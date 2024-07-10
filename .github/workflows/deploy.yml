@@ -1,4 +1,4 @@
-name: 🚀 Trigger Deployments
+name: 🚀 Deployments
 
 on:
   push:
@@ -41,6 +41,7 @@ jobs:
         run: |
           git diff --quiet HEAD^ HEAD ./apps/platform || echo "platform_changed=true" >> $GITHUB_OUTPUT
           git diff --quiet HEAD^ HEAD ./apps/website || echo "website_changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet HEAD^ HEAD ./apps/server || echo "server_changed=true" >> $GITHUB_OUTPUT
 
       - name: 🎯 Deploy Platform to Staging
         if: github.ref == 'refs/heads/staging' && steps.changed.outputs.platform_changed == 'true'
@@ -65,3 +66,4 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_WEBSITE_PROJECT_ID }}
+      

@@ -1,6 +1,13 @@
 import CreateCommunityPost from "./form";
 
-export default async function CommunityCreatePost() {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `Create Community Post | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: "Create a post in the community",
+};
+
+export default async function CreateCommunityPostPage() {
   return (
     <>
       <div className="bg-white/20 backdrop-blur-lg mt-5 rounded-lg p-4 @container/community">

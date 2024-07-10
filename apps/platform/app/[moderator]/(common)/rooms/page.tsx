@@ -16,9 +16,9 @@ import { getRooms, getRoomsInfo } from "src/lib/room/actions";
 import Pagination from "./components/pagination";
 import SearchBox from "./components/search";
 
-export default async function RoomsPage({
-  searchParams,
-}: {
+import type { Metadata, ResolvingMetadata } from "next";
+
+type Props = {
   params: {
     moderator: string;
   };
@@ -28,7 +28,19 @@ export default async function RoomsPage({
     currentStatus?: string;
     roomType?: string;
   };
-}) {
+};
+
+export async function generateMetadata(
+  { params, searchParams }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  return {
+    title: `Rooms | ${params.moderator} Dashboard | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: `Search for rooms based on their availability and type.`,
+  };
+}
+
+export default async function RoomsPage({ searchParams }: Props) {
   const query = searchParams?.query || "";
   const currentPage = Number(searchParams?.page) || 1;
   const filter = {

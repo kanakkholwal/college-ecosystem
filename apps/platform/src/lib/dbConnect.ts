@@ -1,5 +1,5 @@
 import mongoose, { ConnectOptions, Mongoose } from "mongoose";
-import "server-only";
+// import "server-only";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 

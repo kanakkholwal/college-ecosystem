@@ -7,6 +7,13 @@ import Wrapper from "./components/wrapper";
 
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `ChatBot | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: "Chat with the bot to get help",
+};
+
 export default async function ChatBotPage() {
   const session = (await getSession()) as sessionType | null;
   if (!session?.user) {

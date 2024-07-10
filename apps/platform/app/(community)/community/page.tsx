@@ -3,7 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { CATEGORY_IMAGES, CATEGORY_TYPES } from "src/constants/community";
 
-export default async function Dashboard() {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `Communities | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: `Explore different communities`,
+};
+
+export default async function CommunitiesPage() {
   return (
     <div className="grid grid-cols-1 @md:grid-cols-2 @4xl:grid-cols-4 items-stretch gap-4 rounded-md bg-muted text-muted-foreground w-full p-2">
       {CATEGORY_TYPES.map((category) => {

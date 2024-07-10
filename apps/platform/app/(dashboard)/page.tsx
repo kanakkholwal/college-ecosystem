@@ -1,6 +1,13 @@
 import { BorderBeam } from "@/components/animation/border-beam";
 import { RouterCard } from "@/components/common/router-card";
-import { AudioLines, BookUser, Bot, CalendarDays, Grid3X3 } from "lucide-react";
+import {
+  AudioLines,
+  BookUser,
+  Bot,
+  CalendarDays,
+  Grid3X3,
+  CalendarRange,
+} from "lucide-react";
 import Image from "next/image";
 import { GrAnnounce } from "react-icons/gr";
 import { LiaReadme } from "react-icons/lia";
@@ -15,12 +22,6 @@ const quick_links = [
     title: "Results",
     description: "Check your results here.",
     Icon: Grid3X3,
-  },
-  {
-    href: "/chat",
-    title: "Chatbot",
-    description: "Chat with our AI bot.",
-    Icon: Bot,
   },
   {
     href: "/syllabus",
@@ -47,6 +48,12 @@ const quick_links = [
     Icon: CalendarDays,
   },
   {
+    href: "/misc/calender",
+    title: "Academic Calender",
+    description: "Check the academic calender here.",
+    Icon: CalendarRange,
+  },
+  {
     title: "Community",
     href: "/community",
     Icon: AudioLines,
@@ -63,6 +70,12 @@ const quick_links = [
     href: "/polls",
     Icon: MdOutlinePoll,
     description: "Participate in polls.",
+  },
+  {
+    href: "/chat",
+    title: "Chatbot",
+    description: "Chat with the college chatbot.(Beta)",
+    Icon: Bot,
   },
 ];
 

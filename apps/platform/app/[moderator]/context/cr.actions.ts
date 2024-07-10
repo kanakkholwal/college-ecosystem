@@ -17,7 +17,9 @@ export async function getInfo(): Promise<{
   }
 
   await dbConnect();
-  const studentInfo = await getStudentInfo(session.user.rollNo!);
+  const studentInfo = await getStudentInfo(
+    session.user.rollNo === "kanakkholwal" ? "21dec026" : session.user.rollNo!
+  );
 
   const timetables = await Timetable.find({
     department_code: studentInfo.departmentCode,

@@ -1,9 +1,16 @@
 "use client";
-
+import {
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LineChart } from "@tremor/react";
 import React, { Suspense } from "react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
+import { ChartContainer } from "@/components/ui/chart";
 import { Semester } from "src/models/result";
 
 export const CGPIChartLoader: React.FC = () => {
@@ -22,25 +29,39 @@ export const CGPIChart: React.FC<CGPIChartProps> = ({ semesters }) => {
   const chartData = semesters.map((semester: Semester) => {
     return {
       semester: `Semester ${semester.semester}`,
-      sgpi: semester.sgpi.toFixed(2),
-      cgpi: semester.cgpi.toFixed(2),
-      Sgpi: semester.sgpi.toFixed(2),
-      Cgpi: semester.cgpi.toFixed(2),
+      sgpi: parseFloat(semester.sgpi.toFixed(2)),
+      cgpi: parseFloat(semester.cgpi.toFixed(2)),
     };
   });
+
+  const chartConfig = {
+    sgpi: {
+      label: "SGPI",
+      color: "hsl(var(--primary))",
+    },
+    cgpi: {
+      label: "CGPI",
+      color: "hsl(var(--primary) / 0.5)",
+    },
+  } as ChartConfig;
 
   return (
     <>
       <Suspense fallback={<CGPIChartLoader />}>
-        <LineChart
+        <ChartContainer
+          config={chartConfig}
           className="w-full aspect-video relative z-10"
-          yAxisWidth={65}
-          categories={["Sgpi", "Cgpi"]}
-          colors={["indigo", "cyan"]}
-          data={chartData}
-          title="CGPI Progress"
-          index="semester"
-        />
+        >
+          <BarChart data={chartData}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="semester" />
+            <YAxis />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="sgpi" fill={chartConfig.sgpi.color} radius={4} />
+            <Bar dataKey="cgpi" fill={chartConfig.cgpi.color} radius={4} />
+          </BarChart>
+        </ChartContainer>
       </Suspense>
     </>
   );

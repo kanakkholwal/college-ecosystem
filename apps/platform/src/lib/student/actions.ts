@@ -11,10 +11,10 @@ export async function getStudentInfo(rollNo: string): Promise<studentInfoType> {
 
   const result = (await ResultModel.findOne({
     rollNo,
-  }).lean()) as IResultType;
+  }).lean()) as IResultType | null;
 
   if (!result) {
-    throw new Error("No results found");
+    return Promise.reject(new Error("Student not found"));
   }
   const user = (await User.findOne({
     rollNo,

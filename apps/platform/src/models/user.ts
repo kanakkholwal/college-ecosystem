@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import mongoose, { Document, Schema } from "mongoose";
 import { DEPARTMENTS } from "src/constants/departments";
+import { ROLES } from "src/constants/user";
 
 export type UserWithId = {
   _id: string;
@@ -52,7 +53,7 @@ const userSchema = new Schema<IUserSchema>(
     roles: {
       type: [String],
       default: ["student"],
-      enum: ["student", "cr", "faculty", "hod", "moderator", "admin"],
+      enum: ROLES,
     },
     createdAt: { type: Date },
     updatedAt: { type: Date },

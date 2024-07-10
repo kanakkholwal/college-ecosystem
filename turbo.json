@@ -13,8 +13,17 @@
       "cache": false,
       "persistent": true
     },
+    "format":{
+      "cache": true
+    },
     "clean": {
       "cache": false
+    },
+    "dev:server": {
+      "dependsOn": []
+    },
+    "build:server": {
+      "dependsOn": []
     }
   }
 }

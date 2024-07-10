@@ -5,6 +5,13 @@ import { ResultCard, SkeletonCard } from "./components/card";
 import Pagination from "./components/pagination";
 import SearchBox from "./components/search";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `Results | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: `Check your results here.`,
+};
+
 export default async function ResultPage({
   searchParams,
 }: {

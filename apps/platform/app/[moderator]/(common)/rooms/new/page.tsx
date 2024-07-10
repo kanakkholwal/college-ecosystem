@@ -10,7 +10,7 @@ import RoomModel, { RoomType, RoomTypeWithId } from "src/models/room";
 import CreateRoomForm from "./form";
 
 export const metadata: Metadata = {
-  title: "New Room | Admin",
+  title: "New Room | Dashboard",
   description: "Add a new room to the database",
 };
 

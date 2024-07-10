@@ -5,16 +5,23 @@ import { RoomCardPublic } from "./components/card";
 import Pagination from "./components/pagination";
 import SearchBox from "./components/search";
 
-export default async function RoomsPage({
-  searchParams,
-}: {
-  searchParams?: {
+import type { Metadata } from "next";
+
+type Props = {
+  searchParams: {
     query?: string;
     page?: string;
     currentStatus?: string;
     roomType?: string;
   };
-}) {
+};
+
+export const metadata: Metadata = {
+  title: `Rooms | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: `Search for rooms based on their availability and type.`,
+};
+
+export default async function RoomsPage({ searchParams }: Props) {
   const query = searchParams?.query || "";
   const currentPage = Number(searchParams?.page) || 1;
   const filter = {

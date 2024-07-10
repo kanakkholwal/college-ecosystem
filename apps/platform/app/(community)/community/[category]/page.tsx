@@ -8,7 +8,7 @@ import Link from "next/link";
 import { CATEGORY_IMAGES, CATEGORY_TYPES } from "src/constants/community";
 import { getPostsByCategory } from "src/lib/community/actions";
 
-interface CategoryPageProps {
+interface Props {
   params: {
     category: (typeof CATEGORY_TYPES)[number];
   };
@@ -17,11 +17,29 @@ interface CategoryPageProps {
     limit?: number;
   };
 }
+import type { Metadata, ResolvingMetadata } from "next";
 
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: CategoryPageProps) {
+export async function generateMetadata(
+  { params, searchParams }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // read route params
+  const { category } = params;
+  const page = searchParams.page || 1;
+  const limit = searchParams.limit || 10;
+
+  return {
+    title: `${category} | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: `Posts in ${category}`,
+    openGraph: {
+      images: [
+        `${process.env.NEXT_PUBLIC_BASE_URL}/${CATEGORY_IMAGES[category]}`,
+      ],
+    },
+  };
+}
+
+export default async function CategoryPage({ params, searchParams }: Props) {
   const { category } = params;
 
   const page = searchParams.page || 1;

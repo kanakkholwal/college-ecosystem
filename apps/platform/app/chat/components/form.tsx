@@ -8,6 +8,7 @@ import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import ConditionalRender from "@/components/utils/conditional-render";
+import { cn } from "@/lib/utils";
 import { Bot, Mic, Send } from "lucide-react";
 import { useChat } from "../useChat";
 import ChatList from "./chat-list";
@@ -34,10 +35,28 @@ export default function Form() {
     >
       <div className="flex items-center justify-between p-4 gap-3">
         <div className="flex items-center gap-2">
-          <Bot className="w-8 h-8 text-primary" />
-          <h1 className="text-lg font-semibold">
+          <Bot className="w-10 h-10 text-primary" />
+          <div className="text-lg font-semibold">
             {process.env.NEXT_PUBLIC_WEBSITE_NAME} Chatbot
-          </h1>
+            <span className="text-xs text-gray-500 block">
+              Using {` `}
+              <a
+                target="_blank"
+                href="https://huggingface.co/deepset/roberta-base-squad2"
+                className="underline text-primary"
+              >
+                deepset/roberta-base-squad2
+              </a>
+              {` | `}
+              <a
+                target="_blank"
+                href="https://github.com/kanakkholwal/college-ecosystem/blob/main/apps/platform/public/doc/REFERENCE.md"
+                className="underline text-primary"
+              >
+                Reference
+              </a>
+            </span>
+          </div>
         </div>
         <div>
           <GoBackButton />
@@ -90,17 +109,28 @@ export default function Form() {
                 disabled: isLoading,
                 children: <Mic />,
               }}
+              onOpenChange={(open) => stopListening()}
+              className="flex flex-col justify-center items-center gap-3"
             >
               <Button
-                variant="ghost"
-                size="icon_sm"
+                variant={listening ? "default_light" : "ghost"}
+                size="lg"
                 type="button"
+                className="w-40 h-40 mx-auto"
+                rounded="full"
                 disabled={isLoading}
                 onClick={listening ? stopListening : startListening}
               >
                 <Mic />
-                {listening ? "Stop" : "Start"} Listening
               </Button>
+              <p
+                className={cn(
+                  "text-center font-semibold text-gray-700",
+                  listening ? "animate-pulse text-primary" : ""
+                )}
+              >
+                {listening ? "Stop" : "Start"} Listening{listening ? "..." : ""}
+              </p>
             </ResponsiveDialog>
           </ConditionalRender>
           <Button

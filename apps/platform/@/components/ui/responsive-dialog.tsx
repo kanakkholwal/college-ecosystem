@@ -18,6 +18,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 
@@ -26,6 +27,9 @@ export type ResponsiveDialogProps = {
   title: string;
   description: string;
   btnProps: React.ComponentProps<typeof Button>;
+  defaultOpen?: boolean;
+  onOpenChange?(open: boolean): void;
+  className?: string;
 };
 
 export function ResponsiveDialog({
@@ -33,17 +37,26 @@ export function ResponsiveDialog({
   description,
   children,
   btnProps,
+  className,
+  defaultOpen,
+  onOpenChange,
 }: ResponsiveDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen || false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   if (isDesktop) {
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(value) => {
+          setOpen(value);
+          onOpenChange?.(value);
+        }}
+      >
         <DialogTrigger asChild>
           <Button {...btnProps} />
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className={cn("sm:max-w-[425px]", className)}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
@@ -55,7 +68,13 @@ export function ResponsiveDialog({
   }
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer
+      open={open}
+      onOpenChange={(value) => {
+        setOpen(value);
+        onOpenChange?.(value);
+      }}
+    >
       <DrawerTrigger asChild>
         <Button {...btnProps} />
       </DrawerTrigger>
@@ -64,7 +83,7 @@ export function ResponsiveDialog({
           <DrawerTitle>{title}</DrawerTitle>
           <DrawerDescription>{description}</DrawerDescription>
         </DrawerHeader>
-        <div className="px-4 w-full">{children}</div>
+        <div className={cn("px-4 w-full", className)}>{children}</div>
         <DrawerFooter className="pt-2">
           <DrawerClose asChild>
             <Button variant="outline">Cancel</Button>

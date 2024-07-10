@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
 import colors from "tailwindcss/colors";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
 const config = {
   darkMode: ["class"],
@@ -9,9 +9,6 @@ const config = {
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
     "./@/**/*.{ts,tsx,js,jsx}",
-    // Path to Tremor module
-
-    "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
   prefix: "",
   theme: {
@@ -184,7 +181,6 @@ const config = {
     },
   ],
   plugins: [
-    require("@headlessui/tailwindcss"),
     require("tailwindcss-animate"),
     require("@tailwindcss/container-queries"),
     require("@tailwindcss/typography"),

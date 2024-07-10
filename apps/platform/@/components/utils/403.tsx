@@ -6,7 +6,7 @@ export default function Page403() {
           No permission!
         </h2>
         <p className="text-md  text-gray-700 mt-5 text-center">
-          The page you're trying access has restricted access.{`\n`}
+          The page you{`'`}re trying access has restricted access.{`\n`}
           Please refer to your system administrator
         </p>
         <svg

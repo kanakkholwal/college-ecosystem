@@ -6,6 +6,13 @@ import { getAttendanceRecords } from "src/lib/attendance/personal.actions";
 import CreateAttendanceRecord from "./create-record";
 import AttendanceRecord from "./record";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `Attendance | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: "Manage your attendance records here.",
+};
+
 export default async function PersonalAttendanceManager() {
   const attendance_records = await getAttendanceRecords();
   console.log(attendance_records);

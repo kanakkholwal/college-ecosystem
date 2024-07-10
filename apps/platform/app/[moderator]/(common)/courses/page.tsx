@@ -13,11 +13,9 @@ import { Suspense } from "react";
 import { getCourses } from "src/lib/course/actions";
 import Pagination from "./components/pagination";
 import SearchBox from "./components/search";
+import type { Metadata, ResolvingMetadata } from "next";
 
-export default async function CoursesPage({
-  params,
-  searchParams,
-}: {
+type Props = {
   params: {
     moderator: string;
   };
@@ -27,7 +25,19 @@ export default async function CoursesPage({
     department?: string;
     type?: string;
   };
-}) {
+};
+
+export async function generateMetadata(
+  { params, searchParams }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  return {
+    title: `Courses | ${params.moderator} Dashboard | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: `Search for courses based on their name, code, department, and type.`,
+  };
+}
+
+export default async function CoursesPage({ params, searchParams }: Props) {
   const query = searchParams?.query || "";
   const currentPage = Number(searchParams?.page) || 1;
   const filter = {

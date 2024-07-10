@@ -12,6 +12,21 @@ interface Props {
   };
 }
 
+import type { Metadata, ResolvingMetadata } from "next";
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // read route params
+  const [department_code, year, semester] = params.slug;
+
+  return {
+    title: `Semester ${semester} - ${year} | ${department_code} | Timetable`,
+    description: `Timetable for ${department_code} department for semester ${semester} of year ${year}`,
+  };
+}
+
 export default async function Dashboard({ params }: Props) {
   const [department_code, year, semester] = params.slug;
 

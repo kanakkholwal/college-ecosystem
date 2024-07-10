@@ -19,6 +19,8 @@ import { LiaReadme } from "react-icons/lia";
 import { SiGoogleclassroom } from "react-icons/si";
 import { TbDashboard } from "react-icons/tb";
 import { sessionType } from "src/types/session";
+import { GrStorage } from "react-icons/gr";
+import { NotepadTextDashed } from "lucide-react";
 
 export type sideLinkType = {
   label: string;
@@ -49,6 +51,18 @@ const all_links: rawLinkType[] = [
     label: "Results",
     icon: Grid3X3,
     path: "/results",
+    allowed_roles: ["admin", "moderator"],
+  },
+  {
+    label: "Storage",
+    icon: GrStorage,
+    path: "/storage",
+    allowed_roles: ["admin", "moderator"],
+  },
+  {
+    label: "Pages",
+    icon: NotepadTextDashed,
+    path: "/pages",
     allowed_roles: ["admin", "moderator"],
   },
   {

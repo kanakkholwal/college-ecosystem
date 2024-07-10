@@ -25,8 +25,8 @@ export interface AttendanceRecordWithId extends IAttendanceRecord {
 const attendanceRecordSchema = new Schema<IAttendanceRecord>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    subjectCode: { type: String, required: true, trim: true },
-    subjectName: { type: String, required: true, trim: true },
+    subjectCode: { type: String, required: true, trim: true, lowercase: true },
+    subjectName: { type: String, required: true, trim: true, lowercase: true },
     totalClasses: { type: Number, required: true },
     attendance: [
       {
@@ -36,6 +36,10 @@ const attendanceRecordSchema = new Schema<IAttendanceRecord>(
     ],
   },
   { timestamps: true }
+);
+attendanceRecordSchema.index(
+  { userId: 1, subjectCode: 1, subjectName: 1 },
+  { unique: true }
 );
 
 export default mongoose.models?.AttendanceRecord ||

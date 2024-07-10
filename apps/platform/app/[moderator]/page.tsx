@@ -4,13 +4,28 @@ import { sessionType } from "src/types/session";
 import AdminDashboard from "./context/admin.dashboard";
 import CRDashboard from "./context/cr.dashboard";
 
-interface DashboardProps {
+interface Props {
   params: {
     moderator: string;
   };
 }
 
-export default async function Dashboard({ params }: DashboardProps) {
+import type { Metadata, ResolvingMetadata } from "next";
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // read route params
+  const { moderator } = params;
+
+  return {
+    title: `${moderator} Dashboard | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: `Dashboard for ${moderator}`,
+  };
+}
+
+export default async function ModeratorDashboard({ params }: Props) {
   const session = (await getSession()) as sessionType;
 
   return (

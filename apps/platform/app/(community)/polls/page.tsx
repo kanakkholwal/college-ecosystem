@@ -11,7 +11,14 @@ import { sessionType } from "src/types/session";
 import CreatePoll from "./components/create-poll";
 import PollComponent from "./components/poll-component";
 
-export default async function Dashboard() {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `Polls | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: `Check the latest polls here.`,
+};
+
+export default async function PollsPage() {
   const session = (await getSession()) as sessionType;
 
   const [openPolls, closedPolls, userPolls] = await Promise.all([

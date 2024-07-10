@@ -1,4 +1,5 @@
 import TypingIndicator from "@/components/animation/TypingIndicator";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Message } from "../types";
 
@@ -13,22 +14,29 @@ export default function MessageComponent({
 
   return (
     <div
-      className={`w-full flex ${isUser ? "justify-end" : "justify-start"} mb-4`}
+      className={cn(
+        `w-full flex mb-4`,
+        isUser ? "justify-end" : "justify-start"
+      )}
     >
       <div
-        className={`flex flex-col ${isUser ? "items-end" : "items-start"} max-w-[70%]`}
+        className={cn(
+          `flex flex-col max-w-[70%]`,
+          isUser ? "items-end" : "items-start"
+        )}
       >
         <div
-          className={`px-4 py-2 rounded-lg ${
+          className={cn(
+            `px-4 py-2 rounded-lg max-h-mins`,
             isUser
               ? "bg-primary text-white rounded-br-none"
-              : "bg-gray-200 text-gray-800 rounded-bl-none"
-          }`}
+              : "bg-white text-gray-800 rounded-bl-none"
+          )}
         >
           {message.content.trim() === "" ? (
             <TypingIndicator className="h-5" />
           ) : (
-            <p className="text-sm">{message.content}</p>
+            <p className="text-sm align-top">{message.content}</p>
           )}
         </div>
         {message.createdAt && (

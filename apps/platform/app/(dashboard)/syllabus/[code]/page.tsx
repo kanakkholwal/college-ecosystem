@@ -25,11 +25,27 @@ import CourseModel, { booksAndRefType, prevPaperType } from "src/models/course";
 import { AddPrevsModal, AddRefsModal } from "./modal";
 import { IconMap } from "./render-link";
 
-export default async function CoursePage({
-  params,
-}: {
+import type { Metadata, ResolvingMetadata } from "next";
+
+type Props = {
   params: { code: string };
-}) {
+};
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // read route params
+  const course = await getCourseByCode(params.code);
+  if (!course) return notFound();
+
+  return {
+    title: `${course.name} | ${course.code} | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: `Syllabus of ${course.name} (${course.code})`,
+  };
+}
+
+export default async function CoursePage({ params }: Props) {
   const session = await getServerSession(authOptions);
 
   await dbConnect();

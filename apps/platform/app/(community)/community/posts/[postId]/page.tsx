@@ -9,15 +9,36 @@ import { getPostById } from "src/lib/community/actions";
 import { sessionType } from "src/types/session";
 import PostFooter from "./post-footer";
 
-interface CommunityPostProps {
+interface Props {
   params: {
     postId: string;
   };
 }
 
+import type { Metadata, ResolvingMetadata } from "next";
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // read route params
+  const post = await getPostById(params.postId, true);
+  if (!post) return notFound();
+
+  return {
+    title: `${post.title} | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: post.content.slice(0, 100),
+    openGraph: {
+      images: [
+        `${process.env.NEXT_PUBLIC_BASE_URL}/${CATEGORY_IMAGES[post.category]}`,
+      ],
+    },
+  };
+}
+
 const cache = new Map<string, boolean>();
 
-export default async function CommunityPost({ params }: CommunityPostProps) {
+export default async function CommunityPost({ params }: Props) {
   const session = (await getSession()) as sessionType;
   const post = await getPostById(
     params.postId,

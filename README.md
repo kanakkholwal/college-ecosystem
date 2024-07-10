@@ -1,6 +1,6 @@
 # College Ecosystem
 
-[![Trigger Deployments](https://github.com/kanakkholwal/college-ecosystem/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kanakkholwal/college-ecosystem/actions/workflows/ci.yml)
+[![Trigger Deployments](https://github.com/kanakkholwal/college-ecosystem/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/kanakkholwal/college-ecosystem/actions/workflows/deploy.yml)
 
 Welcome to the College Ecosystem monorepo, housing various projects related to college management and services. This repository utilizes Yarn Workspaces and Turbo Repo for efficient project management.
 
@@ -59,6 +59,7 @@ The College Ecosystem includes the following projects:
 
 - [College Platform](https://app.nith.eu.org/) : centralized platform that is multifunctional, user-friendly platform for all.
 - [College Website](https://nith.eu.org) : landing page website
+- [Go Server (No ready yet)](https://go-apis.nith.eu.org) : For concurrent queues and heavy scraping jobs
 
 ```bash
 cd college-ecosystem

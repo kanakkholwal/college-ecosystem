@@ -6,12 +6,21 @@ const envVariables = z.object({
   GOOGLE_SECRET: z.string(),
   NEXTAUTH_URL: z.string(),
   NEXT_AUTH_SECRET: z.string(),
+
   MONGODB_URI: z.string(),
+
   NODE_ENV: z.string().default("testing"),
+
   UPSTASH_REDIS_REST_URL: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
+
   HUGGING_FACE_API_KEY: z.string(),
   FIREWORKS_API_KEY: z.string(),
+
+  FIREBASE_DATABASE_URL: z.string(),
+  FIREBASE_PROJECT_ID: z.string(),
+  FIREBASE_CLIENT_EMAIL: z.string(),
+  FIREBASE_STORAGE_BUCKET: z.string(),
 
   // Client Side
   NEXT_PUBLIC_BASE_URL: z.string(),

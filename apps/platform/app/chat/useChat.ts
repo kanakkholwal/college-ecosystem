@@ -125,7 +125,8 @@ export function useChat(): UseChatResult {
 
   const stopListening = useCallback(() => {
     SpeechRecognition.stopListening();
-  }, []);
+    resetTranscript();
+  }, [resetTranscript]);
 
   return {
     messages,

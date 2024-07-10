@@ -4,7 +4,8 @@ import { getSession } from "src/lib/auth";
 import dbConnect from "src/lib/dbConnect";
 import UserModel, { UserWithId } from "src/models/user";
 
-export async function updateUserRoles(userId: string, roles: string[]) {
+export async function updateUser(userId: string, data: Partial<UserWithId>) {
+  "use server";
   try {
     const session = await getSession();
     if (!session) {
@@ -30,7 +31,7 @@ export async function updateUserRoles(userId: string, roles: string[]) {
       };
     }
     // cannot remove admin role from the only admin
-    if (roles.includes("admin")) {
+    if (data?.roles && data?.roles?.includes("admin")) {
       const user = await UserModel.findById(userId);
       if (user.roles.includes("admin")) {
         const adminCount = await UserModel.countDocuments({
@@ -44,9 +45,10 @@ export async function updateUserRoles(userId: string, roles: string[]) {
         }
       }
     }
-    await UserModel.findByIdAndUpdate(userId, { roles });
+    await UserModel.findByIdAndUpdate(userId, { ...data });
 
     revalidatePath("/admin/users", "page");
+    revalidatePath(`/admin/users/${userId}/update`, "page");
 
     return {
       success: true,
@@ -60,6 +62,20 @@ export async function updateUserRoles(userId: string, roles: string[]) {
     };
   }
 }
+export async function getUser(userId: string): Promise<UserWithId | null> {
+  try {
+    await dbConnect();
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return null;
+    }
+    return Promise.resolve(JSON.parse(JSON.stringify(user)));
+  } catch (error) {
+    console.log(error);
+    return Promise.resolve(null);
+  }
+}
+
 export async function getUsers(
   query: string,
   skip: number,
@@ -67,36 +83,44 @@ export async function getUsers(
     [key: string]: any;
   }
 ): Promise<{ users: UserWithId[]; hasMore: boolean }> {
-  const session = await getSession();
-  if (!session) {
-    return {
-      users: [],
-      hasMore: false,
-    };
+  try {
+    const session = await getSession();
+    if (!session) {
+      return {
+        users: [],
+        hasMore: false,
+      };
+    }
+
+    const resultsPerPage = 50;
+    const filterQuery = {
+      $or: [
+        { firstName: { $regex: query, $options: "i" } },
+        { lastName: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+        { rollNo: { $regex: query, $options: "i" } },
+      ],
+    } as unknown as any;
+    if (filter["department"]) filterQuery["department"] = filter["department"];
+    if (filter["roles"]) filterQuery["roles"] = filter["roles"];
+
+    await dbConnect();
+    const users = await UserModel.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(resultsPerPage)
+      .select("firstName lastName email rollNo roles createdAt department")
+      .exec();
+    const hasMore = users.length === resultsPerPage;
+
+    return Promise.resolve({
+      users: JSON.parse(JSON.stringify(users)),
+      hasMore,
+    });
+  } catch (error) {
+    console.log(error);
+    return Promise.reject(`An error occurred`);
   }
-
-  const resultsPerPage = 50;
-  const filterQuery = {
-    $or: [
-      { firstName: { $regex: query, $options: "i" } },
-      { lastName: { $regex: query, $options: "i" } },
-      { email: { $regex: query, $options: "i" } },
-      { rollNo: { $regex: query, $options: "i" } },
-    ],
-  } as unknown as any;
-  if (filter["department"]) filterQuery["department"] = filter["department"];
-  if (filter["roles"]) filterQuery["roles"] = filter["roles"];
-
-  await dbConnect();
-  const users = await UserModel.find(filterQuery)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(resultsPerPage)
-    .select("firstName lastName email rollNo roles createdAt department")
-    .exec();
-  const hasMore = users.length === resultsPerPage;
-
-  return Promise.resolve({ users: JSON.parse(JSON.stringify(users)), hasMore });
 }
 
 export async function deleteUser(userId: string) {

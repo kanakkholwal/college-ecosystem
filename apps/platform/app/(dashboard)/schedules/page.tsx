@@ -13,6 +13,13 @@ import { getSession } from "src/lib/auth";
 import { getAllTimeTables } from "src/lib/time-table/actions";
 import { sessionType } from "src/types/session";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: `Timetables | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+  description: `Check your schedules here.`,
+};
+
 export default async function Dashboard() {
   const session = (await getSession()) as sessionType;
   const timeTables = await getAllTimeTables();

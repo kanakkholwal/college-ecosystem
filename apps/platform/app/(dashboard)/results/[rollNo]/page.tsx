@@ -1,18 +1,32 @@
 import { GoBackButton } from "@/components/common/go-back";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart } from "@tremor/react";
 import { Mail } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ResultTypeWithId, Semester } from "src/models/result";
 import { getResultByRollNo } from "./actions";
 import { CgpiCard, RankCard, SemCard } from "./components/card";
+import { CGPIChart } from "./components/chart";
 
-export default async function ResultsPage({
-  params,
-}: {
+import type { Metadata, ResolvingMetadata } from "next";
+
+type Props = {
   params: { rollNo: string };
-}) {
+};
+
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // read route params
+  const { rollNo } = params;
+  return {
+    title: `${rollNo} | Results | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    description: `Check the results of ${rollNo}`,
+  };
+}
+
+export default async function ResultsPage({ params }: Props) {
   const result = await getResultByRollNo(params.rollNo);
   if (!result) {
     return notFound();
@@ -99,15 +113,7 @@ export default async function ResultsPage({
           </TabsContent>
           <TabsContent value="graph">
             <div className="max-w-6xl mx-auto my-5 w-full p-4 rounded-xl bg-white/50">
-              <LineChart
-                className="w-full aspect-video relative z-10"
-                yAxisWidth={65}
-                categories={["Sgpi", "Cgpi"]}
-                colors={["indigo", "cyan"]}
-                data={chartData}
-                title="CGPI Progress"
-                index="semester"
-              />
+              <CGPIChart semesters={result.semesters} />
             </div>
           </TabsContent>
         </Tabs>

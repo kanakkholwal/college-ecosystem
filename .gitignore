@@ -18,6 +18,10 @@ node_modules
 apps/**/.env*.local
 apps/**/.env*.development
 apps/**/.env
+# Golang
+/apps/golang-server/bin
+/apps/golang-server/pkg
+/apps/golang-server/main
 
 # Ignore cache files
 .turbo
@@ -57,6 +61,8 @@ out/
 build
 dist
 
+# Docker
+.docker/
 
 # Debug
 npm-debug.log*
@@ -66,3 +72,6 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+coverage/
+dist/
+tmp/

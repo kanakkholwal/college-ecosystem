@@ -1,13 +1,16 @@
-name: 🧹 Lint and Format
+name: 🧹 Lint
+
 
 on:
   push:
-    branches:
-      - '**'
+    branches-ignore:
+      - main
+      - staging
   pull_request:
     branches:
       - '**'
   workflow_call:
+
 
 jobs:
   lint-and-format:
@@ -31,13 +34,11 @@ jobs:
 
       - name: 📦 Install lint dependencies
         run: |
-          npm install --no-package-lock --no-save \
-            eslint \
-            @typescript-eslint/parser \
-            @typescript-eslint/eslint-plugin \
-            eslint-config-prettier \
-            typescript \
-            turbo
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --force
+          fi
 
       - name: 💾 Cache Turbo
         uses: actions/cache@v3

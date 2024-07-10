@@ -140,6 +140,16 @@ export default function Navbar({
                     </Link>
                   </DropdownMenuItem>
                 )}
+                {user.roles!.map((role) => {
+                  return (
+                    <DropdownMenuItem asChild key={role}>
+                      <Link href={`/${role}`}>
+                        <UserRound className="mr-2 h-4 w-4" />
+                        <span className="capitalize">{role} Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
                 <DropdownMenuItem asChild>
                   <Link
                     href={`https://github.com/kanakkholwal/college-ecosystem/issues`}

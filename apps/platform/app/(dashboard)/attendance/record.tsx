@@ -1,7 +1,32 @@
-import { DonutChart } from "@tremor/react";
+"use client";
+import { CircleSlash } from "lucide-react";
+
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import ConditionalRender from "@/components/utils/conditional-render";
+import { Label, Pie, PieChart } from "recharts";
 import { updateAttendanceRecord } from "src/lib/attendance/personal.actions";
 import { AttendanceRecordWithId } from "src/models/attendance-record";
 import UpdateAttendanceRecord from "./update-record";
+
+const chartConfig = {
+  attended: {
+    label: "Attended",
+    color: "hsl(var(--chart-success))",
+  },
+  absent: {
+    label: "Absent",
+    color: "hsl(var(--chart-danger))",
+  },
+  total: {
+    label: "Total",
+    color: "hsl(var(--chart-info))",
+  },
+} as ChartConfig;
 interface AttendanceRecordProps {
   record: AttendanceRecordWithId;
   style?: React.CSSProperties;
@@ -12,14 +37,18 @@ export default function AttendanceRecord({
   record,
   style,
 }: AttendanceRecordProps) {
-  const attendance = [
+  const totalClasses = record.totalClasses;
+
+  const chartData = [
     {
-      name: "Present",
+      name: "Attended",
       value: record.attendance.filter((a) => a.isPresent).length,
+      fill: "hsl(var(--chart-primary))",
     },
     {
       name: "Absent",
       value: record.attendance.filter((a) => !a.isPresent).length,
+      fill: "hsl(var(--chart-danger))",
     },
   ];
   return (
@@ -35,13 +64,67 @@ export default function AttendanceRecord({
           <p className="text-xs text-gray-600">{record.subjectCode}</p>
         </div>
         <div>
-          <DonutChart
-            data={attendance}
-            category="value"
-            index="name"
-            colors={["emerald", "amber"]}
-            className="w-16 h-16"
-          />
+          <ConditionalRender condition={totalClasses === 0}>
+            <div className="flex flex-col items-center justify-center gap-4">
+              <CircleSlash className="h-12 w-12 text-danger" />
+              <div className="text-center text-lg font-medium text-gray-600">
+                No attendance records found
+              </div>
+              <div className="text-muted-foreground text-sm">
+                Your attendance records will be displayed here
+              </div>
+            </div>
+          </ConditionalRender>
+          <ConditionalRender condition={totalClasses > 0}>
+            <ChartContainer
+              config={chartConfig}
+              className="mx-auto aspect-square max-h-[250px]"
+            >
+              <PieChart>
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={60}
+                  strokeWidth={5}
+                >
+                  <Label
+                    content={({ viewBox }) => {
+                      if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                        return (
+                          <text
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                          >
+                            <tspan
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              className="fill-foreground text-3xl font-bold"
+                            >
+                              {totalClasses}
+                            </tspan>
+                            <tspan
+                              x={viewBox.cx}
+                              y={(viewBox.cy || 0) + 24}
+                              className="fill-muted-foreground"
+                            >
+                              Total Classes
+                            </tspan>
+                          </text>
+                        );
+                      }
+                    }}
+                  />
+                </Pie>
+              </PieChart>
+            </ChartContainer>
+          </ConditionalRender>
         </div>
       </div>
       <p>
