@@ -1,12 +1,10 @@
 "use server";
-import type { ResultTypeWithId } from "src/models/result";
-
-import dbConnect from "src/lib/dbConnect";
-import ResultModel from "src/models/result";
 import { z } from "zod";
+import dbConnect from "~/lib/dbConnect";
+import redis from "~/lib/redis";
 import { serverFetch } from "~/lib/server-fetch";
-import redis from "src/lib/redis";
-import serverApis from "~/lib/server-apis";
+import type { ResultTypeWithId } from "~/models/result";
+import ResultModel from "~/models/result";
 
 /*
 /*  For Public Search
@@ -58,7 +56,7 @@ export async function getResults(
     let cachedResults = null;
     try {
       if (!new_cache)
-        cachedResults = await redis.get<getResultsReturnType>(cacheKey);
+        cachedResults = await redis.get(cacheKey) as getResultsReturnType | null;
       else {
         await redis.del(cacheKey);
       }
@@ -86,9 +84,7 @@ export async function getResults(
     const response = { results, totalPages };
 
     // Cache the query results for 1 week
-    await redis.set(cacheKey, JSON.stringify(response), {
-      ex: 60 * 60 * 24 * 7,
-    });
+    await redis.set(cacheKey, JSON.stringify(response), 'EX', 60 * 60 * 24 * 7);
 
     return response;
   } catch (error) {
@@ -110,8 +106,10 @@ export async function getCachedLabels(
   let cachedLabels: CachedLabels | null = null;
   try {
     try {
-      if (!new_cache) cachedLabels = await redis.get(cacheKey);
-      else await redis.del(cacheKey);
+      if (!new_cache) 
+        cachedLabels = await redis.get(cacheKey) as CachedLabels | null;
+      else 
+      await redis.del(cacheKey);
     } catch (redisError) {
       console.error("Redis connection error:", redisError);
     }
@@ -124,9 +122,7 @@ export async function getCachedLabels(
       cachedLabels = { branches, batches, programmes };
 
       // Cache labels for 6 months
-      await redis.set(cacheKey, JSON.stringify(cachedLabels), {
-        ex: 6 * 30 * 24 * 60 * 60,
-      });
+      await redis.set(cacheKey, JSON.stringify(cachedLabels), 'EX', 60 * 60 * 24 * 30 * 6);
     }
   } catch (error) {
     console.error("Error fetching cached labels:", error);

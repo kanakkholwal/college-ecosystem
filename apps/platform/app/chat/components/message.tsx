@@ -1,4 +1,3 @@
-import TypingIndicator from "@/components/animation/TypingIndicator";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { Message } from "../types";
@@ -34,7 +33,7 @@ export default function MessageComponent({
           )}
         >
           {message.content.trim() === "" ? (
-            <TypingIndicator className="h-5" />
+              <p className="text-sm align-top">Thinking...</p>
           ) : (
             <p className="text-sm align-top">{message.content}</p>
           )}

@@ -63,7 +63,7 @@ export default function AttendanceRecord({
   return (
     <div
       className={cn(
-        "flex flex-wrap p-4 gap-4 rounded-lg border hover:border/30 transition-shadow shadow-sm",
+        "flex flex-wrap p-4 gap-4 rounded-lg border hover:border/30 transition-shadow shadow-xs",
         className
       )}
       style={style}
@@ -100,19 +100,19 @@ export default function AttendanceRecord({
               }}
             >
               <div className="grid grid-cols-1 @xs/dialog:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-md shadow">
+                <div className="p-4 border rounded-md shadow-sm">
                   <h5 className="text-sm font-medium">Total Classes</h5>
                   <p className="text-xl font-semibold">{totalClasses}</p>
                 </div>
-                <div className="p-4 border rounded-md shadow">
+                <div className="p-4 border rounded-md shadow-sm">
                   <h5 className="text-sm font-medium">Classes Attended</h5>
                   <p className="text-xl font-semibold">{presentClasses}</p>
                 </div>
-                <div className="p-4 border rounded-md shadow">
+                <div className="p-4 border rounded-md shadow-sm">
                   <h5 className="text-sm font-medium">Classes Missed</h5>
                   <p className="text-xl font-semibold">{absentClasses}</p>
                 </div>
-                <div className="p-4 border rounded-md shadow">
+                <div className="p-4 border rounded-md shadow-sm">
                   <h5 className="text-sm font-medium whitespace-nowrap">
                     Attendance
                   </h5>

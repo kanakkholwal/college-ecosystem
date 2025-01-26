@@ -80,7 +80,7 @@ export default async function CategoryPage(props: Props) {
                   href={`/community/posts/${post._id}`}
                   className={cn(
                     "rounded-sm p-4 font-medium transition-all text-gray-800  text-md w-full capitalize",
-                    "hover:bg-background/40 hover:shadow-sm"
+                    "hover:bg-background/40 hover:shadow-xs"
                   )}
                   key={post._id}
                 >

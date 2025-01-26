@@ -17,7 +17,7 @@ export default function PollComponent({
   const closesAlready = new Date(poll.closesAt) < new Date();
 
   return (
-    <div className="bg-white/10 p-4 rounded-lg mt-2 flex flex-col justify-between items-stretch gap-3 border border-gray-50/40 hover:shadow-sm">
+    <div className="bg-white/10 p-4 rounded-lg mt-2 flex flex-col justify-between items-stretch gap-3 border border-gray-50/40 hover:shadow-xs">
       <div className="flex justify-between items-center gap-3 w-full">
         <h3 className="text-lg font-semibold">{poll.question}</h3>
       </div>

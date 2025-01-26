@@ -42,7 +42,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.7",
     "@serwist/next": "^9.0.11",
-    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-table": "^8.20.6",
     "@xenova/transformers": "^2.17.2",
@@ -96,7 +96,6 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -105,7 +104,8 @@
     "eslint-config-next": "^15.1.6",
     "postcss": "^8",
     "serwist": "^9.0.11",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "4.0.0",
+    "tailwindcss-motion": "^1.0.1",
     "typescript": "^5.7.3"
   },
   "packageManager": "pnpm@9.15.4"

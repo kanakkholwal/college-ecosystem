@@ -60,7 +60,7 @@ export function SidebarContent({
         type="button"
         className={cn(
           "group rounded-lg w-full flex justify-start items-center gap-2 p-2 animate-in popup  transition-colors ",
-          "text-sm font-semibold whitespace-nowrap border border-transparent backdrop-blur-2xl bg-white/30 hover:border-primary/50 hover:shadow text-gray-700 hover:text-primary"
+          "text-sm font-semibold whitespace-nowrap border border-transparent backdrop-blur-2xl bg-white/30 hover:border-primary/50 hover:shadow-sm text-gray-700 hover:text-primary"
         )}
       >
         <LuSearch className="w-5 h-5" />
@@ -97,7 +97,7 @@ function SideLink({ link, style }: SideLinkProps) {
       href={link.href}
       className={cn(
         "group rounded-lg w-full flex justify-start items-center gap-2 px-5 py-2 animate-in popup  transition-colors ",
-        "border border-transparent backdrop-blur-2xl bg-white/10 hover:bg-primary/10 hover:shadow hover:border-primary/5 text-gray-700 hover:text-primary"
+        "border border-transparent backdrop-blur-2xl bg-white/10 hover:bg-primary/10 hover:shadow-sm hover:border-primary/5 text-gray-700 hover:text-primary"
       )}
       target={link.external ? "_blank" : "_self"}
       rel={link.external ? "noopener noreferrer" : undefined}

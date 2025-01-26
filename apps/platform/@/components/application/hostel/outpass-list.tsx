@@ -9,7 +9,7 @@ interface OutpassListProps {
 
 const classNames = {
     container: "w-full grid grid-cols-1 @lg:grid-cols-2 @2xl:grid-cols-3 @5xl:grid-cols-4 gap-3 p-4",
-    item: "flex items-center justify-between p-4 mb-3 bg-white border border-gray-200 rounded-lg shadow-sm last:mb-0",
+    item: "flex items-center justify-between p-4 mb-3 bg-white border border-gray-200 rounded-lg shadow-xs last:mb-0",
     details: "flex flex-col",
     studentInfo: "font-medium text-gray-800",
     outpassInfo: "text-sm text-gray-600",

@@ -85,7 +85,7 @@ export default function CreateCommunityPost() {
               <FormControl>
                 <NexoMdxEditor
                   placeholder="Write a great post"
-                  className="!h-auto p-0"
+                  className="h-auto! p-0"
                   rows={8}
                   renderHtml={(md) => (
                     <MarkdownView className="prose max-w-full">

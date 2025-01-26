@@ -19,7 +19,7 @@ export default async function CommunitiesPage() {
             href={`/community/${category}`}
             className={cn(
               "inline-flex items-center justify-start gap-2 whitespace-nowrap rounded-lg p-4 font-medium text-gray-700 transition-all border border-gray-50/30 text-md w-full capitalize",
-              " hover:text-gray-800 transition-colors backdrop-blur-2xl hover:bg-white/10 hover:shadow hover:border-primary/5"
+              " hover:text-gray-800 transition-colors backdrop-blur-2xl hover:bg-white/10 hover:shadow-sm hover:border-primary/5"
             )}
             key={category}
           >

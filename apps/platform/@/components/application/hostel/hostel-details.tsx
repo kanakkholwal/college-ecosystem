@@ -28,7 +28,7 @@ export async function HostelDetail({ hostel }: { hostel: HostelType }) {
           <Heading level={3} className="font-bold text-gray-800">
             {hostel.name}
           </Heading>
-          <Paragraph className="capitalize !mt-0">
+          <Paragraph className="capitalize mt-0!">
             Warden: {hostel.warden.name}{" "}
             <span className="lowercase">({hostel.warden.email})</span>
           </Paragraph>
@@ -71,7 +71,7 @@ export function HostelDetailsForHosteler({ hostel }: { hostel: HostelType }) {
           <Heading level={3} className="font-bold text-gray-800">
             {hostel.name}
           </Heading>
-          <Paragraph className="capitalize !mt-0">
+          <Paragraph className="capitalize mt-0!">
             Warden: {hostel.warden.name}{" "}
             <span className="lowercase">({hostel.warden.email})</span>
           </Paragraph>

@@ -21,7 +21,7 @@ export default function EmptyArea({
   return (
     <div
       className={cn(
-        "bg-background border-primary/10 hover:border-primary/20 hover:shadow text-center",
+        "bg-background border-primary/10 hover:border-primary/20 hover:shadow-sm text-center",
         "border border-dashed rounded-xl p-14 w-full max-w-[620px]",
         "group hover:bg-muted/50 transition duration-500 hover:duration-200 mx-auto",
         className
@@ -83,7 +83,7 @@ export default function EmptyArea({
           {...actionProps}
           className={cn(
             "mt-4",
-            "shadow-sm active:shadow-none",
+            "shadow-xs active:shadow-none",
             actionProps.className
           )}
         />

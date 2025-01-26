@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 const btnRawClassName =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap capitalize rounded-md text-sm font-semibold tracking-wide ring-offset-background transition-duration-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap capitalize rounded-md text-sm font-semibold tracking-wide ring-offset-background transition-duration-500 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
 function Calendar({
   className,
@@ -28,11 +28,11 @@ function Calendar({
 
         //  (single mode)
         button_previous: cn(
-          "size-6 bg-slate-200 hover:bg-primary/30 rounded-lg inline-flex justify-center items-center cursor-pointer hover:[&>svg]:text-primary",
+          "size-6 bg-slate-200 hover:bg-primary/30 rounded-lg inline-flex justify-center items-center cursor-pointer [&>svg]:hover:text-primary",
           "absolute top-1 left-3 z-10"
         ),
         button_next: cn(
-          "size-6 bg-slate-200 hover:bg-primary/30 rounded-lg inline-flex justify-center items-center cursor-pointer hover:[&>svg]:text-primary",
+          "size-6 bg-slate-200 hover:bg-primary/30 rounded-lg inline-flex justify-center items-center cursor-pointer [&>svg]:hover:text-primary",
           "absolute top-1 right-3 z-10"
         ),
 
@@ -70,9 +70,9 @@ function Calendar({
         disabled: "text-gray-400 opacity-80",
         day_hidden: "invisible",
         today:
-          "text-primary border !border-primary/50 font-semibold hover:text-primary !hover:border-primary/50",
+          "text-primary border border-primary/50! font-semibold hover:text-primary !hover:border-primary/50",
         selected:
-          "!bg-primary/30 text-primary !hover:text-primary !hover:bg-primary/30",
+          "bg-primary/30! text-primary !hover:text-primary !hover:bg-primary/30",
         focused: "shadow-md",
         range_end: "range_end border border-primary/50 rounded-r-md",
         range_start: "range_end border border-primary/50 rounded-l-md",

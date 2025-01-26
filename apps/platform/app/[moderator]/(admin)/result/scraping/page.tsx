@@ -168,9 +168,9 @@ export default function ScrapeResultPage() {
     <>
       <Alert suppressHydrationWarning={true}>
         {connected ? (
-          <Wifi className="size-6 !text-green-500" />
+          <Wifi className="size-6 text-green-500!" />
         ) : (
-          <WifiOff className="size-6 !text-red-500" />
+          <WifiOff className="size-6 text-red-500!" />
         )}
         <AlertTitle>Connection ({transportName})</AlertTitle>
         <AlertDescription className="flex items-center space-x-2">
@@ -181,7 +181,7 @@ export default function ScrapeResultPage() {
           )}
         </AlertDescription>
       </Alert>
-      <section className="p-6 border border-gray-200 rounded-lg bg-slate-100 shadow space-y-5">
+      <section className="p-6 border border-gray-200 rounded-lg bg-slate-100 shadow-sm space-y-5">
         <div
           aria-label="header"
           className="text-lg font-semibold border-b pb-5"
@@ -195,7 +195,7 @@ export default function ScrapeResultPage() {
           <p className="text-red-500 p-2 border border-red-500 bg-red-100 rounded-md text-sm">
             {error}
             <X
-              className="size-4 !text-red-500 ml-auto inline-block cursor-pointer"
+              className="size-4 text-red-500! ml-auto inline-block cursor-pointer"
               role="button"
               onClick={() => setError(null)}
             />
@@ -204,7 +204,7 @@ export default function ScrapeResultPage() {
         {taskData?.taskId ? (
           <DisplayTask task={taskData} />
         ) : (
-          <div className="grid grid-cols-1 gap-2 bg-white p-3 rounded-md shadow">
+          <div className="grid grid-cols-1 gap-2 bg-white p-3 rounded-md shadow-sm">
             <div className="flex gap-4">
               <h5 className="text-sm font-semibold">#No Task Running</h5>
             </div>
@@ -336,7 +336,7 @@ export default function ScrapeResultPage() {
         </div>
       </section>
 
-      <section className="p-6 border border-gray-200 rounded-lg bg-slate-100 shadow">
+      <section className="p-6 border border-gray-200 rounded-lg bg-slate-100 shadow-sm">
         <div
           aria-label="header"
           className="text-lg font-semibold border-b pb-5 mb-5 flex w-full justify-between gap-4"
@@ -374,7 +374,7 @@ export default function ScrapeResultPage() {
           </div>
         </div>
         {taskList.length === 0 && (
-          <div className="grid grid-cols-1 gap-2 bg-primary/10 text-primary text-center p-3 rounded-md shadow">
+          <div className="grid grid-cols-1 gap-2 bg-primary/10 text-primary text-center p-3 rounded-md shadow-sm">
             <div className="flex gap-4">
               <h5 className="text-sm font-semibold">No Task Found</h5>
             </div>
@@ -402,7 +402,7 @@ function DisplayTask({
   actionFunction?: (id: string, type: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-2 bg-white p-3 rounded-md shadow">
+    <div className="grid grid-cols-1 gap-2 bg-white p-3 rounded-md shadow-sm">
       <div className="flex gap-4">
         <Button size="sm" variant="ghost" className="text-sm lowercase">
           #{task.taskId.toLowerCase()}

@@ -177,7 +177,7 @@ export default function SignUpForm() {
                           autoComplete="password"
                           autoCorrect="off"
                           disabled={isLoading}
-                          className="pl-10 pr-5 !mt-0"
+                          className="pl-10 pr-5 mt-0!"
                           {...field}
                         />
                       </FormControl>

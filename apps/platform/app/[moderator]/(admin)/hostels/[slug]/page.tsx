@@ -37,7 +37,7 @@ export default async function HostelPage({
       <div className="flex justify-between w-full">
         <div className="w-1/2">
           <Heading level={4}>{hostel.name}</Heading>
-          <Paragraph className="capitalize !mt-0">
+          <Paragraph className="capitalize mt-0!">
             {hostel.gender} Hostel
           </Paragraph>
         </div>
@@ -45,7 +45,7 @@ export default async function HostelPage({
       <div className="grid grid-cols-1 gap-3">
         <div>
           <Heading level={5}>Warden</Heading>
-          <Paragraph className="!mt-0">
+          <Paragraph className="mt-0!">
             {hostel.warden.name} ({hostel.warden.email})
           </Paragraph>
         </div>

@@ -9,8 +9,8 @@ export default function CalendarBodyWeek() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
-    <div className="flex divide-x flex-grow overflow-hidden">
-      <div className="flex flex-col flex-grow divide-y overflow-hidden">
+    <div className="flex divide-x grow overflow-hidden">
+      <div className="flex flex-col grow divide-y overflow-hidden">
         <div className="flex flex-col flex-1 overflow-y-auto">
           <div className="relative flex flex-1 divide-x flex-col md:flex-row">
             <CalendarBodyMarginDayMargin className="hidden md:block" />

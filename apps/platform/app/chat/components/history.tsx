@@ -41,7 +41,7 @@ function ChatButton({ chat, style }: ChatButtonProps) {
       href={`chat.id=${chat.id}`}
       className={cn(
         "group rounded-lg w-full flex justify-start items-center gap-2 px-5 py-2 animate-in popup  transition-colors ",
-        "border border-transparent backdrop-blur-2xl bg-white/10 hover:bg-primary/10 hover:shadow hover:border-primary/5 text-gray-700 hover:text-primary"
+        "border border-transparent backdrop-blur-2xl bg-white/10 hover:bg-primary/10 hover:shadow-sm hover:border-primary/5 text-gray-700 hover:text-primary"
       )}
       style={style}
     >

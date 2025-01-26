@@ -20,7 +20,7 @@ export function RoleSwitcher({ user }: { user: Session["user"] }) {
           size="lg"
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
         >
-          <div className="flex items-center justify-center rounded-lg text-3xl font-bold text-center relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent hover:from-sky-500 hover:to-primary whitespace-nowrap">
+          <div className="flex items-center justify-center rounded-lg text-3xl font-bold text-center relative bg-linear-to-r from-primary to-sky-500 bg-clip-text text-transparent hover:from-sky-500 hover:to-primary whitespace-nowrap">
             N
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">

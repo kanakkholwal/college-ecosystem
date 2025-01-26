@@ -13,7 +13,7 @@ export default function CalendarBodyDayContent({ date }: { date: Date }) {
   const marginHours = hours.slice(startHour, endHour);
 
   return (
-    <div className="flex flex-col flex-grow">
+    <div className="flex flex-col grow">
       <CalendarBodyHeader date={date} />
 
       <div className="flex-1 relative">

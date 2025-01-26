@@ -266,7 +266,7 @@ export function Write({ textValue, setTextValue, disabled, ...props }: Props) {
             {listItems.map((item) => {
               return (
                 <div key={item.title} className="flex items-center gap-2">
-                  <item.icon className="text-gray-600 h-4  flex-shrink-0" />
+                  <item.icon className="text-gray-600 h-4  shrink-0" />
                   <h4 className="text-md font-semibold text-gray-700">
                     {item.title}
                   </h4>

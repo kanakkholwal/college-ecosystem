@@ -66,7 +66,7 @@ export default async function CoursePage(props: Props) {
         className="z-10 w-full max-w-6xl relative flex flex-col items-center justify-center  py-24 max-h-80 text-center"
       >
         <h1 className="text-gray-900 dark:text-white font-bold text-5xl md:text-6xl xl:text-7xl">
-          <span className="relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent  md:px-2">
+          <span className="relative bg-linear-to-r from-primary to-sky-500 bg-clip-text text-transparent  md:px-2">
             {course.name}
           </span>
         </h1>

@@ -34,7 +34,7 @@ export default async function OutPassRequestsPage(props: PageProps) {
           <Heading level={3} className="font-bold text-gray-800">
             {hostel.name}
           </Heading>
-          <Paragraph className="capitalize !mt-0">
+          <Paragraph className="capitalize mt-0!">
             Warden: {hostel.warden.name}{" "}
             <span className="lowercase">({hostel.warden.email})</span>
           </Paragraph>

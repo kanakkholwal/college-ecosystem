@@ -249,7 +249,7 @@ export const CalendarBody = ({ features, children }: CalendarBodyProps) => {
   }
 
   return (
-    <div className="grid flex-grow grid-cols-7">
+    <div className="grid grow grid-cols-7">
       {days.map((day, index) => (
         <div
           key={index.toString()}
@@ -393,7 +393,7 @@ export const CalendarHeader = ({ className }: CalendarHeaderProps) => {
   const { locale, startDay } = useContext(CalendarContext);
 
   return (
-    <div className={cn("grid flex-grow grid-cols-7", className)}>
+    <div className={cn("grid grow grid-cols-7", className)}>
       {daysForLocale(locale, startDay).map((day) => (
         <div key={day} className="p-3 text-right text-muted-foreground text-xs">
           {day}

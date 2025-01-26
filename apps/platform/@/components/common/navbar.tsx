@@ -13,8 +13,8 @@ export default function Navbar({ user }: NavbarProps) {
   return (
     <div
       className={cn(
-        "sticky marker:md:static left-0 top-0 md:top-5 md:mt-5 z-50 inset-inline-0 mx-auto w-full max-w-[720px] md:rounded-full md:overflow-hidden",
-        "backdrop-blur-2xl md:bg-white/20 md:border md:border-gray-300 bg-gradient-to-b from-primary/5"
+        "sticky md:marker:static left-0 top-0 md:top-5 md:mt-5 z-50 inset-inline-0 mx-auto w-full max-w-[720px] md:rounded-full md:overflow-hidden",
+        "backdrop-blur-2xl md:bg-white/20 md:border md:border-gray-300 bg-linear-to-b from-primary/5"
       )}
     >
       <div className="relative md:px-4 z-50">
@@ -26,7 +26,7 @@ export default function Navbar({ user }: NavbarProps) {
         >
           <Link
             href="/"
-            className="relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent hover:from-sky-500 hover:to-primary lg:text-xl whitespace-nowrap"
+            className="relative bg-linear-to-r from-primary to-sky-500 bg-clip-text text-transparent hover:from-sky-500 hover:to-primary lg:text-xl whitespace-nowrap"
           >
             {process.env.NEXT_PUBLIC_WEBSITE_NAME}
           </Link>

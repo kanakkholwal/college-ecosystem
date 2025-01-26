@@ -230,7 +230,7 @@ export const FileUploader = forwardRef<
           tabIndex={0}
           onKeyDownCapture={handleKeyDown}
           className={cn(
-            "grid w-full focus:outline-none overflow-hidden ",
+            "grid w-full focus:outline-hidden overflow-hidden ",
             className,
             {
               "gap-2": value && value.length > 0,

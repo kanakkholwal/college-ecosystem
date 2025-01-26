@@ -4,7 +4,7 @@ import { FileWithID } from "src/models/file";
 
 export function FileCard({ file }: { file: FileWithID }) {
   return (
-    <div className="flex items-center justify-between p-3 bg-card rounded-md shadow-sm">
+    <div className="flex items-center justify-between p-3 bg-card rounded-md shadow-xs">
       <div className="flex items-center gap-4">
         <Image
           src={file.publicUrl}

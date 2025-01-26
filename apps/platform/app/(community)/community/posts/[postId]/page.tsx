@@ -58,7 +58,7 @@ export default async function CommunityPost(props: Props) {
         <CardHeader>
           <div className="flex flex-wrap items-center w-full mb-4">
             <div className="flex gap-2">
-              <Avatar className="bg-gray-200 shadow">
+              <Avatar className="bg-gray-200 shadow-sm">
                 <AvatarImage
                   src={CATEGORY_IMAGES[post.category]}
                   alt={post.category}

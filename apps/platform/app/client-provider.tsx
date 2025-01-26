@@ -42,14 +42,14 @@ export function Provider({ children }: { children: React.ReactNode }) {
         <canvas
           id="gradient-canvas"
           data-transition-in
-          className="fixed inset-0 -z-[1]"
+          className="fixed inset-0 -z-1"
         />
       ) : (
         <Image
           width={1920}
           height={1280}
           src={fallbackImg}
-          className="fixed inset-0 -z-[1]"
+          className="fixed inset-0 -z-1"
           alt="Fallback"
         />
       )}

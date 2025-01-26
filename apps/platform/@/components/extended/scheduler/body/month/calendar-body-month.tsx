@@ -34,7 +34,7 @@ export default function CalendarBodyMonth() {
   const today = new Date();
 
   return (
-    <div className="flex flex-col flex-grow overflow-hidden">
+    <div className="flex flex-col grow overflow-hidden">
       <div className="hidden md:grid grid-cols-7 border-border divide-x divide-border">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
           <div
@@ -46,7 +46,7 @@ export default function CalendarBodyMonth() {
         ))}
       </div>
 
-      <div className="grid md:grid-cols-7 flex-grow overflow-y-auto">
+      <div className="grid md:grid-cols-7 grow overflow-y-auto">
         {calendarDays.map((day) => {
           const dayEvents = events.filter((event) =>
             isSameDay(event.start, day)

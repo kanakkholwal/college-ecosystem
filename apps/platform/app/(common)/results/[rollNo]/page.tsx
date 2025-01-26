@@ -53,7 +53,7 @@ export default async function ResultsPage(props: Props) {
       >
         <div className="lg:w-3/4 text-center mx-auto mt-10">
           <h1 className="text-gray-900 dark:text-white font-bold text-5xl md:text-6xl xl:text-7xl">
-            <span className="relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent  md:px-2">
+            <span className="relative bg-linear-to-r from-primary to-sky-500 bg-clip-text text-transparent  md:px-2">
               {result.name}
             </span>
           </h1>

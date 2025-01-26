@@ -28,7 +28,7 @@ export function RouterCard({
     <Link
       href={href}
       className={cn(
-        "group rounded-lg flex flex-col justify-between gap-3 border border-gray-50/30 px-5 py-4 animate-in popup transition-colors backdrop-blur-2xl hover:bg-white/10 hover:shadow hover:border-primary/5",
+        "group rounded-lg flex flex-col justify-between gap-3 border border-gray-50/30 px-5 py-4 animate-in popup transition-colors backdrop-blur-2xl hover:bg-white/10 hover:shadow-sm hover:border-primary/5",
         disabled ? "pointer-events-none cursor-not-allowed" : ""
       )}
       target={external ? "_blank" : "_self"}

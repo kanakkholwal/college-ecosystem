@@ -10,7 +10,7 @@ export default function Navbar({ user }: { user: Session["user"] }) {
   const pathname = usePathname();
 
   return (
-    <nav className="w-full p-4 backdrop-blur border-b border-solid border-slate-100/50 dark:border-slate-700 flex items-center lg:px-6 z-2">
+    <nav className="w-full p-4 backdrop-blur-sm border-b border-solid border-slate-100/50 dark:border-slate-700 flex items-center lg:px-6 z-2">
       <SidebarTrigger className="mx-2" />
       <div className="flex items-start flex-col">
         <h3 className="text-lg font-bold">

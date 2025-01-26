@@ -55,7 +55,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
           fallback={
             <button
               type="button"
-              className="relative flex h-12 w-full items-center justify-center px-6 before:absolute before:inset-0 before:rounded-full before:border before:border-transparent before:bg-primary/10 before:bg-gradient-to-b before:transition before:duration-300 hover:before:scale-105 active:duration-75 active:before:scale-95 dark:before:border-gray-700 dark:before:bg-gray-800 sm:w-max"
+              className="relative flex h-12 w-full items-center justify-center px-6 before:absolute before:inset-0 before:rounded-full before:border before:border-transparent before:bg-primary/10 before:bg-linear-to-b before:transition before:duration-300 hover:before:scale-105 active:duration-75 active:before:scale-95 dark:before:border-gray-700 dark:before:bg-gray-800 sm:w-max"
             >
               <span className="relative text-base font-semibold text-primary dark:text-white">
                 <IoMdOptions className="w-5 h-5" />
@@ -75,7 +75,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                 </span>
               ),
               className:
-                "overflow-hidden relative flex h-12 w-full items-center justify-center px-6 before:absolute before:inset-0 before:rounded-full before:border before:border-transparent before:bg-primary/10 before:bg-gradient-to-b before:transition before:duration-300 hover:before:scale-105 active:duration-75 active:before:scale-95 dark:before:border-gray-700 dark:before:bg-gray-800 sm:w-max",
+                "overflow-hidden relative flex h-12 w-full items-center justify-center px-6 before:absolute before:inset-0 before:rounded-full before:border before:border-transparent before:bg-primary/10 before:bg-linear-to-b before:transition before:duration-300 hover:before:scale-105 active:duration-75 active:before:scale-95 dark:before:border-gray-700 dark:before:bg-gray-800 sm:w-max",
             }}
           >
             <div className="mb-4">
@@ -85,7 +85,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                   <Button
                     variant={"link"}
                     size="sm"
-                    className={"text-xs !h-8 capitalize"}
+                    className={"text-xs h-8! capitalize"}
                     onClick={() => {
                       handleFilter("branch", "none");
                     }}
@@ -104,7 +104,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                         : "slate"
                     }
                     size="sm"
-                    className="text-xs !h-8 capitalize"
+                    className="text-xs h-8! capitalize"
                     onClick={() => {
                       handleFilter("branch", branch);
                     }}
@@ -121,7 +121,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                   <Button
                     variant={"link"}
                     size="sm"
-                    className={"text-xs !h-8 capitalize"}
+                    className={"text-xs h-8! capitalize"}
                     onClick={() => {
                       handleFilter("batch", "none");
                     }}
@@ -138,7 +138,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                       : "slate"
                   }
                   size="sm"
-                  className={"text-xs !h-8 capitalize"}
+                  className={"text-xs h-8! capitalize"}
                   onClick={() => {
                     handleFilter("batch", "all");
                   }}
@@ -154,7 +154,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                         : "slate"
                     }
                     size="sm"
-                    className={"text-xs !h-8 capitalize "}
+                    className={"text-xs h-8! capitalize "}
                     onClick={() => {
                       handleFilter("batch", batch);
                     }}
@@ -171,7 +171,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                   <Button
                     variant={"link"}
                     size="sm"
-                    className={"text-xs !h-8 capitalize"}
+                    className={"text-xs h-8! capitalize"}
                     onClick={() => {
                       handleFilter("programme", "none");
                     }}
@@ -188,7 +188,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                       : "slate"
                   }
                   size="sm"
-                  className={"text-xs !h-8 capitalize"}
+                  className={"text-xs h-8! capitalize"}
                   onClick={() => {
                     handleFilter("programme", "all");
                   }}
@@ -204,7 +204,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                         : "slate"
                     }
                     size="sm"
-                    className={"text-xs !h-8 capitalize"}
+                    className={"text-xs h-8! capitalize"}
                     onClick={() => {
                       handleFilter("programme", programme);
                     }}

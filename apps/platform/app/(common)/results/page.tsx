@@ -55,7 +55,7 @@ export default async function ResultPage(props: {
           data-aos="fade-up"
         >
           NITH{" "}
-          <span className="relative bg-gradient-to-r from-primary to-violet-200 bg-clip-text text-transparent dark:from-primaryLight dark:to-secondaryLight md:px-2">
+          <span className="relative bg-linear-to-r from-primary to-violet-200 bg-clip-text text-transparent dark:from-primaryLight dark:to-secondaryLight md:px-2">
             Result
           </span>
           Portal

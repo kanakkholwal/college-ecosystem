@@ -7,8 +7,8 @@ import CalendarBodyMarginDayMargin from "./calendar-body-margin-day-margin";
 export default function CalendarBodyDay() {
   const { date } = useCalendarContext();
   return (
-    <div className="flex divide-x flex-grow overflow-hidden">
-      <div className="flex flex-col flex-grow divide-y overflow-hidden">
+    <div className="flex divide-x grow overflow-hidden">
+      <div className="flex flex-col grow divide-y overflow-hidden">
         <div className="flex flex-col flex-1 overflow-y-auto">
           <div className="relative flex flex-1 divide-x">
             <CalendarBodyMarginDayMargin />
@@ -16,7 +16,7 @@ export default function CalendarBodyDay() {
           </div>
         </div>
       </div>
-      <div className="lg:flex hidden flex-col flex-grow divide-y max-w-[276px]">
+      <div className="lg:flex hidden flex-col grow divide-y max-w-[276px]">
         <CalendarBodyDayCalendar />
         <CalendarBodyDayEvents />
       </div>
