@@ -84,7 +84,7 @@ export default async function ResultsPage(props: Props) {
                 <Mail className="w-5 h-5" />
               </Link>
             </h5>
-            <div className="w-full flex flex-wrap items-center gap-4 text-sm">
+            <div className="w-full flex flex-wrap items-center gap-4 text-sm mx-auto md:ml-0">
               <span
                 className={"bg-primary/10 text-primary py-1.5 px-3 rounded-md"}
               >

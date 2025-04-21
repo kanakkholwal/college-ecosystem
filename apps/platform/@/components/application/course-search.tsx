@@ -101,7 +101,7 @@ export default function SearchBox({ departments, types }: Props) {
                     variant={
                       searchParams.get("branch")?.toString() === "all"
                         ? "default_light"
-                        : "slate"
+                        : "outline"
                     }
                     className="text-xs !h-8 capitalize"
                     onClick={() => {
@@ -136,7 +136,7 @@ export default function SearchBox({ departments, types }: Props) {
                     variant={
                       searchParams.get("type")?.toString() === type
                         ? "default_light"
-                        : "slate"
+                        : "outline"
                     }
                     size="sm"
                     className="text-xs !h-8 capitalize"

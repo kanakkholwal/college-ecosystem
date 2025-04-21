@@ -16,8 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Image from "next/image";
 import Link from "next/link";
-import { getCourseByCode, updateBooksAndRefPublic } from "~/actions/course";
-import dbConnect from "~/lib/dbConnect";
+import { getCourseByCode } from "~/actions/course";
 
 import { AddPrevsModal, AddRefsModal } from "./modal";
 import { IconMap } from "./render-link";
@@ -57,25 +56,43 @@ export default async function CoursePage(props: Props) {
   const { course, booksAndReferences, previousPapers, chapters } = data;
 
   return (
-    <>
-      <div>
-        <GoBackButton />
-      </div>
+    <div className="max-w-6xl mx-auto px-6 md:px-12 xl:px-6">
+
       <section
         id="hero"
-        className="z-10 w-full max-w-6xl relative flex flex-col items-center justify-center  py-24 max-h-80 text-center"
+        className="z-10 w-full max-w-7xl relative flex flex-col gap-5 py-10 px-4 rounded-lg text-center lg:text-left"
       >
-        <h1 className="text-gray-900 dark:text-white font-bold text-5xl md:text-6xl xl:text-7xl">
-          <span className="relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent  md:px-2">
+        <div>
+          <GoBackButton size="sm" />
+        </div>
+        <h1 className="font-bold text-3xl lg:text-5xl">
+          <span className="relative bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent  md:px-2">
             {course.name}
           </span>
         </h1>
-        <h5 className="mt-8 text-xl font-semibold text-gray-700 dark:text-gray-300 text-center mx-auto uppercase">
+        <h5 className="text-lg ml-4 font-semibold text-muted-foreground uppercase">
           {course.code}
         </h5>
+        <div className="w-full flex flex-wrap items-center gap-4 text-sm mx-auto md:ml-0">
+              <span
+                className={"bg-primary/10 text-primary py-1.5 px-3 rounded-md"}
+              >
+                {course.department}
+              </span>
+              <span
+                className={"bg-primary/10 text-primary py-1.5 px-3 rounded-md"}
+              >
+                {course.type}
+              </span>
+              <span
+                className={"bg-primary/10 text-primary py-1.5 px-3 rounded-md"}
+              >
+                {course.credits} Credits
+              </span>
+            </div>
         <div className="mt-16 flex flex-wrap justify-center gap-y-4 gap-x-6" />
       </section>
-      <div className="max-w-6xl mx-auto px-6 md:px-12 xl:px-6">
+      <div className="max-w-6xl mx-auto p-4 md:px-12 xl:px-6">
         <Tabs defaultValue="chapters">
           <TabsList className="mx-auto w-full bg-transparent font-bold flex-wrap gap-4">
             <TabsTrigger value="chapters">Chapters</TabsTrigger>
@@ -86,22 +103,22 @@ export default async function CoursePage(props: Props) {
           </TabsList>
           <TabsContent value="chapters">
             <div className="max-w-7xl w-full xl:px-6 grid gap-4 grid-cols-1">
-              {chapters.map((chapter, index) => {
+              {chapters.map((chapter) => {
                 return (
-                  <Card variant="glass" key={chapter.title}>
+                  <Card key={chapter.title}>
                     <CardHeader className="flex-row gap-2 items-center px-5 py-4">
                       <div className="flex-auto">
-                        <CardTitle>{chapter.title}</CardTitle>
-                        <CardDescription className="font-semibold text-gray-700">
+                        <CardTitle className="font-medium text-lg">{chapter.title}</CardTitle>
+                        <CardDescription className="text-muted-foreground">
                           {chapter.topics.length} Topics
                         </CardDescription>
                       </div>
-                      <div className="w-10 h-10 rounded-full flex justify-center items-center  bg-white/50 font-bold text-lg shrink-0 text-gray-700">
+                      <div className="w-10 h-10 rounded-full flex justify-center items-center  font-bold text-lg shrink-0 text-muted-foreground bg-muted">
                         {chapter.lectures} L
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm text-muted-foreground">
                         {chapter.topics.join(", ")}
                       </p>
                     </CardContent>
@@ -116,20 +133,20 @@ export default async function CoursePage(props: Props) {
                 {booksAndReferences.map((ref) => {
                   const iconsSrc = IconMap.has(
                     ref.type as
+                    | "book"
+                    | "reference"
+                    | "drive"
+                    | "youtube"
+                    | "others"
+                  )
+                    ? IconMap.get(
+                      ref.type as
                       | "book"
                       | "reference"
                       | "drive"
                       | "youtube"
                       | "others"
-                  )
-                    ? IconMap.get(
-                        ref.type as
-                          | "book"
-                          | "reference"
-                          | "drive"
-                          | "youtube"
-                          | "others"
-                      )
+                    )
                     : OthersPng;
                   return (
                     <Card key={ref.link}>
@@ -240,6 +257,6 @@ export default async function CoursePage(props: Props) {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </div>
   );
 }

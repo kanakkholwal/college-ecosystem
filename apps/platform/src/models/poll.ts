@@ -33,7 +33,7 @@ const pollSchema = new mongoose.Schema(
     votes: [
       {
         option: { type: String, required: true },
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        userId: { type:String },
       },
     ],
     closesAt: {
@@ -42,7 +42,7 @@ const pollSchema = new mongoose.Schema(
       default: () => new Date(Date.now() + 6 * 60 * 60 * 1000),
       index: { expires: "1w" },
     }, // Default to 6 hours from now
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createdBy: { type: String, required: true },
   },
   { timestamps: true }
 );

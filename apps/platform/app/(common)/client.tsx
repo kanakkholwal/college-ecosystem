@@ -28,7 +28,7 @@ export function HeroSection({ user }: HeroSection) {
         }}
         className="relative flex flex-col gap-4 items-center justify-center px-4 z-50"
       >
-        <h2 className="text-3xl font-semibold text-center whitespace-nowrap">
+        <h2 className="text-3xl font-semibold text-center">
           {getGreeting()} <span className="text-primary">{user?.name}</span>
         </h2>
         <p className="mb-8 text-lg text-muted-foreground">

@@ -40,7 +40,7 @@ export default function Navbar({ user }: NavbarProps) {
 
 
 export function SocialBar() {
-  return <div className="flex flex-row items-center empty:hidden gap-3">
+  return <div className="inline-flex flex-row items-center empty:hidden gap-3 mx-auto">
     {socials.map((link) => {
       return (
         <Link
@@ -60,7 +60,7 @@ export function SocialBar() {
 }
 
 export function SupportBar() {
-  return <div className="flex flex-row items-center empty:hidden gap-2">
+  return <div className="inline-flex flex-wrap items-center empty:hidden gap-2 mx-auto justify-start">
     {SUPPORT_LINKS.map((link) => {
       return (
         <Link

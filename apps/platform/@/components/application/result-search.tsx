@@ -79,7 +79,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
             }}
           >
             <div className="mb-4">
-              <p className="text-sm font-semibold text-slate-600 mb-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">
                 By Branches
                 {searchParams.get("branch")?.toString() && (
                   <Button
@@ -101,10 +101,10 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                     variant={
                       searchParams.get("branch")?.toString() === branch
                         ? "default_light"
-                        : "slate"
+                        : "outline"
                     }
                     size="sm"
-                    className="text-xs !h-8 capitalize"
+                    className="text-xs capitalize"
                     onClick={() => {
                       handleFilter("branch", branch);
                     }}
@@ -115,7 +115,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
               </div>
             </div>
             <div className="mb-4">
-              <p className="text-sm font-semibold text-slate-600 mb-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">
                 By Batch
                 {searchParams.get("batch")?.toString() && (
                   <Button
@@ -135,7 +135,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                   variant={
                     searchParams.get("batch")?.toString() === "all"
                       ? "default_light"
-                      : "slate"
+                      : "outline"
                   }
                   size="sm"
                   className={"text-xs !h-8 capitalize"}
@@ -151,7 +151,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                     variant={
                       searchParams.get("batch")?.toString() === batch.toString()
                         ? "default_light"
-                        : "slate"
+                        : "outline"
                     }
                     size="sm"
                     className={"text-xs !h-8 capitalize "}
@@ -165,7 +165,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
               </div>
             </div>
             <div className="mb-4">
-              <p className="text-sm font-semibold text-slate-600 mb-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">
                 By Programme
                 {searchParams.get("programme")?.toString() && (
                   <Button
@@ -185,7 +185,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                   variant={
                     searchParams.get("programme")?.toString() === "all"
                       ? "default_light"
-                      : "slate"
+                      : "outline"
                   }
                   size="sm"
                   className={"text-xs !h-8 capitalize"}
@@ -201,7 +201,7 @@ export default function SearchBox({ branches, batches, programmes }: Props) {
                     variant={
                       searchParams.get("programme")?.toString() === programme
                         ? "default_light"
-                        : "slate"
+                        : "outline"
                     }
                     size="sm"
                     className={"text-xs !h-8 capitalize"}

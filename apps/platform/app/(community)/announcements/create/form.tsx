@@ -1,17 +1,16 @@
 "use client";
-import NexoMdxEditor from "nexo-mdx";
 import MarkdownView from "@/components/common/markdown/view";
+import NexoMdxEditor from "nexo-mdx";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -65,7 +64,7 @@ export default function CreateAnnouncement() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-10">
         <FormField
           control={form.control}
           name="title"
@@ -74,14 +73,12 @@ export default function CreateAnnouncement() {
               <FormLabel>Title</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="title"
+                  placeholder="A short title for the announcement."
                   {...field}
                   disabled={form.formState.isSubmitting}
                 />
               </FormControl>
-              <FormDescription>
-                A short title for the announcement.
-              </FormDescription>
+              
               <FormMessage />
             </FormItem>
           )}
@@ -91,7 +88,7 @@ export default function CreateAnnouncement() {
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Content</FormLabel>
+              <FormLabel>The content of the announcement.</FormLabel>
               <FormControl>
                 <NexoMdxEditor
                   {...field}
@@ -99,19 +96,18 @@ export default function CreateAnnouncement() {
                   renderHtml={(md) => <MarkdownView>{md}</MarkdownView>}
                 />
               </FormControl>
-              <FormDescription>
-                The content of the announcement.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          
         <FormField
           control={form.control}
           name="relatedFor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Related For</FormLabel>
+              <FormLabel>The type of announcement.</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
@@ -132,7 +128,6 @@ export default function CreateAnnouncement() {
                   })}
                 </SelectContent>
               </Select>
-              <FormDescription>The type of announcement.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -142,7 +137,7 @@ export default function CreateAnnouncement() {
           name="expiresAt"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Expires At</FormLabel>
+              <FormLabel>The date at which the announcement will expire.</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -177,15 +172,13 @@ export default function CreateAnnouncement() {
                   />
                 </PopoverContent>
               </Popover>
-              <FormDescription>
-                The date at which the announcement will expire.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" width="full">
-          Submit
+        </div>
+        <Button type="submit" className="ml-4" disabled={form.formState.isSubmitting}>
+          Publish Announcement
           <VscSend />
         </Button>
       </form>

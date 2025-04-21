@@ -22,14 +22,11 @@ export type CommunityPostTypeWithId = RawCommunityPostType & {
   _id: string;
   createdAt: Date;
   updatedAt: Date;
-  author:
-    | string
-    | {
-        _id: string;
-        name: string;
-        email: string;
-        rollNo: string;
-      };
+  author: {
+    id: string;
+    name: string;
+    username: string;
+  };
   views: number;
   likes: string[];
   savedBy: string[];
@@ -40,10 +37,14 @@ interface ICommunityPost extends Document {
   content: string;
   category: (typeof CATEGORY_TYPES)[number];
   subCategory?: (typeof SUB_CATEGORY_TYPES)[number];
-  author: Types.ObjectId;
+  author: {
+    id: string;
+    name: string;
+    username: string;
+  };
   views: number;
-  likes: Types.ObjectId[];
-  savedBy: Types.ObjectId[];
+  likes: string[]; // Updated type from string[] to string[]
+  savedBy: string[]; // Updated type from string[] to string[]
   updatedAt: Date;
   createdAt: Date;
 }
@@ -54,9 +55,13 @@ const communityPostSchema = new Schema<ICommunityPost>(
     content: { type: String, required: true },
     category: { type: String, enum: CATEGORY_TYPES, required: true },
     views: { type: Number, required: true },
-    likes: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
-    savedBy: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
-    author: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    likes: [String],
+    savedBy:  [String],
+    author: { 
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      username: { type: String, required: true },
+    },
     subCategory: { type: String, enum: SUB_CATEGORY_TYPES, default: null },
   },
   {
@@ -75,7 +80,11 @@ interface ICommunityComment extends Document {
   postId: Types.ObjectId;
   parentComment: Types.ObjectId | null;
   replies: Types.ObjectId[];
-  author: Types.ObjectId;
+  author: {
+    id: string;
+    name: string;
+    username: string;
+  };
 }
 
 const communityCommentSchema = new Schema<ICommunityComment>(

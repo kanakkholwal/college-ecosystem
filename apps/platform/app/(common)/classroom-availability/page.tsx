@@ -5,10 +5,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ConditionalRender from "@/components/utils/conditional-render";
 import ErrorBanner from "@/components/utils/error";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import { listAllRoomsWithHistory } from "~/actions/room";
 import { getSession } from "~/lib/auth-server";
-import { Search } from "lucide-react";
 
 type Props = {
   searchParams: Promise<{
@@ -32,25 +32,22 @@ export default async function RoomsPage(props: Props) {
   });
 
   return (
-    <>
+    <div className="px-4 md:px-12 xl:px-6 @container">
       <section
         id="hero"
-        className="z-10 w-full max-w-6xl relative flex flex-col items-center justify-center  py-24 max-h-80 text-center"
+        className="z-10 w-full max-w-6xl mx-auto  relative flex flex-col items-center justify-center  py-24 max-h-80 text-center"
       >
-        <h2
-          className="text-2xl lg:text-4xl font-bold text-neutral-900 dark:text-neutral-100 whitespace-nowrap"
-          data-aos="fade-up"
-        >
+        <h2 className="text-3xl font-semibold text-center whitespace-nowrap">
+
           Rooms <span className="text-primary">Search</span>
         </h2>
         <p
-          className="mt-4 text-neutral-700 dark:text-neutral-300"
-          data-aos="zoom-in"
-        >
+          className="mt-4 mb-8 text-lg text-muted-foreground">
+
           Search for rooms based on their availability and type.
         </p>
         <div
-          className="mt-16 flex flex-wrap justify-center gap-y-4 gap-x-6 w-full mx-auto max-w-2xl"
+          className="mt-10 flex flex-wrap justify-center gap-y-4 gap-x-6 w-full mx-auto max-w-2xl"
           data-aos="fade-up"
           data-aos-anchor-placement="center-bottom"
         >
@@ -76,7 +73,7 @@ export default async function RoomsPage(props: Props) {
           />
         </ConditionalRender>
         <ConditionalRender condition={rooms.length > 0}>
-          <div className="max-w-[1440px] mx-auto grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mx-auto max-w-7xl w-full xl:px-6 grid gap-3 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
             {rooms.map((room, i) => {
               return (
                 <RoomCard
@@ -92,6 +89,6 @@ export default async function RoomsPage(props: Props) {
           </div>
         </ConditionalRender>
       </ErrorBoundaryWithSuspense>
-    </>
+    </div>
   );
 }

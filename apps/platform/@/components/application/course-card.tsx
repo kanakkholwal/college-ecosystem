@@ -2,13 +2,16 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { InferSelectModel } from "drizzle-orm";
 import Link from "next/link";
 import type { courses } from "src/db/schema";
+import { getDepartmentCode } from "~/constants/departments";
 import type { Session } from "~/lib/auth-client";
 
 // Infer types for courses
@@ -18,8 +21,8 @@ type Props = {
   course: CourseSelect;
   className?: string;
   authorized_role?:
-    | Session["user"]["role"]
-    | Session["user"]["other_roles"][number];
+  | Session["user"]["role"]
+  | Session["user"]["other_roles"][number];
   style?: React.CSSProperties;
 };
 
@@ -31,28 +34,34 @@ export default function CourseCard({
 }: Props) {
   return (
     <Card
-      variant="glass"
       className={cn("hover:shadow-lg animate-in popup", className)}
       style={style}
     >
-      <CardHeader className="p-3">
-        <h5 className="text-base font-semibold">{course.name}</h5>
-        <p className="max-w-[30ch] text-sm opacity-80 text-pretty font-semibold">
+      <CardHeader className="px-3 py-4">
+
+        <CardTitle className="text-base">{course.name}</CardTitle>
+        <CardDescription className="text-sm font-medium">
           {course.code}
-        </p>
+        </CardDescription>
+
       </CardHeader>
       <CardContent className="flex justify-around items-stretch gap-3 text-center p-3">
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Type</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
+          <p className="text-xs text-muted-foreground">Type</p>
+          <p className="text-base font-bold text-gray-900 dark:text-white">
             {course.type}
           </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white"></p>
         </div>
         <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Credits</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
+          <p className="text-xs text-muted-foreground">Credits</p>
+          <p className="text-base font-bold text-gray-900 dark:text-white">
             {course.credits}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Department</p>
+          <p className="text-base font-bold text-gray-900 dark:text-white">
+            {getDepartmentCode(course.department)}
           </p>
         </div>
       </CardContent>
@@ -71,7 +80,7 @@ export default function CourseCard({
           effect="gooeyRight"
           asChild
         >
-          <Link href={`/syllabus/${course.code}`} target="_blank">
+          <Link href={`/syllabus/${course.code}`} >
             View Course
           </Link>
         </Button>

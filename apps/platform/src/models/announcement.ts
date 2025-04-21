@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 import * as z from "zod";
 
 export const RELATED_FOR_TYPES = [
@@ -37,7 +37,7 @@ interface IAnnouncement extends Document {
   content: string;
   relatedFor: (typeof RELATED_FOR_TYPES)[number];
   expiresAt: Date;
-  createdBy: Types.ObjectId;
+  createdBy: string;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -52,7 +52,7 @@ const announcementSchema = new Schema<IAnnouncement>(
       default: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       index: { expires: "0s" },
     },
-    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: { type: String, required: true },
   },
   {
     timestamps: true,

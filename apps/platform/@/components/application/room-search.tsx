@@ -88,13 +88,13 @@ export default function SearchBox() {
         )}
       >
         <div>
-          <h6 className="font-medium text-gray-800">Filter by</h6>
+          <h6 className="font-medium text-xs text-muted-foreground">Filter by</h6>
         </div>
         <div className="flex flex-wrap gap-2">
           {["all", "available", "occupied"].map((status) => (
             <Button
               key={status}
-              variant={current_status === status ? "default_light" : "ghost"}
+              variant={current_status === status ? "default_light" : "outline"}
               size="sm"
               className={"capitalize"}
               onClick={() => {
