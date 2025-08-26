@@ -19,48 +19,48 @@ concurrency:
   
 jobs:  
 
-  deploy-mail-server:
-    # needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+  # deploy-mail-server:
+  #   # needs: lint
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 📥 Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 2
 
-      - name: 🔍 Detect changed projects
-        id: changed
-        run: |
-              git diff --quiet HEAD^ HEAD ./apps/mail-server || echo "mail_server_changed=true" >> $GITHUB_OUTPUT
+  #     - name: 🔍 Detect changed projects
+  #       id: changed
+  #       run: |
+  #             git diff --quiet HEAD^ HEAD ./apps/mail-server || echo "mail_server_changed=true" >> $GITHUB_OUTPUT
       
-      # - uses: pnpm/action-setup@v4
+  #     # - uses: pnpm/action-setup@v4
 
-      - name: 🛠️ Setup Node.js
-        uses: actions/setup-node@v4
-        if: steps.changed.outputs.mail_server_changed == 'true'
-        with:
-          node-version: 20.x
-          cache: "npm"
+  #     - name: 🛠️ Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       if: steps.changed.outputs.mail_server_changed == 'true'
+  #       with:
+  #         node-version: 20.x
+  #         cache: "npm"
 
-      - name: 💾 Cache Vercel CLI
-        uses: actions/cache@v4
-        if: steps.changed.outputs.mail_server_changed == 'true'
-        with:
-          path: ~/.vercel
-          key: ${{ runner.os }}-vercel-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-vercel-
+  #     - name: 💾 Cache Vercel CLI
+  #       uses: actions/cache@v4
+  #       if: steps.changed.outputs.mail_server_changed == 'true'
+  #       with:
+  #         path: ~/.vercel
+  #         key: ${{ runner.os }}-vercel-${{ hashFiles('**/package-lock.json') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-vercel-
 
-      - name: 📦 Install Vercel CLI
-        if: steps.changed.outputs.mail_server_changed == 'true'
-        run: npm install -g vercel
+  #     - name: 📦 Install Vercel CLI
+  #       if: steps.changed.outputs.mail_server_changed == 'true'
+  #       run: npm install -g vercel
 
-      - name: 📭 Deploy Mail Server to Production
-        if: github.ref == 'refs/heads/main' && steps.changed.outputs.mail_server_changed == 'true'
-        run: vercel --token ${{ secrets.VERCEL_TOKEN }} --prod ./apps/mail-server
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_MAIL_SERVER_PROJECT_ID }}
+  #     - name: 📭 Deploy Mail Server to Production
+  #       if: github.ref == 'refs/heads/main' && steps.changed.outputs.mail_server_changed == 'true'
+  #       run: vercel --token ${{ secrets.VERCEL_TOKEN }} --prod ./apps/mail-server
+  #       env:
+  #         VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  #         VERCEL_PROJECT_ID: ${{ secrets.VERCEL_MAIL_SERVER_PROJECT_ID }}
 
   dockerize-and-deploy-server:
     # needs: lint
@@ -82,28 +82,37 @@ jobs:
         with:
           credentials_json: ${{ secrets.CREDENTIALS_JSON }}
             
-      - name: ⚙️ Log in Docker to GCR
+      - name: 🚀 Deploy to Cloud Run (from source, no Artifact Registry)
         if: steps.server-changed.outputs.server_changed == 'true'
-        uses: docker/login-action@v2
-        with:
-            registry: gcr.io
-            username: _json_key
-            password:  ${{ secrets.CREDENTIALS_JSON }}
-      
-      - name: 🐳 Build and Push Docker Image
-        if:  steps.server-changed.outputs.dockerfile_changed == 'true'
         run: |
-          IMAGE_NAME="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME_SERVER }}:latest"
-          docker build --pull --rm -f "apps/server/Dockerfile" -t "${IMAGE_NAME}" "apps/server"
-          docker push "${IMAGE_NAME}"
-
-      - name: 🚀 Deploy to Cloud Run
-        if: success()
-        run: |  
-          IMAGE_NAME="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME_SERVER }}:latest"
           gcloud run deploy ${{ env.SERVICE_NAME_SERVER }} \
-            --image "${IMAGE_NAME}" \
-            --platform managed \
+            --source ./apps/server \
             --region ${{ secrets.GCP_PROJECT_REGION }} \
+            --platform managed \
             --allow-unauthenticated
+
+      # - name: ⚙️ Log in Docker to GCR
+      #   if: steps.server-changed.outputs.server_changed == 'true'
+      #   uses: docker/login-action@v2
+      #   with:
+      #       registry: gcr.io
+      #       username: _json_key
+      #       password:  ${{ secrets.CREDENTIALS_JSON }}
+      
+      # - name: 🐳 Build and Push Docker Image
+      #   if:  steps.server-changed.outputs.dockerfile_changed == 'true'
+      #   run: |
+      #     IMAGE_NAME="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME_SERVER }}:latest"
+      #     docker build --pull --rm -f "apps/server/Dockerfile" -t "${IMAGE_NAME}" "apps/server"
+      #     docker push "${IMAGE_NAME}"
+
+      # - name: 🚀 Deploy to Cloud Run 
+      #   if: success()
+      #   run: |  
+      #     IMAGE_NAME="gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME_SERVER }}:latest"
+      #     gcloud run deploy ${{ env.SERVICE_NAME_SERVER }} \
+      #       --image "${IMAGE_NAME}" \
+      #       --platform managed \
+      #       --region ${{ secrets.GCP_PROJECT_REGION }} \
+      #       --allow-unauthenticated
 
