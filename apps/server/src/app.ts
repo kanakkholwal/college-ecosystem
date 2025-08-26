@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
+import packageJson from "../package.json";
 import { config } from "./config";
 import httpRoutes from "./routes/httpRoutes";
 
@@ -11,9 +12,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Default route
 app.get("/", (req, res) => {
-  res.json({
-    message: "Welcome to the server!",
-    status: "healthy",
+    res.status(200).json({
+      version: packageJson.version,
+      message: "Welcome to the College Ecosystem API",
+      server: "College Ecosystem API",
+      data: null,
   });
 });
 
