@@ -40,7 +40,7 @@ export function NavMain({
   const pathname = usePathname();
 
   return (
-    <SidebarGroup className="shrink-0 h-full">
+    <SidebarGroup className="shrink-0 max-h-max">
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {

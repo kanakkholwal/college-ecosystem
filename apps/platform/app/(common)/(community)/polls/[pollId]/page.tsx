@@ -70,7 +70,7 @@ export default async function Dashboard({ params }: Props) {
           <h3 className="text-lg font-semibold">{poll.question}</h3>
           <p className="text-sm text-muted-foreground">{poll.description}</p>
         </div>
-        <div className="space-x-3">
+        <div className="gap-3 flex flex-wrap items-center">
           <span className="rounded-md bg-muted text-muted-foreground px-2 py-1 text-xs inline-flex items-center">
             <Info className="mr-1 inline-block size-3" />
             {poll.multipleChoice ? "Multiple choice" : "Single choice"}
