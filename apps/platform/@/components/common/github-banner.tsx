@@ -4,6 +4,7 @@ import { GitBranch, StarIcon, Users } from "lucide-react";
 import Link from "next/link";
 import { getRepoStats, StatsData } from "~/lib/third-party/github";
 import { appConfig } from "~/project.config";
+import { marketwiseLink } from "~/utils/string";
 import { StaggerChildrenContainer, StaggerChildrenItem } from "../animation/motion";
 import { Icon, IconType } from "../icons";
 import { Badge } from "../ui/badge";
@@ -35,7 +36,7 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
     >
       <Badge variant="default">
         <Link
-          href={appConfig.githubRepo}
+          href={marketwiseLink(appConfig.githubRepo, "")}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1"
@@ -91,7 +92,7 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
           </div>
           <div className="z-10 flex flex-shrink-0 flex-col items-start">
             <a
-              href={appConfig.githubRepo}
+              href={marketwiseLink(appConfig.githubRepo, "")}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -101,8 +102,9 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
               {appConfig.name}
             </span>
             <a
-              href={appConfig.githubRepo}
+              href={marketwiseLink(appConfig.githubRepo)}
               target="_blank"
+              rel="noopener noreferrer"
               className="mt-1 text-sm text-muted-foreground underline hover:text-foreground"
             >
               github.com/{appConfig.githubUri.split("/")[0]}
@@ -115,27 +117,39 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
               {/* Dive into our code, contribute, and join a thriving open-source community. */}
             </p>
             <div className="flex flex-col gap-4 text-sm md:flex-row md:gap-6">
-              <div className="flex items-center gap-1">
+              <a
+                href={appConfig.githubRepo + "/stargazers"}
+                rel="noopener noreferrer"
+                target="_blank" className="flex items-center gap-1">
                 <StarIcon className="size-4 text-yellow-400" />
                 <span className="font-semibold text-foreground">
                   {stats.stars}
                 </span>
                 <span className="ml-1 text-muted-foreground">Stars</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </a>
+              <a
+                href={appConfig.githubRepo + "/network/members"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1"
+              >
                 <GitBranch className="size-4 text-muted-foreground" />
                 <span className="font-semibold text-foreground">
                   {stats.forks}
                 </span>
                 <span className="ml-1 text-muted-foreground">Forks</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </a>
+              <a
+                rel="noopener noreferrer"
+                href={appConfig.githubRepo + "/graphs/contributors"}
+                target="_blank"
+                className="flex items-center gap-1">
                 <Users className="size-4 text-muted-foreground" />
                 <span className="font-semibold text-foreground">
                   {stats.contributors}+
                 </span>
                 <span className="ml-1 text-muted-foreground">Contributors</span>
-              </div>
+              </a>
             </div>
           </div>
         </div>

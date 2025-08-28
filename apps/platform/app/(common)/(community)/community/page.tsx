@@ -89,7 +89,7 @@ export default async function CommunitiesPage(props: {
         <CommunityPostList posts={posts} user={session?.user} />
       </main>
       {/* Active Feed Details */}
-      <aside className="hidden lg:block md:col-span-1 space-y-4 sticky top-0 h-fit">
+      <aside className="hidden lg:block md:col-span-1 space-y-4 md:sticky md:top-4 h-fit">
         {activePopularCategory ? (
           <div className="bg-card rounded-2xl shadow p-4">
             <h2 className="text-base font-medium mb-2">

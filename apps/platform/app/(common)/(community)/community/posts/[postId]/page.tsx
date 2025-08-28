@@ -136,14 +136,14 @@ export default async function CommunityPost(props: Props) {
           <Markdown remarkPlugins={[remarkGfm]}>{post.content}</Markdown>
         </article>
         <PostFooter post={post} user={session?.user!} />
-        <div id="ads-section" className="mt-4">
-          <AdUnit adSlot="display-horizontal" key="community-post-ad" />
-        </div>
-        <div id="comments-section" className="mt-4">
-          {/* <CommentsWithAuth
+      </div>
+      <div id="ads-section" className="mt-4">
+        <AdUnit adSlot="display-horizontal" key="community-post-ad" />
+      </div>
+      <div id="comments-section" className="mt-4">
+        {/* <CommentsWithAuth
             page={`community/posts/${post._id}`}
           /> */}
-        </div>
       </div>
     </main>
   );

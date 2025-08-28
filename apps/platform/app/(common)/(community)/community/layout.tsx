@@ -24,7 +24,7 @@ export default async function Layout({
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 min-h-screen">
       {/* Sidebar */}
-      <aside className="hidden md:block md:col-span-1 space-y-6 sticky top-4 h-fit">
+      <aside className="hidden md:block md:col-span-1 space-y-6 md:sticky md:top-4 h-fit">
         {/* Communities Section */}
         <div className="bg-card rounded-2xl shadow-sm border p-5">
           <h2 className="text-sm font-semibold text-foreground/80 mb-3 tracking-tight">

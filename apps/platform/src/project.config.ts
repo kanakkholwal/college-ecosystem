@@ -168,7 +168,7 @@ export const appConfig = {
     },
   ],
   githubRepo:
-    "https://github.com/kanakkholwal/college-ecosystem?utm_source=app.nith.eu.org&utm_medium=referral&utm_campaign=repo_link",
+    "https://github.com/kanakkholwal/college-ecosystem",
   githubUri: "kanakkholwal/college-ecosystem",
   socials: {
     twitter: "https://twitter.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
