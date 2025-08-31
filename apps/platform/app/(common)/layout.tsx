@@ -16,7 +16,7 @@ export default async function Layout({ children }: LayoutProps) {
   const session = await getSession();
 
   return (
-    <div className="flex flex-1 flex-col justify-center min-h-svh w-full z-0">
+    <div className="flex flex-1 flex-col justify-center min-h-svh min-w-full z-0">
 
       <Navbar user={session?.user} />
       <div className="relative flex-1 mx-auto max-w-(--max-app-width) w-full h-full min-h-screen @container flex-col items-center justify-start space-y-4 pb-8">

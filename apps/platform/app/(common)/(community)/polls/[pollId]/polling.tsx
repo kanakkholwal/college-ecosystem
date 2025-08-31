@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { createClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
-import { CircleCheckBig, MousePointerClick } from "lucide-react";
+import { CircleCheckBig, Dot, MousePointerClick } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -106,11 +107,19 @@ export default function Polling({ poll, user, updateVotes }: PollingProps) {
         const hasVoted = voteData.some(
           (v) => v.userId === user.id && v.option === option
         );
-
+        const { disabled, message, btnText } = notAllowed(
+          voteData,
+          poll.multipleChoice,
+          user,
+          option
+        );
         return (
           <motion.div
             key={`${option}-${index}`}
-            className="relative overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            className={cn(
+              "relative overflow-hidden rounded-xl border border-border bg-muted",
+              hasVoted && "border border-primary",
+            )}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             {/* Progress Bar */}
@@ -121,37 +130,41 @@ export default function Polling({ poll, user, updateVotes }: PollingProps) {
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
 
-            <div className="relative z-10 p-4 flex flex-col gap-3">
-              {/* Option Text */}
-              <h3 className="text-base font-semibold tracking-tight">
-                {option}
-              </h3>
+            <div className="relative z-10 p-4  flex cursor-pointer flex-row items-start justify-between rounded-md shadow-none transition-all">
 
-              {/* Stats */}
-              <div className="flex items-center justify-between">
-                <div className="flex gap-3 text-sm">
-                  <span className="text-muted-foreground font-medium">
+              <div data-slot="card-header" className="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6 flex-1 p-0">
+                <div data-slot="card-title" className="font-semibold flex items-center gap-2 text-sm">
+                  {option}
+                  <span className="font-normal text-muted-foreground text-xs">
+                    {/* (the first option) */}
+                  </span>
+                </div>
+                <div data-slot="card-description" className="text-muted-foreground text-sm">
+                  {/* {btnText} */}
+                </div>
+                <div className="flex gap-1 text-xs text-muted-foreground font-medium">
+                  <span>
                     {percent.toFixed(1)}%
                   </span>
+                  <Dot className="inline-block -mx-1 size-4" />
                   <span className="font-semibold text-primary">{count} votes</span>
                 </div>
-
-
-                {/* Vote Button */}
-                <Button 
-                  size="sm"
-                  variant={hasVoted ? "default" : "outline"}
-                  shadow="none"
-                  onClick={() => handleVote(option)}
-                >
-                  {hasVoted ? (
-                    <CircleCheckBig  className="shrink-0" />
-                  ) : (
-                    <MousePointerClick className="shrink-0" />
-                  )}
-                  <span>{hasVoted ? "You Backed This" : "Back This"}</span>
-                </Button>
               </div>
+              {/* Vote Button */}
+              <Button
+                size="sm"
+                shadow={disabled ? "none" : hasVoted ? "none" : "default"}
+                variant={hasVoted ? "glass" : "outline"}
+                title={message}
+                onClick={() => handleVote(option)}
+              >
+                {hasVoted ? (
+                  <CircleCheckBig className="shrink-0" />
+                ) : (
+                  <MousePointerClick className="shrink-0" />
+                )}
+                <span>{hasVoted ? "You Backed This" : "Back This"}</span>
+              </Button>
             </div>
           </motion.div>
         );
