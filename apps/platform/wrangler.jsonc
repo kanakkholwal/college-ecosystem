@@ -65,7 +65,7 @@
   "routes": [
     {
       "pattern": "app.nith.eu.org",
-      "custom_domain": true
+      "custom_domain": true,
     },
     // {
     //   "pattern": "nith.eu.org",
@@ -79,5 +79,8 @@
       "pattern": "platform.nith.eu.org",
       "custom_domain": true
     },
-  ]
+  ],
+  "limits": {
+    "cpu_ms": 300000, // default is 30000 (30 seconds)
+  },
 }
