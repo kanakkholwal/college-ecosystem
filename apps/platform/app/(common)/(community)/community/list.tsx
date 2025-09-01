@@ -1,7 +1,6 @@
 "use client";
 
 import { UserPreview } from "@/components/application/user-preview";
-import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
 import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
@@ -44,7 +43,7 @@ export default function CommunityPostList({
 
   return (
     <div className="grid grid-cols-1 gap-4 w-full">
-      {posts.map((post, index) => (
+      {posts.map((post) => (
         <React.Fragment key={post._id}>
           <div
             key={post._id}

@@ -10,7 +10,12 @@
     "build": "next build",
     "build:no-warn": "next build --experimental-build-mode compile",
     "build:isolated": "docker build -t platform .",
-    "format": "npx prettier --write \"**/*.{ts,tsx,js,jsx,md}\""
+    "format": "npx prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
+    "build:prod": "npx opennext:build && wrangler deploy --dry-run --outdir=dist",
+    "opennext:build": "opennextjs-cloudflare build",
+    "opennext:deploy": "opennextjs-cloudflare deploy",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.6",
@@ -122,7 +127,9 @@
   "devDependencies": {
     "@types/node": "^24",
     "serwist": "^9.1.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+      "wrangler": "^4.30.0",
+    "@opennextjs/cloudflare": "^1.6.5"
   },
   "packageManager": "npm@11.5.2"
 }
