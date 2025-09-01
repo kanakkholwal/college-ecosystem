@@ -36,7 +36,7 @@ const serwist = new Serwist({
   runtimeCaching: [
     // --- Skip Ads & Analytics (always go network) ---
     {
-      matcher: ({ url }) => adAndAnalyticsHosts.includes(url.hostname),
+      matcher: ({ url }) => adAndAnalyticsHosts.includes(url.hostname) || url.hostname.includes(".google") || url.hostname.includes("google."),
       handler: new NetworkOnly(),
     },
 
