@@ -62,10 +62,10 @@
     // }
   ],
   "routes": [
-    {
-      "pattern": "app.nith.eu.org",
-      "custom_domain": true,
-    },
+    // {
+    //   "pattern": "app.nith.eu.org",
+    //   "custom_domain": true,
+    // },
     // {
     //   "pattern": "nith.eu.org",
     //   "custom_domain": true
@@ -76,7 +76,8 @@
     // },
     {
       "pattern": "platform.nith.eu.org",
-      "custom_domain": true
+      "custom_domain": true,
+      
     },
   ],
 }
