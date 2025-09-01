@@ -181,6 +181,8 @@ export const SUBDOMAIN_TO_PATH_REWRITES_Map = new Map<string, string>([
   // ["dashboard", "dashboard"],
 ]);
 
+const POSSIBLE_SUB_ALIAS = ["dev", "platform", "auth", "staging"]
+
 export const auth_SUBDOMAIN_TO_PATH_REWRITES_Map = new Map<
   string,
   {
@@ -202,6 +204,10 @@ export const auth_SUBDOMAIN_TO_PATH_REWRITES_Map = new Map<
       roles: [ROLES_ENUMS.ADMIN],
     },
   ],
+  ...POSSIBLE_SUB_ALIAS.map((path) => [path, {
+    path: "",
+    roles: [],
+  }] as [string, { path: string; roles: string[] }])
 ]);
 
 export function extractSubdomain(request: NextRequest): string | null {
