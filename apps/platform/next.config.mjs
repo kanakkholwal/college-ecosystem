@@ -1,14 +1,14 @@
 /** @type {import('next').NextConfig} */
 
-import withSerWistInit from '@serwist/next';
+// import withSerWistInit from '@serwist/next';
 
-const withSerWist = withSerWistInit({
-  cacheOnNavigation: true,
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-  disable: process.env.NODE_ENV !== "production",
+// const withSerWist = withSerWistInit({
+//   cacheOnNavigation: true,
+//   swSrc: "app/sw.ts",
+//   swDest: "public/sw.js",
+//   disable: process.env.NODE_ENV !== "production",
 
-});
+// });
 
 const nextConfig = {
   reactStrictMode: true,
@@ -53,7 +53,7 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
 };
 
-export default withSerWist(nextConfig);
-// export default nextConfig;
+// export default withSerWist(nextConfig);
+export default nextConfig;
 
 
