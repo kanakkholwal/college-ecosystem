@@ -39,10 +39,6 @@
     "EMAIL_REPLY_TO": "support@nith.eu.org"
   },
   /**
-     * Note: Use secrets to store sensitive data.
-     * https://developers.cloudflare.com/workers/configuration/secrets/
-     */
-  /**
      * Service Bindings (communicate between multiple Workers)
      * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
      */
@@ -52,6 +48,9 @@
       "service": "ce-platform"
     }
   ],
+  "limits": {
+    "cpu_ms": 300000, // default is 30000 (30 seconds)
+  },
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
@@ -80,7 +79,4 @@
       "custom_domain": true
     },
   ],
-  "limits": {
-    "cpu_ms": 300000, // default is 30000 (30 seconds)
-  },
 }
