@@ -1,4 +1,5 @@
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { changeCase } from "~/utils/string";
 import SignInForm from "./sign-in";
 import SignUpForm from "./sign-up";
@@ -35,7 +36,10 @@ interface Props {
 }
 
 export default async function SignInPage({ searchParams }: Props) {
-  const data = await getSession();
+  const headersList = await headers();
+  const data = await auth.api.getSession({
+    headers: headersList,
+  });
   const tabs = TABS.filter(([key]) => {
     // Filter out sign-up/auth/sign-in if session is expired
     if (

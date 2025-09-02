@@ -20,7 +20,7 @@ const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password?token=";
 
 const baseUrl = process.env.BASE_URL;
 
-export const betterAuthOptions:BetterAuthOptions = {
+export const betterAuthOptions = {
   appName: appConfig.name,
   baseURL: baseUrl,
   secret: process.env.BETTER_AUTH_SECRET,
@@ -244,7 +244,7 @@ export const betterAuthOptions:BetterAuthOptions = {
   telemetry: {
     enabled: false,
   },
-}
+} satisfies BetterAuthOptions;
 
 export const auth = betterAuth(betterAuthOptions);
 

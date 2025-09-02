@@ -11,7 +11,8 @@ import { AuthButtonLink } from "@/components/utils/link";
 import { X } from "lucide-react";
 import type { Metadata } from "next";
 import { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { RELATED_FOR_TYPES } from "~/constants/common.announcement";
 import { changeCase } from "~/utils/string";
 
@@ -37,7 +38,10 @@ export const metadata: Metadata = {
 export default async function AnnouncementsPage(props: {
   searchParams: Promise<{ category?: string }>;
 }) {
-  const session = (await getSession()) as Session;
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  }) as Session;
   const searchParams = await props.searchParams;
   const category = searchParams.category || "all"; // Default to 'all' if no category is provided
   const announcements = await getAnnouncements();

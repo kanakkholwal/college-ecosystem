@@ -8,7 +8,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostById } from "~/actions/common.community";
 import { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 interface Props {
   searchParams: Promise<{
@@ -27,7 +28,10 @@ export default async function CommunityPostEditPage(props: Props) {
   const post = await getPostById(searchParams.postId, true);
   if (!post) return notFound();
 
-  const session = (await getSession()) as Session;
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  }) as Session;
   if (session.user.id !== post.author.id || session.user.role !== "admin") {
     return (
       <EmptyArea

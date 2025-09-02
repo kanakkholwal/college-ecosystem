@@ -3,7 +3,8 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { and, desc, eq, like, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { roomSchema } from "~/constants/common.room";
 import { db } from "~/db/connect";
 import { roomUsageHistory, rooms, users } from "~/db/schema";
@@ -224,7 +225,10 @@ export async function updateRoom(
 
 // Function to delete a room and its usage history
 export async function deleteRoom(roomId: string): Promise<RoomSelect> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session || !session.user || session.user.role !== "admin") {
     throw new Error("Unauthorized: Only admins can delete rooms");
   }

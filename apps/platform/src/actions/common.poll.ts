@@ -1,12 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import dbConnect from "~/lib/dbConnect";
 import Poll, { type PollType, type RawPollType } from "~/models/poll";
 
 export async function createPoll(pollData: RawPollType) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to create a poll");
   }
@@ -70,7 +74,10 @@ export async function voteOnPoll(
   pollId: string,
   optionId: string
 ): Promise<PollType> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to vote on a poll");
   }
@@ -145,7 +152,10 @@ export async function getPollsVotedByUser(userId: string): Promise<PollType[]> {
 
 export async function getPollsCreatedByLoggedInUser(): Promise<PollType[]> {
   try {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       return Promise.reject("You need to be logged in to view your polls");
     }

@@ -2,20 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import {
-  RawCommunityPostType,
+    RawCommunityPostType,
 } from "~/constants/common.community";
 import dbConnect from "~/lib/dbConnect";
 import CommunityPost, {
-  CommunityComment,
-  CommunityPostTypeWithId,
-  rawCommunityCommentSchema,
+    CommunityComment,
+    CommunityPostTypeWithId,
+    rawCommunityCommentSchema,
 } from "~/models/community";
 
 // Create a new post
 export async function createPost(postData: RawCommunityPostType) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to create a post");
   }
@@ -101,7 +105,10 @@ type UpdateAction =
     };
 
 export async function updatePost(id: string, action: UpdateAction) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) throw new Error("You need to be logged in to update a post");
 
   await dbConnect();
@@ -155,7 +162,10 @@ export async function updatePost(id: string, action: UpdateAction) {
   return JSON.parse(JSON.stringify(post)) as CommunityPostTypeWithId;
 }
 export async function deletePost(id: string) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to update a post");
   }
@@ -186,7 +196,10 @@ export async function deletePost(id: string) {
 export async function createComment(
   commentData: z.infer<typeof rawCommunityCommentSchema>
 ) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to create a comment");
   }

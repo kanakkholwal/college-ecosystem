@@ -9,7 +9,8 @@ import { getHostels } from "~/actions/hostel.core";
 import { HeaderBar } from "@/components/common/header-bar";
 import { Badge } from "@/components/ui/badge";
 import { MdRoom } from "react-icons/md";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { CreateHostelForm, ImportFromSiteButton } from "./client";
 
 export default async function ChiefWardenPage({
@@ -23,7 +24,10 @@ export default async function ChiefWardenPage({
   const response = await getHostels();
   // console.log(response);
   const { success, data: hostels } = response;
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   return (
     <div className="space-y-5 my-2">

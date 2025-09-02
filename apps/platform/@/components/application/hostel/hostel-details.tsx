@@ -1,12 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heading, Paragraph } from "@/components/ui/typography";
-import type { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth, type Session } from "~/auth";
 import type { HostelType } from "~/models/hostel_n_outpass";
 
 export async function HostelDetail({ hostel }: { hostel: HostelType }) {
-  const session = (await getSession()) as Session;
+  const headersList = await headers();
+
+  const session = (await auth.api.getSession({
+    headers: headersList,
+  })) as Session;
 
   const isWarden =
     hostel.warden.email === session.user.email ||

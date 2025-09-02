@@ -11,7 +11,8 @@ import { format } from "date-fns";
 import { ArrowUpRight, CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
 import { getEvents } from "~/actions/common.events";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 type Props = {
   params: Promise<{
@@ -53,7 +54,10 @@ export default async function AcademicCalenderPage(props: Props) {
     to: searchParams.to ? new Date(searchParams.to) : "",
   });
 
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (session?.user?.role === "admin") {
     console.log("Events fetched for admin:", groupedEvents);
   }

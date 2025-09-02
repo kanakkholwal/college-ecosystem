@@ -1,14 +1,18 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import dbConnect from "src/lib/dbConnect";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { RawAnnouncementType } from "~/constants/common.announcement";
 import Announcement, { AnnouncementTypeWithId } from "~/models/announcement";
 
 export async function createAnnouncement(
   announcementData: RawAnnouncementType
 ) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to create an announcement");
   }
@@ -69,7 +73,10 @@ export async function updateAnnouncement(
 }
 export async function deleteAnnouncement(id: string) {
   try {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       return Promise.reject(
         "You need to be logged in to delete an announcement"

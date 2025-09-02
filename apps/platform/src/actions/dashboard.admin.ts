@@ -2,7 +2,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { auth } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
 import { db } from "~/db/connect";
 import { accounts, sessions, users } from "~/db/schema/auth-schema";
 import dbConnect from "~/lib/dbConnect";
@@ -206,7 +206,10 @@ export async function changeUserPassword(
   newPassword: string
 ): Promise<boolean> {
   try {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (
       !session ||
       session.user.id !== userId ||

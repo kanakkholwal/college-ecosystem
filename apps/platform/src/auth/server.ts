@@ -9,6 +9,7 @@ export const getSession = async () => {
     const session = await auth.api.getSession({
       headers: headersList,
     });
+    
     return session;
   } catch (error) {
     console.error("Error getting session:", error);

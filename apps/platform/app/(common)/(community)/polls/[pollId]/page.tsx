@@ -4,7 +4,8 @@ import { ArrowLeft, Clock, Info } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPollById, updateVotes } from "src//actions/common.poll";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { PollRender } from "../components/poll-component";
 import Polling from "./polling";
 
@@ -45,7 +46,10 @@ interface Props {
 }
 
 export default async function Dashboard({ params }: Props) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   const { pollId } = await params;
   const poll = await getPollById(pollId);
   if (!poll) {

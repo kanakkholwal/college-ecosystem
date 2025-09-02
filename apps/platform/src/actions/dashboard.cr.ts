@@ -3,13 +3,17 @@ import dbConnect from "src/lib/dbConnect";
 import { getStudentInfo } from "src/lib/student/actions";
 import Timetable, { type TimeTableWithID } from "src/models/time-table";
 import type { studentInfoType } from "src/types/student";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 export async function getInfo(): Promise<{
   studentInfo: studentInfoType;
   timetables: TimeTableWithID[];
 }> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   if (!session?.user.other_roles.includes("cr")) {
     throw new Error("You are not authorized to perform this action");
@@ -31,7 +35,10 @@ export async function getInfo(): Promise<{
 }
 
 export async function getCrInfo() {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   if (!session?.user.other_roles.includes("cr")) {
     throw new Error("You are not authorized to perform this action");

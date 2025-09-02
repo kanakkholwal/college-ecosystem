@@ -1,6 +1,7 @@
 "use server";
 import { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { HostelStudentType } from "~/models/hostel_n_outpass";
 import { ResultTypeWithId } from "~/models/result";
 import { getResultByRollNo } from "./common.result";
@@ -32,7 +33,11 @@ interface StudentDashboardData {
 export async function getStudentDashboardData(): Promise<StudentDashboardData> {
   try {
     const hostelResponse = await getHostelForStudent();
-    const { user } = (await getSession()) as Session;
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
+    const { user } = session as Session;
     const outpassHistory = await getOutPassHistoryByRollNo(user.username);
     const academicResult = await getResultByRollNo(user.username);
 

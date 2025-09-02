@@ -5,25 +5,25 @@ import { notFound } from "next/navigation";
 import OthersPng from "./assets/others.png";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
 import { AuthActionButton, PreviousPageLink } from "@/components/utils/link";
 import Image from "next/image";
-import Link from "next/link";
 import { getCourseByCode } from "~/actions/common.course";
 
 import { AddPrevModal, AddRefsModal } from "./modal";
 import { IconMap } from "./render-link";
 
-import type { Metadata, ResolvingMetadata } from "next";
-import { getSession } from "~/auth/server";
-import { orgConfig } from "~/project.config";
 import { Icon } from "@/components/icons";
+import type { Metadata, ResolvingMetadata } from "next";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
+import { orgConfig } from "~/project.config";
 
 type Props = {
   params: Promise<{ code: string }>;
@@ -50,7 +50,10 @@ export default async function CoursePage(props: Props) {
   const searchParams = await props.searchParams;
   const tab = searchParams.tab || "chapters";
 
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   const data = await getCourseByCode(params.code);
   if (!data.course) {

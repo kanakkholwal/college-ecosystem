@@ -1,13 +1,14 @@
 "use server";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { and, count, eq, ilike, or } from "drizzle-orm";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { db } from "~/db/connect";
 import {
-  booksAndReferences,
-  chapters,
-  courses,
-  previousPapers,
+    booksAndReferences,
+    chapters,
+    courses,
+    previousPapers,
 } from "~/db/schema";
 
 // Infer types for courses
@@ -132,7 +133,10 @@ export async function createCourse(course: CourseInsert) {
 }
 
 export async function updateCourseByCr(course: Partial<CourseSelect>) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("User not authenticated");
   }
@@ -196,7 +200,10 @@ export async function updatePrevPapersPublic(
 }
 
 export async function deleteCourse(id: string) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("User not authenticated");
   }

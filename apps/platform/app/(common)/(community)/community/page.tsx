@@ -8,8 +8,9 @@ import { AuthButtonLink } from "@/components/utils/link";
 import { X } from "lucide-react";
 import type { Metadata } from "next";
 import { getPostsByCategory } from "~/actions/common.community";
-import { getSession } from "~/auth/server";
 import CommunityPostList from "./list";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 export const metadata: Metadata = {
   title: "Communities",
@@ -40,7 +41,10 @@ export default async function CommunitiesPage(props: {
   const category = searchParams.c || "all"; // Default to 'all' if no category is provided
   const page = searchParams.page || 1;
   const limit = searchParams.limit || 10;
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   const posts = await getPostsByCategory(category, page, limit);
 
   const activePopularCategory = CATEGORIES.find((c) => c.value === category);

@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 export type ActionState = {
   error?: string;
@@ -45,7 +46,10 @@ export function validatedActionWithUser<S extends z.ZodType<any, any>, T, P>(
   action: ValidatedActionWithUserFn<S, T, P>
 ) {
   return async (prevState: ActionState, payload: P) => {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       throw new Error("User is not authenticated");
     }
@@ -70,7 +74,10 @@ export function validatedActionWithRoles<S extends z.ZodType<any, any>, T, P>(
   action: ValidatedActionWithRolesFn<S, T, P>
 ) {
   return async (prevState: ActionState, payload: P) => {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) throw new Error("User is not authenticated");
     if (
       !allowedRoles.includes(session.user.role) &&
@@ -122,7 +129,10 @@ export function validatedFormActionWithUser<S extends z.ZodType<any, any>, T>(
   action: ValidatedFormActionWithUserFunction<S, T>
 ) {
   return async (prevState: ActionState, formData: FormData) => {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       throw new Error("User is not authenticated");
     }

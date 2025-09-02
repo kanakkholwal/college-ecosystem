@@ -1,7 +1,8 @@
 import Footer from "@/components/common/footer";
 import GithubBanner from "@/components/common/github-banner";
 import Navbar from "@/components/common/navbar";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { LayoutClient } from "./layout.client";
 
 
@@ -13,7 +14,12 @@ type LayoutProps = Readonly<{
 }>;
 
 export default async function Layout({ children }: LayoutProps) {
-  const session = await getSession();
+  const headersList = await headers();
+
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
+  ;
 
   return (
     <div className="flex flex-1 flex-col justify-center min-h-svh min-w-full z-0">

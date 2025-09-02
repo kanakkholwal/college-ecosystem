@@ -9,7 +9,8 @@ import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import { listAllRoomsWithHistory } from "~/actions/common.room";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
 
@@ -42,7 +43,10 @@ export const metadata: Metadata = {
 
 export default async function RoomsPage(props: Props) {
   const searchParams = await props.searchParams;
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   const rooms = await listAllRoomsWithHistory({
     status: searchParams.currentStatus,

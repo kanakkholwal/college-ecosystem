@@ -1,6 +1,7 @@
 "use server"
 
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import dbConnect from "~/lib/dbConnect";
 import { WhisperModel } from "./model";
 
@@ -10,7 +11,10 @@ export async function createWhisper(
 ) {
     "use server";
     try{
-        const session = await getSession();
+        const headersList = await headers();
+        const session = await auth.api.getSession({
+            headers: headersList,
+        });
         if (!session) {
             throw new Error("UNAUTHORIZED",{
                 cause: {

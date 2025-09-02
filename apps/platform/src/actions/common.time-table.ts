@@ -2,7 +2,8 @@
 
 import dbConnect from "src/lib/dbConnect";
 import Timetable, { type TimeTableWithID } from "src/models/time-table";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import type { RawTimetableType as RawTimetable } from "~/constants/common.time-table";
 
 export async function getTimeTable(
@@ -46,7 +47,10 @@ export async function getAllTimeTables(): Promise<Partial<TimeTableWithID>[]> {
   }
 }
 export async function createTimeTable(timetableData: RawTimetable) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("You need to be logged in to view the timetable");
   }
@@ -100,7 +104,10 @@ export async function createTimeTable(timetableData: RawTimetable) {
   }
 }
 export async function deleteTimeTable(timetableId: string) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   if (!session) {
     return Promise.reject("You need to be logged in to delete a timetable");
@@ -139,7 +146,10 @@ export async function updateTimeTable(
   timetableId: string,
   timetableData: Partial<TimeTableWithID>
 ) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   if (!session) {
     return Promise.reject("You need to be logged in to update a timetable");

@@ -4,24 +4,25 @@ import { format } from "date-fns";
 import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { genderSchema, ROLES_ENUMS } from "~/constants";
 import {
-  createHostelSchema,
-  createHostelStudentSchema,
-  updateHostelAbleStudentSchema,
-  updateHostelSchema,
-  updateHostelStudentSchema,
+    createHostelSchema,
+    createHostelStudentSchema,
+    updateHostelAbleStudentSchema,
+    updateHostelSchema,
+    updateHostelStudentSchema,
 } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import serverApis from "~/lib/server-apis/server";
 import {
-  HostelModel,
-  type HostelStudentJson,
-  HostelStudentModel,
-  type HostelStudentType,
-  type HostelType,
-  type IHostelType,
+    HostelModel,
+    type HostelStudentJson,
+    HostelStudentModel,
+    type HostelStudentType,
+    type HostelType,
+    type IHostelType,
 } from "~/models/hostel_n_outpass";
 import ResultModel from "~/models/result";
 import { orgConfig } from "~/project.config";
@@ -339,7 +340,10 @@ export async function getHostelByUser(
   slug?: string
 ): Promise<getHostelByUserType> {
   try {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       return Promise.resolve({
         success: false,
@@ -477,7 +481,10 @@ export async function getHostelForStudent(
   slug?: string
 ): Promise<getHostelByUserType> {
   try {
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       return Promise.resolve({
         success: false,

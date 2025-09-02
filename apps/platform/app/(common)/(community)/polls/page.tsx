@@ -1,9 +1,9 @@
 import EmptyArea from "@/components/common/empty-area";
 import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
 import {
-  getClosedPolls,
-  getOpenPolls,
-  getPollsCreatedByLoggedInUser,
+    getClosedPolls,
+    getOpenPolls,
+    getPollsCreatedByLoggedInUser,
 } from "~//actions/common.poll";
 import type { PollType } from "~/models/poll";
 import CreatePoll from "./components/create-poll";
@@ -16,7 +16,8 @@ import { LogIn } from "lucide-react";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import { CgPoll } from "react-icons/cg";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 export const metadata: Metadata = {
   title: `Polls`,
@@ -51,7 +52,10 @@ export default async function PollsPage(props: {
   const searchParams = await props.searchParams;
   const activeTab = searchParams.tab || "opened-polls"; // Default to 'opened-polls' if no tab is provided
 
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   // Check if the user is logged in then only getPollsCreatedByLoggedInUser
   const polls = await Promise.all([
     getOpenPolls(),

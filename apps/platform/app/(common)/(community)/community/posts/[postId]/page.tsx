@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getPostById } from "src/actions/common.community";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { CATEGORY_IMAGES } from "~/constants/common.community";
 import PostFooter from "./post-footer";
 
@@ -46,7 +47,10 @@ export async function generateMetadata(
 const viewCache = new Set<string>();
 
 export default async function CommunityPost(props: Props) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   const params = await props.params;
   const post = await getPostById(params.postId, viewCache.has(params.postId));
 

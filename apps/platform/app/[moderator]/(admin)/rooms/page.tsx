@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/utils/link";
 import { MdRoom } from "react-icons/md";
 import { getRoomsInfo, listAllRoomsWithHistory } from "~/actions/common.room";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 
 type Props = {
   params: Promise<{
@@ -53,7 +54,10 @@ export default async function RoomsPage(props: Props) {
   const { totalRooms, totalAvailableRooms, totalOccupiedRooms } =
     await getRoomsInfo();
 
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   const stats = [
     {

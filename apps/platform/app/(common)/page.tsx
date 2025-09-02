@@ -9,11 +9,11 @@ import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
 import { testimonialsContent } from "@/constants/landing";
 import { getLinksByRole, quick_links } from "@/constants/links";
 import { Newspaper } from "lucide-react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getPublicStats } from "~/actions/public";
-import type { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { auth, type Session } from "~/auth";
 import { ROLES_ENUMS } from "~/constants";
 import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
@@ -23,7 +23,11 @@ import { ResourcesList } from "./resources/client";
 const RESOURCES_LIMIT = 6; // Limit the number of resources fetched
 
 export default async function HomePage() {
-  const session = await getSession() as Session | null;
+  const headersList = await headers();
+
+  const session = await auth.api.getSession({
+    headers: headersList,
+  }) as Session | null;
   // Get quick links based on user role
   const links = getLinksByRole(session?.user?.other_roles[0] ?? ROLES_ENUMS.STUDENT, quick_links);
 
@@ -33,7 +37,7 @@ export default async function HomePage() {
   ) {
     return redirect(`/${ROLES_ENUMS.GUARD}`);
   }
-  
+
   const [publicStats, resources] = await Promise.all([
     getPublicStats(),
     getAllResources(RESOURCES_LIMIT),
@@ -100,14 +104,14 @@ export default async function HomePage() {
         <StaggerChildrenItem className="w-full py-2 flex justify-center">
           <ButtonLink href="/resources" size="lg" variant="rainbow_outline">
             Checkout All Updates
-            <Icon name="arrow-right"/>
+            <Icon name="arrow-right" />
           </ButtonLink>
         </StaggerChildrenItem>
       </StaggerChildrenContainer>
 
       <FeatureSection />
 
-      
+
       <StaggerChildrenContainer className="space-y-4" id="testimonials">
         <h2 className="text-xl font-semibold text-center">
           What Students Are Saying

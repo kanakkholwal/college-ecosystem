@@ -2,7 +2,8 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { db } from "~/db/connect";
 import {
   personalAttendance,
@@ -28,7 +29,10 @@ export async function createAttendance(
     "id" | "userId" | "createdAt" | "updatedAt"
   >
 ) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("You need to be logged in to create an attendance record.");
   }
@@ -48,7 +52,10 @@ export async function createAttendance(
 
 // Fetch all attendance records for the logged-in user
 export async function getAttendanceRecords() {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("You need to be logged in to fetch attendance records.");
   }
@@ -81,7 +88,10 @@ export async function updateAttendanceRecord(
   recordId: string,
   isPresent: boolean
 ): Promise<string> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("Authentication required.");
   }
@@ -107,7 +117,10 @@ export async function updateAttendanceRecord(
 export async function deleteAttendanceRecord(
   recordId: string
 ): Promise<string> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("Authentication required.");
   }
@@ -138,7 +151,10 @@ export async function forceUpdateAttendanceRecord(
   recordId: string,
   data: Partial<InsertPersonalAttendanceRecord>
 ) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     throw new Error("You need to be logged in to update an attendance record.");
   }

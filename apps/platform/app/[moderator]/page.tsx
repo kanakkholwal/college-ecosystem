@@ -1,5 +1,6 @@
 import { Heading, Paragraph } from "@/components/ui/typography";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { changeCase } from "~/utils/string";
 import { DashboardTemplate } from "./dashboards";
 
@@ -11,7 +12,10 @@ interface Props {
 
 export default async function ModeratorDashboard(props: Props) {
   const params = await props.params;
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   return (
     <div className="w-full space-y-6 my-5">

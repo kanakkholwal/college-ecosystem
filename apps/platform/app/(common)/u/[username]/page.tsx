@@ -7,7 +7,8 @@ import { Metadata } from "next";
 import { PiSmileySad } from "react-icons/pi";
 import { getHostelById } from "~/actions/hostel.core";
 import { getUserByUsername } from "~/actions/user.core";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { ProfileHeader } from "./components/header";
 
 interface UserPageProps {
@@ -81,7 +82,10 @@ export default async function PublicUserPage({ params }: UserPageProps) {
       console.error("Error fetching hostel data:", res.error);
     }
   }
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   const isAuthenticated = !!session?.user;
   const isCurrentUser = isAuthenticated && session.user.id === user.id;
 

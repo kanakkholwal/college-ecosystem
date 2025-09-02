@@ -4,7 +4,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import type { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { ALLOWED_ROLES } from "~/constants";
 import { changeCase } from "~/utils/string";
 
@@ -42,7 +43,10 @@ export default async function DashboardLayout({
     return notFound();
   }
 
-  const session = (await getSession()) as Session;
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  }) as Session;
 
   return (
     <SidebarProvider>

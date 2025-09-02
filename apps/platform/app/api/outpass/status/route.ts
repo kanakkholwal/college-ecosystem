@@ -1,10 +1,11 @@
 import { Types } from "mongoose";
 import { type NextRequest, NextResponse } from "next/server";
 import {
-  getOutPassById,
-  getOutPassHistoryByRollNo,
+    getOutPassById,
+    getOutPassHistoryByRollNo,
 } from "~/actions/hostel.outpass";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { ROLES_ENUMS } from "~/constants";
 import { isValidRollNumber } from "~/constants/core.departments";
 import dbConnect from "~/lib/dbConnect";
@@ -21,7 +22,10 @@ export async function GET(request: NextRequest) {
     if (!isValidRollNo && !isValidMongoId) {
       return new NextResponse("Invalid identifier provided", { status: 400 });
     }
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       return new NextResponse("Unauthorized", { status: 401 });
     }

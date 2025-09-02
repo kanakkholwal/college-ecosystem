@@ -5,6 +5,7 @@ import { type NextRequest } from "next/server";
 import { betterAuthOptions } from "~/auth";
 import { appConfig } from "~/project.config";
 // export const { POST, GET } = toNextJsHandler(auth);
+// import { headers } from 'next/headers'
 
 const authHandler = toNextJsHandler(betterAuth(betterAuthOptions));
 
@@ -23,6 +24,7 @@ function isAllowedOrigin(origin: string | null) {
 
 function withCors(handler: (request: NextRequest) => Promise<Response>) {
   return async (req: NextRequest) => {
+    // const headerList = await headers()
     const origin = req.headers.get("origin") || req.url;
     const allowOrigin = isAllowedOrigin(origin) ? origin : "";
     const res = await handler(req);

@@ -1,6 +1,7 @@
 import Page403 from "@/components/utils/403";
 import { notFound } from "next/navigation";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { ALLOWED_ROLES } from "~/constants";
 
 interface DashboardLayoutProps {
@@ -18,7 +19,10 @@ export default async function DashboardLayout({
   if (moderator !== "admin") {
     return notFound();
   }
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (
     session &&
     moderator === "admin" &&

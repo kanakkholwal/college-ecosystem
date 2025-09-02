@@ -1,8 +1,12 @@
 import type { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { AccountForm } from "./account-form";
 
 export default async function SettingsAccountPage() {
-  const session = (await getSession()) as Session;
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  }) as Session;
   return <AccountForm currentUser={session.user} />;
 }

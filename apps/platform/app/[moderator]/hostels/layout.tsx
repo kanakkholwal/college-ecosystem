@@ -1,6 +1,7 @@
 import Page403 from "@/components/utils/403";
 import { notFound } from "next/navigation";
-import { getSession } from "~/auth/server";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
 
 const ONLY_ALLOWED_ROLES = [ROLES_ENUMS.CHIEF_WARDEN, ROLES_ENUMS.ADMIN];
@@ -16,7 +17,10 @@ export default async function DashboardLayout({
   children,
   params,
 }: DashboardLayoutProps) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   const { moderator } = await params;
   if (
     !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number]) ||
