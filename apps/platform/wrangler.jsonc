@@ -66,10 +66,10 @@
     //   "pattern": "app.nith.eu.org",
     //   "custom_domain": true,
     // },
-    // {
-    //   "pattern": "nith.eu.org",
-    //   "custom_domain": true
-    // },
+    {
+      "pattern": "nith.eu.org",
+      "custom_domain": true
+    },
     // {
     //   "pattern": "www.nith.eu.org",
     //   "custom_domain": true

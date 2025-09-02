@@ -13,6 +13,8 @@
 const nextConfig = {
   reactStrictMode: true,
   crossOrigin: 'anonymous',
+  skipTrailingSlashRedirect: true,
+  // output:"standalone",
   logging: process.env.NODE_ENV !== "production"
     ? false
     : {
@@ -50,7 +52,6 @@ const nextConfig = {
   //     },
   //   ];
   // },
-  skipTrailingSlashRedirect: true,
 };
 
 // export default withSerWist(nextConfig);

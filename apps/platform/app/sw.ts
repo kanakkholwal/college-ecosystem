@@ -34,12 +34,7 @@ const serwist = new Serwist({
   navigationPreload: true,
 
   runtimeCaching: [
-    // --- Skip Ads & Analytics (always go network) ---
-    {
-      matcher: ({ url }) => adAndAnalyticsHosts.includes(url.hostname) || url.hostname.includes(".google") || url.hostname.includes("google."),
-      handler: new NetworkOnly(),
-    },
-
+   
     // --- Static assets (JS/CSS/JSON) ---
     {
       matcher: ({ request }) =>
@@ -72,6 +67,12 @@ const serwist = new Serwist({
 
     // --- Everything else falls back to defaults ---
     ...defaultCache,
+     // --- Skip Ads & Analytics (always go network) ---
+     {
+      matcher: ({ url }) => adAndAnalyticsHosts.includes(url.hostname) || url.hostname.includes(".google") || url.hostname.includes("google."),
+      handler: new NetworkOnly(),
+    },
+
   ],
 });
 

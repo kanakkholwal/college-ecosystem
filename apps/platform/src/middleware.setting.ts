@@ -26,6 +26,7 @@ const RAW_PUBLIC_ROUTES: RoutePattern[] = [
   "/announcements",
   "/polls",
   "/unauthorized",
+  "/community",
   "/community/:postId",
 ];
 
