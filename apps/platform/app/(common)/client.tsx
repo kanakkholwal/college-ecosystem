@@ -201,7 +201,7 @@ export function IntroSection({
   user,
   stats,
 }: {
-  user: Session["user"];
+  user: Session["user"] | null | undefined;
   stats: PublicStatsType;
 }) {
   statsMapping.forEach((stat) => {

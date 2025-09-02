@@ -3,6 +3,8 @@ import { BackgroundBeamsWithCollision } from "@/components/animation/bg-beam-wit
 import { StaggerChildrenContainer, StaggerChildrenItem } from "@/components/animation/motion";
 import { HeaderBar } from "@/components/common/header-bar";
 import { RouterCard } from "@/components/common/router-card";
+import { Icon } from "@/components/icons";
+import { ButtonLink } from "@/components/utils/link";
 import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
 import { testimonialsContent } from "@/constants/landing";
 import { getLinksByRole, quick_links } from "@/constants/links";
@@ -17,23 +19,25 @@ import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
 import { FeatureSection, IntroSection } from "./client";
 import { ResourcesList } from "./resources/client";
-import { ButtonLink } from "@/components/utils/link";
-import { Icon } from "@/components/icons";
 
 const RESOURCES_LIMIT = 6; // Limit the number of resources fetched
 
 export default async function HomePage() {
-  const session = (await getSession()) as Session;
-  const links = getLinksByRole(session?.user?.other_roles[0], quick_links);
+  const session = await getSession() as Session | null;
+  // Get quick links based on user role
+  const links = getLinksByRole(session?.user?.other_roles[0] ?? ROLES_ENUMS.STUDENT, quick_links);
 
   if (
-    session?.user.other_roles.includes(ROLES_ENUMS.GUARD) &&
-    session?.user.role !== ROLES_ENUMS.ADMIN
+    session?.user?.other_roles?.includes(ROLES_ENUMS.GUARD) &&
+    session?.user?.role !== ROLES_ENUMS.ADMIN
   ) {
     return redirect(`/${ROLES_ENUMS.GUARD}`);
   }
-  const publicStats = await getPublicStats();
-  const resources = await getAllResources(RESOURCES_LIMIT);
+  
+  const [publicStats, resources] = await Promise.all([
+    getPublicStats(),
+    getAllResources(RESOURCES_LIMIT),
+  ]);
 
   return (
     <div className="flex flex-col w-full flex-1 gap-12 px-4 md:px-6 pt-4 md:pt-6 xl:px-12 xl:mx-auto max-w-(--max-app-width) max-sm:pb-16">

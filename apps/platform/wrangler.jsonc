@@ -5,7 +5,8 @@
   "compatibility_date": "2025-03-01",
   "compatibility_flags": [
     "nodejs_compat",
-    "global_fetch_strictly_public"
+    "global_fetch_strictly_public",
+    "nodejs_compat_populate_process_env",
   ],
   // Minification helps to keep the Worker bundle size down and improve start up time.
   "minify": true,
