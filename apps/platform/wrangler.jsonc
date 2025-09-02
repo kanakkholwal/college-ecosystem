@@ -5,8 +5,8 @@
   "compatibility_date": "2025-03-01",
   "compatibility_flags": [
     "nodejs_compat",
-    "global_fetch_strictly_public",
     "nodejs_compat_populate_process_env",
+    "global_fetch_strictly_public",
   ],
   // Minification helps to keep the Worker bundle size down and improve start up time.
   "minify": true,
@@ -34,11 +34,11 @@
      * Environment Variables
      * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
      */
-  "vars": {
-    "EMAIL_FROM": "no-reply@notifications.nith.eu.org",
-    "EMAIL_FROM_NAME": "College Platform",
-    "EMAIL_REPLY_TO": "support@nith.eu.org"
-  },
+  // "vars": {
+  //   "EMAIL_FROM": "no-reply@notifications.nith.eu.org",
+  //   "EMAIL_FROM_NAME": "College Platform",
+  //   "EMAIL_REPLY_TO": "support@nith.eu.org"
+  // },
   /**
      * Service Bindings (communicate between multiple Workers)
      * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
