@@ -85,9 +85,8 @@ export default function ResetPassword() {
         newPassword: data.newPassword,
         token: token,
       },{
-         headers:{
-          credentials: 'include'
-        },
+
+        credentials: 'include'
       });
       if (res.error) {
         toast.error(

@@ -78,9 +78,7 @@ export default function SignInForm() {
         rememberMe: data.rememberMe,
       },
       {
-        headers:{
-          credentials: 'include'
-        },
+        credentials: 'include',
         onRequest: () => {
           setIsLoading(true);
         },

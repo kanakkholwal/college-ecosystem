@@ -1,9 +1,9 @@
 // app/api/auth/[...all]/route.ts
 import { toNextJsHandler } from "better-auth/next-js";
+import { type NextRequest } from "next/server";
 import { auth } from "~/auth";
-import { NextResponse } from "next/server";
-
-export const { POST, GET } = toNextJsHandler(auth);
+import { appConfig } from "~/project.config";
+// export const { POST, GET } = toNextJsHandler(auth);
 
 const authHandler = toNextJsHandler(auth);
 
@@ -11,34 +11,25 @@ function isAllowedOrigin(origin: string | null) {
   if (!origin) return false;
   try {
     const url = new URL(origin);
-    
-    return url.hostname.endsWith(".nith.eu.org") || url.hostname === "nith.eu.org";
+    if (process.env.NODE_ENV !== "production") {
+      return origin.includes("localhost") || origin.includes("127.0.0.1")
+    }
+    return url.hostname.endsWith("." + appConfig.appDomain) || url.hostname === appConfig.appDomain;
   } catch {
     return false;
   }
 }
 
-function withCors(handler: (request: Request) => Promise<Response>) {
-  return async (req: Request) => {
-    const origin = req.headers.get("origin");
+function withCors(handler: (request: NextRequest) => Promise<Response>) {
+  return async (req: NextRequest) => {
+    const origin = req.headers.get("origin") || req.url;
     const allowOrigin = isAllowedOrigin(origin) ? origin : "";
-
-    if (req.method === "OPTIONS") {
-      return new NextResponse(null, {
-        status: 204,
-        headers: {
-          "Access-Control-Allow-Origin": allowOrigin,
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-      });
-    }
-
     const res = await handler(req);
     if (allowOrigin) {
       res.headers.set("Access-Control-Allow-Origin", allowOrigin);
       res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS,DELETE");
       res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      res.headers.set("Access-Control-Allow-Credentials", "true");
     }
     return res;
   };
@@ -48,14 +39,14 @@ export const GET = withCors(authHandler.GET);
 export const POST = withCors(authHandler.POST);
 
 export async function OPTIONS(req: NextRequest) {
-  const origin = req.headers.get("origin");
+  const origin = req.headers.get("origin") || req.url;
   const allowOrigin = isAllowedOrigin(origin) ? origin : "";
-  return NextResponse(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": allowOrigin,
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
+  const res = new Response(null, { status: 204 }); // no content
+  if (allowOrigin) {
+    res.headers.set("Access-Control-Allow-Origin", allowOrigin);
+    res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.headers.set("Access-Control-Allow-Credentials", "true"); // <-- missing
+  }
+  return res;
 }

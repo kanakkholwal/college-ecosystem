@@ -48,8 +48,9 @@ export default function UserList({
       setLoading(true);
       await axios
         .get(
-          `/api/users?query=${searchParams.get("query") || ""}&offset=${offset}`
-        )
+          `/api/users?query=${searchParams.get("query") || ""}&offset=${offset}`, {
+          withCredentials: true,
+        })
         .then((response) => response.data)
         .then((response) => {
           setHasMore(response.hasMore);

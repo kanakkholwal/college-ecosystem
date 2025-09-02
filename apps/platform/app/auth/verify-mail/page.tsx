@@ -31,9 +31,7 @@ export default function VerifyEmail() {
             token: token,
           },
         }, {
-          headers: {
-            credentials: 'include'
-          },
+          credentials: 'include'
         })
         .then((res) => {
           if (res.error) {
