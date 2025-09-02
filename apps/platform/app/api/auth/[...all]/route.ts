@@ -1,11 +1,12 @@
 // app/api/auth/[...all]/route.ts
+import { betterAuth } from "better-auth";
 import { toNextJsHandler } from "better-auth/next-js";
 import { type NextRequest } from "next/server";
-import { auth } from "~/auth";
+import { betterAuthOptions } from "~/auth";
 import { appConfig } from "~/project.config";
 // export const { POST, GET } = toNextJsHandler(auth);
 
-const authHandler = toNextJsHandler(auth);
+const authHandler = toNextJsHandler(betterAuth(betterAuthOptions));
 
 function isAllowedOrigin(origin: string | null) {
   if (!origin) return false;

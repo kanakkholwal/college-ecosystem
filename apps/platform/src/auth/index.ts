@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
@@ -20,7 +20,7 @@ const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password?token=";
 
 const baseUrl = process.env.BASE_URL;
 
-export const auth = betterAuth({
+export const betterAuthOptions:BetterAuthOptions = {
   appName: appConfig.name,
   baseURL: baseUrl,
   secret: process.env.BETTER_AUTH_SECRET,
@@ -244,7 +244,9 @@ export const auth = betterAuth({
   telemetry: {
     enabled: false,
   },
-});
+}
+
+export const auth = betterAuth(betterAuthOptions);
 
 type getUserInfoReturnType = {
   email: string;
