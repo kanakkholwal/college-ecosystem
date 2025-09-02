@@ -4,12 +4,12 @@ name: 🚀 Deployments of Landing Sites
 # on: workflow_dispatch
 
 on:
-  push:
-    branches:
-      - main
-      - staging
+  # push:
+  #   branches:
+  #     - main
+  #     - staging
       
-  # workflow_dispatch:
+  workflow_dispatch:
 
 concurrency:
   group:  ${{ github.workflow }}-${{ github.ref }}-deploy-landing
