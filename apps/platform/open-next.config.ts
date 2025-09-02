@@ -1,12 +1,12 @@
 import { defineCloudflareConfig } from "@opennextjs/cloudflare";
-import kvIncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/kv-incremental-cache";
+// import kvIncrementalCache from "@opennextjs/cloudflare/overrides/incremental-cache/kv-incremental-cache";
 import doQueue from "@opennextjs/cloudflare/overrides/queue/do-queue";
 import d1NextTagCache from "@opennextjs/cloudflare/overrides/tag-cache/d1-next-tag-cache";
 // import doShardedTagCache from "@opennextjs/cloudflare/overrides/tag-cache/do-sharded-tag-cache";
 
 export default defineCloudflareConfig({
   enableCacheInterception: true,
-  incrementalCache: kvIncrementalCache,
+  // incrementalCache: kvIncrementalCache,
   tagCache: d1NextTagCache,
   queue: doQueue,
   // This is only required if you use On-demand revalidation
