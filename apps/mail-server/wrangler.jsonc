@@ -39,14 +39,14 @@
   //     "bucket_name": "next-inc-cache"
   //   }
   // ],
-  // "routes": [
-  //   {
-  //     "pattern": "mail.nith.eu.org",
-  //     "custom_domain": true,
+  "routes": [
+    {
+      "pattern": "mail.nith.eu.org",
+      "custom_domain": true,
       
-  //   },
+    },
 
-  // ],
+  ],
   // "account_id": "${CLOUDFLARE_ACCOUNT_ID}",
   // Vars that will be injected into the worker
   
