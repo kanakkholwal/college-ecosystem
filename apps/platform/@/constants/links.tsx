@@ -43,6 +43,14 @@ export const quick_links: RouterCardLink[] = [
     Icon: GrResources,
   },
   {
+    href: "/benefits",
+    title: "Student Benefits",
+    description: "Discover the benefits of Student email ID.",
+    Icon: Sparkles,
+    disabled: false,
+    allowed_roles: ["*"],
+  },
+  {
     href: "/results",
     title: "Results",
     description: "Check your results here.",
@@ -79,14 +87,7 @@ export const quick_links: RouterCardLink[] = [
     disabled: false,
     allowed_roles: ["*"],
   },
-  {
-    href: "/benefits",
-    title: "Student Benefits",
-    description: "Discover the benefits of Student email ID.",
-    Icon: Sparkles,
-    disabled: false,
-    allowed_roles: ["*"],
-  },
+
   {
     title: "Community",
     href: "/community",
@@ -346,28 +347,28 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
     ...(user
       ? user.other_roles?.length <= 1
         ? [
-            {
-              title: "Settings",
-              href: user.other_roles[0] + "/settings",
-              description: "Manage your account settings.",
-              Icon: Settings,
-            },
-          ]
+          {
+            title: "Settings",
+            href: user.other_roles[0] + "/settings",
+            description: "Manage your account settings.",
+            Icon: Settings,
+          },
+        ]
         : [
-            {
-              title: "Dashboard",
-              href: "/" + user.other_roles[0],
-              description: "Manage your account settings.",
+          {
+            title: "Dashboard",
+            href: "/" + user.other_roles[0],
+            description: "Manage your account settings.",
+            Icon: Settings,
+            items: user.other_roles.map((role) => ({
+              title:
+                role.charAt(0).toUpperCase() + role.slice(1) + " Dashboard",
+              href: `/${role}`,
+              description: `Manage your ${role} dashboard.`,
               Icon: Settings,
-              items: user.other_roles.map((role) => ({
-                title:
-                  role.charAt(0).toUpperCase() + role.slice(1) + " Dashboard",
-                href: `/${role}`,
-                description: `Manage your ${role} dashboard.`,
-                Icon: Settings,
-              })),
-            },
-          ]
+            })),
+          },
+        ]
       : []),
   ];
 };
