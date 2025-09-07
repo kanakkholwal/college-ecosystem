@@ -13,7 +13,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getPublicStats } from "~/actions/public";
-import { auth, type Session } from "~/auth";
+import { auth } from "~/auth";
 import { ROLES_ENUMS } from "~/constants";
 import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
@@ -27,7 +27,7 @@ export default async function HomePage() {
 
   const session = await auth.api.getSession({
     headers: headersList,
-  }) as Session | null;
+  });
   // Get quick links based on user role
   const links = getLinksByRole(session?.user?.other_roles[0] ?? ROLES_ENUMS.STUDENT, quick_links);
 

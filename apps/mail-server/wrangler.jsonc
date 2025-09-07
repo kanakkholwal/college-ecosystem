@@ -47,7 +47,7 @@
   //   },
 
   // ],
-  "account_id": "${CLOUDFLARE_ACCOUNT_ID}",
+  // "account_id": "${CLOUDFLARE_ACCOUNT_ID}",
   // Vars that will be injected into the worker
   
   "vars": {
