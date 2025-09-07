@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
+    "opennext:build": "opennextjs-cloudflare build",
+    "opennext:deploy": "opennextjs-cloudflare deploy -- --keep-vars"
   },
   "dependencies": {
     "@react-email/components": "0.0.36",
