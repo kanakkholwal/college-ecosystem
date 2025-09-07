@@ -62,31 +62,20 @@
     //   "binding": "next_inc_cache"
     // }
   ],
-  "routes": [
-    // {
-    //   "pattern": "app.nith.eu.org",
-    //   "custom_domain": true,
-    // },
-    {
-      "pattern": "nith.eu.org",
-      "custom_domain": true
-    },
-    // {
-    //   "pattern": "www.nith.eu.org",
-    //   "custom_domain": true
-    // },
-    {
-      "pattern": "platform.nith.eu.org",
-      "custom_domain": true,
-    },
-  ],
+  // "routes": [
+  //   {
+  //     "pattern": "mail.nith.eu.org",
+  //     "custom_domain": true,
+  //   },
+
+  // ],
   "account_id": "${CLOUDFLARE_ACCOUNT_ID}",
   // Vars that will be injected into the worker
   
   "vars": {
     "GOOGLE_ID": "${GOOGLE_ID}",
     "GOOGLE_SECRET": "${GOOGLE_SECRET}",
-    "BETTER_AUTH_SECRET": "${BETTER_AUTH_SECRET}",
+    "MAIL_PASSWORD": "${MAIL_PASSWORD}",
     "BETTER_AUTH_URL": "${BETTER_AUTH_URL}",
     "SERVER_IDENTITY": "${SERVER_IDENTITY}",
     "NEXT_PUBLIC_SERVER_IDENTITY": "${NEXT_PUBLIC_SERVER_IDENTITY}",

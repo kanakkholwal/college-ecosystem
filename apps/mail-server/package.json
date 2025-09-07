@@ -19,13 +19,14 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
-    
+    "@opennextjs/cloudflare": "^1.8.0",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.34.0"
   },
   "packageManager": "pnpm@10.9.0"
 }
