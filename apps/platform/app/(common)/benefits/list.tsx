@@ -1,7 +1,6 @@
 "use client";
 
 import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
@@ -21,7 +20,7 @@ import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 import { benefitsCategories, benefitsList } from "root/resources/benefits";
-import { changeCase } from "~/utils/string";
+import { changeCase, marketwiseLink } from "~/utils/string";
 
 
 
@@ -115,12 +114,14 @@ export default function FreeStuffTable() {
                                                         {res.description}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Button
+                                                        <ButtonLink
+                                                        href={marketwiseLink(res.href, "benefits")}
+                                                        target="_blank"
                                                             size="sm"
                                                             className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
                                                         >
                                                             Apply Now
-                                                        </Button>
+                                                        </ButtonLink>
                                                     </TableCell>
                                                 </motion.tr>
                                             ))}
