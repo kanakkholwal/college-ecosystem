@@ -33,12 +33,12 @@
   "limits": {
     "cpu_ms": 50000 // default is 30000 (30 seconds)
   },
-  "r2_buckets": [
-    {
-      "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "next-inc-cache"
-    }
-  ],
+  // "r2_buckets": [
+  //   {
+  //     "binding": "NEXT_INC_CACHE_R2_BUCKET",
+  //     "bucket_name": "next-inc-cache"
+  //   }
+  // ],
   // "routes": [
   //   {
   //     "pattern": "mail.nith.eu.org",
