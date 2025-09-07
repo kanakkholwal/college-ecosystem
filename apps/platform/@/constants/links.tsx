@@ -1,4 +1,4 @@
-import { Settings, Tickets, Users } from "lucide-react";
+import { Settings, Sparkles, Tickets, Users } from "lucide-react";
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
 import { LuBookA, LuBuilding, LuGithub, LuSchool } from "react-icons/lu";
@@ -76,6 +76,14 @@ export const quick_links: RouterCardLink[] = [
     title: "Academic Calendar",
     description: "Check the academic calender here.",
     Icon: CalendarRange,
+    disabled: false,
+    allowed_roles: ["*"],
+  },
+  {
+    href: "/benefits",
+    title: "Student Benefits",
+    description: "Discover the benefits of Student email ID.",
+    Icon: Sparkles,
     disabled: false,
     allowed_roles: ["*"],
   },
