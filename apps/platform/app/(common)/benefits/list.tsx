@@ -1,5 +1,6 @@
 "use client";
 
+import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
 import {
     Table,
@@ -19,9 +20,10 @@ import { ButtonLink } from "@/components/utils/link";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
+import { LuShare2 } from "react-icons/lu";
 import { benefitsCategories, benefitsList } from "root/resources/benefits";
+import { appConfig } from "~/project.config";
 import { changeCase, marketwiseLink } from "~/utils/string";
-
 
 
 
@@ -39,13 +41,27 @@ export default function FreeStuffTable() {
             </motion.h1>
 
             <Tabs defaultValue="all" className="w-full">
-                <TabsList className="mb-6">
-                    {benefitsCategories.map((cat) => (
-                        <TabsTrigger key={cat} value={cat}>
-                            {changeCase(cat, "title")}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <TabsList>
+                        {benefitsCategories.map((cat) => (
+                            <TabsTrigger key={cat} value={cat}>
+                                {changeCase(cat, "title")}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
+                    <ShareButton
+                        variant="dark"
+                        size="sm"
+                        data={{
+                            title: "Free Stuff for College Students",
+                            text: "From software tools to learning platforms, explore how you can enhance your college experience with these exclusive offers.",
+                            url: appConfig.url + "/benefits",
+                        }}
+                    >
+                        <LuShare2 />
+                        Share with Friends
+                    </ShareButton>
+                </div>
 
                 {benefitsCategories.map((cat) => (
                     <TabsContent key={cat} value={cat}>
@@ -54,6 +70,7 @@ export default function FreeStuffTable() {
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.2 }}
                             className="bg-background"
+                            id={`benefits-${cat}`}
                         >
                             <div className="relative w-full overflow-auto">
                                 <Table>
@@ -75,6 +92,7 @@ export default function FreeStuffTable() {
                                             .map((res, i) => (
                                                 <motion.tr
                                                     key={res.resource}
+                                                    id={res.resource}
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: 0.1 * i }}
@@ -115,12 +133,13 @@ export default function FreeStuffTable() {
                                                     </TableCell>
                                                     <TableCell>
                                                         <ButtonLink
-                                                        href={marketwiseLink(res.href, "benefits")}
-                                                        target="_blank"
+                                                            href={marketwiseLink(res.href, "benefits")}
+                                                            target="_blank"
                                                             size="sm"
-                                                            className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
+                                                            variant="dark"
                                                         >
                                                             Apply Now
+                                                            <Icon name="arrow-up-right" />
                                                         </ButtonLink>
                                                     </TableCell>
                                                 </motion.tr>

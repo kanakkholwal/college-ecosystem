@@ -59,6 +59,7 @@ export default function HeroSection() {
               <Star
                 key={i}
                 className="size-5 fill-yellow-400 text-yellow-400 animate-pulse"
+                style={{ animationDelay: `${i * 100}ms` }}
               />
             ))}
           </div>
