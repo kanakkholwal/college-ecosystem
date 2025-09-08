@@ -43,17 +43,16 @@
     {
       "pattern": "mail.nith.eu.org",
       "custom_domain": true,
-      
     },
 
   ],
   // "account_id": "${CLOUDFLARE_ACCOUNT_ID}",
   // Vars that will be injected into the worker
   
-  "vars": {
-    "SMTP_HOST": "${SMTP_HOST}",
-    "MAIL_EMAIL": "${MAIL_EMAIL}",
-    "MAIL_PASSWORD": "${MAIL_PASSWORD}",
-    "SERVER_IDENTITY": "${SERVER_IDENTITY}"
-  }
+    // "vars": {
+    //   "SMTP_HOST": "${SMTP_HOST}",
+    //   "MAIL_EMAIL": "${MAIL_EMAIL}",
+    //   "MAIL_PASSWORD": "${MAIL_PASSWORD}",
+    //   "SERVER_IDENTITY": "${SERVER_IDENTITY}"
+    // }
 }

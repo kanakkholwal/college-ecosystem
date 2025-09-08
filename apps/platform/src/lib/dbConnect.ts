@@ -1,7 +1,7 @@
 import { Db, MongoClient } from "mongodb";
 import mongoose, { type ConnectOptions, type Mongoose } from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 declare const global: {
   mongoose: { conn: Mongoose | null; promise: Promise<Mongoose> | null };
@@ -13,7 +13,7 @@ declare const global: {
 
 if (!MONGODB_URI) {
   console.warn("Can't access MONGODB_URI in dbConnect.ts");
-  throw new Error("Please define the MONGODB_URI environment variable");
+  // throw new Error("Please define the MONGODB_URI environment variable");
 }
 
 const defaultDb =
