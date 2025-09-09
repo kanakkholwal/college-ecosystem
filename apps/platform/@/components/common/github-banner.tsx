@@ -1,3 +1,6 @@
+import { StaggerChildrenContainer, StaggerChildrenItem } from "@/components/animation/motion";
+import { Icon, IconType } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { GitBranch, StarIcon, Users } from "lucide-react";
@@ -5,9 +8,6 @@ import Link from "next/link";
 import { getRepoStats, StatsData } from "~/lib/third-party/github";
 import { appConfig } from "~/project.config";
 import { marketwiseLink } from "~/utils/string";
-import { StaggerChildrenContainer, StaggerChildrenItem } from "../animation/motion";
-import { Icon, IconType } from "../icons";
-import { Badge } from "../ui/badge";
 
 interface GithubBannerProps {
   className?: string;
@@ -20,10 +20,10 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
   } catch (error) {
     console.warn("Error fetching GitHub repository stats:", error);
     stats = {
-      stars: 9,
+      stars: 12,
       forks: 2,
       contributors: 1,
-      visitors: 1_40_000, // Fallback value
+      visitors: 2_40_000, // Fallback value
     };
   }
 

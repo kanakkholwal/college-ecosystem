@@ -19,6 +19,7 @@ import {
 import { type themeType } from "@/constants/theme";
 import useStorage from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
+import { sendGAEvent } from "@next/third-parties/google";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -143,8 +144,8 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 
 // Define brand themes
 interface brandThemeType {
-  name:string
-  color:string
+  name: string
+  color: string
 }
 const brand_themes = [
   { name: "Nexo Purple", color: "#7F57F1" },
@@ -179,6 +180,7 @@ export function ThemePopover() {
     if (selected) {
       const root = document.documentElement;
       root.style.setProperty("--primary", selected.color);
+      root.style.setProperty("--ring", selected.color);
       // root.style.setProperty("--primary-foreground", "#ffffff");
     }
   }, [currentTheme]);
@@ -207,7 +209,7 @@ export function ThemePopover() {
               className="rounded-md border bg-popover shadow-md"
             >
               <p className="text-xs text-muted-foreground p-2">
-                  Select your favorite brand theme
+                Select your favorite brand theme
               </p>
               <motion.div
                 className="grid gap-2 p-2 grid-cols-2 sm:grid-cols-3"
@@ -225,6 +227,10 @@ export function ThemePopover() {
                     onClick={() => {
                       setCurrentTheme(theme);
                       setOpen(false);
+                      sendGAEvent("event", "brand_theme_switch", {
+                        theme: theme.name,
+                        color: theme.color,
+                      });
                     }}
                     className={cn(
                       "flex items-center justify-start rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent w-full",

@@ -38,9 +38,10 @@ export function changeCase(
       return str;
   }
 }
+const appUrl = new URL(appConfig.url)
 export function marketwiseLink(link: string, path: string = "/resources") {
   const url = new URL(link);
-  url.searchParams.append("utm_source", appConfig.url);
+  url.searchParams.append("utm_source", appUrl.hostname);
   url.searchParams.append("utm_medium", "referral");
   url.searchParams.append("utm_campaign", appConfig.url + path);
   url.searchParams.append("ref", appConfig.url + path);

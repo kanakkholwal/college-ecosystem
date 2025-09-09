@@ -2,7 +2,7 @@
 import ProfileDropdown from "@/components/common/profile-dropdown";
 import { ApplicationInfo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { ButtonLink } from "@/components/utils/link";
+import { AuthButtonLink, ButtonLink } from "@/components/utils/link";
 import {
   NavLink,
   SUPPORT_LINKS,
@@ -13,11 +13,10 @@ import { cn } from "@/lib/utils";
 import { ArrowUpRight, LayoutDashboard, LogIn } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { Session } from "~/auth";
 import { NavTabs } from "./nav-tabs";
 import { ThemePopover, ThemeSwitcher } from "./theme-switcher";
-
 import { Search, Settings, User } from "lucide-react";
 
 import { Icon } from "@/components/icons";
@@ -30,7 +29,9 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import React from "react";
+import { Separator } from "@/components/ui/separator";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useMemo } from "react";
 
 const loggedInList = [
   {
@@ -49,14 +50,40 @@ interface NavbarProps {
   user?: Session["user"];
 }
 
+
 export default function Navbar({ user }: NavbarProps) {
-  const navLinks = getNavLinks(user);
   const pathname = usePathname();
+  const navLinks = getNavLinks(user);
+
+  // Memoized categories and category map
+  const { categories } = useMemo(() => {
+    const cats = ["all", ...new Set(navLinks.map((l) => l.category).filter(Boolean))];
+    const map = new Map<string, string[]>();
+    cats.forEach((c) =>
+      map.set(
+        c,
+        navLinks.filter((l) => c === "all" || l.category === c).map((l) => l.href)
+      )
+    );
+    return { categories: cats, categoryMap: map };
+  }, [navLinks]);
+
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const availableLinks = useMemo(
+    () =>
+      navLinks.filter(
+        (link) => activeCategory === "all" || link.category === activeCategory
+      ),
+    [activeCategory, navLinks]
+  );
 
   return (
     <header
       id="navbar"
-      className={cn("z-50 w-full pb-2 transition-all", "bg-card/25 backdrop-blur-lg border-b")}
+      className={cn(
+        "z-50 w-full pb-2 transition-all",
+        "bg-card/25 backdrop-blur-lg border-b"
+      )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto flex items-center justify-between px-4 py-2">
         <Link href="/">
@@ -69,21 +96,61 @@ export default function Navbar({ user }: NavbarProps) {
           {user ? (
             <ProfileDropdown user={user} />
           ) : (
-            <ButtonLink
+            <AuthButtonLink
               size="sm"
               rounded="full"
-              href={`/auth/sign-in?next=${pathname}`}
+              href={pathname}
               variant="rainbow"
             >
               Log In
               <LogIn />
-            </ButtonLink>
+            </AuthButtonLink>
           )}
         </div>
       </div>
+
+      {/* Category Tabs */}
       <div className="w-full max-w-(--max-app-width) mx-auto">
+        {categories.length > 1 && (
+          <div className="inline-flex items-center space-x-2 text-sm mx-2 lg:mx-4 mb-2">
+            {categories.map((category, index) => (
+              <Fragment key={category}>
+                <button
+                  onClick={() => setActiveCategory(category)}
+                  className={cn(
+                    "h-6 px-3 py-2 cursor-pointer transition-colors text-xs font-medium capitalize",
+                    "text-muted-foreground hover:text-primary hover:bg-primary/10 hover:dark:bg-primary/30 rounded-lg",
+                    "inline-flex items-center justify-center relative",
+                    activeCategory === category && "text-primary"
+                  )}
+                >
+                  {category}
+                  <AnimatePresence>
+                    {activeCategory === category && (
+                      <motion.div
+                        layoutId="active-category-underline"
+                        className="absolute bottom-0 left-0 right-0 h-0.25 bg-primary rounded-full"
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                  </AnimatePresence>
+                </button>
+                {index < categories.length - 1 && (
+                  <Separator orientation="vertical" />
+                )}
+              </Fragment>
+            ))}
+          </div>
+        )}
+
+        {/* Nav Tabs */}
         <NavTabs
-          navLinks={navLinks.map((link) => ({
+          key={activeCategory} // Key to remount on category change
+          navLinks={availableLinks.map((link) => ({
             id: link.href,
             href: link.href,
             children: (
@@ -99,7 +166,6 @@ export default function Navbar({ user }: NavbarProps) {
     </header>
   );
 }
-
 interface QuickLinksProps extends NavbarProps {
   publicLinks: NavLink[];
 }

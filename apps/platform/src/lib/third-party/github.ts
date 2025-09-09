@@ -37,7 +37,7 @@ export async function getRepoStarGazers(
     }
     return response.data.stargazers_count || 9; // Default to 9 if not available
   } catch (error) {
-    console.error("Error fetching GitHub stars:", error);
+    console.warn("Error fetching GitHub stars:", error);
     return 9; // Fallback value
   }
 }

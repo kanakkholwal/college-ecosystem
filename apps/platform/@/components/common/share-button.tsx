@@ -7,6 +7,7 @@ import { Icon } from "../icons";
 import { Button, ButtonProps } from "../ui/button";
 import { ResponsiveDialog } from "../ui/responsive-dialog";
 import { ButtonLink } from "../utils/link";
+import { sendGAEvent } from '@next/third-parties/google'
 
 type ShareButtonProps = {
   data: {
@@ -39,6 +40,13 @@ function ShareButton({ data, ...props }: ShareButtonProps) {
         children: props.children || "Share",
         variant: "outline",
         ...props,
+        onClick: (e) => {
+          props.onClick?.(e);
+          sendGAEvent("event", "share_button_click", {
+            url: data.url,
+            hasNativeSupport: isNativeShareSupported,
+          });
+        }
       }}
       className="grid-cols-1 gap-4 grid w-full"
     >

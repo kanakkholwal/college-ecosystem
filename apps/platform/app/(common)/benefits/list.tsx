@@ -18,6 +18,7 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/utils/link";
+import { sendGAEvent } from "@next/third-parties/google";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
@@ -136,6 +137,13 @@ export default function FreeStuffTable() {
                                                             target="_blank"
                                                             size="sm"
                                                             variant="dark"
+                                                            onClickCapture={() => {
+                                                                sendGAEvent("event", "benefit_apply_click", {
+                                                                    resource: res.resource,
+                                                                    category: res.category,
+                                                                    tags: res.tags,
+                                                                });
+                                                            }}
                                                         >
                                                             Apply Now
                                                             <Icon name="arrow-up-right" />
@@ -155,7 +163,13 @@ export default function FreeStuffTable() {
                 <p className="text-muted-foreground mr-4 text-sm">
                     Have a resource to share?
                 </p>
-                <ButtonLink href={"https://forms.gle/aA8NzH31ByUommCg7"} target="_blank" variant="rainbow" size="lg">
+                <ButtonLink href={"https://forms.gle/aA8NzH31ByUommCg7"} target="_blank" variant="rainbow" size="lg" onClick={() => {
+                    sendGAEvent("event",
+                        "benefit_submit_click", {
+                        location: "benefits_page",
+                    }
+                    );
+                }}>
                     <Sparkles />
                     Submit a Resource
                     <Icon name="arrow-up-right" />
