@@ -32,6 +32,7 @@ export type RouterCardLink = {
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
   allowed_roles: AllowedRoleType[] | AllowedRoleType;
   disabled?: boolean;
+  category: string;
 };
 
 export const quick_links: RouterCardLink[] = [
@@ -41,6 +42,7 @@ export const quick_links: RouterCardLink[] = [
     description: "Explore resources like articles, experiences, and more.",
     allowed_roles: ["*"],
     Icon: GrResources,
+    category: "general",
   },
   {
     href: "/benefits",
@@ -49,6 +51,7 @@ export const quick_links: RouterCardLink[] = [
     Icon: Sparkles,
     disabled: false,
     allowed_roles: ["*"],
+    category: "general",
   },
   {
     href: "/results",
@@ -56,6 +59,7 @@ export const quick_links: RouterCardLink[] = [
     description: "Check your results here.",
     allowed_roles: ["*"],
     Icon: BiSpreadsheet,
+    category: "academic",
   },
   {
     href: "/syllabus",
@@ -63,6 +67,7 @@ export const quick_links: RouterCardLink[] = [
     description: "Check your syllabus here.",
     Icon: LuBookA,
     allowed_roles: ["*"],
+    category: "academic",
   },
   {
     href: "/classroom-availability",
@@ -70,6 +75,7 @@ export const quick_links: RouterCardLink[] = [
     description: "Check the availability of classrooms here.",
     Icon: LuSchool,
     allowed_roles: ["*"],
+    category: "academic",
   },
   {
     href: "/schedules",
@@ -78,6 +84,7 @@ export const quick_links: RouterCardLink[] = [
     Icon: GrSchedules,
     disabled: false,
     allowed_roles: ["*"],
+    category: "academic",
   },
   {
     href: "/academic-calendar",
@@ -86,6 +93,7 @@ export const quick_links: RouterCardLink[] = [
     Icon: CalendarRange,
     disabled: false,
     allowed_roles: ["*"],
+    category: "academic",
   },
 
   {
@@ -94,6 +102,7 @@ export const quick_links: RouterCardLink[] = [
     Icon: AudioLines,
     description: "Join the community and interact with your peers.",
     allowed_roles: ["*"],
+    category: "community",
   },
   {
     title: "Announcements",
@@ -101,6 +110,7 @@ export const quick_links: RouterCardLink[] = [
     Icon: GrAnnounce,
     description: "Check out the latest announcements.",
     allowed_roles: ["*"],
+    category: "community",
   },
   {
     title: "Polls",
@@ -108,6 +118,7 @@ export const quick_links: RouterCardLink[] = [
     Icon: MdOutlinePoll,
     description: "Participate in polls.",
     allowed_roles: ["*"],
+    category: "community",
   },
   // {
   //   href: "/chat",
@@ -125,6 +136,7 @@ export type rawLinkType = {
   allowed_roles: AllowedRoleType[] | AllowedRoleType;
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
   preserveParams?: boolean;
+  category: "none" | "metrics" | "action" | "view"
   items?: {
     title: string;
     path: string;
@@ -138,16 +150,19 @@ export const sidebar_links: rawLinkType[] = [
     icon: TbDashboard,
     path: "",
     allowed_roles: Object.values(ROLES),
+    category: "none"
   },
   {
     title: "Users",
     icon: Users,
     path: "/users",
     allowed_roles: [ROLES_ENUMS.ADMIN],
+    category: "metrics",
     items: [
       {
         title: "Create User",
         path: "/new",
+
         allowed_roles: [ROLES_ENUMS.ADMIN],
       },
     ],
@@ -157,6 +172,7 @@ export const sidebar_links: rawLinkType[] = [
     icon: BiSpreadsheet,
     path: "/result",
     allowed_roles: [ROLES_ENUMS.ADMIN],
+    category: "metrics",
     items: [
       {
         title: "Scraping",
@@ -175,18 +191,23 @@ export const sidebar_links: rawLinkType[] = [
     title: "Academic Events",
     icon: IoCalendarOutline,
     path: "/events",
+    category: "view",
     allowed_roles: [ROLES_ENUMS.ADMIN],
   },
   {
     title: "Courses",
     icon: LuBookA,
     path: "/courses",
+    category: "view",
+
     allowed_roles: [ROLES_ENUMS.ADMIN],
   },
   {
     title: "Schedules",
     icon: GrSchedules,
     path: "/schedules",
+    category: "view",
+
     // make it regex
     allowed_roles: [
       ROLES_ENUMS.ADMIN,
@@ -199,18 +220,24 @@ export const sidebar_links: rawLinkType[] = [
     title: "Personal Attendance",
     icon: CalendarRange,
     path: "/attendance-personal",
+    category: "view",
+
     allowed_roles: [ROLES_ENUMS.STUDENT],
   },
   {
     title: "Out Pass",
     icon: Tickets,
     path: "/outpass",
+    category: "view",
+
     allowed_roles: [ROLES_ENUMS.STUDENT],
   },
   {
     title: "Rooms",
     icon: LuSchool,
     path: "/rooms",
+    category: "view",
+
     allowed_roles: [ROLES_ENUMS.ADMIN],
     items: [
       {
@@ -224,6 +251,8 @@ export const sidebar_links: rawLinkType[] = [
     title: "Hostels",
     icon: LuBuilding,
     path: "/hostels",
+    category: "view",
+
     allowed_roles: [
       ROLES_ENUMS.ADMIN,
       ROLES_ENUMS.CHIEF_WARDEN,
@@ -238,6 +267,8 @@ export const sidebar_links: rawLinkType[] = [
     title: "Settings",
     icon: Settings,
     path: "/settings",
+    category: "view",
+
     allowed_roles: Object.values(ROLES),
     items: [
       {
@@ -317,11 +348,7 @@ const checkRoleAccess = (userRole: string, allowedRoles: string[]): boolean => {
 
 export const SUPPORT_LINKS = supportLinks;
 
-export type NavLink = {
-  title: string;
-  href: string;
-  description: string;
-  Icon?: React.FC<React.SVGProps<SVGSVGElement>>;
+export type NavLink = RouterCardLink & {
   items?: NavLink[];
 };
 
@@ -335,40 +362,30 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
         self.findIndex((l) => l.href === link.href && l.title === link.title)
     );
   // console.log("Links by role:", linksByRole);
+  const compiledLinks = linksByRole.map((link) => ({
+    ...link,
+  }));
+  if (user) {
+    if (user.other_roles?.length <= 1) {
+      compiledLinks.push({
+        title: "Settings",
+        href: user.other_roles[0] + "/settings",
+        description: "Manage your account settings.",
+        Icon: Settings,
+        category: "dashboard",
+        allowed_roles: ["*"]
+      })
+    } else {
+      compiledLinks.push({
+        title: "Dashboard",
+        href: "/" + user.other_roles[0],
+        description: "Manage your account settings.",
+        Icon: Settings,
+        category: "dashboard",
+        allowed_roles: ["*"],
+      })
+    }
+  }
+  return compiledLinks
 
-  return [
-    // {
-    //   title: "Home",
-    //   href: "/",
-    //   description: "Go to the home page.",
-    //   Icon: House,
-    // },
-    ...linksByRole,
-    ...(user
-      ? user.other_roles?.length <= 1
-        ? [
-          {
-            title: "Settings",
-            href: user.other_roles[0] + "/settings",
-            description: "Manage your account settings.",
-            Icon: Settings,
-          },
-        ]
-        : [
-          {
-            title: "Dashboard",
-            href: "/" + user.other_roles[0],
-            description: "Manage your account settings.",
-            Icon: Settings,
-            items: user.other_roles.map((role) => ({
-              title:
-                role.charAt(0).toUpperCase() + role.slice(1) + " Dashboard",
-              href: `/${role}`,
-              description: `Manage your ${role} dashboard.`,
-              Icon: Settings,
-            })),
-          },
-        ]
-      : []),
-  ];
 };

@@ -28,7 +28,7 @@ export default function ResourceCard({
   date,
   readingTime,
   category,
-  showImage,
+  showImage = false,
   ...frontmatter
 }: ResourceCardProps) {
   return (

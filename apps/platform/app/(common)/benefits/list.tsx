@@ -107,14 +107,13 @@ export default function FreeStuffTable() {
                                                                 height={40}
                                                                 className="rounded-md object-contain size-10"
                                                             />
-                                                            <button className="font-medium hover:underline text-left">
+                                                            <span className="font-medium hover:underline text-left whitespace-nowrap">
                                                                 {res.resource}
-                                                            </button>
+                                                            </span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>{res.value || "-"}</TableCell>
-                                                    <TableCell>
-                                                        <div className="flex gap-2 flex-wrap">
+                                                    <TableCell className="whitespace-nowrap flex gap-2 flex-wrap">
                                                             {res.tags.map((tag) => (
                                                                 <span
                                                                     key={tag}
@@ -126,9 +125,8 @@ export default function FreeStuffTable() {
                                                                     {tag}
                                                                 </span>
                                                             ))}
-                                                        </div>
                                                     </TableCell>
-                                                    <TableCell className="max-w-md">
+                                                    <TableCell className="max-w-md whitespace-pre-wrap">
                                                         {res.description}
                                                     </TableCell>
                                                     <TableCell>

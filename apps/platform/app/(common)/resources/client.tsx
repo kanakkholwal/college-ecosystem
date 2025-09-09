@@ -33,7 +33,7 @@ export function CategoryFilter({ categories }: { categories: string[] }) {
 export function ResourcesList({
   resources,
   className,
-  showImage = true,
+  showImage,
 }: {
   resources: ResourceFrontMatter[];
   className?: string;

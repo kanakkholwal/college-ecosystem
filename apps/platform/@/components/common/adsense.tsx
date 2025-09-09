@@ -24,6 +24,12 @@ const adsTypes = {
   },
 } as const;
 
+
+declare global {
+  interface Window {
+    adsbygoogle: {[key: string]: unknown}[]
+  }
+}
 interface AdUnitProps {
   adSlot: keyof typeof adsTypes;
 }

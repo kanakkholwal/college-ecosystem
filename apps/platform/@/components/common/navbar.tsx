@@ -1,6 +1,8 @@
 "use client";
 import ProfileDropdown from "@/components/common/profile-dropdown";
+import { ApplicationInfo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/utils/link";
 import {
   NavLink,
   SUPPORT_LINKS,
@@ -13,10 +15,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { Session } from "~/auth";
-import { ApplicationInfo } from "../logo";
-import { ButtonLink } from "../utils/link";
 import { NavTabs } from "./nav-tabs";
-import { ThemeSwitcher } from "./theme-switcher";
+import { ThemePopover, ThemeSwitcher } from "./theme-switcher";
 
 import { Search, Settings, User } from "lucide-react";
 
@@ -65,6 +65,7 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="ml-auto flex gap-2 items-center">
           <QuickLinks user={user} publicLinks={navLinks} />
           <ThemeSwitcher />
+          <ThemePopover />
           {user ? (
             <ProfileDropdown user={user} />
           ) : (

@@ -102,7 +102,7 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
       >
         <div
           className={cn(
-            "absolute transition-all duration-300 ease-out bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center",
+            "absolute transition-all duration-300 ease-out bg-primary/10 dark:bg-primary/30 rounded-xl flex items-center",
             triggerHeight
           )}
           style={{
@@ -125,11 +125,12 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                 tabRefs.current[index] = el;
               }}
               className={cn(
-                "px-3 py-2 cursor-pointer transition-colors duration-300 z-10",
+                "px-3 py-2 cursor-pointer transition-colors duration-300 z-10 ",
+                "text-muted-foreground hover:text-foreground/80 bg-transparent",
                 activeIndex === index
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground/80",
-                "bg-transparent",
+                  : "",
+                hoveredIndex === index ? "text-primary hover:text-primary" : "",
                 triggerHeight
               )}
               onMouseEnter={() => setHoveredIndex(index)}
@@ -139,9 +140,9 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                 // onTabChange?.(navLink.id)
               }}
             >
-              <div className="text-xs font-medium leading-5 whitespace-nowrap flex items-center gap-2 justify-center h-full [&>svg]:size-4">
+              <div className="text-xs font-medium leading-5 whitespace-nowrap flex items-center gap-2 justify-center h-full [&>svg]:size-4 hover:[&>svg]:rotate-y-180 [&>svg]:duration-500">
                 {navLink?.children}
-                {navLink.notification? (
+                {navLink.notification ? (
                   <span className="inline-flex items-center justify-center size-4 text-xs font-medium text-primary bg-primary/10 rounded-full">
                     {navLink.notification}
                   </span>
