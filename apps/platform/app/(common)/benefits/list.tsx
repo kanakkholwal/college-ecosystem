@@ -1,5 +1,6 @@
 "use client";
 
+import AdUnit from "@/components/common/adsense";
 import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
 import {
@@ -114,17 +115,17 @@ export default function FreeStuffTable() {
                                                     </TableCell>
                                                     <TableCell>{res.value || "-"}</TableCell>
                                                     <TableCell className="whitespace-nowrap flex gap-2 flex-wrap">
-                                                            {res.tags.map((tag) => (
-                                                                <span
-                                                                    key={tag}
-                                                                    className={`px-2 py-1 rounded-md text-xs ${tag === "NEW"
-                                                                        ? "bg-yellow-200 text-yellow-800"
-                                                                        : "bg-muted text-muted-foreground"
-                                                                        }`}
-                                                                >
-                                                                    {tag}
-                                                                </span>
-                                                            ))}
+                                                        {res.tags.map((tag) => (
+                                                            <span
+                                                                key={tag}
+                                                                className={`px-2 py-1 rounded-md text-xs ${tag === "NEW"
+                                                                    ? "bg-yellow-200 text-yellow-800"
+                                                                    : "bg-muted text-muted-foreground"
+                                                                    }`}
+                                                            >
+                                                                {tag}
+                                                            </span>
+                                                        ))}
                                                     </TableCell>
                                                     <TableCell className="max-w-md whitespace-pre-wrap">
                                                         {res.description}
@@ -149,7 +150,7 @@ export default function FreeStuffTable() {
                     </TabsContent>
                 ))}
             </Tabs>
-
+            <AdUnit adSlot="display-horizontal" key="benefits-page-ad" />
             <div className=" p-4 flex items-center justify-center flex-col gap-3 mt-10">
                 <p className="text-muted-foreground mr-4 text-sm">
                     Have a resource to share?
