@@ -88,7 +88,7 @@ const ResponsiveDialog = React.memo(
                 {description}
               </DrawerDescription>
             </DrawerHeader>
-            <div className={cn("px-4 w-full @container/dialog", className)}>
+            <div className={cn("px-4 w-full @container/dialog space-y-3", className, showCloseButton ? " " : "pb-4")}>
               {children}
             </div>
             {showCloseButton && (

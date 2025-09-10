@@ -1,6 +1,5 @@
 "use client";
 
-import AdUnit from "@/components/common/adsense";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -56,7 +55,6 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
           </motion.div>
         );
       })}
-      <AdUnit adSlot="display-vertical" key="dashboard-settings-sidenav" className="hidden lg:block" />
     </nav>
   );
 }

@@ -3,6 +3,8 @@
 import AdUnit from "@/components/common/adsense";
 import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import {
     Table,
     TableBody,
@@ -19,6 +21,7 @@ import {
 } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/utils/link";
 import { sendGAEvent } from "@next/third-parties/google";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
@@ -26,6 +29,7 @@ import { LuShare2 } from "react-icons/lu";
 import { benefitsCategories, benefitsList } from "root/resources/benefits";
 import { appConfig } from "~/project.config";
 import { changeCase, marketwiseLink } from "~/utils/string";
+
 
 
 
@@ -132,22 +136,92 @@ export default function FreeStuffTable() {
                                                         {res.description}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <ButtonLink
-                                                            href={marketwiseLink(res.href, "benefits")}
-                                                            target="_blank"
-                                                            size="sm"
-                                                            variant="dark"
-                                                            onClickCapture={() => {
-                                                                sendGAEvent("event", "benefit_apply_click", {
-                                                                    resource: res.resource,
-                                                                    category: res.category,
-                                                                    tags: res.tags,
-                                                                });
+
+                                                        <ResponsiveDialog
+                                                        showCloseButton={false}
+                                                            btnProps={{
+                                                                variant: "dark",
+                                                                size: "sm",
+                                                                onClick: () => {
+                                                                    sendGAEvent("event", "benefit_click_claim", {
+                                                                        resource: res.resource,
+                                                                        category: res.category,
+                                                                        tags: res.tags,
+                                                                    });
+                                                                },
+                                                                children: <>
+                                                                    <Icon name="command" />
+                                                                    {res.category === "fellowships" ? "Apply" : "Claim"} Now
+                                                                </>
                                                             }}
+                                                            title={`Apply for ${res.resource}`}
+                                                            description={`You are about to apply for ${res.resource}. Click the button below to proceed.`}
                                                         >
-                                                            Apply Now
-                                                            <Icon name="arrow-up-right" />
-                                                        </ButtonLink>
+                                                            <div className="flex items-start justify-between gap-4">
+                                                                <div className="flex items-center gap-4">
+                                                                    <Avatar className="w-14 h-14 rounded-lg">
+                                                                        <AvatarImage src={res.logo} alt={res.resource} />
+                                                                        <AvatarFallback>{res.resource[0]}</AvatarFallback>
+                                                                    </Avatar>
+
+                                                                    <div>
+                                                                        <h4 className="flex items-center gap-3 text-lg font-semibold">
+                                                                            {res.resource}
+                                                                            <span className="ml-2 inline-flex items-center gap-2">
+                                                                                <Badge variant="default_light">{res.value}</Badge>
+                                                                                {res.isNew && (
+                                                                                    <Badge variant="ghost" className="ml-1 text-xs font-medium uppercase text-emerald-600">
+                                                                                        New
+                                                                                    </Badge>
+                                                                                )}
+                                                                            </span>
+                                                                        </h4>
+
+
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            {res.description}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2 my-2">
+                                                                {res.tags.map((t) => (
+                                                                    <Badge
+                                                                        size="sm"
+                                                                        key={t}
+                                                                        className="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium"
+                                                                    >
+                                                                        {t}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                            <div className="rounded-lg border p-4 bg-gradient-to-b from-white/60 to-transparent">
+                                                                <p className="text-sm leading-relaxed">This free credit is delivered {res.description}. Use the link above to claim. Terms apply.</p>
+
+
+                                                                <div className="mt-4 flex items-center justify-between">
+                                                                    <div className="text-xs text-muted-foreground">Category</div>
+                                                                    <div className="text-sm font-medium capitalize">{res.category.replace("-", " ")}</div>
+                                                                </div>
+                                                            </div>
+                                                            <ButtonLink
+                                                                href={marketwiseLink(res.href, "benefits")}
+                                                                target="_blank"
+                                                                size="sm"
+                                                                width="full"
+                                                                onClickCapture={() => {
+                                                                    sendGAEvent("event", "benefit_click_claimed", {
+                                                                        resource: res.resource,
+                                                                        category: res.category,
+                                                                        tags: res.tags,
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Claim Now
+                                                                <Icon name="arrow-up-right" />
+                                                            </ButtonLink>
+                                                        </ResponsiveDialog>
+
                                                     </TableCell>
                                                 </motion.tr>
                                             ))}

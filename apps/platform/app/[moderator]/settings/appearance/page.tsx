@@ -39,7 +39,7 @@ const BrandThemeSelector = () => {
           const selected = brand_themes.find((b) => b.color === color);
           if (selected) setCurrentTheme(selected);
         }}
-        className="grid gap-4 grid-cols-3 p-6"
+        className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 p-6"
       >
         {brand_themes.map((brandTheme) => {
           const isActive = currentTheme.name === brandTheme.name;

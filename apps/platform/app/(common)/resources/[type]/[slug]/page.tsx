@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeftIcon, Dot, Edit } from "lucide-react";
+import { Dot, Edit } from "lucide-react";
 import { Metadata, ResolvingMetadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -113,7 +113,7 @@ export default async function ResourcePage({ params }: PageProps) {
               size="sm"
               aria-label={`Back to ${changeCase(resolvedParams.type, "title")} resources`}
             >
-              <ArrowLeftIcon />
+              <Icon name="arrow-left" />
               Back to {changeCase(resolvedParams.type, "title")}
             </ButtonLink>
             <ButtonLink
@@ -358,6 +358,7 @@ export default async function ResourcePage({ params }: PageProps) {
           />
         </section>
       )}
+      <AdUnit adSlot="multiplex" key="resources-page-ad-multiplex" className="mt-10" />
     </>
   );
 }
