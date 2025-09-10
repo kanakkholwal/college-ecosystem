@@ -77,7 +77,7 @@ export default function ResourceCard({
 
           <div className="flex flex-wrap gap-1 pt-2">
             {category && (
-              <Badge variant="info" appearance="light" className="text-xs capitalize">
+              <Badge variant="default_light" appearance="light" className="text-xs capitalize">
                 {category}
               </Badge>
             )}

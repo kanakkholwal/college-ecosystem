@@ -4,7 +4,7 @@ import Link from "next/link";
 import { appConfig, supportLinks } from "~/project.config";
 import { ApplicationInfo } from "../logo";
 import GithubStars from "./github";
-import { ThemeSwitcher } from "./theme-switcher";
+import { ThemePopover, ThemeSwitcher } from "./theme-switcher";
 
 const sectionLinks = [
   {
@@ -87,6 +87,7 @@ export default async function Footer() {
           </ul> */}
           <div className="order-1 md:order-2 flex items-center gap-2">
             <ThemeSwitcher />
+            <ThemePopover className="md:hidden" />
             <GoToTopButton />
           </div>
         </div>

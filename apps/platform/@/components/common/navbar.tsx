@@ -10,14 +10,13 @@ import {
   socials,
 } from "@/constants/links";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, LayoutDashboard, LogIn } from "lucide-react";
+import { ArrowUpRight, LayoutDashboard, LogIn, Search, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useState } from "react";
 import type { Session } from "~/auth";
 import { NavTabs } from "./nav-tabs";
 import { ThemePopover, ThemeSwitcher } from "./theme-switcher";
-import { Search, Settings, User } from "lucide-react";
 
 import { Icon } from "@/components/icons";
 import {
@@ -32,6 +31,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useMemo } from "react";
+import { twUtility } from "../utils/tailwind-classes";
 
 const loggedInList = [
   {
@@ -92,7 +92,7 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="ml-auto flex gap-2 items-center">
           <QuickLinks user={user} publicLinks={navLinks} />
           <ThemeSwitcher />
-          <ThemePopover />
+          <ThemePopover className="hidden md:inline-flex"/>
           {user ? (
             <ProfileDropdown user={user} />
           ) : (
@@ -110,9 +110,9 @@ export default function Navbar({ user }: NavbarProps) {
       </div>
 
       {/* Category Tabs */}
-      <div className="w-full max-w-(--max-app-width) mx-auto">
+      <div className={cn("w-full max-w-(--max-app-width) mx-auto pr-3")}>
         {categories.length > 1 && (
-          <div className="inline-flex items-center space-x-2 text-sm mx-2 lg:mx-4 mb-2">
+          <div className={cn("inline-flex items-center space-x-2 text-sm mx-2 lg:mx-4 mb-2 max-w-full",twUtility.horizontalScroll)}>
             {categories.map((category, index) => (
               <Fragment key={category}>
                 <button
@@ -159,6 +159,8 @@ export default function Navbar({ user }: NavbarProps) {
                 {link.title}
               </>
             ),
+            isNew: link.isNew,
+            
             items: link.items,
           }))}
         />

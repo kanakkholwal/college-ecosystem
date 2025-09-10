@@ -1,4 +1,5 @@
 "use client";
+import { Megaphone } from "lucide-react";
 
 import { AnimatedGradientText } from "@/components/animation/animated-shiny-text";
 import { FloatingElements } from "@/components/animation/floating-elements";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/utils/link";
 import { featuresSectionContent } from "@/constants/landing";
 import { cn } from "@/lib/utils";
+import { sendGAEvent } from "@next/third-parties/google";
 import { motion, spring } from "framer-motion";
 import {
   ArrowUpRight,
@@ -218,12 +220,12 @@ export function IntroSection({
   });
   return (
     <section
-      className="z-10 relative mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-8 rounded-lg py-24 lg:text-left"
+      className="z-10 relative mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-8 rounded-lg py-12 sm:py-24 lg:text-left"
       suppressHydrationWarning
     >
       <StaggerChildrenContainer
         className={cn(
-          "relative z-[100] flex w-full flex-col items-center justify-center px-4 text-center lg:flex-row lg:items-start lg:justify-between lg:text-left"
+          "relative z-[100] flex w-full flex-col items-center justify-center sm:px-4 text-center lg:flex-row lg:items-start lg:justify-between lg:text-left"
         )}
       >
         {/* LEFT: value prop, CTAs, badges, stats */}
@@ -234,7 +236,7 @@ export function IntroSection({
             stiffness: 300,
             delay: 0.05,
           }}
-          className="relative z-30 flex w-full max-w-xl flex-1 flex-col items-start justify-center rounded-3xl border border-muted/40 bg-background/60 px-6 py-8 backdrop-blur"
+          className="relative z-30 flex w-full max-w-xl flex-1 flex-col items-start justify-center rounded-3xl border border-muted/40 bg-background/60 px-3 sm:px-6 py-8 backdrop-blur"
         >
           {/* Pill */}
           <motion.div
@@ -281,14 +283,22 @@ export function IntroSection({
           <StaggerChildrenItem
             className="mt-2 flex flex-wrap items-center gap-4"
           >
-            <ButtonLink size="lg" href="#quick-links">
+            <ButtonLink size="responsive_lg" href="#quick-links">
               Explore Features <Icon name="arrow-right" />
             </ButtonLink>
             <ButtonLink
-              size="lg"
+              size="responsive_lg"
               variant="rainbow_outline"
               target="_blank"
               transition="damped"
+              onClick={() => {
+                sendGAEvent('contribute_click', {
+                  location: 'hero_section',
+                  user_id: user?.id,
+                  user_email: user?.email,
+                  // Add any additional parameters you want to track
+                })
+              }}
               href={`https://github.com/${appConfig.githubUri}/blob/main/CONTRIBUTING.md`}
             >
               <Icon name="github" />
@@ -299,19 +309,19 @@ export function IntroSection({
 
           {/* Popular badges (kept) */}
           <StaggerChildrenItem
-            className="mb-6 mt-5 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
+            className="mb-6 mt-5 flex flex-wrap items-center justify-start gap-3"
           >
-            <span className="text-sm font-semibold text-muted-foreground">
+            <span className="text-xs font-semibold text-muted-foreground">
               Popular Features
             </span>
             {popular_features.map((feature) => (
               <Link
                 key={feature.name}
                 href={feature.href}
-                className="group flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-card-foreground shadow-sm transition-all hover:border-primary hover:bg-primary/5 active:scale-95 hover:scale-101"
+                className="group flex items-center gap-2 rounded-full border border-border bg-card px-1.5 md:px-3 py-1 md:py-1.5 h-6 md:h-8 text-xs font-medium text-card-foreground shadow-sm transition-all hover:border-primary hover:bg-primary/5 active:scale-95 hover:scale-101"
               >
                 <feature.icon
-                  className={cn(feature.color, "size-4 transition-colors group-hover:text-primary")}
+                  className={cn(feature.color, "size-3 md:size-4 transition-colors group-hover:text-primary")}
                 />
                 {feature.name}
               </Link>
@@ -415,20 +425,35 @@ export function IntroSection({
   );
 }
 
+
+
+
+
+
+
+
+
 export function HeroBentoMockup() {
   return (
     <motion.div
       variants={bentoVariants}
       initial="hidden"
       animate="show"
-      className="grid w-full max-w-lg grid-cols-2 gap-4"
+      className="relative grid w-full max-w-2xl grid-cols-2 gap-4 md:max-w-4xl"
     >
-      <div className="absolute -top-4 right-0 z-10 bg-gradient-to-r from-primary/80 to-primary/50 px-3 py-1 text-xs font-semibold text-white rounded-full shadow-md animate-pulse">
-        Place Your Event / Ads Here (Preview Only)
-      </div>
+      {/* Banner for Ads/Events */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="absolute -top-8 right-0 z-20 rounded-full bg-gradient-to-r from-primary to-tertiary px-4 py-1.5 text-xs font-semibold text-white shadow-lg"
+      >
+        <Megaphone className="inline h-3.5 w-3.5 mr-1" />
+        Your Club Event / Ads Could Be Here
+      </motion.div>
 
       {/* Result Card */}
-      <Card className="col-span-2 bg-gradient-to-br from-primary/10 to-background backdrop-blur">
+      <Card className="col-span-2 bg-gradient-to-br from-primary/10 to-background backdrop-blur-sm border border-border/40 shadow-lg hover:shadow-xl transition">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <GraduationCap className="h-4 w-4 text-primary" />
@@ -437,16 +462,16 @@ export function HeroBentoMockup() {
         </CardHeader>
         <CardContent className="text-sm">
           <p className="font-medium">
-            CGPI: <span className="text-primary">9.2</span>
+            CGPI: <span className="text-primary font-bold">9.2</span>
           </p>
           <div className="mt-2 h-2 w-full rounded-full bg-muted">
-            <div className="h-2 w-[80%] rounded-full bg-primary"></div>
+            <div className="h-2 w-[80%] rounded-full bg-primary" />
           </div>
         </CardContent>
       </Card>
 
       {/* Hostel Card */}
-      <Card className="rounded-2xl border border-border bg-card shadow-sm">
+      <Card className="rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition">
         <CardHeader className="pb-1">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
             <Home className="h-4 w-4 text-primary" />
@@ -455,12 +480,12 @@ export function HeroBentoMockup() {
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground">
           Room 204 · 3 Seater
-          <p className="text-foreground font-semibold">Allotted ✅</p>
+          <p className="text-foreground font-semibold mt-0.5">Allotted ✅</p>
         </CardContent>
       </Card>
 
       {/* Clubs Card */}
-      <Card className="rounded-2xl border border-border bg-card shadow-sm">
+      <Card className="rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition">
         <CardHeader className="pb-1">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -473,19 +498,20 @@ export function HeroBentoMockup() {
         </CardContent>
       </Card>
 
-      {/* Users Card */}
-      <Card className="col-span-2 rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-card shadow pt-5">
+      {/* User Reach Card */}
+      <Card className="col-span-2 rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-card shadow pt-5 hover:shadow-lg transition">
         <CardContent className="flex items-center justify-between">
           <div>
-            <p className="text-lg font-bold">12,000+</p>
+            <p className="text-2xl font-extrabold">12,000+</p>
             <p className="text-xs text-muted-foreground">Students Connected</p>
           </div>
-          <Users className="h-6 w-6 text-primary" />
+          <Users className="h-7 w-7 text-primary" />
         </CardContent>
       </Card>
     </motion.div>
   );
 }
+
 
 export function FeatureSection() {
   return (

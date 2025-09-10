@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useId, useRef } from "react";
 import { appConfig } from "~/project.config";
@@ -32,9 +33,10 @@ declare global {
 }
 interface AdUnitProps {
   adSlot: keyof typeof adsTypes;
+  className?: string;
 }
 
-const AdUnit: React.FC<AdUnitProps> = ({ adSlot }) => {
+const AdUnit: React.FC<AdUnitProps> = ({ adSlot, className }) => {
   const adsProps = adsTypes[adSlot];
   const id = useId();
   const pathname = usePathname();
@@ -52,7 +54,7 @@ const AdUnit: React.FC<AdUnitProps> = ({ adSlot }) => {
   }, [pathname, adSlot]); // refresh ad when route or slot changes
 
   return (
-    <div className="adsense-container" id={`adsense-${id}`}>
+    <div className={cn("adsense-container empty:hidden",className)} id={`adsense-${id}`}>
       <ins
         key={id}
         id={`adsbygoogle-${id}`}

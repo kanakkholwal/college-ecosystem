@@ -45,7 +45,7 @@ export default async function SettingsLayout({
             }))}
           />
         </aside>
-        <div className="flex-1 p-2 lg:p-4">{children}</div>
+        <div className="flex-1 p-2 lg:p-4 space-y-4">{children}</div>
       </div>
     </div>
   );

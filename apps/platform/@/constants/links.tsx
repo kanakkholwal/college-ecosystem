@@ -1,7 +1,7 @@
-import { Settings, Sparkles, Tickets, Users } from "lucide-react";
+import { Moon, Settings, Sparkles, Tickets, UserRoundCog, Users } from "lucide-react";
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
-import { LuBookA, LuBuilding, LuGithub, LuSchool } from "react-icons/lu";
+import { LuBookA, LuBuilding, LuGithub, LuLayoutDashboard, LuSchool } from "react-icons/lu";
 import { RiTwitterXFill } from "react-icons/ri";
 import type { Session } from "~/auth/client";
 // import { TbServer2 } from "react-icons/tb";
@@ -33,6 +33,7 @@ export type RouterCardLink = {
   allowed_roles: AllowedRoleType[] | AllowedRoleType;
   disabled?: boolean;
   category: string;
+  isNew?: boolean;
 };
 
 export const quick_links: RouterCardLink[] = [
@@ -52,6 +53,7 @@ export const quick_links: RouterCardLink[] = [
     disabled: false,
     allowed_roles: ["*"],
     category: "general",
+    isNew: true,
   },
   {
     href: "/results",
@@ -362,30 +364,43 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
         self.findIndex((l) => l.href === link.href && l.title === link.title)
     );
   // console.log("Links by role:", linksByRole);
-  const compiledLinks = linksByRole.map((link) => ({
-    ...link,
-  }));
+
   if (user) {
-    if (user.other_roles?.length <= 1) {
-      compiledLinks.push({
-        title: "Settings",
-        href: user.other_roles[0] + "/settings",
-        description: "Manage your account settings.",
-        Icon: Settings,
-        category: "dashboard",
-        allowed_roles: ["*"]
-      })
-    } else {
-      compiledLinks.push({
-        title: "Dashboard",
-        href: "/" + user.other_roles[0],
-        description: "Manage your account settings.",
-        Icon: Settings,
-        category: "dashboard",
-        allowed_roles: ["*"],
-      })
-    }
+    linksByRole.push({
+      title: "Dashboard",
+      href: "/" + user.other_roles[0],
+      description: "Manage your account settings.",
+      Icon: LuLayoutDashboard ,
+      category: "dashboard",
+      allowed_roles: ["*"],
+    })
+    linksByRole.push({
+      title: "Settings",
+      href: user.other_roles[0] + "/settings",
+      description: "Manage your account settings.",
+      Icon: Settings,
+      category: "dashboard",
+      allowed_roles: ["*"]
+    })
+    linksByRole.push({
+      title: "Account",
+      href: user.other_roles[0] + "/settings/account",
+      description: "Manage your account settings.",
+      Icon: UserRoundCog,
+      category: "dashboard",
+      allowed_roles: ["*"]
+    })
+    linksByRole.push({
+      title: "Appearance",
+      href: user.other_roles[0] + "/settings/appearance",
+      description: "Manage your account settings.",
+      Icon: Moon,
+      category: "dashboard",
+      allowed_roles: ["*"]
+    })
+
+
   }
-  return compiledLinks
+  return linksByRole
 
 };

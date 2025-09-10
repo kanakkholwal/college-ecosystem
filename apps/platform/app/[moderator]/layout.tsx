@@ -1,11 +1,11 @@
+import AdUnit from "@/components/common/adsense";
 import Navbar from "@/components/common/app-navbar";
 import { AppSidebar } from "@/components/common/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import type { Session } from "~/auth";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
 import { ALLOWED_ROLES } from "~/constants";
 import { changeCase } from "~/utils/string";
 
@@ -43,10 +43,7 @@ export default async function DashboardLayout({
     return notFound();
   }
 
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  }) as Session;
+  const session = await getSession() as Session;
 
   return (
     <SidebarProvider>
@@ -64,9 +61,10 @@ export default async function DashboardLayout({
           <div className="blur-[106px] h-32 bg-gradient-to-r from-cyan-400 to-sky-300 dark:to-indigo-600" />
         </div> */}
 
-        <main className="content  p-4 px-2 md:p-6 z-2 @container space-y-10 min-h-screen h-full">
+        <main className="content p-4 px-2 md:p-6 z-2 @container space-y-10 min-h-screen h-full">
           {children}
         </main>
+        <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
         {process.env.NODE_ENV !== "production" && (
           <div className="fixed bottom-0 right-auto left-auto mx-auto p-2 text-xs text-muted-foreground">
             <span className="font-semibold">Environment:</span>{" "}

@@ -143,11 +143,11 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 
 
 // Define brand themes
-interface brandThemeType {
+export interface brandThemeType {
   name: string
   color: string
 }
-const brand_themes = [
+export const brand_themes = [
   { name: "Nexo Purple", color: "#7F57F1" },
   { name: "Google Blue", color: "#4285F4" },
   { name: "Facebook Blue", color: "#1877F2" },
@@ -161,16 +161,16 @@ const brand_themes = [
   { name: "Twitch Purple", color: "#9146FF" },
   { name: "Discord Blurple", color: "#5865F2" },
   { name: "Reddit Orange", color: "#FF4500" },
-  { name: "Twitter X Black", color: "#000000" },
   { name: "Instagram Gradient", color: "#E1306C" }, // base pink from gradient
   { name: "Snapchat Yellow", color: "#FFFC00" },
   { name: "Tesla Red", color: "#CC0000" },
-  { name: "Adobe Scarlet", color: "#FF0000" },
   { name: "Slack Plum", color: "#611F69" },
   { name: "PayPal Blue", color: "#003087" },
 ];
 
-export function ThemePopover() {
+
+
+export function ThemePopover({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false);
   const [currentTheme, setCurrentTheme] = useStorage<brandThemeType>("theme-brand", brand_themes[0]);
 
@@ -182,13 +182,23 @@ export function ThemePopover() {
       root.style.setProperty("--primary", selected.color);
       root.style.setProperty("--ring", selected.color);
       // root.style.setProperty("--primary-foreground", "#ffffff");
+      // Update <meta name="theme-color">
+      let themeMeta = document.querySelector<HTMLMetaElement>(
+        'meta[name="theme-color"]'
+      );
+      if (!themeMeta) {
+        themeMeta = document.createElement("meta");
+        themeMeta.name = "theme-color";
+        document.head.appendChild(themeMeta);
+      }
+      themeMeta.content = selected.color;
     }
   }, [currentTheme]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="default_light" size="icon_sm">
+        <Button variant="default_light" size="icon_sm" className={cn(className)}>
           <Paintbrush className="text-primary" />
           <span className="sr-only">Change Theme</span>
         </Button>

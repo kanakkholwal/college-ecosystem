@@ -1,10 +1,4 @@
 "use client";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -67,7 +61,7 @@ function AccountFormContent({ currentUser }: Props) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 grid gap-6 md:grid-cols-2"
+        className="grid gap-4"
       >
         <FormField
           control={form.control}
@@ -75,6 +69,11 @@ function AccountFormContent({ currentUser }: Props) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Gender</FormLabel>
+              <FormDescription>
+                {currentUser.gender === "not_specified"
+                  ? "You can set your gender here."
+                  : "You cannot change your gender."}
+              </FormDescription>
               <FormControl>
                 <ToggleGroup
                   defaultValue={"not_specified"}
@@ -101,11 +100,7 @@ function AccountFormContent({ currentUser }: Props) {
                 </ToggleGroup>
               </FormControl>
 
-              <FormDescription>
-                {currentUser.gender === "not_specified"
-                  ? "You can set your gender here."
-                  : "You cannot change your gender."}
-              </FormDescription>
+
               <FormMessage />
             </FormItem>
           )}
@@ -117,6 +112,9 @@ function AccountFormContent({ currentUser }: Props) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Other Emails</FormLabel>
+              <FormDescription>
+                You can add multiple emails separated by commas.
+              </FormDescription>
               <FormControl>
                 <Input
                   type="text"
@@ -129,9 +127,7 @@ function AccountFormContent({ currentUser }: Props) {
                   }
                 />
               </FormControl>
-              <FormDescription>
-                You can add multiple emails separated by commas.
-              </FormDescription>
+
               <FormMessage />
             </FormItem>
           )}
@@ -245,29 +241,23 @@ const panels = [
 export function AccountForm({ currentUser }: Props) {
   return (
     <>
-      <Accordion type="single" collapsible className="space-y-4">
-        {panels.map((panel) => {
-          return (
-            <AccordionItem
-              key={panel.value}
-              value={panel.value}
-              className="bg-card rounded-lg border-b-0"
-            >
-              <AccordionTrigger className="flex-col items-start">
-                <span className="text-base font-medium text-left">
-                  {panel.label}
-                </span>
-                <span className="text-xs text-muted-foreground font-normal">
-                  {panel.description}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="p-4">
-                <panel.content currentUser={currentUser} />
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+      {panels.map((panel) => {
+        return (
+          <div
+            key={panel.value}
+            className="relative w-full flex-col rounded-lg border bg-card"
+          >
+            <div className="px-3 pt-3 font-medium text-sm"> {panel.label}</div>
+            <p className="text-xs text-muted-foreground mt-0.5 px-3">
+              {panel.description}
+            </p>
+            <div className="my-3 h-px w-full bg-border" />
+            <div className="p-4">
+              <panel.content currentUser={currentUser} />
+            </div>
+          </div>
+        );
+      })}
     </>
   );
 }

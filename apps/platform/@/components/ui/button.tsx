@@ -80,6 +80,7 @@ const buttonVariants = cva(
         icon_sm: "size-8 p-2 [&>svg]:size-4",
         icon_lg: "size-12 p-3.5 [&>svg]:size-6",
         icon_xl: "size-14 p-4 [&>svg]:size-8",
+        responsive_lg: "h-9 px-4 py-2 text-sm md:h-11 md:px-5 md:py-3 md:text-base [&>svg]:size-4 md:[&>svg]:size-6 ",
       },
       effect: {
         none: "",
@@ -139,6 +140,11 @@ const buttonVariants = cva(
         glass: "shadow-lg shadow-white/20 dark:shadow-black/20",
       },
     },
+    // compoundVariants:[
+    //   {
+    //     size: "lg",
+    //   }
+    // ],
     defaultVariants: {
       variant: "default",
       size: "default",

@@ -60,7 +60,7 @@ export function BannerPanel({
           exit={{ opacity: 0, y: 100 }}
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
           className={cn(
-            "fixed bottom-4 left-1/2 -translate-x-1/2 z-100 w-[calc(100%-theme(spacing.6))] max-w-6xl rounded-2xl bg-card/80 backdrop-blur-2xl shadow-xl px-4 py-3 md:py-2",
+            "fixed bottom-4 left-1/2 -translate-x-1/2 z-999 w-[calc(100%-theme(spacing.6))] max-w-6xl rounded-2xl bg-card/80 backdrop-blur-2xl shadow-xl px-4 py-3 md:py-2",
             className
           )}
           suppressHydrationWarning

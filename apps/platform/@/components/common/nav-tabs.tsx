@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { sendGAEvent } from '@next/third-parties/google';
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
-import { sendGAEvent } from '@next/third-parties/google'
+import { twUtility } from "../utils/tailwind-classes";
 
 type NavLinkItems = {
   title: string;
@@ -21,6 +22,7 @@ interface NavLink extends LinkProps {
   href: string;
   notification?: string | React.ReactNode | number;
   items?: NavLinkItems[];
+  isNew?: boolean;
 }
 
 interface NavTabsProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -108,7 +110,8 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
         ref={ref}
         className={cn(
           "flex-1 max-w-(--max-app-width)",
-          "snap-x snap-mandatory overflow-x-auto scrollbar-0 scrollbar-thumb-muted/0 scrollbar-track-transparent no-scrollbar mx-2 lg:mx-4",
+          twUtility.horizontalScroll,
+          "mx-2 lg:mx-4",
           className,
           "relative"
         )}
@@ -171,6 +174,11 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                   {navLink.notification ? (
                     <span className="inline-flex items-center justify-center size-4 text-xs font-medium text-primary bg-primary/10 rounded-full">
                       {navLink.notification}
+                    </span>
+                  ) : null}
+                  {navLink?.isNew ? (
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[0.6rem] font-medium text-primary bg-primary/10 rounded-full">
+                      New
                     </span>
                   ) : null}
                 </div>

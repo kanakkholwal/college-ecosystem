@@ -1,9 +1,11 @@
 import AdUnit from "@/components/common/adsense";
+import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeftIcon, Edit, Plus } from "lucide-react";
+import { ArrowLeftIcon, Dot, Edit } from "lucide-react";
 import { Metadata, ResolvingMetadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -98,13 +100,13 @@ export default async function ResourcePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         id="structured-data-resource"
       />
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 lg:mb-20 w-full mx-auto max-w-(--max-app-width)">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 lg:mb-20 w-full mx-auto max-w-[calc((--max-app-width) * 0.8)]">
         <main
           className="col-span-1 lg:col-span-9"
           itemType="https://schema.org/BlogPosting"
           itemScope
         >
-          <div className="flex justify-between items-center m-4 gap-2 pr-2">
+          <div className="flex justify-between items-center m-4 gap-2 pr-2 mb-10">
             <ButtonLink
               href={`/resources/${resolvedParams.type}`}
               variant="ghost"
@@ -118,54 +120,56 @@ export default async function ResourcePage({ params }: PageProps) {
               href={`https://github.com/${appConfig.githubUri}/new/main/apps/platform/resources?filename=${resolvedParams.type}/example.mdx`}
               target="_blank"
               rel="noopener noreferrer"
-              variant="rainbow_outline"
+              variant="default_light"
               rounded="full"
               size="sm"
               aria-label={`Write ${changeCase(resolvedParams.type, "title")} resource`}
             >
-              <Plus />
+              <Icon name="plus" />
               Write Your {changeCase(resolvedParams.type, "title")}
+              <Icon name="arrow-up-right" />
             </ButtonLink>
           </div>
-          <div className="py-12 md:px-8 space-y-5 px-3 lg:px-0">
-            {appConfig.flags.enableOgImage && (
-              <Image
-                width={1200}
-                height={630}
-                src={`/og/resources/${resolvedParams.type}/${resolvedParams.slug}`}
-                alt={frontmatter.title}
-                className="w-full h-auto rounded-lg"
-                itemProp="image"
-                itemType="https://schema.org/ImageObject"
-                loading="lazy"
-              />
-            )}
-            {frontmatter.coverImage && (
-              <Image
-                src={frontmatter.coverImage}
-                alt={frontmatter.title}
-                width={1200}
-                height={630}
-                className="w-full h-auto rounded-lg"
-                itemProp="image"
-                itemType="https://schema.org/ImageObject"
-                loading="lazy"
-              />
-            )}
+          <div className="md:px-8 space-y-5 px-3 lg:px-0 max-w-[55rem]">
+            <div className="empty:hidden w-full mx-auto" itemProp="image">
+              {appConfig.flags.enableOgImage && (
+                <Image
+                  width={1200}
+                  height={630}
+                  src={`/og/resources/${resolvedParams.type}/${resolvedParams.slug}`}
+                  alt={frontmatter.title}
+                  className="w-full h-auto rounded-lg aspect-video"
+                  itemProp="image"
+                  itemType="https://schema.org/ImageObject"
+                  loading="lazy"
+                />
+              )}
+              {frontmatter.coverImage && (
+                <Image
+                  src={frontmatter.coverImage}
+                  alt={frontmatter.title}
+                  width={1200}
+                  height={630}
+                  className="w-full h-auto rounded-lg aspect-video"
+                  itemProp="image"
+                  itemType="https://schema.org/ImageObject"
+                  loading="lazy"
+                />
+              )}
+            </div>
+
             <h1
-              className="mb-4 text-3xl font-bold text-foreground sm:text-5xl text-pretty"
-              itemProp="headline"
-            >
+              className="mb-2 text-2xl font-bold text-foreground sm:text-4xl"
+              itemProp="headline">
               {frontmatter.title}
             </h1>
 
             <p
-              className="text-base text-muted-foreground text-pretty mb-3 line-clamp-3"
-              itemProp="abstract"
-            >
+              className="text-sm text-muted-foreground text-pretty mb-3 line-clamp-3"
+              itemProp="abstract">
               {frontmatter.summary}
             </p>
-            <div className="flex gap-4 px-4 text-sm items-center justify-between lg:px-8">
+            <div className="flex gap-4 px-4 py-2 text-sm items-center justify-between flex-wrap lg:px-8 border-y">
               <a
                 href={frontmatter.author?.url || appConfig.authors[0].url}
                 className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-foreground/5 active:scale-95"
@@ -211,43 +215,34 @@ export default async function ResourcePage({ params }: PageProps) {
                   </p>
                 </div>
               </a>
-              <p className="text-sm font-medium text-muted-foreground">
-                {frontmatter.readingTime}
-              </p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="default_light" className="capitalize">
+                  {frontmatter.category}
+                </Badge>
+                <Dot />
+                <span>
+                  {new Date(frontmatter.date).toLocaleDateString("en-IN", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+                <Dot />
+                <span>{frontmatter.readingTime}</span>
+                <ShareButton
+                  size="sm"
+                  variant="ghost"
+                  data={{ title: frontmatter.title, text: frontmatter.summary, url: resourceUrl }}
+                >
+                  <Icon name="send" />
+                  Share
+                </ShareButton>
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              <span
-                itemProp="publisher"
-                itemScope
-                itemType="https://schema.org/Organization"
-              >
-                <meta itemProp="name" content={appConfig.name} />
-              </span>
-              Published under
-              <Badge
-                size="sm"
-                className="px-1 mx-1 capitalize"
-                itemProp="articleSection"
-              >
-                {frontmatter.category}
-              </Badge>
-              on
-              <Badge
-                size="sm"
-                className="px-1 mx-1"
-                itemProp="datePublished"
-                content={publishedDate}
-              >
-                {new Date(frontmatter.date).toLocaleDateString("en-IN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </Badge>
-            </div>
-            {frontmatter?.alternate_reads?.length && (
-              <div>
-                <p className="text-sm font-medium mb-1">Alternate reads:</p>
+            {frontmatter?.alternate_reads?.length && (<div className="text-sm text-muted-foreground">
+
+              <div className="mt-2">
+                <p className="text-xs font-medium mb-1">Alternate reads:</p>
                 {frontmatter.alternate_reads?.length ? (
                   frontmatter.alternate_reads.map((url, index) => (
                     <ButtonLink
@@ -276,12 +271,15 @@ export default async function ResourcePage({ params }: PageProps) {
                   </span>
                 )}
               </div>
+              <Separator className="mt-4" />
+
+            </div>
             )}
-            <hr className="mt-4" />
+
           </div>
 
           <article
-            className="prose mx-auto p-6 prose-gray dark:prose-invert  container max-w-[900px] bg-card rounded-lg"
+            className="prose mx-auto p-6 prose-gray prose-sm dark:prose-invert container max-w-[55rem] bg-card rounded-lg mt-4"
             itemProp="articleBody"
           >
             <ClientMdx mdxSource={mdxSource} />
@@ -338,29 +336,28 @@ export default async function ResourcePage({ params }: PageProps) {
             <CommentSection />
           </div>
         </main>
-        <aside className="hidden lg:block lg:col-span-3 mt-8">
+        <aside className="hidden lg:block lg:col-span-3 mt-8 lg:sticky lg:top-2">
           <TableOfContents
             items={response.data.toc}
-            className="lg:sticky lg:top-2"
           />
           <AdUnit adSlot="display-vertical" key={"resources-page-ad-footer"} />
-
         </aside>
-        {otherResources.length > 0 && (
-          <section
-            id="related-resources"
-            className="col-span-1 lg:col-span-12 mt-12"
-          >
-            <h2 className="text-xl font-semibold mb-4 text-foreground pl-5">
-              Related Resources
-            </h2>
-            <ResourcesList
-              resources={otherResources}
-              className="items-stretch"
-            />
-          </section>
-        )}
+
       </div>
+      {otherResources.length > 0 && (
+        <section
+          id="related-resources"
+          className="w-full mx-auto max-w-[calc((--max-app-width) * 0.8)]"
+        >
+          <h2 className="text-xl font-semibold mb-4 text-foreground pl-5">
+            Related Resources
+          </h2>
+          <ResourcesList
+            resources={otherResources}
+            className="items-stretch"
+          />
+        </section>
+      )}
     </>
   );
 }

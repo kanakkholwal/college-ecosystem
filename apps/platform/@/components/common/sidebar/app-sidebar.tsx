@@ -16,8 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { Session } from "~/auth/client";
 
-import AdUnit from "@/components/common/adsense";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ApplicationSvgLogo } from "@/components/logo";
 import { sidebar_links } from "@/constants/links";
 import Link from "next/link";
 import { appConfig, orgConfig } from "~/project.config";
@@ -68,17 +67,12 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
               size="lg"
+              asChild
             >
               <Link href={`/${prefixPath ? prefixPath : moderator}`}>
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src="/logo-square.webp" alt={appConfig.name} />
-                  <AvatarFallback className="flex items-center justify-center rounded-lg text-3xl font-bold text-center relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent hover:from-sky-500 hover:to-primary whitespace-nowrap">
-                    {orgConfig.shortName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <ApplicationSvgLogo className="!size-8" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
                     {appConfig.name}
@@ -94,7 +88,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={links} />
-        <AdUnit adSlot="display-square" key="adsense-app-sidebar" />
+      
       </SidebarContent>
 
       <SidebarFooter>
