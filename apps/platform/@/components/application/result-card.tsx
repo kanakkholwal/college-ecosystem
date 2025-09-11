@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -34,19 +34,19 @@ export function ResultCard({
       <CardContent className="flex justify-around items-stretch gap-3 text-center px-3">
         <div>
           <p className="text-xs text-muted-foreground">Batch</p>
-          <p className="text-base font-bold text-gray-900 dark:text-white">
+          <p className="text-base font-bold text-foreground">
             {result.rank.batch}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Branch</p>
-          <p className="text-base font-bold text-gray-900 dark:text-white">
+          <p className="text-base font-bold text-foreground">
             {result.rank.branch}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Class</p>
-          <p className="text-base font-bold text-gray-900 dark:text-white">
+          <p className="text-base font-bold text-foreground">
             {result.rank.class}
           </p>
         </div>

@@ -122,7 +122,7 @@ export async function assignBranchChange() {
 }
 export async function getAbnormalResults() {
   try {
-    const response = await serverApis.results.getAbnormalResults(undefined);
+    const response = await serverApis.results.getAbnormalResults(undefined)
     console.log("Abnormal Results:", response);
 
     if (response?.error) {

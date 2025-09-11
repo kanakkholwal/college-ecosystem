@@ -138,7 +138,7 @@ export default function FreeStuffTable() {
                                                     <TableCell>
 
                                                         <ResponsiveDialog
-                                                        showCloseButton={false}
+                                                            showCloseButton={false}
                                                             btnProps={{
                                                                 variant: "dark",
                                                                 size: "sm",
@@ -160,7 +160,7 @@ export default function FreeStuffTable() {
                                                             <div className="flex items-start justify-between gap-4">
                                                                 <div className="flex items-center gap-4">
                                                                     <Avatar className="w-14 h-14 rounded-lg">
-                                                                        <AvatarImage src={res.logo} alt={res.resource} />
+                                                                        <AvatarImage src={res.logo} alt={res.resource} className="rounded-lg" />
                                                                         <AvatarFallback>{res.resource[0]}</AvatarFallback>
                                                                     </Avatar>
 
@@ -188,6 +188,7 @@ export default function FreeStuffTable() {
                                                                 {res.tags.map((t) => (
                                                                     <Badge
                                                                         size="sm"
+                                                                        variant="default_light"
                                                                         key={t}
                                                                         className="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium"
                                                                     >
@@ -195,15 +196,21 @@ export default function FreeStuffTable() {
                                                                     </Badge>
                                                                 ))}
                                                             </div>
-                                                            <div className="rounded-lg border p-4 bg-gradient-to-b from-white/60 to-transparent">
-                                                                <p className="text-sm leading-relaxed">This free credit is delivered {res.description}. Use the link above to claim. Terms apply.</p>
+                                                            <div className="rounded-xl border border-border/40 p-5 bg-gradient-to-b from-primary/5 via-background to-secondary/5 shadow-sm">
+                                                                <p className="text-sm leading-relaxed text-foreground/90">
+                                                                    This free credit is delivered {res.description}. Use the link above to claim. Terms apply.
+                                                                </p>
 
-
-                                                                <div className="mt-4 flex items-center justify-between">
-                                                                    <div className="text-xs text-muted-foreground">Category</div>
-                                                                    <div className="text-sm font-medium capitalize">{res.category.replace("-", " ")}</div>
+                                                                <div className="mt-5 flex items-center justify-between">
+                                                                    <span className="text-xs text-muted-foreground tracking-wide uppercase">
+                                                                        Category
+                                                                    </span>
+                                                                    <span className="text-sm font-semibold text-primary capitalize">
+                                                                        {res.category.replace("-", " ")}
+                                                                    </span>
                                                                 </div>
                                                             </div>
+
                                                             <ButtonLink
                                                                 href={marketwiseLink(res.href, "benefits")}
                                                                 target="_blank"

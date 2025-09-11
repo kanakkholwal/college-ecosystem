@@ -20,7 +20,7 @@ export const config = {
     REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
 
 
-    corsOrigins: ["nith.eu.org", "app.nith.eu.org"],
+    corsOrigins: ["https://nith.eu.org", "https://app.nith.eu.org"],
     corsEnabled: process.env.CORS_ENABLED === "true",
     isDev : process.env.NODE_ENV !== "production",
 } as const;

@@ -1,14 +1,13 @@
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowDownUp, TrendingUp, Undo2 } from "lucide-react";
-import Link from "next/link";
 import { PreviousPageLink } from "@/components/utils/link";
+import { ArrowDownUp, TrendingUp } from "lucide-react";
 
 export default function Loading() {
   return (
@@ -43,7 +42,7 @@ export default function Loading() {
         <CgpiCardLoader />
       </div>
       <div>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center mx-auto mt-24 mb-10">
+        <h2 className="text-3xl font-bold text-foreground text-center mx-auto mt-24 mb-10">
           Semester Wise Results
         </h2>
         <div className="max-w-6xl mx-auto px-6 md:px-12 xl:px-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

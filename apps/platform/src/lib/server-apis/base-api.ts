@@ -1,12 +1,12 @@
 import type { BetterFetch } from "@better-fetch/fetch";
 
-export type FetchParams = Parameters<BetterFetch>;
-export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "OPTIONS";
+export type FetchParams = BetterFetch extends (...args: infer P) => any ? P : never;
+export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "OPTIONS" | "PATCH";
 
 export interface ApiConfigEntry<P, R> {
   url: string;
   method: HttpMethod;
-  transformParams?: (payload: P) => Record<string, string>;
+  transformParams?: (payload: P) => Record<string, string | number | undefined>;
   transformBody?: (payload: P) => any;
   transformResponse?: (res: unknown) => R;
   disabled?: boolean;
@@ -28,38 +28,43 @@ export function createApiInstance<
 } {
   const api = {} as any;
 
-  for (const key in config) {
+  for (const key of Object.keys(config) as Array<keyof T>) {
+    const entry = config[key];
     const { url, method, transformParams, transformBody, transformResponse } =
-      config[key];
+      entry;
 
     api[key] = async (payload: any) => {
       let finalUrl = url;
 
-      // Handle URL parameters
       if (transformParams) {
         const params = transformParams(payload);
-        finalUrl = finalUrl.replace(/:(\w+)/g, (_, key) =>
-          encodeURIComponent(params?.[key])
+        finalUrl = finalUrl.replace(/:(\w+)/g, (_, paramName) =>
+          encodeURIComponent(String(params?.[paramName]))
         );
       }
 
-      const body =
+      const rawBody =
         method !== "GET" && payload !== undefined
-          ? JSON.stringify(transformBody ? transformBody(payload) : payload)
+          ? transformBody
+            ? transformBody(payload)
+            : payload
           : undefined;
 
-      const response = await fetchInstance(finalUrl, {
+      const body =
+        rawBody === undefined ||
+        rawBody instanceof FormData ||
+        rawBody instanceof URLSearchParams ||
+        typeof rawBody === "string"
+          ? rawBody
+          : JSON.stringify(rawBody);
+
+      const response = await (fetchInstance as any)(finalUrl, {
         method,
-        ...(method !== "GET" && body ? { body } : {}),
+        ...(body !== undefined ? { body } : {}),
       });
 
-      // Handle JSON parsing consistently
-      const _transformResponse =
-        transformResponse || ((res: unknown) => res as any);
-
-      return _transformResponse
-        ? _transformResponse(response.data)
-        : response.data;
+      const data = (response && (response as any).data) ?? response;
+      return transformResponse ? transformResponse(data) : (data as any);
     };
   }
 

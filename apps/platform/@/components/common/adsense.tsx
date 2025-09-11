@@ -28,7 +28,7 @@ const adsTypes = {
 
 declare global {
   interface Window {
-    adsbygoogle: {[key: string]: unknown}[]
+    adsbygoogle: { [key: string]: unknown }[]
   }
 }
 interface AdUnitProps {
@@ -44,9 +44,10 @@ const AdUnit: React.FC<AdUnitProps> = ({ adSlot, className }) => {
 
   useEffect(() => {
     try {
-    if (typeof window !== "undefined") {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-        }
+      if(process.env.NEXT_PUBLIC_ENV !== "production") return;
+      if (typeof window !== "undefined") {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
     } catch (e) {
       console.error("Adsense error:", e);
       adRef.current?.classList.add("error");
@@ -54,7 +55,7 @@ const AdUnit: React.FC<AdUnitProps> = ({ adSlot, className }) => {
   }, [pathname, adSlot]); // refresh ad when route or slot changes
 
   return (
-    <div className={cn("adsense-container empty:hidden",className)} id={`adsense-${id}`}>
+    <div className={cn("adsense-container empty:hidden", className)} id={`adsense-${id}`}>
       <ins
         key={id}
         id={`adsbygoogle-${id}`}

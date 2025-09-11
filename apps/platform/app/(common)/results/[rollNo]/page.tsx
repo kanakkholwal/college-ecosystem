@@ -1,3 +1,4 @@
+
 import AdUnit from "@/components/common/adsense";
 import {
   Accordion,
@@ -13,32 +14,25 @@ import { ArrowDownUp, Mail } from "lucide-react";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ResultTypeWithId, Semester } from "src/models/result";
+import type { ResultTypeWithId } from "src/models/result";
 import { getResultByRollNo } from "~/actions/common.result";
 import { orgConfig } from "~/project.config";
-import type { Course } from "~/types/result";
 import { CGPIChart } from "./components/chart";
 
 type Props = {
   params: Promise<{ rollNo: string }>;
-  searchParams?: Promise<{
-    update?: string;
-    new?: string;
-  }>;
+  searchParams?: Promise<{ update?: string; new?: string }>;
 };
 
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  // read route params
   const { rollNo } = await params;
   return {
     title: `${rollNo} | Results`,
     description: `Check the results of ${rollNo}`,
-    alternates: {
-      canonical: "/results/" + rollNo,
-    },
+    alternates: { canonical: "/results/" + rollNo },
   };
 }
 
@@ -49,189 +43,165 @@ export default async function ResultsPage(props: Props) {
   const update_result = searchParams?.update === "true";
   const is_new = searchParams?.new === "true";
   const result = await getResultByRollNo(params.rollNo, update_result, is_new);
-  if (!result) {
-    return notFound();
-  }
 
-  const maxCgpi = result.semesters?.reduce(
-    (prev, curr) => Math.max(prev, curr.cgpi),
-    0
-  );
-  const minCgpi = result.semesters?.reduce(
-    (prev, curr) => Math.min(prev, curr.cgpi),
-    10
-  );
-  const cgpi = result.semesters?.at(-1)?.cgpi ?? 0;
+  if (!result) return notFound();
+
+  const maxCgpi = Math.max(...result.semesters.map((s) => s.cgpi));
+  const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi));
+  const cgpi = result.semesters.at(-1)?.cgpi ?? 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-12 xl:px-6">
+    <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-12">
+      {/* Header Section */}
       <section
         id="hero"
-        className="z-10 w-full max-w-7xl relative flex flex-col gap-5 py-10 px-4 rounded-lg text-center lg:text-left"
+        className="w-full py-10 flex flex-col gap-6 lg:gap-10 relative"
       >
-        <div className="mr-auto">
-          <PreviousPageLink size="sm" variant="light" />
+        <div>
+          <PreviousPageLink size="sm" variant="ghost" />
         </div>
-        <div className="mt-5 mb-4 grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Student Info */}
           <div className="flex flex-col gap-4">
-            <h1 className="font-bold text-3xl lg:text-5xl">
-              <span className="relative bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent md:px-2">
+            <h1 className="font-bold text-4xl lg:text-5xl tracking-tight">
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 {result.name}
               </span>
             </h1>
-            <h5 className="text-lg ml-4 font-semibold text-muted-foreground uppercase">
+            <h5 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
               {result.rollNo}
               <Link
                 href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}
-                className="inline-block text-primary hover:text-primaryLight ease-in duration-300 align-middle ml-2 -mt-1"
-                title={"Contact via mail"}
+                className="text-primary hover:text-primary/80 transition-colors"
+                title="Contact via mail"
               >
                 <Mail className="w-5 h-5" />
               </Link>
             </h5>
-            <div className="w-full flex flex-wrap items-center gap-4 text-sm mx-auto md:ml-0">
-              <Badge variant="info" appearance="light">{getYear(result)}</Badge>
-              <Badge variant="info" appearance="light">{result.branch}</Badge>
-              <Badge variant="info" appearance="light">{result.programme}</Badge>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>{getYear(result)}</Badge>
+              <Badge>{result.branch}</Badge>
+              <Badge>{result.programme}</Badge>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
-            <div className="p-4 bg-card rounded-lg space-y-4">
-              <h4 className="text-base font-medium">
-                <ArrowDownUp className="inline-block size-5 mr-2" />
-                Performance Analysis
-              </h4>
-              <div className="grid grid-cols-3 gap-3 text-center px-3">
-                <div>
-                  <p className="text-xs  text-muted-foreground">Max. CGPI</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    {maxCgpi}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs  text-muted-foreground">Cgpi</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    {cgpi}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs  text-muted-foreground">Min. Cgpi</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    {minCgpi}
-                  </p>
-                </div>
 
-                <div>
-                  <p className="text-xs  text-muted-foreground">Batch Rank</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    {result.rank.batch}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs  text-muted-foreground">Branch Rank</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    {result.rank.branch}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs  text-muted-foreground">Class Rank</p>
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    {result.rank.class}
-                  </p>
-                </div>
-              </div>
+          {/* Performance Card */}
+          <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
+            <h4 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <ArrowDownUp className="size-5" />
+              Performance Snapshot
+            </h4>
+            <div className="grid grid-cols-3 gap-y-6 text-center">
+              <Stat label="Max CGPI" value={maxCgpi} />
+              <Stat label="Current CGPI" value={cgpi} />
+              <Stat label="Min CGPI" value={minCgpi} />
+              <Stat label="Batch Rank" value={result.rank.batch} />
+              <Stat label="Branch Rank" value={result.rank.branch} />
+              <Stat label="Class Rank" value={result.rank.class} />
             </div>
           </div>
         </div>
+
         <AdUnit
           adSlot="display-horizontal"
           key={"results-page-ad-header-" + result.rollNo}
         />
       </section>
-      <div>
-        <h2 className="text-3xl font-bold text-center mx-auto my-10">
-          Semester Wise Results
+
+      {/* Semester Results */}
+      <section className="mt-12">
+        <h2 className="text-2xl lg:text-3xl font-bold text-center mb-8">
+          Semester-wise Results
         </h2>
 
-        <Tabs defaultValue="table">
-          <div className="flex items-center w-full mb-5">
-            <TabsList className="mx-auto">
+        <Tabs defaultValue="table" className="w-full">
+          <div className="flex justify-center mb-6">
+            <TabsList>
               <TabsTrigger value="table">Tabular View</TabsTrigger>
               <TabsTrigger value="graph">Graphical View</TabsTrigger>
             </TabsList>
           </div>
+
+          {/* Table View */}
           <TabsContent value="table">
             <Accordion
               type="single"
               collapsible
               defaultValue={result.semesters?.[0]?.semester.toString()}
-              className="w-full relative grid gap-4"
+              className="grid gap-4"
             >
-              {result.semesters?.map((semester: Semester,index) => {
-                return (
-                  <AccordionItem
-                    value={semester.semester.toString()}
-                    key={semester.semester}
-                    className="bg-card p-3 rounded-lg"
-                  >
-                    <AccordionTrigger className="space-y-1 no-underline hover:no-underline items-center justify-between flex-wrap align-middle gap-3">
-                      <h4 className="text-base font-semibold leading-none align-middle">
-                        {" "}
-                        Semester {semester.semester}
-                      </h4>
-                      <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground align-middle mr-4">
-                        <div>CGPI : {semester.cgpi}</div>
-                        <Separator orientation="vertical" className="h-5" />
-                        <div>SGPI : {semester.sgpi}</div>
-                        <Separator orientation="vertical" className="h-5" />
-                        <div>{semester.courses.length} Courses</div>
-                        <Separator orientation="vertical" className="h-5" />
+              {result.semesters?.map((semester) => (
+                <AccordionItem
+                  value={semester.semester.toString()}
+                  key={semester.semester}
+                  className="bg-card border border-border/40 rounded-xl p-4"
+                >
+                  <AccordionTrigger className="flex justify-between flex-wrap gap-4 ">
+                    <h4 className="text-base font-semibold">
+                      Semester {semester.semester}
+                    </h4>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap mr-4">
+                      <span>CGPI: {semester.cgpi}</span>
+                      <Separator orientation="vertical" className="h-4" />
+                      <span>SGPI: {semester.sgpi}</span>
+                      <Separator orientation="vertical" className="h-4" />
+                      <span>{semester.courses.length} Courses</span>
+                      <Separator orientation="vertical" className="h-4" />
+                      <span>
+                        Credits: {semester.sgpi_total}/{semester.cgpi_total}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="mt-4 space-y-3">
+                    {semester.courses.map((course) => (
+                      <div
+                        key={course.code}
+                        className="flex justify-between items-center py-2 px-3 rounded-lg border border-border/40 hover:bg-muted/40 transition"
+                      >
                         <div>
-                          Sem/Total Credit : {semester.sgpi_total}/{" "}
-                          {semester.cgpi_total}
+                          <h4 className="text-sm font-medium">
+                            {course.name.replaceAll("&amp;", "&")}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {course.code}
+                          </p>
+                        </div>
+                        <div className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                          {course.cgpi}
                         </div>
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="ms-6 mr-4">
-                      <Separator className="my-4" />
-                      {semester.courses?.map((course: Course, index) => {
-                        return (
-                          <div
-                            className="flex justify-between items-center py-2 gap-2 border-b border-border last:border-b-0"
-                            key={course.code}
-                          >
-                            <div className="flex items-start flex-col">
-                              <h4 className="text-sm tracking-wide font-semibold">
-                                {course.name.replaceAll("&amp;", "&")}
-                              </h4>
-                              <p className="text-xs text-muted-foreground">
-                                {course.code}
-                              </p>
-                            </div>
-                            <div className="text-primary text-sm bg-primary/20 dark:bg-primary/10 p-3 rounded-full h-6 w-6 flex justify-center items-center">
-                              {course.cgpi}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
             </Accordion>
           </TabsContent>
+
+          {/* Graph View */}
           <TabsContent value="graph">
-            <div className="max-w-4xl mx-auto my-5 w-full p-4 rounded-xl bg-accent">
+            <div className="max-w-4xl mx-auto my-6 rounded-2xl bg-accent p-6">
               <CGPIChart semesters={result.semesters} />
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-       <AdUnit
-          adSlot="display-horizontal"
-          key={"results-page-ad-footer-" + result.rollNo}
- 
-        />
+      </section>
+
+      <AdUnit
+        adSlot="display-horizontal"
+        key={"results-page-ad-footer-" + result.rollNo}
+      />
+    </div>
+  );
+}
+
+/* Small stat card */
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <p className="text-lg font-semibold">{value}</p>
     </div>
   );
 }

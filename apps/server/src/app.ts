@@ -3,6 +3,7 @@ import express from "express";
 import packageJson from "../package.json";
 import { config } from "./config";
 import httpRoutes from "./routes/httpRoutes";
+import { checkCors } from "./utils/cors";
 
 const app = express();
 
@@ -12,16 +13,17 @@ app.use(express.urlencoded({ extended: true }));
 
 // Default route
 app.get("/", (req, res) => {
-    res.status(200).json({
-      version: packageJson.version,
-      message: "Welcome to the College Ecosystem API",
-      server: "College Ecosystem API",
-      data: null,
+  res.status(200).json({
+    version: packageJson.version,
+    message: "Welcome to the College Ecosystem API",
+    server: "College Ecosystem API",
+    data: null,
   });
 });
 
 const SERVER_IDENTITY = config.SERVER_IDENTITY;
 if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
+
 
 // Middleware to handle custom CORS logic
 app.use((req: Request, res: Response, next: NextFunction): void => {
@@ -31,7 +33,8 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 
   // 1. Handle preflight requests first
   if (req.method === "OPTIONS") {
-    if (origin) {
+    const origin = req.headers.origin;
+    if (origin && checkCors(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
       res.setHeader(

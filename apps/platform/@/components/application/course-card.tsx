@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { InferSelectModel } from "drizzle-orm";
@@ -47,19 +47,19 @@ export default function CourseCard({
       <CardContent className="flex justify-around items-stretch gap-3 text-center p-3 pt-0">
         <div>
           <p className="text-xs text-muted-foreground">Type</p>
-          <p className="text-base font-semibold text-gray-900 dark:text-white">
+          <p className="text-base font-semibold text-foreground">
             {course.type}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Credits</p>
-          <p className="text-base font-bold text-gray-900 dark:text-white">
+          <p className="text-base font-bold text-foreground">
             {course.credits}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Department</p>
-          <p className="text-base font-bold text-gray-900 dark:text-white">
+          <p className="text-base font-bold text-foreground">
             {getDepartmentCode(course.department)}
           </p>
         </div>

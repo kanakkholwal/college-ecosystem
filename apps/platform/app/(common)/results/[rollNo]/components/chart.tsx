@@ -1,23 +1,28 @@
 "use client";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   type ChartConfig,
-  ChartLegend,
-  ChartLegendContent,
+  ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoaderCircle } from "lucide-react";
 import type React from "react";
 import { Suspense } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-
-import { ChartContainer } from "@/components/ui/chart";
-import type { Semester } from "src/models/result";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import type { Semester } from "~/models/result";
 
 export const CGPIChartLoader: React.FC = () => {
   return (
-    <div className="w-full relative">
-      <Skeleton className="w-full h-full min-h-64" />
+    <div className="w-full h-64 flex items-center justify-center">
+      <LoaderCircle className="animate-spin size-10 text-primary" />
     </div>
   );
 };
@@ -27,45 +32,79 @@ interface CGPIChartProps {
 }
 
 export const CGPIChart: React.FC<CGPIChartProps> = ({ semesters }) => {
-  const chartData = semesters.map((semester: Semester) => {
-    return {
-      semester: `Semester ${semester.semester}`,
-      sgpi: Number.parseFloat(semester.sgpi.toFixed(2)),
-      cgpi: Number.parseFloat(semester.cgpi.toFixed(2)),
-    };
-  });
+  const chartData = semesters.map((semester: Semester) => ({
+    semester: `Sem ${semester.semester}`,
+    SGPI: Number.parseFloat(semester.sgpi.toFixed(2)),
+    CGPI: Number.parseFloat(semester.cgpi.toFixed(2)),
+  }))
 
-  const chartConfig = {
-    sgpi: {
+  const chartConfig: ChartConfig = {
+    SGPI: {
       label: "SGPI",
       color: "var(--chart-1)",
     },
-    cgpi: {
+    CGPI: {
       label: "CGPI",
       color: "var(--chart-2)",
     },
-  } as ChartConfig;
+  };
 
   return (
-    <>
-      <Suspense fallback={<CGPIChartLoader />}>
-        <ChartContainer
-          config={chartConfig}
-          className="w-full aspect-video relative z-10 bg-card shadow-sm p-4 rounded-lg"
-          title="SGPI and CGPI for each semester"
-        >
-          <BarChart data={chartData}>
-            <CartesianGrid vertical={true} />
-            <XAxis dataKey="semester" />
-            <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="sgpi" fill={chartConfig.sgpi.color} radius={4} />
-            <Bar dataKey="cgpi" fill={chartConfig.cgpi.color} radius={4} />
-          </BarChart>
-        </ChartContainer>
-      </Suspense>
-    </>
+    <Card className="rounded-2xl shadow-lg border border-border/50">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">
+          Academic Performance Overview
+        </CardTitle>
+        <CardDescription>
+          Track how your <span className="font-medium">Semester GPA (SGPI)</span> and{" "}
+          <span className="font-medium">Cumulative GPA (CGPI)</span> evolve across semesters.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Suspense fallback={<CGPIChartLoader />}>
+          <ChartContainer config={chartConfig} className="w-full h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 16, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" className="stroke-primary bg-primary/10" />
+                <XAxis
+                  dataKey="semester"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 12, fill: "var(--foreground)" }}
+                />
+                <YAxis
+                  domain={[0, 10]}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 12, fill: "var(--foreground)" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="SGPI"
+                  stroke="var(--chart-1)"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "var(--chart-1)" }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="CGPI"
+                  stroke="var(--chart-2)"
+                  strokeWidth={2}
+                  strokeOpacity={0.7}
+                  dot={{ r: 4, fill: "var(--chart-2)", opacity: 0.7 }}
+                  activeDot={{ r: 6 }}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </Suspense>
+      </CardContent>
+    </Card>
   );
 };
 

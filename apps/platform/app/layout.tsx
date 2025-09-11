@@ -121,17 +121,18 @@ export default function RootLayout({ children }: RootLayoutProps) {
           id="json-ld-educational-organization"
           suppressHydrationWarning
         />
-                {/* ✅ Load AdSense script once globally */}
+        {/* ✅ Load AdSense script once globally */}
         <Provider>{children} </Provider>
-        <Script
-          id="adsense-script"
-          strategy="afterInteractive"
-          async
-          src={"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + appConfig.verifications.google_adsense}
-          crossOrigin="anonymous"
-        />
-        {process.env.NODE_ENV === "production" && (
+        {process.env.NODE_ENV === "production" && (<>
+          <Script
+            id="adsense-script"
+            strategy="afterInteractive"
+            async
+            src={"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + appConfig.verifications.google_adsense}
+            crossOrigin="anonymous"
+          />
           <GoogleAnalytics gaId={appConfig.verifications.google_analytics} />
+        </>
         )}
       </body>
     </html>
