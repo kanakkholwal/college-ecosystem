@@ -1,5 +1,5 @@
 
-export const submitBenefitsLink ="https://forms.gle/aA8NzH31ByUommCg7";
+export const submitBenefitsLink = "https://forms.gle/aA8NzH31ByUommCg7";
 
 export type benefitsItem = {
   id?: string
@@ -11,7 +11,7 @@ export type benefitsItem = {
   href: string;
   category: string
   isNew?: boolean,
-  country?: string
+  country?: "worldwide" | "USA" | "India" | "United Kingdom" | string
 };
 
 
@@ -92,7 +92,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://www.anthropic.com/contact-sales/for-student-builders",
       tags: ["API Credits", "AI"],
       category: "free-stuff",
-      country:"worldwide"
+      country: "worldwide"
     }, {
       id: "8",
       resource: "Free Landing Page Builder",
@@ -291,7 +291,7 @@ const benefits: Record<string, benefitsItem[]> = {
       value: "Student Pricing",
       tags: ["Popular", "Paid"],
       description: "Student Pricing on a new Mac or iPad",
-      href: "https://freeforstudents.org/go/apple-edu-in",
+      href: "https://www.apple.com/in-edu/store",
       category: "Technology",
       country: "India"
     },
@@ -302,7 +302,7 @@ const benefits: Record<string, benefitsItem[]> = {
       value: "Free",
       tags: ["Popular"],
       description: "Student Developer Pack",
-      href: "https://freeforstudents.org/go/student-developer-pack",
+      href: "https://education.github.com/pack",
       category: "Software and Tools",
       country: "India"
     },
@@ -313,7 +313,7 @@ const benefits: Record<string, benefitsItem[]> = {
       value: "50% Off",
       tags: ["Popular"],
       description: "50% Off Apple Music plus Free Apple TV+",
-      href: "https://freeforstudents.org/go/apple-music-student",
+      href: "https://support.apple.com/en-us/106008",
       category: "Entertainment",
       country: "India"
     },
@@ -493,7 +493,7 @@ const benefits: Record<string, benefitsItem[]> = {
       value: "50% Off Apple Music plus Free Apple TV+",
       tags: ["Popular"],
       description: "Available in United States",
-      href: "https://freeforstudents.org/go/apple-music-student",
+      href: "https://support.apple.com/en-us/106008",
       category: "Entertainment",
       country: "USA"
     },
@@ -504,7 +504,7 @@ const benefits: Record<string, benefitsItem[]> = {
       value: "69% Off Secure VPN + 3 Months Free",
       tags: ["Limited Time Only", "Paid"],
       description: "Available in United States",
-      href: "https://freeforstudents.org/go/nordvpn-69pc",
+      href: "https://nordvpn.com/special/",
       category: "Software and Tools",
       country: "USA"
     },
@@ -693,261 +693,261 @@ const benefits: Record<string, benefitsItem[]> = {
       country: "USA"
     }
   ],
-  uk:[
-  {
-    id: "prime-student-uk",
-    resource: "Amazon",
-    logo: "https://api.freeforstudents.org/assets/cdf6c305-3538-40f5-be73-31b7642f65d2?format=auto&width=256",
-    value: "Free Amazon Prime for 6 Months",
-    tags: ["Popular"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/prime-student-uk",
-    category: "Shopping",
-    country: "United Kingdom"
-  },
-  {
-    id: "prime-video-uk",
-    resource: "Prime Video",
-    logo: "https://api.freeforstudents.org/assets/e34310ad-7d42-4dee-9a45-78d7741c4ce0?format=auto&width=256",
-    value: "Stream Prime Video Free for 6 Months",
-    tags: ["Popular"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/prime-video-uk",
-    category: "Entertainment",
-    country: "United Kingdom"
-  },
-  {
-    id: "apple-edu-uk",
-    resource: "Apple",
-    logo: "https://api.freeforstudents.org/assets/155fb282-7d59-4f5a-9f38-899f8b5364e3?format=auto&width=256",
-    value: "Student Pricing on a new Mac or iPad",
-    tags: ["Popular", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/apple-edu-uk",
-    category: "Technology",
-    country: "United Kingdom"
-  },
-  {
-    id: "student-developer-pack",
-    resource: "GitHub",
-    logo: "https://api.freeforstudents.org/assets/c611bd9f-46f4-443d-9635-f0f42b0fecf8?format=auto&width=256",
-    value: "Student Developer Pack",
-    tags: ["Popular"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/student-developer-pack",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "apple-music-student",
-    resource: "Apple Music",
-    logo: "https://api.freeforstudents.org/assets/775c5a96-21d6-4416-83d0-3f9db06d9b6e?format=auto&width=256",
-    value: "50% Off Apple Music plus Free Apple TV+",
-    tags: ["Popular"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/apple-music-student",
-    category: "Entertainment",
-    country: "United Kingdom"
-  },
-  {
-    id: "nordvpn-69pc",
-    resource: "NordVPN",
-    logo: "https://api.freeforstudents.org/assets/b1f76d7d-e52c-4a71-a359-8150ab57e118?format=auto&width=256",
-    value: "69% Off Secure VPN + 3 Months Free",
-    tags: ["Limited Time Only", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/nordvpn-69pc",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "jetbrains-edu",
-    resource: "JetBrains",
-    logo: "https://api.freeforstudents.org/assets/b0a7a385-ce61-4eda-a9b2-e8dc519724a2?format=auto&width=256",
-    value: "Free Access to Professional Developer Software",
-    tags: ["Popular"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/jetbrains-edu",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "aws-educate",
-    resource: "Amazon Web Services",
-    logo: "https://api.freeforstudents.org/assets/b2541cf7-f8f1-44d0-96a4-372aadc05573?format=auto&width=256",
-    value: "Learn Cloud Skills with AWS Educate",
-    tags: [],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/aws-educate",
-    category: "Education",
-    country: "United Kingdom"
-  },
-  {
-    id: "surfshark-80pc",
-    resource: "Surfshark",
-    logo: "https://api.freeforstudents.org/assets/5fc6c724-307d-46fe-b3b6-f8043ac589ed?format=auto&width=256",
-    value: "80% Off Award-Winning Secure VPN",
-    tags: ["Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/surfshark-80pc",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "ynab-college",
-    resource: "YNAB",
-    logo: "https://api.freeforstudents.org/assets/a6372999-2898-4759-a651-8586f41da209?format=auto&width=256",
-    value: "Free Wealth-Building Budgeting App",
-    tags: [],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/ynab-college",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "creative-cloud-60pc",
-    resource: "Adobe",
-    logo: "https://api.freeforstudents.org/assets/9d274709-09b3-4ceb-95e0-96de5762fffc?format=auto&width=256",
-    value: "Get 60% Off Adobe Creative Cloud",
-    tags: ["Popular", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/creative-cloud-60pc",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "datacamp-student-50pc",
-    resource: "Datacamp",
-    logo: "https://api.freeforstudents.org/assets/cbda741b-003e-4ee5-b80b-0ac4bf7bd84c?format=auto&width=256",
-    value: "50% Off Data Science & AI Courses",
-    tags: ["Recently Added", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/datacamp-student-50pc",
-    category: "Education",
-    country: "United Kingdom"
-  },
-  {
-    id: "namecheap",
-    resource: "Namecheap",
-    logo: "https://api.freeforstudents.org/assets/f5f5e07f-494a-4c50-ad5c-b462b4ff852e?format=auto&width=256",
-    value: "Free .me and Discounted Domains",
-    tags: [],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/namecheap",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "dashlane-premium",
-    resource: "Dashlane",
-    logo: "https://api.freeforstudents.org/assets/7e812c92-ca52-4c3f-a26a-b8cfb8573440?format=auto&width=256",
-    value: "Free Password Manager for 1 Year",
-    tags: ["Recently Added"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/dashlane-premium",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "skillshare-30pc-annual",
-    resource: "Skillshare",
-    logo: "https://api.freeforstudents.org/assets/89cc051a-b6a5-4897-9f98-1a33366c0025?format=auto&width=256",
-    value: "Get 30% Off Annual Skillshare Membership",
-    tags: ["Recently Added", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/skillshare-30pc-annual",
-    category: "Education",
-    country: "United Kingdom"
-  },
-  {
-    id: "squarespace-50pc",
-    resource: "Squarespace",
-    logo: "https://api.freeforstudents.org/assets/57cacfe7-70b1-4055-88ad-963a69870325?format=auto&width=256",
-    value: "50% Off First Year of Website Builder",
-    tags: ["Recently Added", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/squarespace-50pc",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "airalo-15pc",
-    resource: "Airalo",
-    logo: "https://api.freeforstudents.org/assets/87e8b8fa-fc71-44f6-8fd4-787c91cd8a39?format=auto&width=256",
-    value: "Stay Connected with 15% Off International eSIMs",
-    tags: ["Recently Added", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/airalo-15pc",
-    category: "Technology",
-    country: "United Kingdom"
-  },
-  {
-    id: "kayak-student",
-    resource: "KAYAK",
-    logo: "https://api.freeforstudents.org/assets/7bc6f0db-e547-4b42-bf81-13b923f7bcb7?format=auto&width=256",
-    value: "Up to 40% Off Flights for Students",
-    tags: ["Recently Added", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/kayak-student",
-    category: "Shopping",
-    country: "United Kingdom"
-  },
-  {
-    id: "autodesk-edu-access",
-    resource: "Autodesk",
-    logo: "https://api.freeforstudents.org/assets/5370e886-72ef-49c1-92f3-340ad0bae2e8?format=auto&width=256",
-    value: "Free Access to Design & Modelling Software",
-    tags: [],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/autodesk-edu-access",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "intel-software-tools",
-    resource: "Intel",
-    logo: "https://api.freeforstudents.org/assets/6a77a1e6-7d97-42ef-b3ac-57a7621cb8df?format=auto&width=256",
-    value: "Free Software Development Tools",
-    tags: [],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/intel-software-tools",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "figma-education-plan",
-    resource: "Figma",
-    logo: "https://api.freeforstudents.org/assets/e0fd6971-2223-41ef-8c1a-ba2514c78849?format=auto&width=256",
-    value: "Design Tool with Free Education Plan",
-    tags: ["Recently Added"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/figma-education-plan",
-    category: "Software and Tools",
-    country: "United Kingdom"
-  },
-  {
-    id: "samsung-stu-youth-uk",
-    resource: "Samsung",
-    logo: "https://api.freeforstudents.org/assets/4d01154d-08ac-4018-b1ca-30fffcf5c42f?format=auto&width=256",
-    value: "Samsung Student & Youth Discounts",
-    tags: ["Popular", "Paid"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/samsung-stu-youth-uk",
-    category: "Technology",
-    country: "United Kingdom"
-  },
-  {
-    id: "youtube-student-plan",
-    resource: "YouTube",
-    logo: "https://api.freeforstudents.org/assets/4bfc13a9-3934-4b36-b86b-9d761c17a0c6?format=auto&width=256",
-    value: "YouTube Premium Student Plan",
-    tags: ["Recently Added"],
-    description: "Available in United Kingdom",
-    href: "https://freeforstudents.org/go/youtube-student-plan",
-    category: "Entertainment",
-    country: "United Kingdom"
-  }
-],
+  uk: [
+    {
+      id: "prime-student-uk",
+      resource: "Amazon",
+      logo: "https://api.freeforstudents.org/assets/cdf6c305-3538-40f5-be73-31b7642f65d2?format=auto&width=256",
+      value: "Free Amazon Prime for 6 Months",
+      tags: ["Popular"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/prime-student-uk",
+      category: "Shopping",
+      country: "United Kingdom"
+    },
+    {
+      id: "prime-video-uk",
+      resource: "Prime Video",
+      logo: "https://api.freeforstudents.org/assets/e34310ad-7d42-4dee-9a45-78d7741c4ce0?format=auto&width=256",
+      value: "Stream Prime Video Free for 6 Months",
+      tags: ["Popular"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/prime-video-uk",
+      category: "Entertainment",
+      country: "United Kingdom"
+    },
+    {
+      id: "apple-edu-uk",
+      resource: "Apple",
+      logo: "https://api.freeforstudents.org/assets/155fb282-7d59-4f5a-9f38-899f8b5364e3?format=auto&width=256",
+      value: "Student Pricing on a new Mac or iPad",
+      tags: ["Popular", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/apple-edu-uk",
+      category: "Technology",
+      country: "United Kingdom"
+    },
+    {
+      id: "student-developer-pack",
+      resource: "GitHub",
+      logo: "https://api.freeforstudents.org/assets/c611bd9f-46f4-443d-9635-f0f42b0fecf8?format=auto&width=256",
+      value: "Student Developer Pack",
+      tags: ["Popular"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/student-developer-pack",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "apple-music-student",
+      resource: "Apple Music",
+      logo: "https://api.freeforstudents.org/assets/775c5a96-21d6-4416-83d0-3f9db06d9b6e?format=auto&width=256",
+      value: "50% Off Apple Music plus Free Apple TV+",
+      tags: ["Popular"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/apple-music-student",
+      category: "Entertainment",
+      country: "United Kingdom"
+    },
+    {
+      id: "nordvpn-69pc",
+      resource: "NordVPN",
+      logo: "https://api.freeforstudents.org/assets/b1f76d7d-e52c-4a71-a359-8150ab57e118?format=auto&width=256",
+      value: "69% Off Secure VPN + 3 Months Free",
+      tags: ["Limited Time Only", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/nordvpn-69pc",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "jetbrains-edu",
+      resource: "JetBrains",
+      logo: "https://api.freeforstudents.org/assets/b0a7a385-ce61-4eda-a9b2-e8dc519724a2?format=auto&width=256",
+      value: "Free Access to Professional Developer Software",
+      tags: ["Popular"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/jetbrains-edu",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "aws-educate",
+      resource: "Amazon Web Services",
+      logo: "https://api.freeforstudents.org/assets/b2541cf7-f8f1-44d0-96a4-372aadc05573?format=auto&width=256",
+      value: "Learn Cloud Skills with AWS Educate",
+      tags: [],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/aws-educate",
+      category: "Education",
+      country: "United Kingdom"
+    },
+    {
+      id: "surfshark-80pc",
+      resource: "Surfshark",
+      logo: "https://api.freeforstudents.org/assets/5fc6c724-307d-46fe-b3b6-f8043ac589ed?format=auto&width=256",
+      value: "80% Off Award-Winning Secure VPN",
+      tags: ["Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/surfshark-80pc",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "ynab-college",
+      resource: "YNAB",
+      logo: "https://api.freeforstudents.org/assets/a6372999-2898-4759-a651-8586f41da209?format=auto&width=256",
+      value: "Free Wealth-Building Budgeting App",
+      tags: [],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/ynab-college",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "creative-cloud-60pc",
+      resource: "Adobe",
+      logo: "https://api.freeforstudents.org/assets/9d274709-09b3-4ceb-95e0-96de5762fffc?format=auto&width=256",
+      value: "Get 60% Off Adobe Creative Cloud",
+      tags: ["Popular", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/creative-cloud-60pc",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "datacamp-student-50pc",
+      resource: "Datacamp",
+      logo: "https://api.freeforstudents.org/assets/cbda741b-003e-4ee5-b80b-0ac4bf7bd84c?format=auto&width=256",
+      value: "50% Off Data Science & AI Courses",
+      tags: ["Recently Added", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/datacamp-student-50pc",
+      category: "Education",
+      country: "United Kingdom"
+    },
+    {
+      id: "namecheap",
+      resource: "Namecheap",
+      logo: "https://api.freeforstudents.org/assets/f5f5e07f-494a-4c50-ad5c-b462b4ff852e?format=auto&width=256",
+      value: "Free .me and Discounted Domains",
+      tags: [],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/namecheap",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "dashlane-premium",
+      resource: "Dashlane",
+      logo: "https://api.freeforstudents.org/assets/7e812c92-ca52-4c3f-a26a-b8cfb8573440?format=auto&width=256",
+      value: "Free Password Manager for 1 Year",
+      tags: ["Recently Added"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/dashlane-premium",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "skillshare-30pc-annual",
+      resource: "Skillshare",
+      logo: "https://api.freeforstudents.org/assets/89cc051a-b6a5-4897-9f98-1a33366c0025?format=auto&width=256",
+      value: "Get 30% Off Annual Skillshare Membership",
+      tags: ["Recently Added", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/skillshare-30pc-annual",
+      category: "Education",
+      country: "United Kingdom"
+    },
+    {
+      id: "squarespace-50pc",
+      resource: "Squarespace",
+      logo: "https://api.freeforstudents.org/assets/57cacfe7-70b1-4055-88ad-963a69870325?format=auto&width=256",
+      value: "50% Off First Year of Website Builder",
+      tags: ["Recently Added", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/squarespace-50pc",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "airalo-15pc",
+      resource: "Airalo",
+      logo: "https://api.freeforstudents.org/assets/87e8b8fa-fc71-44f6-8fd4-787c91cd8a39?format=auto&width=256",
+      value: "Stay Connected with 15% Off International eSIMs",
+      tags: ["Recently Added", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/airalo-15pc",
+      category: "Technology",
+      country: "United Kingdom"
+    },
+    {
+      id: "kayak-student",
+      resource: "KAYAK",
+      logo: "https://api.freeforstudents.org/assets/7bc6f0db-e547-4b42-bf81-13b923f7bcb7?format=auto&width=256",
+      value: "Up to 40% Off Flights for Students",
+      tags: ["Recently Added", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/kayak-student",
+      category: "Shopping",
+      country: "United Kingdom"
+    },
+    {
+      id: "autodesk-edu-access",
+      resource: "Autodesk",
+      logo: "https://api.freeforstudents.org/assets/5370e886-72ef-49c1-92f3-340ad0bae2e8?format=auto&width=256",
+      value: "Free Access to Design & Modelling Software",
+      tags: [],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/autodesk-edu-access",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "intel-software-tools",
+      resource: "Intel",
+      logo: "https://api.freeforstudents.org/assets/6a77a1e6-7d97-42ef-b3ac-57a7621cb8df?format=auto&width=256",
+      value: "Free Software Development Tools",
+      tags: [],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/intel-software-tools",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "figma-education-plan",
+      resource: "Figma",
+      logo: "https://api.freeforstudents.org/assets/e0fd6971-2223-41ef-8c1a-ba2514c78849?format=auto&width=256",
+      value: "Design Tool with Free Education Plan",
+      tags: ["Recently Added"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/figma-education-plan",
+      category: "Software and Tools",
+      country: "United Kingdom"
+    },
+    {
+      id: "samsung-stu-youth-uk",
+      resource: "Samsung",
+      logo: "https://api.freeforstudents.org/assets/4d01154d-08ac-4018-b1ca-30fffcf5c42f?format=auto&width=256",
+      value: "Samsung Student & Youth Discounts",
+      tags: ["Popular", "Paid"],
+      description: "Available in United Kingdom",
+      href: "https://freeforstudents.org/go/samsung-stu-youth-uk",
+      category: "Technology",
+      country: "United Kingdom"
+    },
+    {
+      id: "youtube-student-plan",
+      resource: "YouTube",
+      logo: "https://api.freeforstudents.org/assets/4bfc13a9-3934-4b36-b86b-9d761c17a0c6?format=auto&width=256",
+      value: "YouTube Premium Student Plan",
+      tags: ["Recently Added"],
+      description: "Available in United Kingdom",
+      href: "https://www.youtube.com/premium/student",
+      category: "Entertainment",
+      country: "worldwide"
+    }
+  ],
 
 }
 // map benefits into array
