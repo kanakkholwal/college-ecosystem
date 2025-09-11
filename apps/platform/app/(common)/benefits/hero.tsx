@@ -1,10 +1,12 @@
 "use client";
 
 import { NumberTicker } from "@/components/animation/number-ticker";
+import { Icon } from "@/components/icons";
 import { ButtonLink } from "@/components/utils/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import { submitBenefitsLink } from "root/resources/benefits";
 
 const words = ["builders", "hackers", "founders", "creators", "developers"];
 
@@ -78,7 +80,7 @@ export default function HeroSection() {
         className="flex flex-col gap-4"
       >
         <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center">
-          <span className="text-spektr-cyan-50">Free stuff for college</span>
+          <span className="text-neutral-800 dark:text-cyan-50">Free stuff for college</span>
           <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1 h-[1em] ">
             {words.map((word, i) => (
               <motion.span
@@ -108,10 +110,16 @@ export default function HeroSection() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
+        className="flex flex-col sm:flex-row gap-4"
       >
         <ButtonLink href="#benefits" size="lg" variant="rainbow_outline">
           Check out the benefits
-          <ArrowRight />
+          <Icon name="arrow-right" />
+        </ButtonLink>
+        <ButtonLink href={submitBenefitsLink} size="lg" variant="default">
+          <Icon name="sparkles" />
+          Submit a Resource
+          <Icon name="arrow-up-right" />
         </ButtonLink>
       </motion.div>
     </section>

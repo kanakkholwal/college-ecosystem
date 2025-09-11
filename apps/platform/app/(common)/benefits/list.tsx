@@ -1,262 +1,245 @@
 "use client";
 
 import AdUnit from "@/components/common/adsense";
+import EmptyArea from "@/components/common/empty-area";
 import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { Input } from "@/components/ui/input";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Tabs,
     TabsContent,
-    TabsList,
-    TabsTrigger,
+    VercelTabsList
 } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/utils/link";
 import { sendGAEvent } from "@next/third-parties/google";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { SearchX } from "lucide-react";
 import Image from "next/image";
+import { useQueryState } from "nuqs";
+import { useMemo } from "react";
 import { LuShare2 } from "react-icons/lu";
-import { benefitsCategories, benefitsList } from "root/resources/benefits";
+import { benefitsCategories, benefitsList, benefitsRegions, submitBenefitsLink } from "root/resources/benefits";
 import { appConfig } from "~/project.config";
 import { changeCase, marketwiseLink } from "~/utils/string";
-
-
-
-
-
 export default function FreeStuffTable() {
+    const [query, setQuery] = useQueryState("q", { defaultValue: "" });
+    const [region, setRegion] = useQueryState("region", { defaultValue: "" });
+
+    const filteredBenefits = useMemo(() => {
+        return benefitsList.filter((benefit) => {
+            const matchesQuery = query
+                ? benefit.resource.toLowerCase().includes(query.toLowerCase()) ||
+                benefit.description.toLowerCase().includes(query.toLowerCase()) ||
+                benefit.tags.some((tag) =>
+                    tag.toLowerCase().includes(query.toLowerCase())
+                )
+                : true;
+            const matchesRegion =
+                (region.toLowerCase() === "worldwide" || region.toLowerCase() === "global" || region.trim() === "" || typeof region === "undefined") ?
+                    true : benefit.country
+                        ? benefit.country.toLowerCase() === region.toLowerCase()
+                        : true;
+            return matchesQuery && matchesRegion;
+        });
+    }, [query, region]);
+
     return (
-        <div className="p-8 max-w-6xl mx-auto" id="benefits">
-            <motion.h1
+        <div className="min-h-screen w-full bg-gradient-to-b from-background via-muted/20 to-background py-10 px-4 lg:px-10" id="benefits">
+            <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="text-3xl font-semibold mb-8"
+                className="text-center mb-12"
             >
-                Free Stuff for College Builders
-            </motion.h1>
+                <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">
+                    Free Stuff for College Builders
+                </h1>
+                <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+                    Discover curated resources, exclusive credits, and perks to supercharge your student journey.
+                </p>
+            </motion.div>
 
-            <Tabs defaultValue="all" className="w-full">
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                    <TabsList>
-                        {benefitsCategories.map((cat) => (
-                            <TabsTrigger key={cat} value={cat}>
-                                {changeCase(cat, "title")}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
+            <div className="max-w-7xl mx-auto">
+                <div className="w-full flex flex-wrap sm:flex-row sm:flex-nowrap items-center gap-4 mb-8">
+                    <div className="relative flex-auto w-full">
+                        <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
+                        <Input
+                            type="search"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search benefits..."
+                            className="pl-10"
+                        />
+                    </div>
+                    <Select value={region} onValueChange={(value) => setRegion(value)}>
+                        <SelectTrigger className="max-w-[15rem] capitalize">
+                            <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {benefitsRegions.map((region) => (
+                                <SelectItem key={region} value={region} className="capitalize">
+                                    {region}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <ShareButton
                         variant="dark"
-                        size="sm"
+                        // size="sm" 
                         data={{
                             title: "Free Stuff for College Students",
                             text: "From software tools to learning platforms, explore how you can enhance your college experience with these exclusive offers.",
                             url: appConfig.url + "/benefits",
                         }}
+                        className="rounded-xl shadow-sm"
                     >
                         <LuShare2 />
-                        Share with Friends
+                        Share
                     </ShareButton>
-                </div>
 
-                {benefitsCategories.map((cat) => (
-                    <TabsContent key={cat} value={cat}>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="bg-background"
-                            id={`benefits-${cat}`}
-                        >
-                            <div className="relative w-full overflow-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Resource</TableHead>
-                                            <TableHead>Value</TableHead>
-                                            <TableHead>Tags</TableHead>
-                                            <TableHead>Description</TableHead>
-                                            <TableHead />
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {benefitsList
-                                            .filter((r) => {
-                                                if (cat === "all") return true;
-                                                return r.category === cat;
-                                            })
-                                            .map((res, i) => (
-                                                <motion.tr
-                                                    key={res.resource}
-                                                    id={res.resource}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: 0.1 * i }}
-                                                    className="border-b border-border transition-colors hover:bg-muted/50"
-                                                >
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
-                                                            <Image
-                                                                src={res.logo}
-                                                                alt={`${res.resource} logo`}
-                                                                width={40}
-                                                                height={40}
-                                                                className="rounded-md object-contain size-10"
-                                                            />
-                                                            <span className="font-medium hover:underline text-left whitespace-nowrap">
-                                                                {res.resource}
-                                                            </span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>{res.value || "-"}</TableCell>
-                                                    <TableCell className="whitespace-nowrap flex gap-2 flex-wrap">
+                </div>
+                <Tabs defaultValue="all" className="w-full">
+                    <VercelTabsList
+                        className="flex-1 mb-6"
+                        onTabChangeQuery="category"
+                        tabs={benefitsCategories.map((cat) => ({
+                            label: changeCase(cat, "title"),
+                            value: cat,
+                            id: cat,
+                        }))}
+                    />
+
+                    {benefitsCategories.map((cat, catIndex) => {
+                        const tabBenefits = filteredBenefits.filter((r) => {
+                            if (cat === "all") return true;
+                            return r.category === cat;
+                        });
+                        return <TabsContent key={cat} value={cat} className="space-y-10">
+                            {tabBenefits.length === 0 ? (
+                                <EmptyArea
+                                    icons={[SearchX]}
+                                    title="No benefits found"
+                                    description="Try adjusting your search or filter to find what you're looking for."
+
+                                />
+                            ) : <>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                                >
+                                    {tabBenefits.map((res, i) => (
+                                        <motion.div
+                                            key={res.resource + i}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.05 * i }}
+                                            className="rounded-xl border bg-card shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col"
+                                        >
+                                            <div className="flex items-center gap-3 p-4 border-b">
+                                                {res.logo.trim() !== "" && (<Image
+                                                    src={res.logo}
+                                                    alt={`${res.resource} logo`}
+                                                    width={40}
+                                                    height={40}
+                                                    className="rounded-md object-contain h-10 w-auto max-w-16"
+                                                    unoptimized
+                                                />)}
+                                                <div>
+                                                    <h3 className="font-semibold">{res.resource}</h3>
+                                                    <p className="text-xs text-muted-foreground capitalize">
+                                                        {res?.country
+                                                            ? `Available in ${res.country}`
+                                                            : "Available Worldwide"}
+                                                    </p>
+
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 flex-1 flex flex-col">
+                                                <div className="flex items-center justify-between mb-3">
+
+                                                    <div className="flex gap-1 flex-wrap">
                                                         {res.tags.map((tag) => (
-                                                            <span
+                                                            <Badge
                                                                 key={tag}
-                                                                className={`px-2 py-1 rounded-md text-xs ${tag === "NEW"
-                                                                    ? "bg-yellow-200 text-yellow-800"
-                                                                    : "bg-muted text-muted-foreground"
-                                                                    }`}
+                                                                className={
+                                                                    tag === "NEW"
+                                                                        ? "bg-primary/10 text-primary"
+                                                                        : "bg-muted text-muted-foreground"
+                                                                }
                                                             >
                                                                 {tag}
-                                                            </span>
+                                                            </Badge>
                                                         ))}
-                                                    </TableCell>
-                                                    <TableCell className="max-w-md whitespace-pre-wrap">
-                                                        {res.description}
-                                                    </TableCell>
-                                                    <TableCell>
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground flex-1">{res.description}</p>
+                                                <div className="mt-5 flex items-center justify-between">
+                                                    <span className="text-xs text-muted-foreground tracking-wide uppercase">
+                                                        Category
+                                                    </span>
+                                                    <Badge variant="default_light" className="capitalize">
+                                                        {res.category.replace("-", " ")}
+                                                    </Badge>
+                                                </div>
+                                            </div>
 
-                                                        <ResponsiveDialog
-                                                            showCloseButton={false}
-                                                            btnProps={{
-                                                                variant: "dark",
-                                                                size: "sm",
-                                                                onClick: () => {
-                                                                    sendGAEvent("event", "benefit_click_claim", {
-                                                                        resource: res.resource,
-                                                                        category: res.category,
-                                                                        tags: res.tags,
-                                                                    });
-                                                                },
-                                                                children: <>
-                                                                    <Icon name="command" />
-                                                                    {res.category === "fellowships" ? "Apply" : "Claim"} Now
-                                                                </>
-                                                            }}
-                                                            title={`Apply for ${res.resource}`}
-                                                            description={`You are about to apply for ${res.resource}. Click the button below to proceed.`}
-                                                        >
-                                                            <div className="flex items-start justify-between gap-4">
-                                                                <div className="flex items-center gap-4">
-                                                                    <Avatar className="w-14 h-14 rounded-lg">
-                                                                        <AvatarImage src={res.logo} alt={res.resource} className="rounded-lg" />
-                                                                        <AvatarFallback>{res.resource[0]}</AvatarFallback>
-                                                                    </Avatar>
+                                            <div className="p-4 border-t mt-auto flex items-center justify-between gap-4 flex-wrap">
+                                                <Badge variant="default_light">{res.value || "Not described"}</Badge>
+                                                <ButtonLink href={marketwiseLink(res.href, "benefits")} target="_blank" size="sm"
+                                                    variant="dark"
+                                                    onClickCapture={() => { sendGAEvent("event", "benefit_click_claimed", { resource: res.resource, category: res.category, tags: res.tags, }); }} >
+                                                    <Icon name="command" />
+                                                    Claim Now
+                                                    <Icon name="arrow-up-right" />
+                                                </ButtonLink>
 
-                                                                    <div>
-                                                                        <h4 className="flex items-center gap-3 text-lg font-semibold">
-                                                                            {res.resource}
-                                                                            <span className="ml-2 inline-flex items-center gap-2">
-                                                                                <Badge variant="default_light">{res.value}</Badge>
-                                                                                {res.isNew && (
-                                                                                    <Badge variant="ghost" className="ml-1 text-xs font-medium uppercase text-emerald-600">
-                                                                                        New
-                                                                                    </Badge>
-                                                                                )}
-                                                                            </span>
-                                                                        </h4>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </motion.div>
 
+                                {/* Insert AdSense in between each category */}
+                                {catIndex % 2 === 0 && (
+                                    <div className="flex justify-center">
+                                        <AdUnit adSlot="display-square" key={`benefits-ad-${catIndex}`} />
+                                    </div>
+                                )}
+                            </>}
+                        </TabsContent>
+                    })}
+                </Tabs>
 
-                                                                        <p className="text-sm text-muted-foreground">
-                                                                            {res.description}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-2 my-2">
-                                                                {res.tags.map((t) => (
-                                                                    <Badge
-                                                                        size="sm"
-                                                                        variant="default_light"
-                                                                        key={t}
-                                                                        className="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium"
-                                                                    >
-                                                                        {t}
-                                                                    </Badge>
-                                                                ))}
-                                                            </div>
-                                                            <div className="rounded-xl border border-border/40 p-5 bg-gradient-to-b from-primary/5 via-background to-secondary/5 shadow-sm">
-                                                                <p className="text-sm leading-relaxed text-foreground/90">
-                                                                    This free credit is delivered {res.description}. Use the link above to claim. Terms apply.
-                                                                </p>
-
-                                                                <div className="mt-5 flex items-center justify-between">
-                                                                    <span className="text-xs text-muted-foreground tracking-wide uppercase">
-                                                                        Category
-                                                                    </span>
-                                                                    <span className="text-sm font-semibold text-primary capitalize">
-                                                                        {res.category.replace("-", " ")}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-
-                                                            <ButtonLink
-                                                                href={marketwiseLink(res.href, "benefits")}
-                                                                target="_blank"
-                                                                size="sm"
-                                                                width="full"
-                                                                onClickCapture={() => {
-                                                                    sendGAEvent("event", "benefit_click_claimed", {
-                                                                        resource: res.resource,
-                                                                        category: res.category,
-                                                                        tags: res.tags,
-                                                                    });
-                                                                }}
-                                                            >
-                                                                Claim Now
-                                                                <Icon name="arrow-up-right" />
-                                                            </ButtonLink>
-                                                        </ResponsiveDialog>
-
-                                                    </TableCell>
-                                                </motion.tr>
-                                            ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </motion.div>
-                    </TabsContent>
-                ))}
-            </Tabs>
-            <AdUnit adSlot="display-horizontal" key="benefits-page-ad" />
-            <div className=" p-4 flex items-center justify-center flex-col gap-3 mt-10">
-                <p className="text-muted-foreground mr-4 text-sm">
-                    Have a resource to share?
-                </p>
-                <ButtonLink href={"https://forms.gle/aA8NzH31ByUommCg7"} target="_blank" variant="rainbow" size="lg" onClick={() => {
-                    sendGAEvent("event",
-                        "benefit_submit_click", {
-                        location: "benefits_page",
-                    }
-                    );
-                }}>
-                    <Sparkles />
-                    Submit a Resource
-                    <Icon name="arrow-up-right" />
-                </ButtonLink>
+                <div className="mt-16 text-center">
+                    <p className="text-muted-foreground mb-4">Have a resource to share?</p>
+                    <ButtonLink
+                        href={submitBenefitsLink}
+                        target="_blank"
+                        variant="rainbow"
+                        size="lg"
+                        onClick={() => {
+                            sendGAEvent("event", "benefit_submit_click", {
+                                location: "benefits_page",
+                            });
+                        }}
+                    >
+                        <Icon name="sparkles" />
+                        Submit a Resource
+                        <Icon name="arrow-up-right" />
+                    </ButtonLink>
+                </div>
             </div>
-
         </div>
     );
 }
