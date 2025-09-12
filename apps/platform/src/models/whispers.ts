@@ -93,7 +93,6 @@ const PollSubSchema = new Schema<IPoll>(
 /* Main schema */
 const WhisperPostSchema = new Schema<IWhisperPost>(
     {
-        campusId: { type: String, index: true },
         authorId: { type: String, required: false, select: false }, // from Session["user"].id
         visibility: { type: String, enum: ["ANONYMOUS", "PSEUDO", "IDENTIFIED"], default: "ANONYMOUS" },
         category: { type: String, enum: ["CONFESSION", "CRITICISM", "PRAISE", "SHOWER_THOUGHT", "OTHER"], default: "OTHER" },
@@ -113,7 +112,6 @@ const WhisperPostSchema = new Schema<IWhisperPost>(
 );
 
 WhisperPostSchema.index({ score: -1, createdAt: -1 });
-WhisperPostSchema.index({ campusId: 1, createdAt: -1 });
 WhisperPostSchema.index({ moderationStatus: 1, createdAt: -1 });
 
 export const WhisperPostModel: Model<IWhisperPost> =

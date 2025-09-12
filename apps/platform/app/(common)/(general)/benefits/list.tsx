@@ -202,6 +202,7 @@ export default function FreeStuffTable() {
                                                     utm_campaign: "benefits_page",
                                                 })} target="_blank" size="sm"
                                                     variant="dark"
+                                                    prefetch={false}
                                                     onClickCapture={() => { sendGAEvent("event", "benefit_click_claimed", { resource: res.resource, category: res.category, tags: res.tags, }); }} >
                                                     <Icon name="command" />
                                                     Claim Now
@@ -215,9 +216,9 @@ export default function FreeStuffTable() {
 
                                 {/* Insert AdSense in between each category */}
                                 {catIndex % 2 === 0 && (
-                                    <div className="flex justify-center">
+                                    <>
                                         <AdUnit adSlot="display-square" key={`benefits-ad-${catIndex}`} />
-                                    </div>
+                                    </>
                                 )}
                             </>}
                         </TabsContent>

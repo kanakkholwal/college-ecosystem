@@ -8,6 +8,7 @@ import { ButtonLink } from "@/components/utils/link";
 import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
 import { testimonialsContent } from "@/constants/landing";
 import { getLinksByRole, quick_links } from "@/constants/links";
+import { ResourcesList } from "app/(common)/(general)/resources/client";
 import { Newspaper } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -18,7 +19,6 @@ import { ROLES_ENUMS } from "~/constants";
 import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
 import { FeatureSection, IntroSection } from "./client";
-import { ResourcesList } from "./resources/client";
 
 const RESOURCES_LIMIT = 6; // Limit the number of resources fetched
 

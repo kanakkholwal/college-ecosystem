@@ -4,7 +4,7 @@ import { WhisperPostT } from "~/constants/community.whispers";
 export const DUMMY_WHISPERS: WhisperPostT[] = [
   {
     _id: "1",
-    campusId: "CAMPUS-001",
+    
     authorId: "user-101",
     visibility: "ANONYMOUS",
     category: "CONFESSION",
@@ -27,7 +27,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
   },
   {
     _id: "2",
-    campusId: "CAMPUS-001",
+    
     authorId: "user-202",
     visibility: "PSEUDO",
     category: "CRITICISM",
@@ -59,7 +59,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
   },
   {
     _id: "3",
-    campusId: "CAMPUS-002",
+    
     authorId: "user-303",
     visibility: "IDENTIFIED",
     category: "PRAISE",
@@ -82,7 +82,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
   },
   {
     _id: "4",
-    campusId: "CAMPUS-002",
+    
     authorId: "user-404",
     visibility: "PSEUDO",
     category: "SHOWER_THOUGHT",
@@ -105,7 +105,6 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
   },
   {
     _id: "5",
-    campusId: "CAMPUS-003",
     authorId: "user-505",
     visibility: "ANONYMOUS",
     category: "OTHER",

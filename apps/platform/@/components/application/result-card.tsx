@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -54,7 +54,7 @@ export function ResultCard({
       <CardFooter className="justify-between">
         <Button size="sm">{result.semesters?.at(-1)?.cgpi ?? "0"}</Button>
         <Button size="sm" variant="default_light" asChild>
-          <Link href={`/results/${result.rollNo}`}>View Result</Link>
+          <Link href={`/results/${result.rollNo}`} prefetch={false}>View Result</Link>
         </Button>
       </CardFooter>
     </Card>
