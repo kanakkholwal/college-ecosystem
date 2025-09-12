@@ -36,7 +36,10 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
     >
       <Badge variant="default">
         <Link
-          href={marketwiseLink(appConfig.githubRepo, "")}
+          href={marketwiseLink(appConfig.githubRepo, {
+            utm_medium: "app",
+            utm_campaign: "github-banner",
+          })}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1"
@@ -92,7 +95,11 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
           </div>
           <div className="z-10 flex flex-shrink-0 flex-col items-start">
             <a
-              href={marketwiseLink(appConfig.githubRepo, "")}
+              href={marketwiseLink(appConfig.githubRepo, {
+                utm_medium: "app",
+                utm_campaign: "github-banner",
+
+              })}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -102,7 +109,11 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
               {appConfig.name}
             </span>
             <a
-              href={marketwiseLink(appConfig.githubRepo)}
+              href={marketwiseLink(appConfig.githubRepo,{
+                utm_medium: "app",
+                utm_campaign: "github-banner",
+
+              })}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-1 text-sm text-muted-foreground underline hover:text-foreground"

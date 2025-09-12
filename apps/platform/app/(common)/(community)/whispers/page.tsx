@@ -1,150 +1,181 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { BaseHeroSection } from "@/components/application/base-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioStyle } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createWhisper } from "./actions";
+import { z } from "zod";
+import { VISIBILITY_OPTIONS } from "~/constants/community.whispers";
 
-export default function ConfessionPage() {
-  const [confession, setConfession] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(true);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confession.trim()) return;
+const WhisperPostSchema = z.object({
+  content: z.string().min(1, "Message cannot be empty").max(5000),
+  pseudo: z.string().optional(),
+  visibility: z.enum(["ANONYMOUS", "PSEUDO"]),
+});
+
+
+type WhisperPostInput = z.infer<typeof WhisperPostSchema>;
+
+export default function WhisperRoomPage() {
+  const [form, setForm] = useState<WhisperPostInput>({
+    content: "",
+    pseudo: "",
+    visibility: "ANONYMOUS",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleChange = (field: keyof WhisperPostInput, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async () => {
+    const parsed = WhisperPostSchema.safeParse(form);
+    if (!parsed.success) {
+      toast({
+        title: "Oops 🤭",
+        description: parsed.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const formData = new FormData();
-      formData.append("confession", confession);
-      formData.append("isAnonymous", String(isAnonymous));
+      setLoading(true);
+      await fetch("/api/whisper-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
 
-      const response = await createWhisper(confession, isAnonymous);
-      if (response.status === 200) {
-        setConfession("");
-        setIsAnonymous(true);
-        // Optionally, show a success message or update the UI
-        console.log("Whisper created successfully:", response.whisper);
-        toast({
-          title: "Whisper Created",
-          description: "Your whisper has been posted successfully.",
-          variant: "success",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: response.message || "Failed to create whisper.",
-          variant: "destructive",
-        });
-        // Handle error response
-        console.error("Failed to create whisper:", response.message);
-      }
-    } catch (error) {
-      console.error("Error creating whisper:", error);
+      toast({
+        title: "Shared ✨",
+        description: "Your whisper just went live!",
+      });
+
+      router.push("/whisper-room/feed");
+    } catch {
+      toast({
+        title: "Something went wrong 😵",
+        description: "Try again in a moment.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="md:col-span-3 w-full space-y-4 pr-2 min-h-screen grid grid-cols-1 gap-4">
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center pt-4"
-      >
-        <h1 className="text-4xl lg:text-5xl font-bold tracking-tight">
-          Whisper Room
-        </h1>
-        <p className="text-muted-foreground mt-2 text-lg">
-          Share your thoughts, opinions, and secrets. Anonymous or not, your
-          voice matters.
-        </p>
-      </motion.div>
+    <motion.div
+      className="w-full md:col-span-3"
 
-      {/* Confession Box */}
-      <motion.form
-        onSubmit={handleSubmit}
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
-        className="mt-6 w-full"
-      >
-        <Card className="shadow-xl bg-card/80 backdrop-blur-xl border border-border/40 rounded-2xl">
-          <CardContent className="p-6 space-y-6">
-            {/* Anonymity Toggle */}
-            <div className="flex items-center justify-between">
-              <Badge
-                variant={isAnonymous ? "default_light":"outline"}
-                className={cn(
-                  "cursor-pointer select-none transition-colors",
-                )}
-                onClick={() => setIsAnonymous(!isAnonymous)}
-              >
-                {isAnonymous ? (
-                  <div className="flex items-center gap-1">
-                    <EyeOff className="h-4 w-4" /> Anonymous
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-4 w-4" /> Public
-                  </div>
-                )}
-              </Badge>
-            </div>
+      initial={{ y: 30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
 
-            {/* Input Box */}
-            <Textarea
-              value={confession}
-              onChange={(e) => setConfession(e.target.value)}
-              placeholder="What's on your mind?..."
-              className="resize-none min-h-[120px] rounded-xl border-border focus:ring-primary focus-visible:outline-none"
-            />
+      <Card >
+        <BaseHeroSection
+          title="Whisper Room 💬"
+          description="Drop your confessions, shower thoughts, or praises. Be real, be anonymous, be pseudo."
+        >
 
-            {/* Submit */}
-            <Button
-              className="w-full rounded-xl text-base font-medium gap-2"
-              disabled={!confession.trim()}
-            >
-              <Send />
-              Post Confession
-            </Button>
-          </CardContent>
-        </Card>
-      </motion.form>
+        </BaseHeroSection>
 
-      {/* Feed Section */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.8 }}
-        className="mt-12 w-full space-y-4"
-      >
-        {[1, 2, 3].map((item) => (
-          <Card
-            key={item}
-            className="bg-card/70 backdrop-blur-xl border border-border/30 shadow-lg hover:shadow-primary/20 transition rounded-2xl"
+
+        <CardContent className="space-y-6">
+          {/* Message */}
+          <motion.div
+            whileFocus={{ scale: 1.01 }}
+            className="flex flex-col space-y-2"
           >
-            <CardContent className="p-5 space-y-2">
-              <p className="text-base leading-relaxed">
-                {item === 1
-                  ? "Sometimes I feel like the library is more fun than the fest."
-                  : item === 2
-                  ? "Why does the canteen food taste like it holds grudges?"
-                  : "Shoutout to the professor who actually makes 8 AM classes worth it."}
-              </p>
-              <span className="text-xs text-muted-foreground">
-                {item % 2 === 0 ? "Anonymous" : "Public"}
+            <Label htmlFor="content" className="font-medium">
+              Your Whisper
+            </Label>
+            <Textarea
+              id="content"
+              value={form.content}
+              onChange={e => handleChange("content", e.target.value)}
+              placeholder="What’s on your mind? 🤔 (Max 5000 chars)"
+              className="resize-none rounded-xl"
+              rows={6}
+            />
+            <span className="text-xs text-muted-foreground">
+              Don’t worry, nobody knows it’s you… unless you want them to 😉
+            </span>
+          </motion.div>
+
+          {/* Visibility */}
+          <div className="space-y-2">
+            <Label className="font-medium">Choose your vibe ✨</Label>
+            <RadioGroup
+              value={form.visibility}
+              onValueChange={val => handleChange("visibility", val)}
+            >
+              {VISIBILITY_OPTIONS.map(option => {
+                return (
+                  <div
+                    key={option.value}
+                  >
+                    <Label htmlFor={option.value} className={cn(RadioStyle.label, "justify-start")}>
+                      <input type="radio" name="visibility" value={option.value} id={option.value} className={RadioStyle.input} />
+                      {option.label}
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {option.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </RadioGroup>
+          </div>
+
+          {/* Pseudo Name */}
+          {form.visibility === "PSEUDO" && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-2 pl-4"
+            >
+              <Label htmlFor="pseudo" className="font-medium">
+                Pick your pseudo handle 🎨
+              </Label>
+              <Input
+                id="pseudo"
+                value={form.pseudo}
+                onChange={e => handleChange("pseudo", e.target.value)}
+                placeholder="@campus_crush_01"
+                className="rounded-xl"
+              />
+              <span className="text-xs text-slate-400">
+                Fun nicknames encouraged. Keep it safe for campus 🌸
               </span>
-            </CardContent>
-          </Card>
-        ))}
-      </motion.div>
-    </div>
+            </motion.div>
+          )}
+
+          {/* Submit */}
+          <div className="flex justify-end">
+            <Button
+              disabled={loading}
+              onClick={handleSubmit}
+              variant="rainbow"
+            >
+              {loading ? "Whispering..." : "Publish 🚀"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

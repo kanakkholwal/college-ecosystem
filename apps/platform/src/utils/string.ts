@@ -38,15 +38,37 @@ export function changeCase(
       return str;
   }
 }
-const appUrl = new URL(appConfig.url)
-export function marketwiseLink(link: string, path: string = "/resources") {
+const appUrl = new URL(appConfig.url);
+
+type UTMSource = string; // usually hostname or campaign source
+type UTMMedium = "app" | "email" | "social" | "cpc" | "affiliate";
+type UTMParams = {
+  utm_medium?: UTMMedium;
+  utm_campaign?: string;
+  utm_source?: UTMSource;
+  utm_path?: string;
+};
+
+export function marketwiseLink(link: string, options: UTMParams = {}) {
   const url = new URL(link);
-  url.searchParams.append("utm_source", appUrl.hostname);
-  url.searchParams.append("utm_medium", "referral");
-  url.searchParams.append("utm_campaign", appConfig.url + path);
-  url.searchParams.append("ref", appConfig.url + path);
+
+  const {
+    utm_medium = "app",
+    utm_campaign = "/resources",
+    utm_source = appUrl.hostname,
+    utm_path = "/resources",
+  } = options;
+
+  const campaignPath = new URL(utm_path, appUrl).toString();
+
+  url.searchParams.set("utm_source", utm_source);
+  url.searchParams.set("utm_medium", utm_medium);
+  url.searchParams.set("utm_campaign", utm_campaign || campaignPath);
+  url.searchParams.set("ref", campaignPath);
+
   return url.toString();
 }
+
 export function validatePassword(password: string) {
   const result = passwordSchema.safeParse(password);
   if (!result.success) {

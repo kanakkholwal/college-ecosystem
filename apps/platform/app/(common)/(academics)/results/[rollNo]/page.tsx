@@ -181,9 +181,7 @@ export default async function ResultsPage(props: Props) {
 
           {/* Graph View */}
           <TabsContent value="graph">
-            <div className="max-w-4xl mx-auto my-6 rounded-2xl bg-accent p-6">
               <CGPIChart semesters={result.semesters} />
-            </div>
           </TabsContent>
         </Tabs>
       </section>

@@ -296,6 +296,17 @@ const benefits: Record<string, benefitsItem[]> = {
       country: "India"
     },
     {
+      id: "unidays-in",
+      resource: "Unidays",
+      logo: "https://images.unidays.world/i/creative/raw/3717fb3a-8f0f-4210-844c-8f53171a6788",
+      value: "best student discounts",
+      tags: ["Popular"],
+      description: "Exclusive student deals and benefits",
+      href: "https://www.myunidays.com/IN/en-IN",
+      category: "free-stuff",
+      country: "India"
+    },
+    {
       id: "student-developer-pack",
       resource: "GitHub",
       logo: "https://api.freeforstudents.org/assets/c611bd9f-46f4-443d-9635-f0f42b0fecf8?format=auto&width=256",

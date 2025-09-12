@@ -197,7 +197,10 @@ export default function FreeStuffTable() {
 
                                             <div className="p-4 border-t mt-auto flex items-center justify-between gap-4 flex-wrap">
                                                 <Badge variant="default_light">{res.value || "Not described"}</Badge>
-                                                <ButtonLink href={marketwiseLink(res.href, "benefits")} target="_blank" size="sm"
+                                                <ButtonLink href={marketwiseLink(res.href, {
+                                                    utm_medium: "app",
+                                                    utm_campaign: "benefits_page",
+                                                })} target="_blank" size="sm"
                                                     variant="dark"
                                                     onClickCapture={() => { sendGAEvent("event", "benefit_click_claimed", { resource: res.resource, category: res.category, tags: res.tags, }); }} >
                                                     <Icon name="command" />

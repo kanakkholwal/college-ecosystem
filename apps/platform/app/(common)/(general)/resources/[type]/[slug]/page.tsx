@@ -251,8 +251,10 @@ export default async function ResourcePage({ params }: PageProps) {
                       variant="link"
                       className="ml-2 group gap-1"
                       href={marketwiseLink(
-                        url,
-                        `/resources/${frontmatter.type}/${frontmatter.slug}`
+                        url,{
+                          utm_medium: "app",
+                          utm_campaign: "resource_alternate_reads",
+                        }
                       )}
                       target="_blank"
                       rel="noopener noreferrer"

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { CATEGORIES } from "./constants";
 
 import { Button } from "@/components/ui/button";
 import { SortAsc, TrendingUpIcon, VenetianMask } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CATEGORY_OPTIONS } from "~/constants/community.whispers";
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +24,7 @@ export default async function Layout({
     return notFound();
   }
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 min-h-screen">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 min-h-screen w-full max-w-(--max-app-width) mx-auto">
       {/* Sidebar */}
       <aside className="hidden md:block md:col-span-1 space-y-6 sticky top-4 h-fit">
         {/* Communities Section */}
@@ -72,17 +72,17 @@ export default async function Layout({
         {/* Popular Communities Section */}
         <div className="bg-card rounded-2xl shadow-sm border p-5">
           <h2 className="text-sm font-semibold text-foreground/80 mb-3 tracking-tight">
-            Popular Communities
+            Popular Categories
           </h2>
           <div className="grid grid-cols-1 gap-2">
-            {CATEGORIES.map((category) => (
+            {CATEGORY_OPTIONS.map((category) => (
               <Link
-                key={category.name}
-                href={`/whispers?type=${category.name}`}
+                key={category.label}
+                href={`/whispers?type=${category.value}`}
                 className="group flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-muted/60 transition-colors text-sm font-medium text-muted-foreground"
               >
-                <category.Icon className="w-5 h-5 text-primary group-hover:text-primary/80" />
-                <span className="truncate">{category.name}</span>
+                <category.Icon className="size-5 text-primary group-hover:text-primary/80" />
+                <span className="truncate">{category.label}</span>
               </Link>
             ))}
           </div>

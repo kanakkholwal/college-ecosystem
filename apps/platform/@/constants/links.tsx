@@ -1,4 +1,4 @@
-import { Moon, Settings, Sparkles, Tickets, UserRoundCog, Users } from "lucide-react";
+import { Moon, Podcast, Settings, Sparkles, Tickets, UserRoundCog, Users } from "lucide-react";
 import { BsInstagram } from "react-icons/bs";
 import { FiLinkedin } from "react-icons/fi";
 import { LuBookA, LuBuilding, LuGithub, LuLayoutDashboard, LuSchool } from "react-icons/lu";
@@ -400,6 +400,16 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
     })
 
 
+  }
+  if(process.env.NODE_ENV !== "production"){
+    linksByRole.push({
+      title: "Whisper Room",
+      href: "/whispers",
+      description: "Anonymous discussion forum for students.",
+      Icon: Podcast,
+      category: "community",
+      allowed_roles: ["student"]
+    })
   }
   return linksByRole
 
