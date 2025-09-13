@@ -18,9 +18,11 @@ import {
   WhisperPostSchema,
 } from "~/constants/community.whispers";
 
+import { Icon } from "@/components/icons";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ButtonLink } from "@/components/utils/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Content, JSONContent } from "@tiptap/react";
 import {
@@ -74,6 +77,7 @@ export default function WhisperRoomPage() {
   async function onSubmit(values: z.infer<typeof WhisperPostSchema>) {
     try {
       setLoading(true);
+      console.log("Submitting whisper:", values);
 
       // Simulate request
       await new Promise((res) => setTimeout(res, 1200));
@@ -104,44 +108,49 @@ export default function WhisperRoomPage() {
         <BaseHeroSection
           title="Whisper Room 💬"
           description="Drop your confessions, shower thoughts, or praises. Be real, be anonymous, be pseudo."
-        />
+        >
+          <ButtonLink href="/whisper-room/feed" shadow="none" variant="default_light"><Icon name="podcast" />Go to Feed</ButtonLink>
+        </BaseHeroSection>
 
         <Card className="border-none shadow-lg">
           <CardContent className="gap-8 grid grid-cols-12 p-6">
             {/* Editor Section */}
-            <motion.div
-              whileFocus={{ scale: 1.01 }}
-              className="flex flex-col space-y-3 md:col-span-8 col-span-12 bg-card p-4 rounded-lg border"
-            >
-              <Label htmlFor="content" className="font-medium">
-                Your Whisper
-              </Label>
-              <NexoEditor
-                content={reactText as Content}
-                placeholder="What’s on your mind? 🤔 (Max 5000 chars)"
-                onChange={(content) => {
-                  setRichText(content);
-                  const md = renderToMarkdown({
-                    content: content as JSONContent,
-                    extensions: defaultExtensions,
-                  });
-                  if (md.length > 5000) {
-                    toast({
-                      title: "Content too long 😵",
-                      description: "Please limit your whisper to 5000 characters.",
-                    });
-                    return;
-                  } else if (md.length < 3) {
-                    return;
-                  }
-                  form.setValue("content", md);
-                }}
-              />
-
-              <span className="text-xs text-muted-foreground">
-                Don’t worry, nobody knows it’s you… unless you want them to 😉
-              </span>
-            </motion.div>
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-3 md:col-span-8 col-span-12 bg-card p-4 rounded-lg border">
+                  <FormLabel>  Your Whisper</FormLabel>
+                  <FormControl>
+                    <NexoEditor
+                      content={reactText as Content}
+                      placeholder="What’s on your mind? 🤔 (Max 5000 chars)"
+                      onChange={(content) => {
+                        setRichText(content);
+                        const md = renderToMarkdown({
+                          content: content as JSONContent,
+                          extensions: defaultExtensions,
+                        });
+                        if (md.length > 5000) {
+                          toast({
+                            title: "Content too long 😵",
+                            description: "Please limit your whisper to 5000 characters.",
+                          });
+                          return;
+                        } else if (md.length < 3) {
+                          return;
+                        }
+                        form.setValue("content", md);
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Don’t worry, nobody knows it’s you… unless you want them to 😉
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Sidebar Section */}
             <div className="md:col-span-4 col-span-12 space-y-6">
@@ -173,7 +182,7 @@ export default function WhisperRoomPage() {
                                 id={option.value}
                                 checked={field.value === option.value}
                                 onChange={() => field.onChange(option.value)}
-                                className={cn(RadioStyle.input,"border-4")}
+                                className={cn(RadioStyle.input, "border-4")}
                               />
                               <span>{option.label}</span>
                             </Label>

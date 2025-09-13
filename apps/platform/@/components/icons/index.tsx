@@ -34,6 +34,7 @@ import {
   Palette,
   Phone,
   Plus,
+  Podcast,
   RocketIcon,
   Search,
   Share,
@@ -113,6 +114,7 @@ export const IconComponent = {
   bookmark: Bookmark,
   "bookmark-check": BookmarkCheck,
   heart: FaHeart,
+  podcast:Podcast,
   "heart-empty": FaRegHeart,
   // social media icons
   github: Github,
