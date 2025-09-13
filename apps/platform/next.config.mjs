@@ -14,7 +14,29 @@ const nextConfig = {
   reactStrictMode: true,
   crossOrigin: 'anonymous',
   skipTrailingSlashRedirect: true,
-  // output:"standalone",
+
+  // Performance optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  // Reduce bundle size
+
+  // optimizePackageImports: [
+  //   '@radix-ui/react-icons',
+  //   'lucide-react',
+  //   'react-icons',
+  //   'framer-motion'
+  // ],
+  // turbo: {
+  //   rules: {
+  //     '*.svg': {
+  //       loaders: ['@svgr/webpack'],
+  //       as: '*.js',
+  //     },
+  //   },
+  // },
+
   logging: process.env.NODE_ENV !== "production"
     ? false
     : {
@@ -22,20 +44,38 @@ const nextConfig = {
         fullUrl: false,
       },
     },
+
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: '**' },
       { protocol: 'https', hostname: 'api.dicebear.com' },
       { hostname: 'visitor-badge.laobi.icu' },
     ],
-  },
-  turbopack: {
-    // TODO: enable when fixed
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 31536000, // 1 year
   },
 
-  // experimental: {
-  //   forceSwcTransforms: true,
-  // },
+  // Webpack optimizations
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            enforce: true,
+          },
+        },
+      };
+    }
+    return config;
+  },
   // async rewrites() {
   //   return [
   //     {

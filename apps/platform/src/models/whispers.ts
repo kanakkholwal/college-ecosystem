@@ -1,10 +1,10 @@
 // models/whisper.model.ts
 import mongoose, { Document, Model, Schema } from "mongoose";
-import { WhisperPostT } from "~/constants/community.whispers";
+import { moderationStatuses, postCategories, postReactions, postVisibilities, WhisperPostT } from "~/constants/community.whispers";
 
 export interface IReaction {
     userId?: string; // Postgres user id
-    type: "LIKE" | "LAUGH" | "RELATE" | "AGREE" | "DISAGREE" | "REPORT";
+    type: typeof postReactions[number];
     createdAt?: Date;
 }
 
@@ -47,7 +47,7 @@ export interface IWhisperPost extends Document, Omit<WhisperPostT, "_id" | "crea
 const ReactionSubSchema = new Schema<IReaction>(
     {
         userId: { type: String, required: false },
-        type: { type: String, enum: ["LIKE", "LAUGH", "RELATE", "AGREE", "DISAGREE", "REPORT"], required: true },
+        type: { type: String, enum: postReactions, required: true },
         createdAt: { type: Date, default: Date.now },
     },
     { _id: true }
@@ -94,19 +94,17 @@ const PollSubSchema = new Schema<IPoll>(
 const WhisperPostSchema = new Schema<IWhisperPost>(
     {
         authorId: { type: String, required: false, select: false }, // from Session["user"].id
-        visibility: { type: String, enum: ["ANONYMOUS", "PSEUDO", "IDENTIFIED"], default: "ANONYMOUS" },
-        category: { type: String, enum: ["CONFESSION", "CRITICISM", "PRAISE", "SHOWER_THOUGHT", "OTHER"], default: "OTHER" },
+        visibility: { type: String, enum: postVisibilities, default: postVisibilities[0] },
+        category: { type: String, enum: postCategories, required: true, },
         content: { type: String, required: true, minlength: 2, maxlength: 5000 },
-        attachments: { type: [String], default: [] },
         pseudo: { type: PseudoIdentitySubSchema, required: false },
         reactions: { type: [ReactionSubSchema], default: [] },
         reports: { type: [ReportSubSchema], default: [] },
-        moderationStatus: { type: String, enum: ["PENDING", "APPROVED", "REMOVED", "FLAGGED", "REVIEWED"], default: "PENDING", index: true },
+        moderationStatus: { type: String, enum: moderationStatuses, default: moderationStatuses[0], index: true },
         score: { type: Number, default: 0, index: true },
         pinned: { type: Boolean, default: false },
         pinnedUntil: { type: Date },
         poll: { type: PollSubSchema, required: false },
-        meta: { type: Schema.Types.Mixed },
     },
     { timestamps: true, versionKey: false }
 );

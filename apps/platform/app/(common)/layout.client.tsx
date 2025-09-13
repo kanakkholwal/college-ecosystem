@@ -41,6 +41,7 @@ const PROMO = {
 };
 
 export function LayoutClient({ user }: { user?: Session["user"] }) {
+    return null; // Disable the banner for now
     return <>
         <ConditionalRender
             condition={true} //PROMO.getConditionByUser(user) <--- Uncomment this line to enable the banner based on condition

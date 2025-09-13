@@ -404,7 +404,7 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
   if(process.env.NODE_ENV !== "production"){
     linksByRole.push({
       title: "Whisper Room",
-      href: "/whispers",
+      href: "/whisper-room",
       description: "Anonymous discussion forum for students.",
       Icon: Podcast,
       category: "community",

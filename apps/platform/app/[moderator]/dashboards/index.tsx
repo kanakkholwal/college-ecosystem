@@ -1,10 +1,10 @@
 import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
-import { BannerPanel } from "@/components/utils/banner";
-import ConditionalRender from "@/components/utils/conditional-render";
+// import { BannerPanel } from "@/components/utils/banner";
+// import ConditionalRender from "@/components/utils/conditional-render";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
-import { RocketIcon } from "@radix-ui/react-icons";
+// import { RocketIcon } from "@radix-ui/react-icons";
 import AdminDashboard from "./admin.dashboard";
 import ChiefWardenDashboard from "./chief_warden.dashboard";
 import CRDashboard from "./cr.dashboard";
@@ -31,7 +31,7 @@ export function DashboardTemplate({ user_role }: { user_role: string }) {
     if (DashboardComponent) {
       return (
         <>
-          <ConditionalRender condition={user_role === "student"}>
+          {/* <ConditionalRender condition={user_role === "student"}>
             <BannerPanel
               icon={<RocketIcon className="size-4 text-muted-foreground" />}
               isClosable={true}
@@ -44,7 +44,7 @@ export function DashboardTemplate({ user_role }: { user_role: string }) {
                 variant: "default_light",
               }}
             />
-          </ConditionalRender>
+          </ConditionalRender> */}
           <AdUnit adSlot="display-horizontal" key={"dashboard-page-ad-" + user_role} />
           <ErrorBoundaryWithSuspense
             loadingFallback={

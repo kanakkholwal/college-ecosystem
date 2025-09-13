@@ -1,12 +1,98 @@
-// zod-schemas.ts
 import { Drama, HatGlasses, Heart, Plus, ShowerHead, VenetianMask } from "lucide-react";
 import { FaEarListen, FaRegFaceLaughSquint, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa6";
 import { z } from "zod";
+// constants
+// ~/constants/whisper.constants.ts
 
-export const PostVisibility = z.enum(["ANONYMOUS", "PSEUDO", "IDENTIFIED"]);
-export const PostCategory = z.enum(["CONFESSION", "CRITICISM", "PRAISE", "SHOWER_THOUGHT", "OTHER"]);
-export const ModerationStatus = z.enum(["PENDING", "APPROVED", "REMOVED", "FLAGGED", "REVIEWED"]);
-export const ReactionType = z.enum(["LIKE", "LAUGH", "RELATE", "AGREE", "DISAGREE", "REPORT"]);
+export const VISIBILITY_OPTIONS = [
+  {
+    value: "ANONYMOUS",
+    label: "🙈 Anonymous",
+    description: "Your identity stays completely hidden.",
+  },
+  {
+    value: "PSEUDO",
+    label: "🎭 Pseudo",
+    description: "Pick a fun nickname. Keep it safe for campus 🌸",
+  },
+  {
+    value: "IDENTIFIED",
+    label: "🪪 Identified",
+    description: "Post under your real profile (less common in Whisper).",
+  },
+] as const;
+
+export type VisibilityType = (typeof VISIBILITY_OPTIONS)[number]["value"];
+
+type CategoryOption = {
+    value: string;
+    label: string;
+    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+    description: string;
+}
+
+
+export const CATEGORY_OPTIONS: CategoryOption[] = [
+  {
+    value: "confession",
+    label: "Confession",
+    Icon: Drama,
+    description: "Get it off your chest — no judgment here.",
+  },
+  {
+    value: "criticism",
+    label: "Criticism",
+    Icon: VenetianMask,
+    description: "Point out issues, share constructive feedback.",
+  },
+  {
+    value: "praise",
+    label: "Praise",
+    Icon: FaEarListen,
+    description: "Celebrate people, events, or anything wholesome.",
+  },
+  {
+    value: "shower_thought",
+    label: "Shower Thought",
+    Icon: ShowerHead,
+    description: "Random brain dump moments.",
+  },
+  {
+    value: "other",
+    label: "Other",
+    Icon: HatGlasses,
+    description: "Doesn’t fit in a box? Put it here.",
+  },
+] as const;
+
+export const REACTION_OPTIONS = [
+  { value: "like", label: "👍 Like",Icon:Heart },
+  { value: "laugh", label: "😂 Laugh",Icon:FaRegFaceLaughSquint  },
+  { value: "relate", label: "😌 Relatable" ,Icon:Plus  },
+  { value: "agree", label: "👌 Agree",Icon:FaRegThumbsUp },
+  { value: "disagree", label: "🙅 Disagree",Icon:FaRegThumbsDown },
+  { value: "report", label: "🚩 Report",Icon:FaRegFlag },
+] as const;
+
+export type ReactionType = (typeof REACTION_OPTIONS)[number]["value"];
+
+export const moderationStatuses:string[] = [
+  "PENDING",
+  "APPROVED",
+  "REMOVED",
+  "FLAGGED",
+  "REVIEWED",
+] as const;
+export const postVisibilities = VISIBILITY_OPTIONS.map(v => v.value);
+export const postCategories = CATEGORY_OPTIONS.map(c => c.value);
+export const postReactions = REACTION_OPTIONS.map(r => r.value);
+// zod-schemas
+
+
+export const PostVisibility = z.enum(postVisibilities as [string, ...string[]]);
+export const PostCategory = z.enum(postCategories as [string, ...string[]]);
+export const ModerationStatus = z.enum(moderationStatuses as [string, ...string[]]);
+export const ReactionType = z.enum(postReactions as [string, ...string[]]);
 
 export const PseudoIdentitySchema = z.object({
   handle: z.string().min(2).max(32),
@@ -42,19 +128,17 @@ export const PollSchema = z.object({
 export const WhisperPostSchema = z.object({
   _id: z.string().optional(),
   authorId: z.string(), // Postgres user id
-  visibility: PostVisibility.default("ANONYMOUS"),
-  category: PostCategory.default("OTHER"),
+  visibility: PostVisibility.default(postVisibilities[0]),
+  category: PostCategory.default(postCategories[0]),
   content: z.string().min(1).max(5000),
-  attachments: z.array(z.string().url()).optional().default([]),
   pseudo: PseudoIdentitySchema.optional(), // no null, just undefined if missing
   reactions: z.array(ReactionSchema).optional().default([]),
   reports: z.array(ReportSchema).optional().default([]),
-  moderationStatus: ModerationStatus.default("PENDING"),
+  moderationStatus: ModerationStatus.default(moderationStatuses[0]),
   score: z.number().int().default(0),
   pinned: z.boolean().default(false),
   pinnedUntil: z.date().optional(),
   poll: PollSchema.optional(),
-  meta: z.record(z.any()).optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
@@ -68,78 +152,3 @@ export type PollT = z.infer<typeof PollSchema>;
 
 
 
-// constants
-// ~/constants/whisper.constants.ts
-
-export const VISIBILITY_OPTIONS = [
-  {
-    value: "ANONYMOUS",
-    label: "🙈 Anonymous",
-    description: "Your identity stays completely hidden.",
-  },
-  {
-    value: "PSEUDO",
-    label: "🎭 Pseudo",
-    description: "Pick a fun nickname. Keep it safe for campus 🌸",
-  },
-  {
-    value: "IDENTIFIED",
-    label: "🪪 Identified",
-    description: "Post under your real profile (less common in Whisper).",
-  },
-] as const;
-
-export type VisibilityType = (typeof VISIBILITY_OPTIONS)[number]["value"];
-
-type CategoryOption = {
-    value: string;
-    label: string;
-    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
-    description: string;
-}
-
-
-export const CATEGORY_OPTIONS: CategoryOption[] = [
-  {
-    value: "CONFESSION",
-    label: "Confession",
-    Icon: Drama,
-    description: "Get it off your chest — no judgment here.",
-  },
-  {
-    value: "CRITICISM",
-    label: "Criticism",
-    Icon: VenetianMask,
-    description: "Point out issues, share constructive feedback.",
-  },
-  {
-    value: "PRAISE",
-    label: "Praise",
-    Icon: FaEarListen,
-    description: "Celebrate people, events, or anything wholesome.",
-  },
-  {
-    value: "SHOWER_THOUGHT",
-    label: "Shower Thought",
-    Icon: ShowerHead,
-    description: "Random brain dump moments.",
-  },
-  {
-    value: "OTHER",
-    label: "Other",
-    Icon: HatGlasses,
-    description: "Doesn’t fit in a box? Put it here.",
-  },
-] as const;
-
-
-export const REACTION_OPTIONS = [
-  { value: "LIKE", label: "👍 Like",Icon:Heart },
-  { value: "LAUGH", label: "😂 Laugh",Icon:FaRegFaceLaughSquint  },
-  { value: "RELATE", label: "😌 Relatable" ,Icon:Plus  },
-  { value: "AGREE", label: "👌 Agree",Icon:FaRegThumbsUp },
-  { value: "DISAGREE", label: "🙅 Disagree",Icon:FaRegThumbsDown },
-  { value: "REPORT", label: "🚩 Report",Icon:FaRegFlag },
-] as const;
-
-export type ReactionType = (typeof REACTION_OPTIONS)[number]["value"];

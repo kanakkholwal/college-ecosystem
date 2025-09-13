@@ -18,6 +18,16 @@ export type benefitsItem = {
 const benefits: Record<string, benefitsItem[]> = {
   worldwide: [
     {
+      id: "comet-student-offer",
+      resource: "Comet Browser ",
+      value: "Early Access + Free Perplexity Pro",
+      description: "Get early access to Comet Browser + free Perplexity Pro (1 month) with student email",
+      href: "https://perplexity.ai/browser/claim/W7FPUV05G7",
+      tags: ["AI", "Pro Membership", "Student Exclusive", "Upgrade", "Referral"],
+      logo: "https://www.buildincollege.com/logos/perplexity.png",
+      category: "free-stuff",
+    },
+    {
       id: "1",
       resource: "ElevenLabs",
       logo: "https://www.buildincollege.com/logos/elevenlabs.png",
@@ -191,7 +201,7 @@ const benefits: Record<string, benefitsItem[]> = {
       logo: "https://www.buildincollege.com/logos/perplexity.png",
       value: "$20",
       description: "Sign up with .edu email",
-      href: "https://plex.it/referrals/BNJ8UCZW",
+      href: "https://perplexity.ai/pro?referral_code=OY49SK1W",
       tags: ["AI", "Productivity"],
       category: "free-stuff"
     }, {
