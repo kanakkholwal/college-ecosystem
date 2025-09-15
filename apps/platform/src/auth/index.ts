@@ -273,25 +273,13 @@ type FacultyType = {
   department: string;
 };
 
-async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserInfoReturnType> {
+async function getUserInfo(user: User & Record<string, unknown>): Promise<getUserInfoReturnType> {
   const username = user.email.split("@")[0];
   const isStudent = isValidRollNumber(username);
 
   if (isStudent) {
     console.log("Student");
-    // TODO: temporarily disable result check for 2025 batch
-    if (username.startsWith("25")) {
-      return {
-        other_roles: [ROLES_ENUMS.STUDENT],
-        department: getDepartmentByRollNo(username) as string,
-        name: user.name,
-        emailVerified: true,
-        email: user.email,
-        username,
-        gender:  "not_specified",
-        hostelId: "not_specified",
-      };
-    }
+
     const res = await serverFetch<{
       message: string;
       data: ResultType | null;
@@ -312,7 +300,19 @@ async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserI
         message: "Result not found for the given roll number | Contact admin",
       });
     }
-
+    // TODO: temporarily disable result check for 2025 batch
+    if (username.startsWith("25")) {
+      return {
+        other_roles: [ROLES_ENUMS.STUDENT],
+        department: getDepartmentByRollNo(username) as string,
+        name: user.name,
+        emailVerified: true,
+        email: user.email,
+        username,
+        gender: "not_specified",
+        hostelId: "not_specified",
+      };
+    }
     const hostelStudent = await getHostelStudent({
       rollNo: username,
       email: user.email,
@@ -326,7 +326,7 @@ async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserI
       department: getDepartmentByRollNo(username) as string,
       name: response.data.name.toUpperCase(),
       emailVerified: true,
-      email:user.email,
+      email: user.email,
       username,
       gender: hostelStudent?.gender || "not_specified",
       hostelId: hostelStudent?.hostelId || "not_specified",
@@ -339,7 +339,7 @@ async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserI
   }>("/api/faculties/search/:email", {
     method: "POST",
     params: {
-      email:user.email,
+      email: user.email,
     },
   });
   const faculty = response?.data;
@@ -353,7 +353,7 @@ async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserI
       department: faculty.department,
       name: faculty.name.toUpperCase(),
       emailVerified: true,
-      email:user.email,
+      email: user.email,
       username,
       gender: "not_specified",
       hostelId: null,
@@ -364,7 +364,7 @@ async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserI
   return {
     other_roles: [ROLES_ENUMS.STAFF],
     department: "Staff",
-    email:user.email,
+    email: user.email,
     emailVerified: true,
     username,
     gender: "not_specified",

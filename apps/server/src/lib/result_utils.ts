@@ -119,7 +119,7 @@ export async function getResultHeaders(rollNo: string, defaultBTech = true): Pro
         }
     }
     const matches = [
-        Number.parseInt(rollNo.toLowerCase().substring(0, 2)), // 20
+        Number.parseInt(rollNo.toLowerCase().substring(0, 2)), // 24
         rollNo.toLowerCase().substring(2, 5), // dec,bec,bar
         rollNo.toLowerCase().substring(5, 8), // 001
     ] as const;
@@ -129,6 +129,7 @@ export async function getResultHeaders(rollNo: string, defaultBTech = true): Pro
     if (localCache.has(programme.scheme + batchCode)) {
         return Promise.resolve(localCache.get(programme.scheme + batchCode)!);
     }
+    // TODO: Implement a more persistent caching mechanism (like Redis or file-based) if needed in future
 
     try {
         // 

@@ -9,6 +9,7 @@
         "dev": "tsx watch src/index.ts",
         "lint": "eslint src/** ",
         "lint:fix": "eslint src/**  --fix",
+        "add_freshers": "tsx src/scripts/add_freshers.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [

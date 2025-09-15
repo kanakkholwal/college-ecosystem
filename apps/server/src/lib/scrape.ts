@@ -203,7 +203,7 @@ export async function scrapeResult(rollNo: string): Promise<{
           for (const semester of studentDual.semesters) {
             student.semesters.push({
               ...semester,
-              semester:`${semester.semester}-DD`, // Append 'D' to indicate dual degree semester
+              semester: `${semester.semester}-DD`, // Append 'D' to indicate dual degree semester
             })
           }
           console.log(student.semesters.length + " total semesters found in dual degree result");
@@ -237,6 +237,8 @@ export async function scrapeResult(rollNo: string): Promise<{
   }
 }
 
+const latestBatchCode = 24; // for 2024 batch
+
 /**
  * Gets the information headers for the roll number.
  * @param rollNo - The roll number of the student.
@@ -252,6 +254,33 @@ export async function getInfoFromRollNo(rollNo: string, dualDegree = false) {
     rollNo.toLowerCase().substring(5, 8), // 001
   ] as const;
   const [batchCode,] = matches;
+  if (isNaN(batchCode) || batchCode < 20) {
+    return {
+      batch: 0,
+      branch: "not_specified",
+      url: "",
+      headers: {
+        Referer: "",
+        CSRFToken: "",
+        RequestVerificationToken: "",
+      },
+      programme: "not_specified",
+    };
+  }
+  if (batchCode === latestBatchCode + 1) {
+    // console.log("Results not yet available for the latest batch. falling back to previous batch headers");
+    return {
+      batch: Number.parseInt(`20${batchCode}`),
+      branch: determineDepartment(rollNo),
+      url: "<url>",
+      headers: {
+        Referer: "<Referer>",
+        CSRFToken: "<CSRFToken>",
+        RequestVerificationToken: "<RequestVerificationToken>",
+      },
+      programme: determineProgramme(rollNo),
+    };
+  }
   const headersResponse = await getResultHeaders(rollNo, !dualDegree);
   if (headersResponse.error) {
     return {
