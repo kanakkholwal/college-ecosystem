@@ -9,7 +9,6 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     visibility: "ANONYMOUS",
     category: "CONFESSION",
     content: "I once accidentally walked into the wrong lecture hall and sat there for 30 minutes before realizing 😭",
-    attachments: [],
     reactions: [
       { type: "LIKE", userId: "u1" },
       { type: "LAUGH", userId: "u2" },
@@ -21,7 +20,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     pinned: false,
     pinnedUntil: undefined,
     poll: undefined,
-    meta: { aiToxicityScore: 0.02 },
+
     createdAt: new Date("2025-09-10T10:00:00Z"),
     updatedAt: new Date("2025-09-10T10:30:00Z"),
   },
@@ -32,7 +31,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     visibility: "PSEUDO",
     category: "CRITICISM",
     content: "Canteen food portions are shrinking every semester 🍛⬇️",
-    attachments: [],
+    
     pseudo: { handle: "HungryHippo", avatar: undefined, color: "#FF69B4" },
     reactions: [
       { type: "RELATE", userId: "u5" },
@@ -53,7 +52,6 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
       expiresAt: new Date("2025-09-20T23:59:59Z"),
       anonymousVotes: true,
     },
-    meta: {},
     createdAt: new Date("2025-09-11T15:20:00Z"),
     updatedAt: new Date("2025-09-11T15:30:00Z"),
   },
@@ -64,7 +62,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     visibility: "IDENTIFIED",
     category: "PRAISE",
     content: "Shoutout to the library staff 📚 for being absolute lifesavers during finals week!",
-    attachments: [],
+    
     reactions: [
       { type: "LIKE", userId: "u8" },
       { type: "LIKE", userId: "u9" },
@@ -76,7 +74,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     pinned: true,
     pinnedUntil: new Date("2025-09-30T23:59:59Z"),
     poll: undefined,
-    meta: { tags: ["praise", "library"] },
+    
     createdAt: new Date("2025-09-12T08:00:00Z"),
     updatedAt: new Date("2025-09-12T08:15:00Z"),
   },
@@ -87,7 +85,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     visibility: "PSEUDO",
     category: "SHOWER_THOUGHT",
     content: "Technically, our campus cats own us, not the other way around 🐈",
-    attachments: [],
+    
     pseudo: { handle: "CatPhilosopher", avatar: undefined, color: "#FFD700" },
     reactions: [
       { type: "LAUGH", userId: "u11" },
@@ -99,7 +97,6 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     pinned: false,
     pinnedUntil: undefined,
     poll: undefined,
-    meta: {},
     createdAt: new Date("2025-09-13T12:00:00Z"),
     updatedAt: new Date("2025-09-13T12:05:00Z"),
   },
@@ -109,7 +106,7 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
     visibility: "ANONYMOUS",
     category: "OTHER",
     content: "Anyone know if the WiFi works better at the new block? 🤔",
-    attachments: [],
+    
     reactions: [],
     reports: [{ reporterId: "u15", reason: "Spam", createdAt: new Date() }],
     moderationStatus: "FLAGGED",
@@ -126,7 +123,6 @@ export const DUMMY_WHISPERS: WhisperPostT[] = [
       expiresAt: new Date("2025-09-18T20:00:00Z"),
       anonymousVotes: false,
     },
-    meta: {},
     createdAt: new Date("2025-09-13T18:00:00Z"),
     updatedAt: new Date("2025-09-13T18:10:00Z"),
   },
