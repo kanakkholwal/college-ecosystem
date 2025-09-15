@@ -68,6 +68,11 @@ export default function SignUpForm() {
   });
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     console.log(data);
+    // TODO: restrict sign in for 2025 batch for google only
+    if (!data.email.startsWith("25")) {
+      toast.error("Only 2025 batch students are allowed to sign up right now. Please use Google Sign In.");
+      return;
+    }
 
     setIsLoading(true);
     await authClient.signUp.email(
@@ -203,7 +208,7 @@ export default function SignUpForm() {
               {isLoading && (
                 <Icon name="loader-circle" className="animate-spin" />
               )}
-              Sign Up with Email
+              {isLoading ? "Signing up..." : "Sign Up with Email"}
             </Button>
           </form>
         </Form>

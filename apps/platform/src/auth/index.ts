@@ -1,4 +1,4 @@
-import { betterAuth, BetterAuthOptions } from "better-auth";
+import { betterAuth, BetterAuthOptions, User } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
@@ -15,14 +15,15 @@ import { appConfig } from "~/project.config";
 import type { ResultType } from "~/types/result";
 import { mailFetch, serverFetch } from "../lib/fetch-server";
 
-const VERIFY_EMAIL_PATH_PREFIX = "/auth/verify-mail?token=";
-const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password?token=";
+const VERIFY_EMAIL_PATH_PREFIX = "/auth/verify-mail";
+const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password";
 
-const baseUrl = process.env.BASE_URL;
+const baseUrl = new URL(process.env.BASE_URL);
+
 
 export const betterAuthOptions = {
   appName: appConfig.name,
-  baseURL: baseUrl,
+  baseURL: baseUrl.toString(),
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -39,7 +40,7 @@ export const betterAuthOptions = {
     user: {
       create: {
         before: async (user) => {
-          const info = await getUserInfo(user.email);
+          const info = await getUserInfo(user);
           console.log("Creating user for ", info);
           return {
             data: {
@@ -73,7 +74,11 @@ export const betterAuthOptions = {
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url, token }, request) => {
-      const verification_url = `${baseUrl}${RESET_PASSWORD_PATH_PREFIX}${token}`;
+      // const verification_url = `${baseUrl}${RESET_PASSWORD_PATH_PREFIX}${token}`;
+      const reset_link = new URL(process.env.BASE_URL as string);
+      reset_link.pathname = RESET_PASSWORD_PATH_PREFIX;
+      reset_link.searchParams.set("token", token);
+
       try {
         const response = await mailFetch<{
           data: string[] | null;
@@ -87,7 +92,7 @@ export const betterAuthOptions = {
             payload: {
               name: user.name,
               email: user.email,
-              reset_link: verification_url,
+              reset_link: reset_link.toString(),
             },
           }),
         });
@@ -108,7 +113,9 @@ export const betterAuthOptions = {
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
-      const verification_url = `${baseUrl}${VERIFY_EMAIL_PATH_PREFIX}${token}`;
+      const verification_url = new URL(process.env.BASE_URL as string);
+      verification_url.pathname = VERIFY_EMAIL_PATH_PREFIX;
+      verification_url.searchParams.set("token", token);
       try {
         const response = await mailFetch<{
           data: string[] | null;
@@ -123,7 +130,7 @@ export const betterAuthOptions = {
               platform_name: appConfig.name,
               name: user.name,
               email: user.email,
-              verification_url: verification_url,
+              verification_url: baseUrl.toString(),
             },
           }),
         });
@@ -266,12 +273,25 @@ type FacultyType = {
   department: string;
 };
 
-async function getUserInfo(email: string): Promise<getUserInfoReturnType> {
-  const username = email.split("@")[0];
+async function getUserInfo(user:User & Record<string,unknown>): Promise<getUserInfoReturnType> {
+  const username = user.email.split("@")[0];
   const isStudent = isValidRollNumber(username);
 
   if (isStudent) {
     console.log("Student");
+    // TODO: temporarily disable result check for 2025 batch
+    if (username.startsWith("25")) {
+      return {
+        other_roles: [ROLES_ENUMS.STUDENT],
+        department: getDepartmentByRollNo(username) as string,
+        name: user.name,
+        emailVerified: true,
+        email: user.email,
+        username,
+        gender:  "not_specified",
+        hostelId: "not_specified",
+      };
+    }
     const res = await serverFetch<{
       message: string;
       data: ResultType | null;
@@ -295,7 +315,7 @@ async function getUserInfo(email: string): Promise<getUserInfoReturnType> {
 
     const hostelStudent = await getHostelStudent({
       rollNo: username,
-      email: email,
+      email: user.email,
       gender: response.data?.gender,
       name: response.data.name,
       cgpi: response.data.semesters.at(-1)?.cgpi || 0,
@@ -306,7 +326,7 @@ async function getUserInfo(email: string): Promise<getUserInfoReturnType> {
       department: getDepartmentByRollNo(username) as string,
       name: response.data.name.toUpperCase(),
       emailVerified: true,
-      email,
+      email:user.email,
       username,
       gender: hostelStudent?.gender || "not_specified",
       hostelId: hostelStudent?.hostelId || "not_specified",
@@ -319,7 +339,7 @@ async function getUserInfo(email: string): Promise<getUserInfoReturnType> {
   }>("/api/faculties/search/:email", {
     method: "POST",
     params: {
-      email,
+      email:user.email,
     },
   });
   const faculty = response?.data;
@@ -333,18 +353,18 @@ async function getUserInfo(email: string): Promise<getUserInfoReturnType> {
       department: faculty.department,
       name: faculty.name.toUpperCase(),
       emailVerified: true,
-      email,
+      email:user.email,
       username,
       gender: "not_specified",
       hostelId: null,
     };
   }
   console.log("Other:Staff");
-  console.log(email);
+  console.log(user);
   return {
     other_roles: [ROLES_ENUMS.STAFF],
     department: "Staff",
-    email,
+    email:user.email,
     emailVerified: true,
     username,
     gender: "not_specified",
