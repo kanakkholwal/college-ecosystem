@@ -13,13 +13,14 @@ const freshersDataSchema = z.array(
   })
 );
 
-function getStudentData(rows: string[][]) {
+function getStudentData(rows: string[][], forceGender?: "male" | "female") {
   const sanitized_data = [];
   const rows_info = new Map([
     [0, "rollNo"],
     [1, "name"],
     // [4, "gender"],
   ]);
+
   for (const row of rows) {
     const data = {} as Record<string, string>;
     for (let i = 0; i < row.length; i++) {
@@ -27,12 +28,12 @@ function getStudentData(rows: string[][]) {
       if (key) {
         if (key === "rollNo") {
           data[key] = row[i].toLowerCase().trim();
-        } else {
+        } else if (key === "name") {
           data[key] = row[i].trim();
         }
       }
       if (i === row.length - 1) {
-        data["gender"] = "not_specified";
+        data["gender"] = forceGender || "not_specified";
       }
     }
     // console.log(data);
@@ -53,18 +54,31 @@ function getStudentData(rows: string[][]) {
   return unique_data;
 }
 
-async function importFreshers(ENV: "production" | "testing", filePath: string) {
+async function getDataFromFile(filePath: string) {
+  const rows = await readXlsxFile(path.join(__dirname, filePath));
+  // const sanitized_rows = rows
+  //   .filter((row) => row.every((cell) => cell !== null))
+  //   .map((row) => row.map((cell) => cell.toString())).slice(1);
+  const sanitized_rows = rows
+    .filter((row) => row.some((cell) => cell !== null)) // keep if at least one non-null cell
+    .map((row) => row.map((cell) => (cell ? cell.toString() : "")))
+    .slice(1);
+  return sanitized_rows;
+}
+
+async function importFreshers(ENV: "production" | "testing", filePaths: {
+  path: string;
+  forceGender?: "male" | "female";
+}[]) {
   try {
     const time = new Date();
-    await dbConnect(ENV);
 
-    const rows = await readXlsxFile(path.join(__dirname, filePath));
-    const sanitized_rows = rows
-      .filter((row) => row.every((cell) => cell !== null))
-      .map((row) => row.map((cell) => cell.toString())).slice(1);
+    const sanitized_rows = await Promise.all(filePaths.map(filePath => getDataFromFile(filePath.path)));
 
-    const sanitized_data = getStudentData(sanitized_rows);
+    const sanitized_data = await Promise.all(sanitized_rows.map((rows, index) => getStudentData(rows, filePaths[index].forceGender))).then(dataArrays => dataArrays.flat());
+
     // return;
+    console.log("Sanitized Data", sanitized_data.slice(0, 5));
     const parsedData = freshersDataSchema.safeParse(sanitized_data);
     if (!parsedData.success) {
       console.log({
@@ -89,16 +103,26 @@ async function importFreshers(ENV: "production" | "testing", filePath: string) {
       };
     });
     // verify the data against the schema and set the required keys
+    await dbConnect(ENV);
 
     const results = await Promise.all(getSanitizedData());
     await ResultModel.deleteMany({
       $or: [
         { batch: 2025 },
         { batch: 0 },
+        { batch: "0" },
         { batch: "2025" }
       ]
     });
-    const resultsWithRanks = await ResultModel.insertMany(results);
+    const ops = results.map((student) => ({
+      updateOne: {
+        filter: { rollNo: student.rollNo }, // unique key
+        update: { $set: student },
+        upsert: true,
+      },
+    }));
+
+    const resultsWithRanks = await ResultModel.bulkWrite(ops);
 
     console.log("Freshers imported successfully.");
 
@@ -108,7 +132,7 @@ async function importFreshers(ENV: "production" | "testing", filePath: string) {
       data: {
         timeTaken: `${(new Date().getTime() - time.getTime()) / 1000}s`,
         lastUpdated: new Date().toISOString(),
-        results: `${resultsWithRanks.length} freshers imported`,
+        results: `${resultsWithRanks.ok} freshers imported`,
       },
     });
     process.exit(1);
@@ -123,4 +147,13 @@ async function importFreshers(ENV: "production" | "testing", filePath: string) {
   }
 }
 
-importFreshers("testing", "./freshers.xlsx");
+importFreshers("production", [
+  {
+    path: "./Boys.xlsx",
+    forceGender: "male"
+  },
+  {
+    path: "./Girls.xlsx",
+    forceGender: "female"
+  }
+]);

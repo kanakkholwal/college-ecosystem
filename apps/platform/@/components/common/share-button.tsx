@@ -1,13 +1,13 @@
 "use client";
 
 import { useShare } from "@/hooks/useShare";
-import { useState } from "react";
+import { sendGAEvent } from '@next/third-parties/google';
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Icon } from "../icons";
 import { Button, ButtonProps } from "../ui/button";
 import { ResponsiveDialog } from "../ui/responsive-dialog";
 import { ButtonLink } from "../utils/link";
-import { sendGAEvent } from '@next/third-parties/google'
 
 type ShareButtonProps = {
   data: {
@@ -16,18 +16,29 @@ type ShareButtonProps = {
     url?: string;
     image?: string;
   };
+  shareCurrentUrl?: boolean;
 } & ButtonProps;
 
-function ShareButton({ data, ...props }: ShareButtonProps) {
+function ShareButton({ data, shareCurrentUrl, ...props }: ShareButtonProps) {
+  const shareUrl = useMemo(() => {
+    if (shareCurrentUrl) {
+      if (typeof window !== "undefined") {
+        return window.location.href;
+      } 
+    } else {
+      return data.url;
+    }
+  }, [shareCurrentUrl, data.url]);
+
   const { share, isNativeShareSupported, socials } = useShare({
     title: data.title,
     text: data.text,
-    url: data.url,
+    url: shareUrl,
     image: data.image,
   });
 
   const [copied, setCopied] = useState(false);
-  if (!data.url) {
+  if (!shareUrl) {
     toast.error("No URL provided for sharing");
     return null;
   }
@@ -43,7 +54,7 @@ function ShareButton({ data, ...props }: ShareButtonProps) {
         onClick: (e) => {
           props.onClick?.(e);
           sendGAEvent("event", "share_button_click", {
-            url: data.url,
+            url: shareUrl,
             hasNativeSupport: isNativeShareSupported,
           });
         }
@@ -91,12 +102,12 @@ function ShareButton({ data, ...props }: ShareButtonProps) {
           rounded="large"
           size="xs"
           onClick={() => {
-            if (!data.url) {
+            if (!shareUrl) {
               toast.error("No URL provided to copy");
               return;
             }
             try {
-              navigator.clipboard.writeText(data.url);
+              navigator.clipboard.writeText(shareUrl);
               setCopied(true);
               toast.success("Link copied to clipboard", {
                 duration: 2000,

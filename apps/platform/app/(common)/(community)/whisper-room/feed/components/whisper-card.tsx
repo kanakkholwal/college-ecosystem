@@ -18,7 +18,7 @@ const getVisibility = (val: string) =>
     VISIBILITY_OPTIONS.find(v => v.value === val);
 
 
-export default function WhisperCard({ post,user }: { post: WhisperPostT,user?:Session["user"] }) {
+export default function WhisperCard({ post, user }: { post: WhisperPostT, user?: Session["user"] }) {
     const category = getCategory(post.category);
     const visibility = getVisibility(post.visibility);
 
@@ -61,7 +61,7 @@ export default function WhisperCard({ post,user }: { post: WhisperPostT,user?:Se
 
 }
 
-export function WhisperCardFooter({ post }: { post: WhisperPostT,user?:Session["user"] }) {
+export function WhisperCardFooter({ post,user }: { post: WhisperPostT, user?: Session["user"] }) {
     const [isPending, startTransition] = useTransition();
     const [optimisticPost, setOptimisticPost] = useOptimistic(
         post,
@@ -87,18 +87,20 @@ export function WhisperCardFooter({ post }: { post: WhisperPostT,user?:Session["
     return <div className="flex gap-2 flex-wrap">
         {REACTION_OPTIONS.map(r => {
             const count =
-                post.reactions.filter(rx => rx.type === r.value).length;
+                optimisticPost.reactions.filter(rx => rx.type === r.value).length;
+            const userHasReacted = optimisticPost.reactions.some(rx => rx.type === r.value && rx.userId === user?.id);
             return (
                 <Button
                     size="xs"
                     key={r.value}
                     onClick={() => handleReaction(r.value)}
-                    variant={"outline"}
+                    variant={userHasReacted ? "default_light" : "outline"}
                     className={cn(
-
+                        userHasReacted ? "scale-120":""
                     )}
                 >
                     <r.Icon className="size-3.5" />
+                    
                     <span className="text-xs">{count}</span>
                 </Button>
             );

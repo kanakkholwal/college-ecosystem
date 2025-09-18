@@ -25,10 +25,10 @@ export const VISIBILITY_OPTIONS = [
 export type VisibilityType = (typeof VISIBILITY_OPTIONS)[number]["value"];
 
 type CategoryOption = {
-    value: string;
-    label: string;
-    Icon: React.FC<React.SVGProps<SVGSVGElement>>;
-    description: string;
+  value: string;
+  label: string;
+  Icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  description: string;
 }
 
 
@@ -66,17 +66,17 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
 ] as const;
 
 export const REACTION_OPTIONS = [
-  { value: "like", label: "👍 Like",Icon:Heart },
-  { value: "laugh", label: "😂 Laugh",Icon:FaRegFaceLaughSquint  },
-  { value: "relate", label: "😌 Relatable" ,Icon:Plus  },
-  { value: "agree", label: "👌 Agree",Icon:FaRegThumbsUp },
-  { value: "disagree", label: "🙅 Disagree",Icon:FaRegThumbsDown },
-  { value: "report", label: "🚩 Report",Icon:FaRegFlag },
+  { value: "like", label: "👍 Like", Icon: Heart },
+  { value: "laugh", label: "😂 Laugh", Icon: FaRegFaceLaughSquint },
+  { value: "relate", label: "😌 Relatable", Icon: Plus },
+  { value: "agree", label: "👌 Agree", Icon: FaRegThumbsUp },
+  { value: "disagree", label: "🙅 Disagree", Icon: FaRegThumbsDown },
+  { value: "report", label: "🚩 Report", Icon: FaRegFlag },
 ] as const;
 
 export type ReactionType = (typeof REACTION_OPTIONS)[number]["value"];
 
-export const moderationStatuses:string[] = [
+export const moderationStatuses: string[] = [
   "PENDING",
   "APPROVED",
   "REMOVED",
@@ -119,26 +119,32 @@ export const PollOptionSchema = z.object({
 });
 
 export const PollSchema = z.object({
-  question: z.string().min(1).max(280),
   options: z.array(PollOptionSchema).min(2).max(10),
-  expiresAt: z.date().optional(),
   anonymousVotes: z.boolean().optional().default(true),
 });
+
+export const rawWhisperPostSchema = z.object({
+  visibility: PostVisibility.default(postVisibilities[0]),
+  category: PostCategory.default(postCategories[0]),
+  content: z.string().min(2,{
+    message: "Post must be at least 2 characters long",
+  }).max(5000,{
+    message: "Post cannot exceed 5000 characters",
+  }),
+  pseudo: PseudoIdentitySchema.optional(), // no null, just undefined if missing
+  poll: PollSchema.optional(),
+})
 
 export const WhisperPostSchema = z.object({
   _id: z.string().optional(),
   authorId: z.string(), // Postgres user id
-  visibility: PostVisibility.default(postVisibilities[0]),
-  category: PostCategory.default(postCategories[0]),
-  content: z.string().min(1).max(5000),
-  pseudo: PseudoIdentitySchema.optional(), // no null, just undefined if missing
+  ...rawWhisperPostSchema.shape,
   reactions: z.array(ReactionSchema).optional().default([]),
   reports: z.array(ReportSchema).optional().default([]),
   moderationStatus: ModerationStatus.default(moderationStatuses[0]),
   score: z.number().int().default(0),
   pinned: z.boolean().default(false),
   pinnedUntil: z.date().optional(),
-  poll: PollSchema.optional(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });

@@ -610,7 +610,15 @@ body {
     background-color: rgb(var(--gray-100) / .5);
     padding: .125rem .5rem;
 }
-
+.is-empty:not(.with-slash)[data-placeholder]:has( > .ProseMirror-trailingBreak:only-child):before{
+    content: attr(data-placeholder);
+    float: left;
+    color: var(--muted-foreground);
+    pointer-events: none;
+    height: 0;
+    user-select: none;
+    width: 100%;
+}
 @layer base {
     * {
         @apply border-border outline-ring/50;

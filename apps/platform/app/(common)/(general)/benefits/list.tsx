@@ -100,6 +100,7 @@ export default function FreeStuffTable() {
                             url: appConfig.url + "/benefits",
                         }}
                         className="rounded-xl shadow-sm"
+                        shareCurrentUrl={true}
                     >
                         <LuShare2 />
                         Share

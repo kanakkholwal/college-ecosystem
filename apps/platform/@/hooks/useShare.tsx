@@ -12,6 +12,7 @@ import { IoLogoReddit, IoMailOutline } from "react-icons/io5";
 import { LuFacebook } from "react-icons/lu";
 import { TbBrandTelegram } from "react-icons/tb";
 
+import { useMemo } from "react";
 import toast from "react-hot-toast";
 import { FaPinterestP, FaXTwitter } from "react-icons/fa6";
 
@@ -27,10 +28,16 @@ export const useShare = (data: {
   url?: string;
   image?: string;
 }) => {
+  
+
   const share = async () => {
     if (navigator.share) {
       try {
-        await navigator.share(data);
+        await navigator.share({
+          title: data.title,
+          text: data.text,
+          url: data.url,
+        });
       } catch (error) {
         toast.error("Failed to share content");
         console.error(error);
@@ -83,7 +90,7 @@ export const useShare = (data: {
       },
       {
         name: "email",
-        url: `mailto:?subject=${data.title}&body=${data.text}`,
+        url: `mailto:?subject=${data.title}&body=${data.text}: ${data.url}`,
         icon: IoMailOutline,
       },
     ] as Social[],

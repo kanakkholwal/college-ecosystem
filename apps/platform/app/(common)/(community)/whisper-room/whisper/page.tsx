@@ -14,11 +14,12 @@ import { useState } from "react";
 import { z } from "zod";
 import {
   CATEGORY_OPTIONS,
+  rawWhisperPostSchema,
   VISIBILITY_OPTIONS,
-  WhisperPostSchema,
 } from "~/constants/community.whispers";
 
 import { Icon } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
@@ -36,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ButtonLink } from "@/components/utils/link";
+import { useActionState } from "@/hooks/useActionState";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Content, JSONContent } from "@tiptap/react";
 import {
@@ -45,6 +47,7 @@ import {
 } from "nexo-editor";
 import "nexo-editor/index.css";
 import { useForm } from "react-hook-form";
+import { createWhisperPost } from "~/actions/community.whisper";
 
 export default function WhisperRoomPage() {
   const [reactText, setRichText] = useState<Content>({
@@ -55,39 +58,44 @@ export default function WhisperRoomPage() {
         content: [
           {
             type: "text",
-            text: "Hello, this is a simple editor built with Nexo Editor!",
+            text: ""
           },
         ],
       },
     ],
   });
-
-  const form = useForm<z.infer<typeof WhisperPostSchema>>({
-    resolver: zodResolver(WhisperPostSchema),
+  const [savePost, state] = useActionState(createWhisperPost)
+  const form = useForm<z.infer<typeof rawWhisperPostSchema>>({
+    resolver: zodResolver(rawWhisperPostSchema),
     defaultValues: {
       content: "",
-      visibility: "ANONYMOUS",
-      category: "OTHER",
+      visibility: VISIBILITY_OPTIONS[0].value,
+      category: CATEGORY_OPTIONS[0].value,
     },
   });
 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function onSubmit(values: z.infer<typeof WhisperPostSchema>) {
+  async function onSubmit(values: z.infer<typeof rawWhisperPostSchema>) {
     try {
       setLoading(true);
       console.log("Submitting whisper:", values);
 
       // Simulate request
-      await new Promise((res) => setTimeout(res, 1200));
-
+      await savePost(values);
+      console.log("Whisper shared successfully!");
       toast({
         title: "Shared ✨",
         description: "Your whisper just went live!",
+        variant: "success",
       });
-
-      router.push("/whisper-room/feed");
+      if (state.data) {
+        router.push("/whisper-room/feed");
+      }
+      if(state.error) {
+        throw state.error;
+      }
     } catch {
       toast({
         title: "Something went wrong 😵",
@@ -98,6 +106,7 @@ export default function WhisperRoomPage() {
       setLoading(false);
     }
   }
+  console.log(form.formState.errors)
 
   return (
     <Form {...form}>
@@ -106,21 +115,26 @@ export default function WhisperRoomPage() {
         className="space-y-8 max-w-6xl mx-auto"
       >
         <BaseHeroSection
-          title="Whisper Room 💬"
+          title="Whisper Room 💬 (Beta)"
           description="Drop your confessions, shower thoughts, or praises. Be real, be anonymous, be pseudo."
         >
           <ButtonLink href="/whisper-room/feed" shadow="none" variant="default_light"><Icon name="podcast" />Go to Feed</ButtonLink>
         </BaseHeroSection>
 
-        <Card className="border-none shadow-lg">
-          <CardContent className="gap-8 grid grid-cols-12 p-6">
+        <Card className="border-none shadow-lg p-0">
+          <CardContent className="gap-8 grid grid-cols-12 p-3 md:p-6">
             {/* Editor Section */}
             <FormField
               control={form.control}
               name="content"
               render={({ field }) => (
                 <FormItem className="flex flex-col space-y-3 md:col-span-8 col-span-12 bg-card p-4 rounded-lg border">
-                  <FormLabel>  Your Whisper</FormLabel>
+                  <div className="flex items-center gap-3 flex-wrap justify-between">
+                    <FormLabel>Your Whisper</FormLabel>
+                    <Badge variant={form.getValues("content").length > 5000 ? "destructive" : "default"} className="ml-auto">
+                      {form.getValues("content").length} / 5000 characters
+                    </Badge>
+                  </div>
                   <FormControl>
                     <NexoEditor
                       content={reactText as Content}
@@ -135,17 +149,18 @@ export default function WhisperRoomPage() {
                           toast({
                             title: "Content too long 😵",
                             description: "Please limit your whisper to 5000 characters.",
+                            variant: "destructive",
                           });
                           return;
                         } else if (md.length < 3) {
                           return;
                         }
-                        form.setValue("content", md);
+                        form.setValue("content", md, { shouldValidate: true, shouldDirty: true });
                       }}
                     />
                   </FormControl>
                   <FormDescription>
-                    Don’t worry, nobody knows it’s you… unless you want them to 😉
+                    Markdown supported. Be respectful and keep it safe for campus 🌸
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -195,11 +210,11 @@ export default function WhisperRoomPage() {
                     </FormControl>
                     {field.value === "PSEUDO" && (
                       <motion.div
-                        className="space-y-2 pl-6"
+                        className="pl-6"
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
-                        <Label htmlFor="pseudo" className="font-medium">
+                        <Label htmlFor="pseudo" className="font-medium text-xs">
                           Pick your pseudo handle 🎨
                         </Label>
                         <Input
@@ -209,14 +224,17 @@ export default function WhisperRoomPage() {
                             form.setValue("pseudo", { handle: e.target.value })
                           }
                           placeholder="@campus_crush_01"
-                          className="rounded-xl"
+                          custom-size="sm"
                         />
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[8px] text-muted-foreground">
                           Fun nicknames encouraged. Keep it safe for campus 🌸
                         </span>
                       </motion.div>
                     )}
                     <FormMessage />
+                    <FormDescription>
+                      Don’t worry, nobody knows it’s you… unless you want them to 😉
+                    </FormDescription>
                   </FormItem>
                 )}
               />
@@ -249,14 +267,13 @@ export default function WhisperRoomPage() {
 
               {/* Publish Button */}
               <Button
-                disabled={
-                  loading || form.getValues("content").trim().length < 3
-                }
+                disabled={loading || !form.formState.isValid || state.loading}
+
                 type="submit"
                 size="lg"
                 className="w-full"
               >
-                {loading ? "Whispering..." : "Publish Whisper"}
+                {(loading || state.loading) ? "Whispering..." : "Publish Whisper"}
               </Button>
             </div>
           </CardContent>

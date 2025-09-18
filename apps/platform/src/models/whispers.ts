@@ -27,9 +27,8 @@ export interface IPollOption {
 }
 
 export interface IPoll {
-    question: string;
     options: IPollOption[];
-    expiresAt?: Date;
+    closingAt?: Date;
     anonymousVotes: boolean; // Ensure this is always a boolean
 }
 
@@ -82,9 +81,8 @@ const PollOptionSchema = new Schema<IPollOption>(
 
 const PollSubSchema = new Schema<IPoll>(
     {
-        question: { type: String, required: true, maxlength: 280 },
         options: { type: [PollOptionSchema], required: true },
-        expiresAt: { type: Date },
+        closingAt: { type: Date },
         anonymousVotes: { type: Boolean, default: true, required: true },
     },
     { _id: false }

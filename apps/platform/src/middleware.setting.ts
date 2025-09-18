@@ -28,6 +28,8 @@ const RAW_PUBLIC_ROUTES: RoutePattern[] = [
   "/unauthorized",
   "/community",
   "/community/:postId",
+  "/whisper-room/feed/:postId",
+  "/whisper-room/whisper",
 ];
 
 export const PUBLIC_ROUTES = RAW_PUBLIC_ROUTES.map((route) => ({
