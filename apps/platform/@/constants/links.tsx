@@ -408,7 +408,8 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
       description: "Anonymous discussion forum for students.",
       Icon: Podcast,
       category: "community",
-      allowed_roles: ["student"]
+      allowed_roles: ["student"],
+      isNew:true
     })
   }
   return linksByRole

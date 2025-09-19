@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 // provider.tsx
 "use client";
+import { Toaster } from "@/components/ui/sonner";
 import { all_themes } from "@/constants/theme";
 import { cn } from "@/lib/utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -51,6 +52,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
           duration: 2500,
         }}
       />
+      <Toaster position="top-center" richColors />
       <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
         <span>
           <img

@@ -23,6 +23,12 @@ export const VISIBILITY_OPTIONS = [
 ] as const;
 
 export type VisibilityType = (typeof VISIBILITY_OPTIONS)[number]["value"];
+export const getCategory = (val: string) =>
+    CATEGORY_OPTIONS.find(c => c.value === val);
+
+export const getVisibility = (val: string) =>
+    VISIBILITY_OPTIONS.find(v => v.value === val);
+
 
 type CategoryOption = {
   value: string;
@@ -115,12 +121,19 @@ export const ReportSchema = z.object({
 export const PollOptionSchema = z.object({
   id: z.string(),
   text: z.string().min(1).max(280),
-  votes: z.number().int().nonnegative().optional(),
+  votes: z.array(z.string()).default([]), // array of userIds who voted for this option
 });
 
 export const PollSchema = z.object({
-  options: z.array(PollOptionSchema).min(2).max(10),
-  anonymousVotes: z.boolean().optional().default(true),
+  options: z.array(PollOptionSchema).min(2,{
+    message: "At least 2 options are required",
+  }).max(10,{
+    message: "A maximum of 10 options are allowed",
+  }),
+  anonymousVotes: z.boolean().optional().default(false),
+},{
+  required_error: "Poll options are required",
+  invalid_type_error: "Invalid poll options",
 });
 
 export const rawWhisperPostSchema = z.object({
@@ -132,7 +145,7 @@ export const rawWhisperPostSchema = z.object({
     message: "Post cannot exceed 5000 characters",
   }),
   pseudo: PseudoIdentitySchema.optional(), // no null, just undefined if missing
-  poll: PollSchema.optional(),
+  poll: PollSchema.optional()
 })
 
 export const WhisperPostSchema = z.object({

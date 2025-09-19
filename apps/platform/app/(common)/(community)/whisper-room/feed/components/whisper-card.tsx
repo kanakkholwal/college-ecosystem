@@ -1,21 +1,22 @@
 "use client";
 
+import { Icon } from "@/components/icons";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { VercelTabsList } from "@/components/ui/tabs";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { Podcast } from "lucide-react";
+import Link from "next/link";
 import { useOptimistic, useTransition } from "react";
 import toast from "react-hot-toast";
 import { reactToPost } from "~/actions/community.whisper";
 import { Session } from "~/auth";
-import { CATEGORY_OPTIONS, REACTION_OPTIONS, ReactionType, VISIBILITY_OPTIONS, WhisperPostT } from "~/constants/community.whispers";
+import { CATEGORY_OPTIONS, getCategory, getVisibility, REACTION_OPTIONS, ReactionType, WhisperPostT } from "~/constants/community.whispers";
 
-const getCategory = (val: string) =>
-    CATEGORY_OPTIONS.find(c => c.value === val);
-
-const getVisibility = (val: string) =>
-    VISIBILITY_OPTIONS.find(v => v.value === val);
 
 
 export default function WhisperCard({ post, user }: { post: WhisperPostT, user?: Session["user"] }) {
@@ -23,36 +24,68 @@ export default function WhisperCard({ post, user }: { post: WhisperPostT, user?:
     const visibility = getVisibility(post.visibility);
 
     return <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-                <div className="text-sm font-semibold mb-1">
+        <CardHeader className="inline-flex items-center gap-2 flex-row p-3">
+            <Avatar className="size-8 rounded-full">
+                <AvatarImage
+                    alt="Post Author"
+                    width={32}
+                    height={32}
+                    src={
+                        post.visibility === "PSEUDO" ? post.pseudo?.avatar
+                            ? post.pseudo?.avatar
+                            : `https://api.dicebear.com/5.x/initials/svg?seed=${post.pseudo?.handle}` :
+                            post.visibility === "ANONYMOUS" ? `https://api.dicebear.com/5.x/initials/svg?seed=Anonymous` :
+                                `https://api.dicebear.com/5.x/initials/svg?seed=${post.authorId}`
+                    }
+                />
+                <AvatarFallback>
+                    {post.visibility === "PSEUDO"
+                        ? post.pseudo?.handle.charAt(0).toUpperCase()
+                        : post.visibility === "ANONYMOUS" ? "A"
+                            : post.authorId.charAt(0).toUpperCase()}
+                </AvatarFallback>
+            </Avatar>
+            <div className="text-muted-foreground grid gap-1 text-sm">
+                <Link
+                    href={`feed?postedBy=${post.visibility === "PSEUDO" ? post.pseudo?.handle : post.visibility === "ANONYMOUS" ? "anonymous" : post.authorId}`}
+                    className="hover:underline hover:text-primary text-xs lg:text-sm text-foreground font-medium"
+                >
                     {post.visibility === "PSEUDO"
                         ? post.pseudo?.handle
                         : visibility?.label}
-                </div>
-                <div className="text-xs text-muted-foreground">
+                </Link>
+
+                <span className="text-xs text-muted-foreground">
                     Posted{" "}
                     {post.createdAt &&
                         formatDistanceToNow(new Date(post.createdAt), {
                             addSuffix: true,
                         })}
-                </div>
+                </span>
+            </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4 p-3 lg:p-5">
+            <div className="prose max-w-none break-words prose-sm lg:prose-base dark:prose-invert">
+                {post.content.length > 250
+                    ? post.content.slice(0, 250) + "..."
+                    : post.content}
             </div>
             {category && (
                 <Badge
                     variant="default_light"
+                    size="sm"
+                    className="mr-1"
                 >
-                    {category.label}
+                    #{category.label}
                 </Badge>
             )}
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-            <p className="text-base whitespace-pre-wrap">
-                {post.content.length > 250
-                    ? post.content.slice(0, 250) + "..."
-                    : post.content}
-            </p>
+            {post.poll && (
+                <ButtonLink variant="ghost" size="xs" href={`feed/${post._id}`}>
+                    View Poll
+                    <Icon name="arrow-right" />
+                </ButtonLink>
+            )}
 
             {/* Reaction Bar */}
             <WhisperCardFooter post={post} user={user} />
@@ -61,7 +94,7 @@ export default function WhisperCard({ post, user }: { post: WhisperPostT, user?:
 
 }
 
-export function WhisperCardFooter({ post,user }: { post: WhisperPostT, user?: Session["user"] }) {
+export function WhisperCardFooter({ post, user }: { post: WhisperPostT, user?: Session["user"] }) {
     const [isPending, startTransition] = useTransition();
     const [optimisticPost, setOptimisticPost] = useOptimistic(
         post,
@@ -84,7 +117,7 @@ export function WhisperCardFooter({ post,user }: { post: WhisperPostT, user?: Se
             }
         });
     };
-    return <div className="flex gap-2 flex-wrap">
+    return <div className="flex gap-2">
         {REACTION_OPTIONS.map(r => {
             const count =
                 optimisticPost.reactions.filter(rx => rx.type === r.value).length;
@@ -93,19 +126,33 @@ export function WhisperCardFooter({ post,user }: { post: WhisperPostT, user?: Se
                 <Button
                     size="xs"
                     key={r.value}
-                    onClick={() => handleReaction(r.value)}
-                    variant={userHasReacted ? "default_light" : "outline"}
+                    onClick={() => !isPending && handleReaction(r.value)}
+                    variant={userHasReacted ? "default_light" : "ghost"}
                     className={cn(
-                        userHasReacted ? "scale-120":""
+                        userHasReacted ? "scale-104 text-primary" : "",
+                        "hover:scale-105 hover:text-primary",
                     )}
                 >
-                    <r.Icon className="size-3.5" />
-                    
-                    <span className="text-xs">{count}</span>
+                    <r.Icon />
+                    {count}
                 </Button>
             );
         })}
     </div>
+}
+const tabs = [
+    { label: "All", id: "all", icon: Podcast },
+    ...CATEGORY_OPTIONS.map(c => ({ label: c.label, id: c.value, icon: c.Icon })),
+];
+export function TabList() {
+    return <>
+
+        <VercelTabsList
+            tabs={tabs}
+            onTabChangeQuery="category"
+            defaultValue="all"
+        />
+    </>
 }
 
 export function WhisperCardSkeleton() {

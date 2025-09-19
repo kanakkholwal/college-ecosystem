@@ -1,8 +1,7 @@
 import Footer from "@/components/common/footer";
 import GithubBanner from "@/components/common/github-banner";
 import Navbar from "@/components/common/navbar";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
 import { LayoutClient } from "./layout.client";
 
 
@@ -14,11 +13,8 @@ type LayoutProps = Readonly<{
 }>;
 
 export default async function Layout({ children }: LayoutProps) {
-  const headersList = await headers();
 
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+  const session = await getSession();
   ;
 
   return (

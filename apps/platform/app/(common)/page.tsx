@@ -10,11 +10,10 @@ import { testimonialsContent } from "@/constants/landing";
 import { getLinksByRole, quick_links } from "@/constants/links";
 import { ResourcesList } from "app/(common)/(general)/resources/client";
 import { Newspaper } from "lucide-react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getPublicStats } from "~/actions/public";
-import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
 import { ROLES_ENUMS } from "~/constants";
 import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
@@ -22,12 +21,10 @@ import { FeatureSection, IntroSection } from "./client";
 
 const RESOURCES_LIMIT = 6; // Limit the number of resources fetched
 
-export default async function HomePage() {
-  const headersList = await headers();
 
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+export default async function HomePage() {
+
+  const session = await getSession();
   // Get quick links based on user role
   const links = getLinksByRole(session?.user?.other_roles[0] ?? ROLES_ENUMS.STUDENT, quick_links);
 

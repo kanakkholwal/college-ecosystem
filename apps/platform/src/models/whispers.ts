@@ -23,7 +23,7 @@ export interface IPseudoIdentity {
 export interface IPollOption {
     id: string;
     text: string;
-    votes: number;
+    votes: string[]; // Array of user IDs who voted for this option
 }
 
 export interface IPoll {
@@ -74,7 +74,7 @@ const PollOptionSchema = new Schema<IPollOption>(
     {
         id: { type: String, required: true },
         text: { type: String, required: true, maxlength: 280 },
-        votes: { type: Number, default: 0, min: 0 },
+        votes: { type: [String], default: [], },
     },
     { _id: false }
 );

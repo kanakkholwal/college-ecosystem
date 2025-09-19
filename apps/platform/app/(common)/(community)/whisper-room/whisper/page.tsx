@@ -36,17 +36,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { ButtonLink } from "@/components/utils/link";
 import { useActionState } from "@/hooks/useActionState";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Content, JSONContent } from "@tiptap/react";
+import { nanoid } from "nanoid";
 import {
   defaultExtensions,
   NexoEditor,
   renderToMarkdown,
 } from "nexo-editor";
 import "nexo-editor/index.css";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { createWhisperPost } from "~/actions/community.whisper";
 
 export default function WhisperRoomPage() {
@@ -71,12 +73,16 @@ export default function WhisperRoomPage() {
       content: "",
       visibility: VISIBILITY_OPTIONS[0].value,
       category: CATEGORY_OPTIONS[0].value,
+      poll: undefined,
     },
   });
 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "poll.options",
+  });
   async function onSubmit(values: z.infer<typeof rawWhisperPostSchema>) {
     try {
       setLoading(true);
@@ -93,7 +99,7 @@ export default function WhisperRoomPage() {
       if (state.data) {
         router.push("/whisper-room/feed");
       }
-      if(state.error) {
+      if (state.error) {
         throw state.error;
       }
     } catch {
@@ -106,7 +112,10 @@ export default function WhisperRoomPage() {
       setLoading(false);
     }
   }
-  console.log(form.formState.errors)
+  const hasErrors = Object.keys(form.formState.errors).length > 0;
+  if (hasErrors) {
+    console.log("Form errors:", form.formState.errors);
+  }
 
   return (
     <Form {...form}>
@@ -221,7 +230,7 @@ export default function WhisperRoomPage() {
                           id="pseudo"
                           value={form.getValues("pseudo")?.handle || ""}
                           onChange={(e) =>
-                            form.setValue("pseudo", { handle: e.target.value })
+                            form.setValue("pseudo", { handle: e.target.value },{shouldValidate:true,shouldDirty:true})
                           }
                           placeholder="@campus_crush_01"
                           custom-size="sm"
@@ -264,8 +273,122 @@ export default function WhisperRoomPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="poll"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-wrap">
+                    <div className="space-y-0.5">
+                      <FormLabel>
+                        Add a Poll? <span className="text-xs text-muted-foreground">(Optional)</span>
+                      </FormLabel>
+                      <FormDescription>
+                        Let the community vote on your question! (2-10 options)
+                      </FormDescription>
+                    </div>
 
-              {/* Publish Button */}
+                    <FormControl>
+                      <Switch onCheckedChange={(checked) => {
+                        if (!checked) {
+                          field.onChange(undefined);
+                          return;
+                        }
+                        field.onChange({ options: [], anonymousVotes: false, });
+                      }} />
+                    </FormControl>
+
+                  </FormItem>
+                )}
+              />
+              {form.getValues("poll") !== undefined && (<FormField
+                control={form.control}
+                name="poll.anonymousVotes"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>
+                        Anonymous Voting? <span className="text-xs text-muted-foreground">(Optional)</span>
+                      </FormLabel>
+                      <FormDescription>
+                        Keep votes private to encourage honest opinions.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />)}
+
+            </div>
+            {form.getValues("poll") !== undefined && (<div className="md:col-span-8 col-span-12 text-sm text-muted-foreground border p-3 rounded-xl">
+              <FormField
+                control={form.control}
+                name="poll.options"
+                render={() => (
+                  <FormItem>
+                    <div className="flex items-center space-x-2 justify-between">
+                      <FormLabel className="mb-0">
+                        Poll Options
+                      </FormLabel>
+                      <Button
+                        size="xs"
+                        type="button"
+                        variant="ghost"
+                        transition="none"
+                        onClick={() =>
+                          append({
+                            id: nanoid(),
+                            text: "",
+                            votes: [],
+                          })
+                        }
+                      >
+                        Add Option
+                      </Button>
+                    </div>
+                    <FormDescription>Add the options for the poll</FormDescription>
+                    {fields.map((field, index) => (
+                      <FormField
+                        key={field.id}
+                        control={form.control}
+                        name={`poll.options.${index}`}
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row space-x-3 space-y-0">
+                            <FormLabel className="bg-card text-muted-foreground aspect-square rounded-lg size-8 inline-flex justify-center items-center mb-0">
+                              {index + 1}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder={`Enter Option ${index + 1}`}
+                                id={`options.${index}.id`}
+                                {...form.register(`poll.options.${index}.text`)}
+                                custom-size="sm"
+                                disabled={form.formState.isSubmitting}
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              size="icon_sm"
+                              variant="destructive_light"
+                              disabled={fields.length <= 2}
+                              onClick={() => remove(index)}
+                            >
+                              -
+                            </Button>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>)}
+            <div className="md:col-span-4 col-span-12 space-y-6">
               <Button
                 disabled={loading || !form.formState.isValid || state.loading}
 

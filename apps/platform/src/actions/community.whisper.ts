@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getSession } from "~/auth/server";
-import { postReactions, rawWhisperPostSchema } from "~/constants/community.whispers";
+import { PollT, postReactions, rawWhisperPostSchema, WhisperPostT } from "~/constants/community.whispers";
 import dbConnect from "~/lib/dbConnect";
 import { WhisperPostModel } from "~/models/whispers";
 
@@ -98,4 +98,47 @@ export async function getWhisperFeed() {
         console.error(err);
         return Promise.reject(err);
     }
+}
+
+export async function getWhisperPostById(postId: string):Promise<WhisperPostT> {
+    if (!postId) {
+        throw new Error("Invalid postId");
+    }
+    try {
+        await dbConnect();
+        const post = await WhisperPostModel.findById(postId).lean();
+        if (!post) {
+            throw new Error("Post not found");
+        }
+        return Promise.resolve(JSON.parse(JSON.stringify(post)));
+    } catch (err) {
+        console.error(err);
+        return Promise.reject(err);
+    }
+}
+
+// WhisperPostT["poll"] required
+export async function updateWhisperPoll(postId: string, updatedPoll: PollT) :Promise<PollT> {
+    if (!postId || !updatedPoll) {
+        throw new Error("Invalid postId or poll data");
+    }
+    try {
+        await dbConnect();
+        const post = await WhisperPostModel.findById(postId);
+        if (!post) {
+            throw new Error("Post not found");
+        }
+        if(!post.poll) {
+            throw new Error("No poll associated with this post");
+        }
+        post.poll = updatedPoll;
+        await post.save();
+        revalidatePath("/whisper-room/feed");
+        revalidatePath("/whisper-room/feed/" + postId);
+        return Promise.resolve(post.poll);
+    } catch (err) {
+        console.error(err);
+        return Promise.reject(err);
+    }
+
 }

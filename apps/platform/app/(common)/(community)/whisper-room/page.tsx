@@ -3,6 +3,7 @@
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ButtonLink } from "@/components/utils/link";
 import { motion } from "framer-motion";
 import { PenLine, Podcast, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
@@ -48,18 +49,14 @@ export default function WhisperLandingPage() {
         </p>
 
         <div className="mt-6 flex gap-4 justify-center">
-          <Button asChild size="lg">
-            <Link href="/whisper-room/whisper">
+          <ButtonLink size="lg"href="/whisper-room/whisper">
             <RiSpeakLine />
             Start Whispering
-            </Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/whisper-room/feed">
+          </ButtonLink>
+          <ButtonLink variant="outline" size="lg"  href="/whisper-room/feed">
             Explore Feed
             <Icon name="arrow-right"  />
-            </Link>
-          </Button>
+          </ButtonLink>
         </div>
       </motion.div>
 
