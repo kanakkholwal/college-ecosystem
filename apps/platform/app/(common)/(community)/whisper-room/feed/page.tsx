@@ -1,4 +1,3 @@
-
 import { getWhisperFeed } from "~/actions/community.whisper";
 import WhisperFeedClient from "./client";
 

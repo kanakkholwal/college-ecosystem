@@ -94,7 +94,11 @@ const WhisperPostSchema = new Schema<IWhisperPost>(
         authorId: { type: String, required: false, select: false }, // from Session["user"].id
         visibility: { type: String, enum: postVisibilities, default: postVisibilities[0] },
         category: { type: String, enum: postCategories, required: true, },
-        content: { type: String, required: true, minlength: 2, maxlength: 5000 },
+        // content: { type: String, required: true, minlength: 2, maxlength: 5000 },
+        content_json: { type: Object, required: true },
+        // content rendered to HTML on the client side using Tiptap
+        // so we don't store it in DB to save space and avoid redundancy
+        // but we may consider caching it in future if performance is an issue
         pseudo: { type: PseudoIdentitySubSchema, required: false },
         reactions: { type: [ReactionSubSchema], default: [] },
         reports: { type: [ReportSubSchema], default: [] },

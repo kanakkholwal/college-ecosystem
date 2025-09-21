@@ -5,14 +5,14 @@ export const githubApiFetch = createFetch({
   baseURL: "https://api.github.com",
   headers: process.env.GITHUB_OAUTH_TOKEN
     ? {
-        Authorization: `Bearer ${process.env.GITHUB_OAUTH_TOKEN}`,
-        "Content-Type": "application/json",
-        Accept: "application/vnd.github+json",
-      }
+      Authorization: `Bearer ${process.env.GITHUB_OAUTH_TOKEN}`,
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github+json",
+    }
     : {
-        "Content-Type": "application/json",
-        Accept: "application/vnd.github+json",
-      },
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github+json",
+    },
   next: {
     revalidate: 3600,
   },
@@ -22,6 +22,9 @@ export async function getRepoStarGazers(
   repoUri = appConfig.githubUri
 ): Promise<number> {
   try {
+    if (process.env.NODE_ENV !== "production") {
+      return 12; // Fallback value for non-production environments
+    }
     const response = await githubApiFetch<RepoData>(`/repos/${repoUri}`);
     if (response.error) {
       if (
@@ -33,12 +36,12 @@ export async function getRepoStarGazers(
         return Promise.reject(response.error);
       }
       console.warn("GitHub API rate limit exceeded. Returning cached stats.");
-      return Promise.resolve(9); // Fallback value
+      return Promise.resolve(12); // Fallback value
     }
-    return response.data.stargazers_count || 9; // Default to 9 if not available
+    return response.data.stargazers_count || 12; // Default to 12 if not available
   } catch (error) {
     console.warn("Error fetching GitHub stars:", error);
-    return 9; // Fallback value
+    return 12; // Fallback value
   }
 }
 export async function extractVisitorCount(): Promise<number> {
@@ -70,7 +73,7 @@ export async function extractVisitorCount(): Promise<number> {
     }
 
     console.warn("Visitor count not found in SVG");
-    return 1_00_000; // Default value to last remembered count
+    return 345221; // Default value to last remembered count
   } catch (error) {
     console.error("Error extracting visitor count:", error);
     throw error;
@@ -80,6 +83,9 @@ export async function getRepoStats(
   repoUri = appConfig.githubUri
 ): Promise<StatsData> {
   try {
+    if (process.env.NODE_ENV !== "production") {
+      return { stars: 12, forks: 2, contributors: 1, visitors: 345221 };
+    }
     const response = await githubApiFetch<RepoData>(`/repos/${repoUri}`);
     if (response.error) {
       if (
@@ -92,7 +98,7 @@ export async function getRepoStats(
       }
       console.warn("GitHub API rate limit exceeded. Returning cached stats.");
       return {
-        stars: 9,
+        stars: 12,
         forks: 2,
         contributors: 1,
         visitors: await extractVisitorCount(),

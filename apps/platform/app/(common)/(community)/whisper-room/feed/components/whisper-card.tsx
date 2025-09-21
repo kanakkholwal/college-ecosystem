@@ -5,26 +5,35 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { VercelTabsList } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
+import { Content, JSONContent } from "@tiptap/react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { Podcast } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useTransition } from "react";
-import toast from "react-hot-toast";
-import { reactToPost } from "~/actions/community.whisper";
+import { toast } from "sonner";
+import { deleteWhisperPost, reactToPost } from "~/actions/community.whisper";
 import { Session } from "~/auth";
 import { CATEGORY_OPTIONS, getCategory, getVisibility, REACTION_OPTIONS, ReactionType, WhisperPostT } from "~/constants/community.whispers";
 
-
-
-export default function WhisperCard({ post, user }: { post: WhisperPostT, user?: Session["user"] }) {
+export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, user?: Session["user"], idx: number }) {
     const category = getCategory(post.category);
     const visibility = getVisibility(post.visibility);
 
+    const previewHTML = contentJsonToPreview(post.content_json, 200);
+
     return <Card>
-        <CardHeader className="inline-flex items-center gap-2 flex-row p-3">
+        <CardHeader className="inline-flex items-center gap-2 flex-row p-3 relative w-full" style={{
+            animationDelay: `${idx * 0.1}s`,
+        }}>
             <Avatar className="size-8 rounded-full">
                 <AvatarImage
                     alt="Post Author"
@@ -42,7 +51,7 @@ export default function WhisperCard({ post, user }: { post: WhisperPostT, user?:
                     {post.visibility === "PSEUDO"
                         ? post.pseudo?.handle.charAt(0).toUpperCase()
                         : post.visibility === "ANONYMOUS" ? "A"
-                            : post.authorId.charAt(0).toUpperCase()}
+                            : post.authorId}
                 </AvatarFallback>
             </Avatar>
             <div className="text-muted-foreground grid gap-1 text-sm">
@@ -63,29 +72,67 @@ export default function WhisperCard({ post, user }: { post: WhisperPostT, user?:
                         })}
                 </span>
             </div>
+            <div className="absolute right-3 top-3  left-auto flex items-center gap-2">
+
+                <Icon name="pin"
+                    className={cn("size-4 text-muted-foreground", post.pinned ? "visible" : "invisible")} />
+                {user?.role === "admin" && (<DropdownMenu>
+                    <DropdownMenuTrigger className="p-1 rounded hover:bg-accent">
+                        <Icon name="ellipsis-vertical" className="size-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem>
+                            {post.pinned ? "Unpin Post" : "Pin Post"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/whisper-room/feed/${post._id}/edit`}>
+                                Edit Post
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive hover:text-destructive focus:text-destructive"
+                            onClick={() => toast.promise(deleteWhisperPost(post._id!), {
+                                loading: "Deleting post...",
+                                success: "Post deleted",
+                                error: "Error deleting post"
+                            })}>
+                            Delete Post
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>)}
+            </div>
         </CardHeader>
 
         <CardContent className="space-y-4 p-3 lg:p-5">
-            <div className="prose max-w-none break-words prose-sm lg:prose-base dark:prose-invert">
-                {post.content.length > 250
-                    ? post.content.slice(0, 250) + "..."
-                    : post.content}
+            <div
+                className="text-sm text-foreground/90 prose dark:prose-invert max-w-none break-words prose-sm"
+                dangerouslySetInnerHTML={{
+                    __html: previewHTML,
+                }}
+            />
+            <div>
+
+                {category && (
+                    <Badge
+                        variant="default_light"
+                        size="sm"
+                        className="mr-1"
+                    >
+                        #{category.label}
+                    </Badge>
+                )}
+                {post.poll && (
+                    <ButtonLink variant="ghost" size="xs" href={`feed/${post._id}`}>
+                        View Poll
+                        <Icon name="arrow-right" />
+                    </ButtonLink>
+                )}
+                {previewHTML.length >= 200 && (
+                    <ButtonLink variant="link" size="xs" href={`feed/${post._id}`}>
+                        Read More
+                        <Icon name="arrow-right" />
+                    </ButtonLink>
+                )}
             </div>
-            {category && (
-                <Badge
-                    variant="default_light"
-                    size="sm"
-                    className="mr-1"
-                >
-                    #{category.label}
-                </Badge>
-            )}
-            {post.poll && (
-                <ButtonLink variant="ghost" size="xs" href={`feed/${post._id}`}>
-                    View Poll
-                    <Icon name="arrow-right" />
-                </ButtonLink>
-            )}
 
             {/* Reaction Bar */}
             <WhisperCardFooter post={post} user={user} />
@@ -94,7 +141,13 @@ export default function WhisperCard({ post, user }: { post: WhisperPostT, user?:
 
 }
 
-export function WhisperCardFooter({ post, user }: { post: WhisperPostT, user?: Session["user"] }) {
+interface WhisperCardFooterProps {
+    post: WhisperPostT;
+    user?: Session["user"];
+    className?: string;
+    btnSize?: React.ComponentProps<typeof Button>["size"];
+}
+export function WhisperCardFooter({ post, user, className, btnSize }: WhisperCardFooterProps) {
     const [isPending, startTransition] = useTransition();
     const [optimisticPost, setOptimisticPost] = useOptimistic(
         post,
@@ -117,20 +170,20 @@ export function WhisperCardFooter({ post, user }: { post: WhisperPostT, user?: S
             }
         });
     };
-    return <div className="flex gap-2">
+    return <div className={cn("flex gap-2 items-center", className)}>
         {REACTION_OPTIONS.map(r => {
             const count =
                 optimisticPost.reactions.filter(rx => rx.type === r.value).length;
             const userHasReacted = optimisticPost.reactions.some(rx => rx.type === r.value && rx.userId === user?.id);
             return (
                 <Button
-                    size="xs"
+                    size={btnSize || "xs"}
                     key={r.value}
                     onClick={() => !isPending && handleReaction(r.value)}
                     variant={userHasReacted ? "default_light" : "ghost"}
                     className={cn(
                         userHasReacted ? "scale-104 text-primary" : "",
-                        "hover:scale-105 hover:text-primary",
+                        "hover:scale-105 hover:text-primary hover:bg-accent",
                     )}
                 >
                     <r.Icon />
@@ -140,6 +193,62 @@ export function WhisperCardFooter({ post, user }: { post: WhisperPostT, user?: S
         })}
     </div>
 }
+
+export function contentJsonToPreview(
+    content: Content,
+    maxLength = 200
+): string {
+    if (!content) return "";
+
+    let textCount = 0;
+    let html = "";
+
+    function traverse(node: JSONContent) {
+        if (textCount >= maxLength) return;
+
+        if (node.text) {
+            let text = node.text;
+            if (textCount + text.length > maxLength) {
+                text = text.slice(0, maxLength - textCount) + "…";
+            }
+            textCount += text.length;
+
+            // Apply marks
+            if (node.marks) {
+                node.marks.forEach((mark) => {
+                    switch (mark.type) {
+                        case "bold":
+                            text = `<strong>${text}</strong>`;
+                            break;
+                        case "italic":
+                            text = `<em>${text}</em>`;
+                            break;
+                        case "underline":
+                            text = `<u>${text}</u>`;
+                            break;
+                    }
+                });
+            }
+
+            html += text;
+        }
+
+        if (node.content) {
+            node.content.forEach(traverse);
+        }
+    }
+
+    // Handle array or single object
+    if (Array.isArray(content)) {
+        content.forEach(traverse);
+    } else {
+        traverse(content as JSONContent);
+    }
+
+    return html;
+}
+
+
 const tabs = [
     { label: "All", id: "all", icon: Podcast },
     ...CATEGORY_OPTIONS.map(c => ({ label: c.label, id: c.value, icon: c.Icon })),

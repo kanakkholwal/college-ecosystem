@@ -207,6 +207,7 @@ export default function PollingFunctional({ poll, user, updatePoll, settings, po
                 </div>
               </div>
               {/* Vote Button */}
+              
               <Button
                 size="sm"
                 variant={hasVoted ? "glass" : "outline"}

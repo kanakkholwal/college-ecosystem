@@ -53,7 +53,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 31536000, // 1 year
   },
-
+  poweredByHeader: false,
   // Webpack optimizations
   // webpack: (config, { dev, isServer }) => {
   //   if (!dev && !isServer) {

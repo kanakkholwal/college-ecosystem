@@ -52,7 +52,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
           duration: 2500,
         }}
       />
-      <Toaster position="top-center" richColors />
+      <Toaster position="bottom-right" richColors />
       <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
         <span>
           <img

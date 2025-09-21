@@ -1,33 +1,36 @@
+import { Content } from "@tiptap/react";
 import { Drama, HatGlasses, Heart, Plus, ShowerHead, VenetianMask } from "lucide-react";
+import { nanoid } from "nanoid";
 import { FaEarListen, FaRegFaceLaughSquint, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa6";
 import { z } from "zod";
+
 // constants
 // ~/constants/whisper.constants.ts
 
 export const VISIBILITY_OPTIONS = [
   {
     value: "ANONYMOUS",
-    label: "🙈 Anonymous",
+    label: "Anonymous",
     description: "Your identity stays completely hidden.",
   },
   {
     value: "PSEUDO",
-    label: "🎭 Pseudo",
+    label: "Pseudo",
     description: "Pick a fun nickname. Keep it safe for campus 🌸",
   },
   {
     value: "IDENTIFIED",
-    label: "🪪 Identified",
+    label: "Identified",
     description: "Post under your real profile (less common in Whisper).",
   },
 ] as const;
 
 export type VisibilityType = (typeof VISIBILITY_OPTIONS)[number]["value"];
 export const getCategory = (val: string) =>
-    CATEGORY_OPTIONS.find(c => c.value === val);
+  CATEGORY_OPTIONS.find(c => c.value === val);
 
 export const getVisibility = (val: string) =>
-    VISIBILITY_OPTIONS.find(v => v.value === val);
+  VISIBILITY_OPTIONS.find(v => v.value === val);
 
 
 type CategoryOption = {
@@ -119,19 +122,23 @@ export const ReportSchema = z.object({
 });
 
 export const PollOptionSchema = z.object({
-  id: z.string(),
-  text: z.string().min(1).max(280),
+  id: z.string().default(() => nanoid()), // unique id for this option
+  text: z.string().min(1, {
+    message: "Poll option text must be at least 1 character long",
+  }).max(280, {
+    message: "Poll option text must be at most 280 characters long",
+  }),
   votes: z.array(z.string()).default([]), // array of userIds who voted for this option
 });
 
 export const PollSchema = z.object({
-  options: z.array(PollOptionSchema).min(2,{
+  options: z.array(PollOptionSchema).min(2, {
     message: "At least 2 options are required",
-  }).max(10,{
+  }).max(10, {
     message: "A maximum of 10 options are allowed",
   }),
   anonymousVotes: z.boolean().optional().default(false),
-},{
+}, {
   required_error: "Poll options are required",
   invalid_type_error: "Invalid poll options",
 });
@@ -139,17 +146,14 @@ export const PollSchema = z.object({
 export const rawWhisperPostSchema = z.object({
   visibility: PostVisibility.default(postVisibilities[0]),
   category: PostCategory.default(postCategories[0]),
-  content: z.string().min(2,{
-    message: "Post must be at least 2 characters long",
-  }).max(5000,{
-    message: "Post cannot exceed 5000 characters",
-  }),
+  content_json: z.custom<Content>(),
+
   pseudo: PseudoIdentitySchema.optional(), // no null, just undefined if missing
   poll: PollSchema.optional()
 })
 
 export const WhisperPostSchema = z.object({
-  _id: z.string().optional(),
+  _id: z.string(),
   authorId: z.string(), // Postgres user id
   ...rawWhisperPostSchema.shape,
   reactions: z.array(ReactionSchema).optional().default([]),

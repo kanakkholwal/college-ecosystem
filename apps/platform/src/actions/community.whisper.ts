@@ -27,7 +27,7 @@ export async function reactToPost(postId: string, reaction: typeof postReactions
         );
         if (existingReaction) {
             // If the user has already reacted, update the reaction
-            if(existingReaction.type !== reaction) {
+            if (existingReaction.type !== reaction) {
                 // If the reaction is different, update the reaction
                 existingReaction.type = reaction;
             } else {
@@ -53,43 +53,45 @@ export async function reactToPost(postId: string, reaction: typeof postReactions
     }
 }
 
-export async function createWhisperPost(rawPost:unknown) {
+export async function createWhisperPost(rawPost: unknown): Promise<boolean> {
     const validation = rawWhisperPostSchema.safeParse(rawPost);
     if (!validation.success) {
         throw new Error("Invalid post data: " + JSON.stringify(validation.error.issues));
     }
-
     const session = await getSession();
     if (!session) {
         throw new Error("User not authenticated");
     }
-    if(session.user.banned) {
+    if (session.user.banned) {
         throw new Error("User is banned");
     }
-    const { content, visibility, category, poll } = validation.data;
+    const { content_json, visibility, category, poll, pseudo } = validation.data;
 
     try {
         await dbConnect();
-        const newPost = new WhisperPostModel({
+        // Do NOT instantiate Mongoose document, just create it directly
+        await WhisperPostModel.create({
             authorId: session.user.id,
-            content,
+            content_json: JSON.parse(JSON.stringify(content_json)),
             visibility,
             category,
             reactions: [],
-            poll
+            poll,
+            pseudo,
         });
-        await newPost.save();
-        return Promise.resolve(newPost);
+
+        revalidatePath("/whisper-room/feed");
+        return Promise.resolve(true);
     } catch (err) {
         console.error(err);
         return Promise.reject(err);
     }
 }
 
-export async function getWhisperFeed() {
+export async function getWhisperFeed(): Promise<WhisperPostT[]> {
     try {
         await dbConnect();
-        const posts = await WhisperPostModel.find({ })
+        const posts = await WhisperPostModel.find({})
             .sort({ createdAt: -1 })
             .limit(50)
             .lean()
@@ -100,7 +102,7 @@ export async function getWhisperFeed() {
     }
 }
 
-export async function getWhisperPostById(postId: string):Promise<WhisperPostT> {
+export async function getWhisperPostById(postId: string): Promise<WhisperPostT> {
     if (!postId) {
         throw new Error("Invalid postId");
     }
@@ -118,7 +120,7 @@ export async function getWhisperPostById(postId: string):Promise<WhisperPostT> {
 }
 
 // WhisperPostT["poll"] required
-export async function updateWhisperPoll(postId: string, updatedPoll: PollT) :Promise<PollT> {
+export async function updateWhisperPoll(postId: string, updatedPoll: PollT): Promise<PollT> {
     if (!postId || !updatedPoll) {
         throw new Error("Invalid postId or poll data");
     }
@@ -128,7 +130,7 @@ export async function updateWhisperPoll(postId: string, updatedPoll: PollT) :Pro
         if (!post) {
             throw new Error("Post not found");
         }
-        if(!post.poll) {
+        if (!post.poll) {
             throw new Error("No poll associated with this post");
         }
         post.poll = updatedPoll;
@@ -141,4 +143,89 @@ export async function updateWhisperPoll(postId: string, updatedPoll: PollT) :Pro
         return Promise.reject(err);
     }
 
+}
+
+export async function deleteWhisperPost(postId: string): Promise<boolean> {
+    if (!postId) {
+        throw new Error("Invalid postId");
+    }
+    const session = await getSession();
+    if (!session) {
+        throw new Error("User not authenticated");
+    }
+    try {
+        await dbConnect();
+        const post = await WhisperPostModel.findById(postId);
+        if (!post) {
+            throw new Error("Post not found");
+        }
+        if (post.authorId !== session.user.id && session.user.role !== "admin") {
+            throw new Error("User not authorized to delete this post");
+        }
+        await post.deleteOne();
+        revalidatePath("/whisper-room/feed");
+        return Promise.resolve(true);
+    } catch (err) {
+        console.error(err);
+        return Promise.reject(err);
+    }
+}
+export async function editWhisperPost(postId: string, rawPost: unknown): Promise<WhisperPostT> {
+    if (!postId) {
+        throw new Error("Invalid postId");
+    }
+    const validation = rawWhisperPostSchema.safeParse(rawPost);
+    if (!validation.success) {
+        throw new Error("Invalid post data: " + JSON.stringify(validation.error.issues));
+    }
+    const session = await getSession();
+    if (!session) {
+        throw new Error("User not authenticated");
+    }
+    try {
+        await dbConnect();
+        const post = await WhisperPostModel.findById(postId);
+        if (!post) {
+            throw new Error("Post not found");
+        }
+        if (post.authorId !== session.user.id && session.user.role !== "admin") {
+            throw new Error("User not authorized to edit this post");
+        }
+        const { content_json, visibility, category, poll, pseudo } = validation.data;
+        post.content_json = content_json;
+        post.visibility = visibility;
+        post.category = category;
+        post.poll = poll;
+        post.pseudo = pseudo;
+        await post.save();
+        revalidatePath("/whisper-room/feed");
+        revalidatePath("/whisper-room/feed/" + postId);
+        return Promise.resolve(JSON.parse(JSON.stringify(post)));
+    } catch (err) {
+        console.error(err);
+        return Promise.reject(err);
+    }
+}
+
+type patchMethod = Partial<WhisperPostT>;
+
+export async function patchWhisperPost(postId: string, patch: patchMethod, payload: Partial<WhisperPostT>): Promise<WhisperPostT> {
+    if (!postId) {
+        throw new Error("Invalid postId");
+    }
+    try {
+        await dbConnect();
+        const post = await WhisperPostModel.findById(postId);
+        if (!post) {
+            throw new Error("Post not found");
+        }
+        Object.assign(post, patch);
+        await post.save();
+        revalidatePath("/whisper-room/feed");
+        revalidatePath("/whisper-room/feed/" + postId);
+        return Promise.resolve(JSON.parse(JSON.stringify(post)));
+    } catch (err) {
+        console.error(err);
+        return Promise.reject(err);
+    }
 }

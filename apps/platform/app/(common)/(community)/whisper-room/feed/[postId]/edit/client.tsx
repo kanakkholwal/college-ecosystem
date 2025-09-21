@@ -1,6 +1,5 @@
 "use client";
 
-import { BaseHeroSection } from "@/components/application/base-hero";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +15,7 @@ import {
   CATEGORY_OPTIONS,
   rawWhisperPostSchema,
   VISIBILITY_OPTIONS,
+  WhisperPostT,
 } from "~/constants/community.whispers";
 
 import { Icon } from "@/components/icons";
@@ -42,7 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ButtonLink } from "@/components/utils/link";
 import { useActionState } from "@/hooks/useActionState";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Content, JSONContent } from "@tiptap/react";
@@ -52,25 +51,21 @@ import {
 } from "nexo-editor";
 import "nexo-editor/index.css";
 import { useFieldArray, useForm } from "react-hook-form";
-import { createWhisperPost } from "~/actions/community.whisper";
+import { editWhisperPost } from "~/actions/community.whisper";
 
 
-export default function WhisperRoomPage() {
+export default function EditWhisperPostClient({ post }: { post: WhisperPostT }) {
   const [contentSize, setContentSize] = useState<number>(0);
 
-  const [savePost, state] = useActionState(createWhisperPost)
+  const [updatePost, state] = useActionState(editWhisperPost)
   const form = useForm<z.infer<typeof rawWhisperPostSchema>>({
     resolver: zodResolver(rawWhisperPostSchema),
     defaultValues: {
-      content_json: {
-        type: "doc",
-        content: [
-
-        ],
-      } as Content,
-      visibility: VISIBILITY_OPTIONS[0].value,
-      category: CATEGORY_OPTIONS[0].value,
-      poll: undefined,
+      content_json: post.content_json,
+      visibility: post.visibility,
+      category: post.category,
+      poll: post.poll || undefined,
+      pseudo: post.pseudo || undefined,
     },
   });
 
@@ -84,14 +79,20 @@ export default function WhisperRoomPage() {
     try {
       setLoading(true);
       console.log("Submitting whisper:", values);
-      const post = await savePost(values);
-      if (post.data) {
-        console.log("Whisper shared successfully!");
-        toast.success("✨ Whisper shared successfully!");
+
+      toast.promise(updatePost(post._id!, values), {
+        success: "Whisper updated! 🎉",
+        error: (err) => {
+          console.error(err);
+          return "Failed to update whisper: " + err.message
+        },
+        loading: "Updating your whisper...",
+      });
+      if (state.data) {
         router.push("/whisper-room/feed");
       }
-      if (post.error) {
-        throw post.error;
+      if (state.error) {
+        throw state.error;
       }
     } catch {
       toast.error("Something went wrong 😵", {
@@ -104,9 +105,9 @@ export default function WhisperRoomPage() {
     }
   }
   const hasErrors = Object.keys(form.formState.errors).length > 0;
-  if (hasErrors) {
+  if (hasErrors || !form.formState.isValid) {
     console.log("Form errors:", form.formState.errors);
-    console.log("Form is not valid:", form.getValues());
+    console.log("Form is not valid:", form.formState);
   }
 
   return (
@@ -115,13 +116,6 @@ export default function WhisperRoomPage() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8 max-w-6xl mx-auto"
       >
-        <BaseHeroSection
-          title="Whisper Room 💬 (Beta)"
-          description="Drop your confessions, shower thoughts, or praises. Be real, be anonymous, be pseudo."
-        >
-          <ButtonLink href="/whisper-room/feed" shadow="none" variant="default_light"><Icon name="podcast" />Go to Feed</ButtonLink>
-        </BaseHeroSection>
-
         <Card className="border-none shadow-lg p-0">
           <CardContent className="gap-8 grid grid-cols-12 p-3 md:p-6">
             {/* Editor Section */}
@@ -142,7 +136,6 @@ export default function WhisperRoomPage() {
                       placeholder="What’s on your mind? 🤔 (Max 5000 chars)"
                       onChange={(content) => {
                         field.onChange(content);
-
                         const size = contentJsonToText(content as JSONContent).length;
                         setContentSize(size);
                         if (size > 5000) {
@@ -385,7 +378,7 @@ export default function WhisperRoomPage() {
                 size="lg"
                 className="w-full"
               >
-                {(loading || state.loading) ? "Whispering..." : "Publish Whisper"}
+                {(loading || state.loading) ? "Updating Whisper..." : "Update Whisper"}
               </Button>
             </div>
             {state.error && (
