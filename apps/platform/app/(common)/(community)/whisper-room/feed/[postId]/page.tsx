@@ -4,17 +4,18 @@ import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
 import { Icon } from "@/components/icons";
 import { CardHeader } from "@/components/ui/card";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { ButtonLink } from "@/components/utils/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { formatDistanceToNow } from "date-fns";
 import { HatGlasses, Info } from "lucide-react";
-import { NexoEditor } from "nexo-editor";
 import { notFound } from "next/navigation";
 import { getWhisperPostById, updateWhisperPoll } from "~/actions/community.whisper";
 import { getSession } from "~/auth/server";
 import { getCategory, getVisibility } from "~/constants/community.whispers";
 import { changeCase } from "~/utils/string";
 import { WhisperCardFooter } from "../components/whisper-card";
+import { RenderPostContent } from "./client";
 
 interface WhisperFeedPageProps {
     params: Promise<{ postId: string }>;
@@ -69,7 +70,7 @@ export default async function WhisperFeedPage({ params }: WhisperFeedPageProps) 
                                 {whisper.visibility === "PSEUDO"
                                     ? whisper.pseudo?.handle.charAt(0).toUpperCase()
                                     : whisper.visibility === "ANONYMOUS" ? "A"
-                                        : whisper.authorId.charAt(0).toUpperCase()}
+                                        : whisper.authorId?.charAt(0)?.toUpperCase()}
                             </AvatarFallback>
                         </Avatar>}
                     <div className="text-muted-foreground grid gap-1 text-sm">
@@ -86,11 +87,17 @@ export default async function WhisperFeedPage({ params }: WhisperFeedPageProps) 
                             {whisper.createdAt &&
                                 formatDistanceToNow(new Date(whisper.createdAt), {
                                     addSuffix: true,
-                                })}
+                                })} · {category?.label}
                         </span>
                     </div>
                 </CardHeader>
-                <NexoEditor content={whisper.content_json} />
+                <ErrorBoundaryWithSuspense
+                    loadingFallback={<div className="animate-pulse h-4 bg-muted rounded w-full" />}
+
+                >
+                    <RenderPostContent content={whisper.content_json} />
+                </ErrorBoundaryWithSuspense>
+
                 {whisper.poll && (<>
                     <div className="gap-3 flex flex-wrap items-center">
                         <span className="rounded-md bg-muted text-muted-foreground px-2 py-1 text-xs inline-flex items-center">

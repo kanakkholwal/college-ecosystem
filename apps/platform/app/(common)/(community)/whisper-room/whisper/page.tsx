@@ -84,13 +84,18 @@ export default function WhisperRoomPage() {
     try {
       setLoading(true);
       console.log("Submitting whisper:", values);
+
+      const toastId = toast.loading('Whispering your secret...');
       const post = await savePost(values);
+
       if (post.data) {
+        toast.dismiss(toastId);
         console.log("Whisper shared successfully!");
         toast.success("✨ Whisper shared successfully!");
         router.push("/whisper-room/feed");
       }
       if (post.error) {
+        toast.dismiss(toastId);
         throw post.error;
       }
     } catch {

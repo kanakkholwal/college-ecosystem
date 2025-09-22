@@ -4,7 +4,7 @@ import { Icon } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,7 +30,7 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
 
     const previewHTML = contentJsonToPreview(post.content_json, 200);
 
-    return <Card>
+    return <Card className="flex flex-col">
         <CardHeader className="inline-flex items-center gap-2 flex-row p-3 relative w-full" style={{
             animationDelay: `${idx * 0.1}s`,
         }}>
@@ -80,12 +80,14 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
                     <DropdownMenuTrigger className="p-1 rounded hover:bg-accent">
                         <Icon name="ellipsis-vertical" className="size-4" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+                    <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem>
+                            <Icon name={post.pinned ? "pin-off" : "pin"} className="size-3 mr-1"/>
                             {post.pinned ? "Unpin Post" : "Pin Post"}
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <Link href={`/whisper-room/feed/${post._id}/edit`}>
+                            <Icon name="pencil" className="size-3 mr-1"/>
                                 Edit Post
                             </Link>
                         </DropdownMenuItem>
@@ -95,6 +97,7 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
                                 success: "Post deleted",
                                 error: "Error deleting post"
                             })}>
+                                <Icon name="trash" className="size-3 mr-1"/>
                             Delete Post
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -109,13 +112,13 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
                     __html: previewHTML,
                 }}
             />
-            <div>
+            <div className="mt-auto flex items-center gap-2 flex-wrap">
 
                 {category && (
                     <Badge
                         variant="default_light"
                         size="sm"
-                        className="mr-1"
+                        className="mr-auto"
                     >
                         #{category.label}
                     </Badge>
@@ -134,9 +137,12 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
                 )}
             </div>
 
+        </CardContent>
+        <CardFooter className="mt-auto">
+
             {/* Reaction Bar */}
             <WhisperCardFooter post={post} user={user} />
-        </CardContent>
+        </CardFooter>
     </Card>
 
 }
