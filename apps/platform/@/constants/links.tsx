@@ -401,7 +401,7 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
 
 
   }
-  if(process.env.NODE_ENV !== "production"){
+  // if(process.env.NODE_ENV !== "production"){
     linksByRole.push({
       title: "Whisper Room",
       href: "/whisper-room",
@@ -411,7 +411,7 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
       allowed_roles: ["student"],
       isNew:true
     })
-  }
+  // }
   return linksByRole
 
 };
