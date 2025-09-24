@@ -171,14 +171,16 @@ export default function AttendanceRecord({
         )}
         {/* Empty State */}
         {totalClasses === 0 && (
-          <div className="flex flex-col items-center text-center flex-1 my-auto">
-            <CircleSlash className="w-8 h-8  mb-2" />
-            <p className="text-sm font-medium">No attendance records found</p>
-            <p className="text-xs text-muted-foreground">
-              Add your first record to start tracking.
+          <div className="flex flex-col items-center justify-center flex-1 my-auto p-6 text-center border border-dashed rounded-lg bg-muted/20">
+            <CircleSlash className="w-10 h-10 text-muted-foreground mb-3" />
+            <p className="text-sm font-medium">No attendance data yet</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Start adding records to track your attendance progress.
             </p>
+
           </div>
         )}
+
       </div>
     </div>
   );

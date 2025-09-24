@@ -1,29 +1,34 @@
-import EmptyArea from "@/components/common/empty-area";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { BookUser } from "lucide-react";
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { getAttendanceRecords } from "~/actions/student.record_personal";
-import AttendanceAnalytics from "./attendance-analytics";
-import CreateAttendanceRecord from "./create-record";
-import AttendanceRecord from "./record";
+// app/attendance/page.tsx
+import EmptyArea from "@/components/common/empty-area"
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog"
+import { BookUser } from "lucide-react"
+import type { Metadata } from "next"
+import { Suspense } from "react"
+import { getAttendanceRecords } from "~/actions/student.record_personal"
+import AttendanceAnalytics from "./attendance-analytics"
+import CreateAttendanceRecord from "./create-record"
+import AttendanceRecord from "./record"
 
 export const metadata: Metadata = {
-  title: `Attendance`,
+  title: "Attendance",
   description: "Manage your attendance records here.",
-};
+}
 
 export default async function PersonalAttendanceManager() {
-  const attendance_records = await getAttendanceRecords();
+  const attendance_records = await getAttendanceRecords()
 
   return (
-    <div className="z-10 w-full max-w-7xl relative space-y-10 @container/attendance">
+    <div className="relative z-10 w-full max-w-7xl space-y-8 @container/attendance">
       {/* Analytics Section */}
       <AttendanceAnalytics records={attendance_records} />
-      {/* Header Section */}
-      <div className="w-full flex justify-between items-center whitespace-nowrap gap-2 bg-card p-3 rounded-md">
-        <h3 className="text-base font-medium">
-          Attendance Records ({attendance_records.length})
+
+      {/* Header */}
+      <div className="flex w-full items-center justify-between gap-2 rounded-lg border bg-card/80 backdrop-blur-sm p-4 shadow-sm">
+        <h3 className="text-lg font-semibold tracking-tight text-foreground">
+          Attendance Records
+          <span className="ml-2 text-sm font-normal text-muted-foreground">
+            ({attendance_records.length})
+          </span>
         </h3>
         <CreateAttendanceRecordButton />
       </div>
@@ -33,32 +38,32 @@ export default async function PersonalAttendanceManager() {
         <EmptyArea
           icons={[BookUser]}
           title="No attendance records"
-          description="There are no attendance records at the moment."
+          description="There are no attendance records yet. Create one to get started."
         />
       )}
 
-      {/* Attendance Records */}
-      <Suspense fallback={<div>Loading...</div>}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Records Grid */}
+      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading...</div>}>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {attendance_records.map((record, index) => (
             <AttendanceRecord
               record={record}
-              style={{ animationDelay: `${index * 50}ms` }}
               key={record.id}
-              className="animate-in popup"
+              className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+              style={{ animationDelay: `${index * 50}ms` }}
             />
           ))}
         </div>
       </Suspense>
     </div>
-  );
+  )
 }
 
 function CreateAttendanceRecordButton() {
   return (
     <ResponsiveDialog
       title="Create Attendance Record"
-      description="Create a new attendance record for a subject."
+      description="Add a new attendance record for a subject."
       btnProps={{
         variant: "default_light",
         size: "sm",
@@ -67,5 +72,5 @@ function CreateAttendanceRecordButton() {
     >
       <CreateAttendanceRecord />
     </ResponsiveDialog>
-  );
+  )
 }

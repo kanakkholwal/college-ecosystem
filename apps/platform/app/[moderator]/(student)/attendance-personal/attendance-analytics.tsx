@@ -1,71 +1,77 @@
-import { NumberTicker } from "@/components/animation/number-ticker";
-import { cn } from "@/lib/utils";
-import type React from "react";
-import type { PersonalAttendanceWithRecords } from "~/db/schema/attendance_record";
+"use client"
+
+import { NumberTicker } from "@/components/animation/number-ticker"
+import { cn } from "@/lib/utils"
+import type React from "react"
+import type { PersonalAttendanceWithRecords } from "~/db/schema/attendance_record"
 
 interface AttendanceAnalyticsProps {
-  records: PersonalAttendanceWithRecords[];
+  records: PersonalAttendanceWithRecords[]
 }
 
-const AttendanceAnalytics: React.FC<AttendanceAnalyticsProps> = ({
-  records,
-}) => {
-  const totalClasses = records.reduce(
-    (acc, record) => acc + record.records.length,
+const AttendanceAnalytics: React.FC<AttendanceAnalyticsProps> = ({ records }) => {
+  const totalClasses = records.reduce((acc, record) => acc + record.records.length, 0)
+  const presentClasses = records.reduce(
+    (acc, record) => acc + record.records.filter((a) => a.isPresent).length,
     0
-  );
-  const presentClasses = records.reduce((acc, record) => {
-    return acc + record.records.filter((a) => a.isPresent).length;
-  }, 0);
-  const absentClasses = totalClasses - presentClasses;
+  )
+  const absentClasses = totalClasses - presentClasses
   const attendancePercentage =
-    totalClasses > 0
-      ? ((presentClasses / totalClasses) * 100).toFixed(2)
-      : "0.00";
+    totalClasses > 0 ? ((presentClasses / totalClasses) * 100).toFixed(2) : "0.00"
 
   return (
-    <div className="p-4 rounded-md bg-card ">
-      <h4 className="text-lg font-medium mb-4">
-        Attendance Analytics ({records.length} Subjects)
+    <div className="rounded-xl border bg-card p-6 shadow">
+      <h4 className="mb-6 text-lg font-semibold tracking-tight text-foreground">
+        Attendance Analytics{" "}
+        <span className="ml-1 text-sm font-normal text-muted-foreground">
+          ({records.length} Subjects)
+        </span>
       </h4>
-      <div className="grid grid-cols-1 @sm/attendance:grid-cols-2 @2xl/attendance:grid-cols-4 gap-4">
-        <div className="p-3 rounded-md border">
-          <h5 className="text-sm font-medium">Total Classes</h5>
-          <p className="text-xl font-semibold">
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Total Classes */}
+        <div className="rounded-lg border bg-card/60 p-4">
+          <h5 className="text-sm font-medium text-muted-foreground">Total Classes</h5>
+          <p className="text-2xl font-bold text-foreground">
             <NumberTicker value={totalClasses} />
           </p>
         </div>
-        <div className="p-3 rounded-md border">
-          <h5 className="text-sm font-medium">Classes Attended</h5>
-          <p className="text-xl font-semibold">
-            <NumberTicker value={presentClasses} className="text-green-500" />
+
+        {/* Classes Attended */}
+        <div className="rounded-lg border bg-card/60 p-4">
+          <h5 className="text-sm font-medium text-muted-foreground">Classes Attended</h5>
+          <p className="text-2xl font-bold text-success">
+            <NumberTicker value={presentClasses} />
           </p>
         </div>
-        <div className="p-3 rounded-md border">
-          <h5 className="text-sm font-medium">Classes Missed</h5>
-          <p className="text-xl font-semibold">
-            <NumberTicker value={absentClasses} className="text-red-500" />
+
+        {/* Classes Missed */}
+        <div className="rounded-lg border bg-card/60 p-4">
+          <h5 className="text-sm font-medium text-muted-foreground">Classes Missed</h5>
+          <p className="text-2xl font-bold text-destructive">
+            <NumberTicker value={absentClasses} />
           </p>
         </div>
-        <div className="p-3 rounded-md border">
-          <h5 className="text-sm font-medium whitespace-nowrap">
-            Attendance Percentage
-          </h5>
-          <p className={cn("text-xl font-semibold")}>
-            <NumberTicker
-              value={parseFloat(attendancePercentage)}
-              suffix="%"
-              className={cn({
-                "text-red-500": parseFloat(attendancePercentage) < 50,
-                "text-yellow-500": parseFloat(attendancePercentage) < 75,
-                "text-green-500": parseFloat(attendancePercentage) >= 75,
-              })}
-            />
+
+        {/* Attendance Percentage */}
+        <div className="rounded-lg border bg-card/60 p-4">
+          <h5 className="text-sm font-medium text-muted-foreground">Attendance %</h5>
+          <p
+            className={cn(
+              "text-2xl font-bold",
+              parseFloat(attendancePercentage) < 50 && "text-destructive",
+              parseFloat(attendancePercentage) >= 50 &&
+                parseFloat(attendancePercentage) < 75 &&
+                "text-warning",
+              parseFloat(attendancePercentage) >= 75 && "text-success"
+            )}
+          >
+            <NumberTicker value={parseFloat(attendancePercentage)} suffix="%" />
           </p>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AttendanceAnalytics;
+export default AttendanceAnalytics

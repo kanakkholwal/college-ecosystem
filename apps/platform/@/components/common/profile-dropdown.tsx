@@ -110,7 +110,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
           <Link
             key={link.href}
             href={link?.href || ""}
-            className="rounded-md h-8 px-3 py-2 inline-flex justify-start gap-2 items-center text-xs font-medium capitalize border bg-muted text-muted-foreground hover:border-primary hover:text-primary whitespace-nowrap"
+            className="rounded-md h-8 px-3 py-2 inline-flex justify-start gap-2 items-center text-xs font-medium capitalize border bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary whitespace-nowrap"
           >
             {link.Icon && <link.Icon className="size-3 inline-block" />}
             <span className="truncate">{changeCase(link.title, "title")}</span>

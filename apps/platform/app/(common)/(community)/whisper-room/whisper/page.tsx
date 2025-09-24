@@ -79,7 +79,10 @@ export default function WhisperRoomPage() {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "poll.options",
+    shouldUnregister: true, // this prevents keeping stale poll data when poll is turned off
   });
+  const pollEnabled = form.watch("poll") !== undefined;
+
   async function onSubmit(values: z.infer<typeof rawWhisperPostSchema>) {
     try {
       setLoading(true);
@@ -294,7 +297,7 @@ export default function WhisperRoomPage() {
                   </FormItem>
                 )}
               />
-              {form.getValues("poll") !== undefined && (<FormField
+              {pollEnabled && (<FormField
                 control={form.control}
                 name="poll.anonymousVotes"
                 render={({ field }) => (
@@ -318,7 +321,7 @@ export default function WhisperRoomPage() {
               />)}
 
             </div>
-            {form.getValues("poll") !== undefined && (<div className="md:col-span-8 col-span-12 text-sm text-muted-foreground border p-3 rounded-xl">
+            {pollEnabled && (<div className="md:col-span-8 col-span-12 text-sm text-muted-foreground border p-3 rounded-xl">
               <FormField
                 control={form.control}
                 name="poll.options"

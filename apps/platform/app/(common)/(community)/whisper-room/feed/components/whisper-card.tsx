@@ -82,12 +82,12 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem>
-                            <Icon name={post.pinned ? "pin-off" : "pin"} className="size-3 mr-1"/>
+                            <Icon name={post.pinned ? "pin-off" : "pin"} className="size-3 mr-1" />
                             {post.pinned ? "Unpin Post" : "Pin Post"}
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                             <Link href={`/whisper-room/feed/${post._id}/edit`}>
-                            <Icon name="pencil" className="size-3 mr-1"/>
+                                <Icon name="pencil" className="size-3 mr-1" />
                                 Edit Post
                             </Link>
                         </DropdownMenuItem>
@@ -97,7 +97,7 @@ export default function WhisperCard({ post, user, idx }: { post: WhisperPostT, u
                                 success: "Post deleted",
                                 error: "Error deleting post"
                             })}>
-                                <Icon name="trash" className="size-3 mr-1"/>
+                            <Icon name="trash" className="size-3 mr-1" />
                             Delete Post
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -153,51 +153,77 @@ interface WhisperCardFooterProps {
     className?: string;
     btnSize?: React.ComponentProps<typeof Button>["size"];
 }
+
+
 export function WhisperCardFooter({ post, user, className, btnSize }: WhisperCardFooterProps) {
     const [isPending, startTransition] = useTransition();
-    const [optimisticPost, setOptimisticPost] = useOptimistic(
-        post,
-        (current) => ({
-            ...current,
-        })
-    );
+
+    const [optimisticPost, setOptimisticPost] = useOptimistic(post, (current, action: { type: "reaction"; value: ReactionType }) => {
+        if (action.type === "reaction" && user) {
+            const alreadyReacted = current.reactions.find(
+                (rx) => rx.type === action.value && rx.userId === user.id
+            );
+
+            let newReactions;
+
+            if (alreadyReacted) {
+                // remove reaction
+                newReactions = current.reactions.filter(
+                    (rx) => !(rx.type === action.value && rx.userId === user.id)
+                );
+            } else {
+                // replace other reactions from same user with this one
+                newReactions = [
+                    ...current.reactions.filter((rx) => rx.userId !== user.id),
+                    { type: action.value, userId: user.id },
+                ];
+            }
+
+            return {
+                ...current,
+                reactions: newReactions,
+            };
+        }
+        return current;
+    });
 
     const handleReaction = (type: ReactionType) => {
         startTransition(() => {
             setOptimisticPost({ type: "reaction", value: type });
-            try {
-                //
-                void reactToPost(optimisticPost._id!, type).catch((error) => {
-                    toast.error("Failed to react to post: " + error.message);
-                    console.error("Failed to react to post:", error);
-                });
-            } catch (err) {
-                console.error(err);
-            }
+
+            void reactToPost(post._id!, type).catch((error) => {
+                toast.error("Failed to react to post: " + error.message);
+                console.error("Failed to react to post:", error);
+            });
         });
     };
-    return <div className={cn("flex gap-2 items-center", className)}>
-        {REACTION_OPTIONS.map(r => {
-            const count =
-                optimisticPost.reactions.filter(rx => rx.type === r.value).length;
-            const userHasReacted = optimisticPost.reactions.some(rx => rx.type === r.value && rx.userId === user?.id);
-            return (
-                <Button
-                    size={btnSize || "xs"}
-                    key={r.value}
-                    onClick={() => !isPending && handleReaction(r.value)}
-                    variant={userHasReacted ? "default_light" : "ghost"}
-                    className={cn(
-                        userHasReacted ? "scale-104 text-primary" : "",
-                        "hover:scale-105 hover:text-primary hover:bg-accent",
-                    )}
-                >
-                    <r.Icon />
-                    {count}
-                </Button>
-            );
-        })}
-    </div>
+
+    return (
+        <div className={cn("flex gap-2 items-center", className)}>
+            {REACTION_OPTIONS.map((r) => {
+                const count = optimisticPost.reactions.filter((rx) => rx.type === r.value).length;
+                const userHasReacted = optimisticPost.reactions.some(
+                    (rx) => rx.type === r.value && rx.userId === user?.id
+                );
+
+                return (
+                    <Button
+                        key={r.value}
+                        size={btnSize || "xs"}
+                        onClick={() => !isPending && handleReaction(r.value)}
+                        variant={userHasReacted ? "default_light" : "ghost"}
+                        className={cn(
+                            userHasReacted ? "scale-104 text-primary" : "",
+                            "hover:scale-105 hover:text-primary hover:bg-accent transition-transform"
+                        )}
+                    >
+                        <r.Icon />
+                        {count}
+                    </Button>
+                );
+            })}
+        </div>
+    );
 }
 
 export function contentJsonToPreview(

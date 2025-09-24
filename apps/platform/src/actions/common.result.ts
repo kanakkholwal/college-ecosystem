@@ -24,6 +24,7 @@ export async function getResults(
     programme?: string;
     batch?: number;
     limit?: number;
+    include_freshers?: boolean;
   },
   new_cache?: boolean
 ): Promise<getResultsReturnType> {
@@ -77,10 +78,12 @@ export async function getResults(
     if (filter.batch && filter.batch.toString() !== "all") {
       filterQuery.batch = filter.batch;
     }
+    if (!filter.include_freshers) {
+      filterQuery.$expr = { $gt: [{ $size: "$semesters" }, 0] };
+    }
 
     const results = await ResultModel.find({
       ...filterQuery,
-      $expr: { $gt: [{ $size: "$semesters" }, 0] },
     })
       .sort({ "rank.college": "asc" })
       .skip(skip)
