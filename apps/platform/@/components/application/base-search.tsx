@@ -6,7 +6,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { IoMdOptions } from "react-icons/io";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -26,6 +26,7 @@ type SearchBoxProps = {
   variant?: "default" | "expanded";
   className?: string;
   disabled?: boolean;
+  id?: string;
 };
 
 export default function BaseSearchBox({
@@ -38,15 +39,16 @@ export default function BaseSearchBox({
   variant = "default",
   className,
   disabled = false,
+  id
 }: SearchBoxProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
   const [open, setOpen] = useState(false);
+  const params = useMemo(() => new URLSearchParams(searchParams), [searchParams]);
 
   const handleSearch = useDebouncedCallback((term: string) => {
-    const params = new URLSearchParams(searchParams);
     params.set("page", "1");
 
     if (term) {
@@ -58,8 +60,6 @@ export default function BaseSearchBox({
   }, debounceTime);
 
   const handleFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-
     if (value === "none" || value === "all") {
       params.delete(key);
     } else if (value) {
@@ -71,17 +71,7 @@ export default function BaseSearchBox({
     replace(`${pathname}?${params.toString()}`);
   };
 
-  const clearAllFilters = () => {
-    const params = new URLSearchParams(searchParams);
-    filterOptions.forEach((option) => {
-      params.delete(option.key);
-    });
-    replace(`${pathname}?${params.toString()}`);
-  };
 
-  const hasActiveFilters = filterOptions.some((option) =>
-    searchParams.get(option.key)
-  );
 
   return (
     <div
@@ -188,13 +178,17 @@ export default function BaseSearchBox({
         )}
 
         <Input
-          placeholder={searchPlaceholder}
           className={cn(
             "w-full rounded-full",
             isDesktop ? "h-11 px-18" : "h-10 pl-10 pr-14"
           )}
+          placeholder={searchPlaceholder}
           defaultValue={searchParams.get(searchParamsKey)?.toString()}
-          onChange={(e) => handleSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch(e.currentTarget.value);
+          }}
+          id={`search-${id ?? "input"}`}
+          onBlur={(e) => handleSearch(e.currentTarget.value)}
           disabled={disabled}
         />
 
@@ -209,6 +203,14 @@ export default function BaseSearchBox({
             transition="damped"
             size={isDesktop ? "default" : "sm"}
             disabled={disabled}
+            onClick={() => {
+              const input = document.getElementById(`search-${id ?? "input"}`) as HTMLInputElement;
+              if (input) {
+                handleSearch(input.value)
+                input.blur()
+              }
+            }
+            }
           >
             <Search className="mx-auto" />
           </Button>

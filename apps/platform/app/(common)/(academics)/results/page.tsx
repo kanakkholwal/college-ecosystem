@@ -2,7 +2,7 @@ import { ResultCard, SkeletonCard } from "@/components/application/result-card";
 import Pagination from "@/components/application/result-pagination";
 import SearchBox from "@/components/application/result-search";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Fragment, Suspense } from "react";
+import { Suspense } from "react";
 import { BiSpreadsheet } from "react-icons/bi";
 import { getCachedLabels, getResults } from "~/actions/common.result";
 
@@ -116,13 +116,12 @@ export default async function ResultPage(props: {
   };
   const new_cache = searchParams?.cache === "new";
 
-  const { results, totalPages } = await getResults(
-    query,
-    currentPage,
-    filter,
-    new_cache
-  );
-  const { branches, programmes, batches } = await getCachedLabels(new_cache);
+  const [resData, labels] = await Promise.all([
+    getResults(query, currentPage, filter, new_cache),
+    getCachedLabels(new_cache),
+  ]);
+  const { results, totalPages } = resData;
+  const { branches, programmes, batches } = labels;
 
   return (
     <div className="px-4 md:px-12 xl:px-6 @container">
@@ -174,7 +173,6 @@ and track academic performance"
           <div className="mx-auto max-w-7xl w-full xl:px-6 grid gap-3 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
             {results.map((result, i) => {
               return (
-                <Fragment key={result._id.toString()}>
                   <ResultCard
                     key={result._id.toString()}
                     result={result}
@@ -182,14 +180,7 @@ and track academic performance"
                       animationDelay: `${i * 100}ms`,
                     }}
                   />
-                  {/* {(i + 1) % 4 === 0 && (
-
-                    <AdUnit
-                      adSlot="display-square"
-                      key={`ad-${result._id.toString()}`}
-                    />
-                  )} */}
-                </Fragment>
+                
               );
             })}
           </div>

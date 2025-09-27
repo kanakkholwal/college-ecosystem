@@ -1,5 +1,5 @@
 "use client";
-import { Megaphone } from "lucide-react";
+import { Book, Building, Calendar, Megaphone, MessageCircle, TrendingUpDownIcon, Users2 } from "lucide-react";
 
 import { AnimatedGradientText } from "@/components/animation/animated-shiny-text";
 import { FloatingElements } from "@/components/animation/floating-elements";
@@ -7,12 +7,13 @@ import { StaggerChildrenContainer, StaggerChildrenItem } from "@/components/anim
 import { NumberTicker } from "@/components/animation/number-ticker";
 import FeatureCard from "@/components/common/feature-card";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/utils/link";
 import { featuresSectionContent } from "@/constants/landing";
 import { cn } from "@/lib/utils";
 import { sendGAEvent } from "@next/third-parties/google";
-import { motion, spring } from "framer-motion";
+import { AnimatePresence, motion, spring } from "framer-motion";
 import {
   ArrowUpRight,
   BookOpen,
@@ -27,6 +28,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "~/auth";
 import { PublicStatsType } from "~/lib/third-party/github";
 import { appConfig, orgConfig } from "~/project.config";
@@ -362,7 +364,8 @@ export function IntroSection({
           <StaggerChildrenItem
             className="mb-6 w-full max-w-md rounded-2xl border border-border bg-card shadow-xl backdrop-blur-sm"
           >
-            <HeroBentoMockup />
+            {/* <HeroBentoMockup /> */}
+            <FeaturesShowcase features={FEATURES} autoplay intervalMs={6000} />
           </StaggerChildrenItem>
 
 
@@ -558,3 +561,324 @@ export function FeatureSection() {
     </motion.section>
   );
 }
+
+
+// 
+export type FeatureItem = {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  // optional visual: either an inline React node (svg/icon) or an image URL
+  icon?: React.ReactNode;
+  image?: string;
+};
+
+export interface FeaturesShowcaseProps {
+  features: FeatureItem[];
+  autoplay?: boolean;
+  intervalMs?: number;
+  loop?: boolean;
+  showControls?: boolean;
+  showIndicators?: boolean;
+  className?: string;
+}
+
+/**
+ * Generic features slideshow / showcase.
+ * - Responsive
+ * - Keyboard navigation (← →)
+ * - Drag/swipe to change slides
+ * - Autoplay with progress bar (pauses on hover/focus)
+ * - Uses ShadCN semantic classes (bg-card, text-foreground, muted-foreground, etc)
+ */
+ function FeaturesShowcase({
+  features,
+  autoplay = true,
+  intervalMs = 5000,
+  loop = true,
+  showControls = true,
+  showIndicators = true,
+  className,
+}: FeaturesShowcaseProps) {
+  const length = features.length;
+  const [index, setIndex] = useState(0);
+  const [isPaused, setPaused] = useState(false);
+  const timerRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // clamp helper
+  const clampIndex = (i: number) =>
+    loop ? ((i % length) + length) % length : Math.max(0, Math.min(length - 1, i));
+
+  const go = (dir: number) => setIndex((i) => clampIndex(i + dir));
+  const goTo = (i: number) => setIndex(clampIndex(i));
+
+  // autoplay
+  useEffect(() => {
+    if (!autoplay || isPaused || length <= 1) return;
+    // use window.setTimeout to get numeric id
+    timerRef.current = window.setTimeout(() => {
+      setIndex((i) => clampIndex(i + 1));
+    }, intervalMs) as unknown as number;
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [index, autoplay, isPaused, intervalMs, length]);
+
+  // keyboard nav
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") go(-1);
+      if (e.key === "ArrowRight") go(1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [length, loop]);
+
+  // pause on hover/focus
+  const handleMouseEnter = () => setPaused(true);
+  const handleMouseLeave = () => setPaused(false);
+  const handleFocus = () => setPaused(true);
+  const handleBlur = () => setPaused(false);
+
+  // animation variants
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 48 : -48,
+      opacity: 0,
+      scale: 0.98,
+    }),
+    center: { x: 0, opacity: 1, scale: 1 },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -48 : 48,
+      opacity: 0,
+      scale: 0.98,
+    }),
+  };
+
+  // compute direction for framer-motion (positive => next)
+  const prevIndex = useRef(index);
+  const direction = useMemo(() => {
+    const d = index - prevIndex.current;
+    prevIndex.current = index;
+    if (d === 0) return 1;
+    // normalize for looping (if jumped from last -> 0)
+    if (Math.abs(d) > 1) return d > 0 ? 1 : -1;
+    return d > 0 ? 1 : -1;
+  }, [index]);
+
+  if (!features || features.length === 0) return null;
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={cn("relative w-full", className)}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Features showcase"
+    >
+      {/* Slides container */}
+      <div className="overflow-hidden rounded-lg border bg-card p-4">
+        <div className="relative h-56 md:h-72 lg:h-80">
+          <AnimatePresence custom={direction} initial={false} mode="wait">
+            <motion.div
+              key={features[index].id ?? index}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.45, ease: "easeInOut" }}
+              className="absolute inset-0 flex flex-col md:flex-row items-center gap-6 p-4"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.18}
+              onDragEnd={(_, info) => {
+                const threshold = 80;
+                if (info.offset.x > threshold) go(-1);
+                else if (info.offset.x < -threshold) go(1);
+              }}
+            >
+              {/* Visual (image/icon) */}
+              <div className="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center">
+                {features[index].image ? (
+                  <div className="w-full h-36 md:h-56 lg:h-64 rounded-md overflow-hidden bg-muted/10 flex items-center justify-center">
+                    <img
+                      src={features[index].image}
+                      alt={features[index].title}
+                      className="object-cover w-full h-full"
+                      draggable={false}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-lg flex items-center justify-center bg-muted/10">
+                    {features[index].icon ?? (
+                      <svg
+                        aria-hidden
+                        width="36"
+                        height="36"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="stroke-current text-muted-foreground"
+                      >
+                        <path d="M12 3v18M3 12h18" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg md:text-xl font-semibold text-foreground truncate">
+                  {features[index].title}
+                </h3>
+                {features[index].subtitle && (
+                  <p className="text-sm text-muted-foreground mt-1">{features[index].subtitle}</p>
+                )}
+                {features[index].description && (
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {features[index].description}
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {/* Example CTA slot — consumers can override by placing children inside each feature item if desired */}
+                  <Button size="sm" variant="default">Learn more</Button>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Controls */}
+      {showControls && length > 1 && (
+        <>
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-2">
+            <div className="pointer-events-auto">
+              <button
+                aria-label="Previous"
+                onClick={() => go(-1)}
+                className="rounded-md p-2 bg-card/80 border hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                title="Previous"
+              >
+                <Icon name="arrow-left" className="h-5 w-5 text-foreground" />
+              </button>
+            </div>
+
+            <div className="pointer-events-auto">
+              <button
+                aria-label="Next"
+                onClick={() => go(1)}
+                className="rounded-md p-2 bg-card/80 border hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                title="Next"
+              >
+                <Icon name="arrow-right" className="h-5 w-5 text-foreground" />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Indicators + progress */}
+      <div className="mt-3 flex items-center justify-between gap-4">
+        {showIndicators && (
+          <div className="flex gap-2 items-center">
+            {features.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => goTo(i)}
+                className={cn(
+                  "h-2 md:h-2.5 w-6 md:w-8 rounded-full transition-all",
+                  i === index ? "bg-primary" : "bg-muted/40"
+                )}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* autoplay progress */}
+        {autoplay && length > 1 ? (
+          <div className="flex-1 md:flex-initial">
+            <div className="h-2 w-full rounded-full bg-muted/20 overflow-hidden">
+              <motion.div
+                key={index + (isPaused ? "-paused" : "")}
+                initial={{ width: 0 }}
+                animate={{ width: isPaused ? 0 : "100%" }}
+                transition={{
+                  duration: isPaused ? 0 : intervalMs / 1000,
+                  ease: "linear",
+                }}
+                className="h-full bg-primary"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export const FEATURES: FeatureItem[] = [
+  {
+    id: "1",
+    title: "Smart Room Allotment",
+    subtitle: "CGPI & Preference Based",
+    description:
+      "Allocate hostel rooms efficiently based on CGPI, SOE priority, and roommate preferences. Highest CGPI student selects roommates first.",
+    icon: <Building className="w-12 h-12 text-primary" />,
+  },
+  {
+    id: "2",
+    title: "Academic Dashboard",
+    subtitle: "Ranks & Results",
+    description:
+      "Track your class rank, CGPI, and results in real-time with an intuitive dashboard that highlights your academic standing.",
+    icon: <Book className="w-12 h-12 text-primary" />,
+  },
+  {
+    id: "3",
+    title: "Clubs & Societies",
+    subtitle: "Join & Manage",
+    description:
+      "Explore college clubs, manage events, or create your own society with custom dashboards and pages using pre-built templates.",
+    icon: <Users2 className="w-12 h-12 text-primary" />,
+  },
+  {
+    id: "4",
+    title: "Polls & Surveys",
+    subtitle: "Engage the Community",
+    description:
+      "Create polls or surveys for students, track anonymous votes, and get insights instantly to drive student engagement.",
+    icon: <TrendingUpDownIcon className="w-12 h-12 text-primary" />,
+  },
+  {
+    id: "5",
+    title: "Event Management",
+    subtitle: "Campus Events",
+    description:
+      "View, RSVP, and manage college events seamlessly with calendar integration and real-time updates.",
+    icon: <Calendar className="w-12 h-12 text-primary" />,
+  },
+  {
+    id: "6",
+    title: "Community Activities",
+    subtitle: "Posts & Comments",
+    description:
+      "Post resources, participate in discussions, comment on threads, and keep up with campus-wide conversations.",
+    icon: <MessageCircle className="w-12 h-12 text-primary" />,
+  },
+];
