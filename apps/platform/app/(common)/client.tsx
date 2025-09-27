@@ -364,8 +364,8 @@ export function IntroSection({
           <StaggerChildrenItem
             className="mb-6 w-full max-w-md rounded-2xl border border-border bg-card shadow-xl backdrop-blur-sm"
           >
-            {/* <HeroBentoMockup /> */}
-            <FeaturesShowcase features={FEATURES} autoplay intervalMs={6000} />
+            <HeroBentoMockup />
+            {/* <FeaturesShowcase features={FEATURES} autoplay intervalMs={6000} /> */}
           </StaggerChildrenItem>
 
 
