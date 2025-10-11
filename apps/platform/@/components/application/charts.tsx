@@ -41,7 +41,7 @@ import { changeCase } from "~/utils/string";
  */
 
 interface BaseProps<
-  TData extends Record<string, any>,
+  TData extends Record<string, number | string>,
   TConfig extends ChartConfig,
 > {
   data: TData[];
@@ -133,7 +133,7 @@ export function ChartBar<
               tickMargin={5}
               axisLine={false}
               tickFormatter={(value) => changeCase(value, "title")}
-              // hide
+            // hide
             />
             <XAxis dataKey={dataKey.toString()} type="number" hide />
             <ChartTooltip
@@ -333,7 +333,7 @@ interface PieDonutTextProps<
   TData extends Record<string, any>,
   TConfig extends ChartConfig,
 > extends BaseProps<TData, TConfig>,
-    PieBaseProps<TData, TConfig> {
+  PieBaseProps<TData, TConfig> {
   // Additional properties specific to Pie/Donut charts
   textLabel?: string;
   textValue: string | number;
@@ -418,6 +418,7 @@ export function ChartPieDonutText<
     </ChartContainer>
   );
 }
+
 export function ChartPie<
   TData extends Record<string, any>,
   TConfig extends ChartConfig,
@@ -496,6 +497,55 @@ export function ChartPie<
     </ChartContainer>
   );
 }
+export function RoundedPieChart<TData extends Record<string, any>, TConfig extends ChartConfig>({
+  data,
+  config,
+  dataKey,
+  nameKey,
+  innerRadius = 60,
+  strokeWidth = 5,
+  className = "mx-auto aspect-square max-h-[250px]",
+  showLabelList = true,
+  tooltipProps,
+  tooltipContentProps,
+  showLegend = true,
+  pieClassName,
+}: PieBaseProps<TData, TConfig>) {
+
+  return (
+    <ChartContainer config={config} className={className}>
+      <PieChart>
+        <ChartTooltip
+          content={<ChartTooltipContent nameKey={nameKey.toString()} hideLabel />}
+          {...tooltipProps}
+        />
+        <Pie
+          data={data}
+          dataKey={dataKey.toString()}
+          nameKey={nameKey.toString()}
+          innerRadius={innerRadius}
+          outerRadius={90}
+          strokeWidth={strokeWidth}
+          cornerRadius={8}
+          paddingAngle={4}
+        >
+          {showLabelList && (
+            <LabelList
+              dataKey={dataKey.toString()}
+              className="fill-background"
+              stroke="none"
+              fontSize={12}
+              fontWeight={500}
+              fill="currentColor"
+              formatter={(value: number) => value.toString()}
+            />
+          )}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
+  );
+}
+
 // export function ChartPieLabelList<TData extends Record<string, any>, TConfig extends ChartConfig>({
 //     data,
 //     config,

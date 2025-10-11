@@ -1,3 +1,4 @@
+import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import { BaseHeroSection } from "@/components/application/base-hero";
 import BaseSearchBox from "@/components/application/base-search";
 import { ButtonLink } from "@/components/utils/link";
@@ -86,7 +87,16 @@ export default async function Page() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-
+      <div className="absolute top-0 left-0 z-0 w-full min-h-80 [mask-image:linear-gradient(to_top,transparent_25%,black_95%)]">
+        <FlickeringGrid
+          className="absolute top-0 left-0 size-full"
+          squareSize={4}
+          gridGap={6}
+          color="#6B7280"
+          maxOpacity={0.2}
+          flickerChance={0.05}
+        />
+      </div>
       <BaseHeroSection
         title="Resources"
         description="Explore our comprehensive collection of articles, experiences, and case studies."

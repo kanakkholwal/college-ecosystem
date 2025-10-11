@@ -149,6 +149,30 @@ export const columns: ColumnDef<UserType>[] = [
     enableHiding: true,
   },
   {
+    id: "updatedAt",
+    accessorKey: "updatedAt",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Updated At" />
+    ),
+    cell: ({ row }) => {
+      const formatted = new Date(row.getValue("updatedAt")).toLocaleDateString(
+        "en-IN",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }
+      );
+      return (
+        <div className="text-left font-medium whitespace-nowrap">
+          {formatted}
+        </div>
+      );
+    },
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
     id: "actions",
     accessorKey: "actions",
     header: "Actions",

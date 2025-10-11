@@ -1,8 +1,8 @@
 "use server";
 import type { InferSelectModel } from "drizzle-orm";
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
-import { auth } from "~/auth";
 import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { db } from "~/db/connect";
 import { accounts, sessions, users } from "~/db/schema/auth-schema";
 import dbConnect from "~/lib/dbConnect";
@@ -326,7 +326,7 @@ export async function getUsersByGender(): Promise<Record<string, number>> {
     .execute();
   return result.reduce(
     (acc, curr) => {
-      acc[curr.gender] = curr.count;
+      acc[curr.gender] = Number.parseInt(curr.count as unknown as string, 10);
       return acc;
     },
     {} as Record<string, number>

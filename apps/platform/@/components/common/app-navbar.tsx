@@ -39,7 +39,7 @@ export default function Navbar({
   };
 
   return (
-    <nav className="w-full p-4 backdrop-blur border-b border-solid flex items-center lg:px-6 z-2">
+    <nav className="w-full p-4 backdrop-blur-xs border-b border-dashed flex items-center lg:px-6 z-2">
       <SidebarTrigger className="mx-2" />
       <div className="flex items-start flex-col">
         <h3 className="text-sm font-semibold">
