@@ -48,6 +48,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'api.dicebear.com' },
+      { protocol: 'https', hostname: '**' },
       { hostname: 'visitor-badge.laobi.icu' },
     ],
     formats: ['image/webp', 'image/avif'],

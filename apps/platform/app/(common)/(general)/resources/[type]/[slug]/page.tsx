@@ -1,3 +1,4 @@
+import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import AdUnit from "@/components/common/adsense";
 import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
@@ -5,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ButtonLink } from "@/components/utils/link";
-import { Dot, Edit } from "lucide-react";
+import { ArrowLeft, Dot, Edit } from "lucide-react";
 import { Metadata, ResolvingMetadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -100,37 +101,160 @@ export default async function ResourcePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         id="structured-data-resource"
       />
+      <div className="absolute top-0 left-0 z-0 w-full h-[200px] [mask-image:linear-gradient(to_top,transparent_25%,black_95%)]">
+        <FlickeringGrid
+          className="absolute top-0 left-0 size-full"
+          squareSize={4}
+          gridGap={6}
+          color="#6B7280"
+          maxOpacity={0.2}
+          flickerChance={0.05}
+        />
+      </div>
+      <div className="space-y-4 border-b border-border relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col gap-6 p-6">
+          <div className="flex flex-wrap items-center gap-3 gap-y-5 text-sm text-muted-foreground">
+            <ButtonLink variant="outline" size="icon_sm" href="/">
+              <ArrowLeft />
+              <span className="sr-only">Back to all articles</span>
+            </ButtonLink>
+            {frontmatter.tags && frontmatter.tags.length > 0 && (
+              <div className="flex flex-wrap gap-3 text-muted-foreground">
+                {frontmatter.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="h-6 w-fit px-3 text-sm font-medium bg-muted text-muted-foreground rounded-md border flex items-center justify-center"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            <time className="font-medium text-muted-foreground">
+              {new Date(frontmatter.date).toLocaleDateString("en-IN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
+          </div>
+
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tighter text-balance">
+            {frontmatter.title}
+          </h1>
+
+          {frontmatter.summary && (
+            <p className="text-muted-foreground max-w-4xl md:text-lg md:text-balance">
+              {frontmatter.summary}
+            </p>
+          )}
+        </div>
+        <div className="flex gap-4 px-4 py-2 text-sm items-center justify-between flex-wrap lg:px-8 border-b">
+          <a
+            href={frontmatter.author?.url || appConfig.authors[0].url}
+            className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-foreground/5 active:scale-95 duration-500"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Author"
+            title="Author Profile"
+            itemProp="author"
+            itemScope
+            itemType="https://schema.org/Person"
+          >
+            <Avatar>
+              <AvatarImage
+                alt={frontmatter.author?.name || "Author Avatar"}
+                className="size-9 rounded-full"
+                role="presentation"
+                loading="lazy"
+                src={
+                  frontmatter.author?.image || appConfig.authors[0].image
+                }
+                itemProp="image"
+                itemType="https://schema.org/ImageObject"
+              />
+              <AvatarFallback>
+                {frontmatter.author?.name?.charAt(0) || "A"}
+                <span className="sr-only">
+                  {frontmatter.author?.name || "Author"}
+                </span>
+              </AvatarFallback>
+            </Avatar>
+
+            <div>
+              <p
+                className="font-semibold text-foreground"
+                itemProp="name"
+                itemType="https://schema.org/Person"
+              >
+                {" "}
+                {frontmatter.author?.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {frontmatter.author?.handle || "@kanakkholwal"}
+              </p>
+            </div>
+          </a>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+
+            <span>{frontmatter.readingTime}</span>
+            <Dot />
+            <ShareButton
+              size="sm"
+              variant="ghost"
+              data={{ title: frontmatter.title, text: frontmatter.summary, url: resourceUrl }}
+            >
+              <Icon name="send" />
+              Share
+            </ShareButton>
+          </div>
+        </div>
+        {frontmatter?.alternate_reads?.length && (<div className="text-sm text-muted-foreground">
+
+          <div className="mt-2 pl-4">
+            <p className="text-xs font-medium mb-1">Alternate reads:</p>
+            {frontmatter.alternate_reads?.length ? (
+              frontmatter.alternate_reads.map((url, index) => (
+                <ButtonLink
+                  key={index}
+                  size="xs"
+                  variant="link"
+                  className="ml-2 group gap-1"
+                  href={marketwiseLink(
+                    url, {
+                    utm_medium: "app",
+                    utm_campaign: "resource_alternate_reads",
+                  }
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  itemProp="alternateName"
+                >
+                  {new URL(url).hostname.replace("www.", "")}
+                  <Icon
+                    name="arrow-right"
+                    className="group-hover:-rotate-45 transition-all duration-200"
+                  />
+                </ButtonLink>
+              ))
+            ) : (
+              <span className="text-muted-foreground">
+                No alternate reads available
+              </span>
+            )}
+          </div>
+          <Separator className="mt-4" />
+
+        </div>
+        )}
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 lg:mb-20 w-full mx-auto max-w-[calc((--max-app-width) * 0.8)]">
         <main
           className="col-span-1 lg:col-span-9"
           itemType="https://schema.org/BlogPosting"
           itemScope
         >
-          <div className="flex justify-between items-center m-4 gap-2 pr-2 mb-10">
-            <ButtonLink
-              href={`/resources/${resolvedParams.type}`}
-              variant="ghost"
-              size="sm"
-              aria-label={`Back to ${changeCase(resolvedParams.type, "title")} resources`}
-            >
-              <Icon name="arrow-left" />
-              Back to {changeCase(resolvedParams.type, "title")}
-            </ButtonLink>
-            <ButtonLink
-              href={`https://github.com/${appConfig.githubUri}/new/main/apps/platform/resources?filename=${resolvedParams.type}/example.mdx`}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="default_light"
-              rounded="full"
-              size="sm"
-              aria-label={`Write ${changeCase(resolvedParams.type, "title")} resource`}
-            >
-              <Icon name="plus" />
-              Write Your {changeCase(resolvedParams.type, "title")}
-              <Icon name="arrow-up-right" />
-            </ButtonLink>
-          </div>
-          <div className="md:px-8 space-y-5 px-3 lg:px-0 max-w-[55rem]">
+          <div className="md:px-8 space-y-5 px-3 lg:px-0 max-w-full">
             <div className="empty:hidden w-full mx-auto" itemProp="image">
               {appConfig.flags.enableOgImage && (
                 <Image
@@ -158,130 +282,11 @@ export default async function ResourcePage({ params }: PageProps) {
               )}
             </div>
 
-            <h1
-              className="mb-2 text-2xl font-bold text-foreground sm:text-4xl"
-              itemProp="headline">
-              {frontmatter.title}
-            </h1>
-
-            <p
-              className="text-sm text-muted-foreground text-pretty mb-3 line-clamp-3"
-              itemProp="abstract">
-              {frontmatter.summary}
-            </p>
-            <div className="flex gap-4 px-4 py-2 text-sm items-center justify-between flex-wrap lg:px-8 border-y">
-              <a
-                href={frontmatter.author?.url || appConfig.authors[0].url}
-                className="flex items-center gap-3 rounded-lg px-2 py-1 hover:bg-foreground/5 active:scale-95"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Author"
-                title="Author Profile"
-                itemProp="author"
-                itemScope
-                itemType="https://schema.org/Person"
-              >
-                <Avatar>
-                  <AvatarImage
-                    alt={frontmatter.author?.name || "Author Avatar"}
-                    className="size-9 rounded-full"
-                    role="presentation"
-                    loading="lazy"
-                    src={
-                      frontmatter.author?.image || appConfig.authors[0].image
-                    }
-                    itemProp="image"
-                    itemType="https://schema.org/ImageObject"
-                  />
-                  <AvatarFallback>
-                    {frontmatter.author?.name?.charAt(0) || "A"}
-                    <span className="sr-only">
-                      {frontmatter.author?.name || "Author"}
-                    </span>
-                  </AvatarFallback>
-                </Avatar>
-
-                <div>
-                  <p
-                    className="font-semibold text-foreground"
-                    itemProp="name"
-                    itemType="https://schema.org/Person"
-                  >
-                    {" "}
-                    {frontmatter.author?.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {frontmatter.author?.handle || "@kanakkholwal"}
-                  </p>
-                </div>
-              </a>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="default_light" className="capitalize">
-                  {frontmatter.category}
-                </Badge>
-                <Dot />
-                <span>
-                  {new Date(frontmatter.date).toLocaleDateString("en-IN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </span>
-                <Dot />
-                <span>{frontmatter.readingTime}</span>
-                <ShareButton
-                  size="sm"
-                  variant="ghost"
-                  data={{ title: frontmatter.title, text: frontmatter.summary, url: resourceUrl }}
-                >
-                  <Icon name="send" />
-                  Share
-                </ShareButton>
-              </div>
-            </div>
-            {frontmatter?.alternate_reads?.length && (<div className="text-sm text-muted-foreground">
-
-              <div className="mt-2">
-                <p className="text-xs font-medium mb-1">Alternate reads:</p>
-                {frontmatter.alternate_reads?.length ? (
-                  frontmatter.alternate_reads.map((url, index) => (
-                    <ButtonLink
-                      key={index}
-                      size="xs"
-                      variant="link"
-                      className="ml-2 group gap-1"
-                      href={marketwiseLink(
-                        url,{
-                          utm_medium: "app",
-                          utm_campaign: "resource_alternate_reads",
-                        }
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      itemProp="alternateName"
-                    >
-                      {new URL(url).hostname.replace("www.", "")}
-                      <Icon
-                        name="arrow-right"
-                        className="group-hover:-rotate-45 transition-all duration-200"
-                      />
-                    </ButtonLink>
-                  ))
-                ) : (
-                  <span className="text-muted-foreground">
-                    No alternate reads available
-                  </span>
-                )}
-              </div>
-              <Separator className="mt-4" />
-
-            </div>
-            )}
 
           </div>
 
           <article
-            className="prose mx-auto p-6 prose-gray prose-sm dark:prose-invert container max-w-[55rem] bg-card rounded-lg mt-4"
+            className="prose mx-auto p-6 prose-gray prose-sm dark:prose-invert container max-w-full bg-card rounded-lg mt-4"
             itemProp="articleBody"
           >
             <ClientMdx mdxSource={mdxSource} />
@@ -338,11 +343,17 @@ export default async function ResourcePage({ params }: PageProps) {
             <CommentSection />
           </div>
         </main>
-        <aside className="hidden lg:block lg:col-span-3 mt-8 lg:sticky lg:top-2">
-          <TableOfContents
-            items={response.data.toc}
-          />
-          <AdUnit adSlot="display-vertical" key={"resources-page-ad-footer"} />
+        <aside className="hidden lg:block  lg:col-span-3 flex-shrink-0">
+          <div className="sticky top-20 space-y-8">
+            {/* {page.data.author && isValidAuthor(page.data.author) && (
+              <AuthorCard author={getAuthor(page.data.author)} />
+            )} */}
+            {/* <TableOfContents /> */}
+            <TableOfContents
+              items={response.data.toc}
+            />
+            <AdUnit adSlot="display-vertical" key={"resources-page-ad-footer"} />
+          </div>
         </aside>
 
       </div>

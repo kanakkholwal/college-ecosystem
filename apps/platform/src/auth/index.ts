@@ -309,7 +309,7 @@ async function getUserInfo(user: User & Record<string, unknown>): Promise<getUse
         emailVerified: true,
         email: user.email,
         username,
-        gender: "not_specified",
+        gender: response?.data?.gender || "not_specified",
         hostelId: "not_specified",
       };
     }

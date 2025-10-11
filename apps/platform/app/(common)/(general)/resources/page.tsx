@@ -67,9 +67,9 @@ export default async function Page() {
           datePublished: new Date(resource.date).toISOString(),
           image: resource.coverImage
             ? {
-                "@type": "ImageObject",
-                url: resource.coverImage,
-              }
+              "@type": "ImageObject",
+              url: resource.coverImage,
+            }
             : undefined,
           articleSection: resource.category,
           keywords: resource.tags?.join(", ") || "",
@@ -78,6 +78,7 @@ export default async function Page() {
     },
   };
   const allCategories = [...new Set(resources.map((r) => r.type))] as string[];
+
   return (
     <>
       {/* Structured Data */}
@@ -157,7 +158,6 @@ export default async function Page() {
         </ButtonLink>
       </BaseHeroSection>
       <div className="max-w-(--max-app-width) mx-auto px-4 lg:px-6 mb-8">
-      
         <CategoryFilter categories={allCategories} />
       </div>
       <ResourcesList resources={resources} />
