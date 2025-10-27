@@ -1,17 +1,21 @@
-"use client";
+import { getCachedLabels } from "~/actions/common.result";
 import BaseSearchBox from "./base-search";
 
 type Props = {
-  branches: string[];
-  batches: string[];
-  programmes: string[];
+  // branches: string[];
+  // batches: string[];
+  // programmes: string[];
+  new_cache?: boolean;
 };
 
-export default function ResultSearchBox({
-  branches,
-  batches,
-  programmes,
+export default async function ResultSearchBox({
+  // branches,
+  // batches,
+  // programmes,
+  new_cache,
 }: Props) {
+  const { branches, batches, programmes } = await getCachedLabels(new_cache);
+  
   const filterOptions = [
     {
       key: "branch",

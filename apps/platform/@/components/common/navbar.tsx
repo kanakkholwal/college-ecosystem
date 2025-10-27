@@ -327,7 +327,6 @@ export function SupportBar() {
 export function GoToTopButton({ className }: { className?: string }) {
   return (
     <ButtonLink
-      role="anchor"
       href="#navbar"
       title="Go to top"
       variant="ghost"

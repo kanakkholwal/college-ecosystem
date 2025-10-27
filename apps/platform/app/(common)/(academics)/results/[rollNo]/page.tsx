@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PreviousPageLink } from "@/components/utils/link";
 import { ArrowDownUp, Mail } from "lucide-react";
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ResultTypeWithId } from "src/models/result";
@@ -25,8 +25,7 @@ type Props = {
 };
 
 export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
+  { params }: Props
 ): Promise<Metadata> {
   const { rollNo } = await params;
   return {
@@ -222,12 +221,12 @@ function getYear(result: ResultTypeWithId): string | null {
         : "Final Year (Dual Degree)";
     case 8:
       return result.programme === "B.Tech"
-        ? "Pass Out"
+        ? "Alumni"
         : "Super Final Year (Dual Degree)";
     case 9:
       return "Super Final Year (Dual Degree)";
     case 10:
-      return "Pass Out";
+      return "Alumni";
     default:
       return "Unknown Year";
   }

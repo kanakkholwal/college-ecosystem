@@ -8,7 +8,6 @@ import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
 import { CategoryFilter, ResourcesList } from "./client";
 
-// Site constants (should match those in your blog post page)
 
 export const metadata: Metadata = {
   title: "Resources ",

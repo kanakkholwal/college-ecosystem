@@ -44,7 +44,7 @@ const CourseSchema: Schema = new Schema({
   name: { type: String, required: true },
   code: { type: String, required: true },
   cgpi: { type: Number, required: true },
-});
+},{ _id: false });
 
 const SemesterSchema: Schema = new Schema({
   sgpi: { type: Number, required: true },
@@ -53,7 +53,7 @@ const SemesterSchema: Schema = new Schema({
   semester: { type: Schema.Types.Mixed, required: true },
   sgpi_total: { type: Number, required: true },
   cgpi_total: { type: Number, required: true },
-});
+}, { _id: false });
 
 const ResultSchema: Schema = new Schema(
   {
@@ -65,7 +65,7 @@ const ResultSchema: Schema = new Schema(
     semesters: { type: [SemesterSchema], required: true },
     gender: {
       type: String,
-      enums: ["male", "female", "not_specified"],
+      enum: ["male", "female", "not_specified"],
       default: "not_specified",
     },
     rank: {
@@ -79,6 +79,11 @@ const ResultSchema: Schema = new Schema(
     timestamps: true,
   }
 );
+
+// compound / text indexes
+ResultSchema.index({ "rank.college": 1, _id: -1 });
+ResultSchema.index({ branch: 1, batch: 1 });
+ResultSchema.index({ name: "text" }); // if using text search on name
 
 const ResultModel =
   mongoose.models.Result || mongoose.model<IResultType>("Result", ResultSchema);

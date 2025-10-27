@@ -1,4 +1,5 @@
 "use server";
+import { cache } from "react";
 import type { ResultTypeWithId } from "~/models/result";
 
 import { z } from "zod";
@@ -11,9 +12,14 @@ import ResultModel from "~/models/result";
 /*  For Public Search
 */
 
+type responseResultType = Omit<ResultTypeWithId, "semesters"> & {
+  cgpi: number;
+  prevCgpi?: number;
+};
 type getResultsReturnType = {
-  results: ResultTypeWithId[];
+  results: responseResultType[];
   totalPages: number;
+  totalCount: number;
 };
 
 export async function getResults(
@@ -29,152 +35,160 @@ export async function getResults(
   new_cache?: boolean
 ): Promise<getResultsReturnType> {
   try {
-    // Try Redis GET
+    const resultsPerPage = filter?.limit || 32;
+    const page = Math.max(1, Number(currentPage) || 1);
 
-    const cacheKey = `results_${filter ? `_${JSON.stringify(Object.entries(filter).sort())}_${query}_${currentPage}` : ""}`;
+    // deterministic cache key
+    const keyParts = [
+      `q=${encodeURIComponent(query || "")}`,
+      `p=${page}`,
+      `l=${resultsPerPage}`,
+      `b=${filter?.branch ?? "all"}`,
+      `pr=${filter?.programme ?? "all"}`,
+      `bt=${filter?.batch ?? "all"}`,
+      `f=${filter?.include_freshers ? "1" : "0"}`,
+    ];
+    const cacheKey = `results:${keyParts.join("|")}`;
 
-    let cachedResults: getResultsReturnType | null = null;
     if (!new_cache) {
       try {
-        const cachedData = await redis.get(cacheKey);
-        if (cachedData) {
-          console.log("Cache hit for key:", cacheKey);
-          cachedResults = JSON.parse(cachedData) as getResultsReturnType;
-        }
-      } catch (redisGetErr) {
-        console.log("Redis GET error:", redisGetErr);
+        const cached = await redis.get(cacheKey);
+        if (cached) return JSON.parse(cached) as getResultsReturnType;
+      } catch (e) {
+        console.log("Redis GET error:", e);
       }
     } else {
       try {
         await redis.del(cacheKey);
-      } catch (redisDelErr) {
-        console.log("Redis DEL error:", redisDelErr);
+      } catch (e) {
+        console.log("Redis DEL error:", e);
       }
     }
 
-    if (cachedResults) {
-      return cachedResults;
-    }
     await dbConnect();
-    const resultsPerPage = filter?.limit || 32;
-    const skip = currentPage * resultsPerPage - resultsPerPage;
 
-    // biome-ignore lint/suspicious/noExplicitAny: legacy query compatibility
-    const filterQuery: any = {
-      $or: [
-        { rollNo: { $regex: query, $options: "i" } },
-        { name: { $regex: query, $options: "i" } },
-      ],
-    };
-
-    if (filter.branch && filter.branch !== "all") {
-      filterQuery.branch = filter.branch;
+    // Build filter query
+    const filterQuery: any = {};
+    if (query && query.trim() !== "") {
+      const q = query.trim();
+      // Prefer indexed exact matches first (rollNo), fallback to regex on name.
+      filterQuery.$or = [
+        { rollNo: q },
+        { name: { $regex: q, $options: "i" } },
+      ];
     }
 
-    if (filter.programme && filter.programme !== "all") {
+    if (filter.branch && filter.branch !== "all") filterQuery.branch = filter.branch;
+    if (filter.programme && filter.programme !== "all")
       filterQuery.programme = filter.programme;
-    }
-
-    if (filter.batch && filter.batch.toString() !== "all") {
-      filterQuery.batch = filter.batch;
-    }
+    if (filter.batch && filter.batch.toString() !== "all") filterQuery.batch = filter.batch;
     if (!filter.include_freshers) {
-      filterQuery.$expr = { $gt: [{ $size: "$semesters" }, 0] };
+      // filterQuery.$expr = { $gt: [{ $size: "$semesters" }, 0] };
+      filterQuery["semesters.0"] = { $exists: true };
     }
 
-    const results = await ResultModel.find({
-      ...filterQuery,
-    })
-      .sort({ "rank.college": "asc" })
-      .skip(skip)
-      .limit(resultsPerPage)
-      .exec();
 
-    const totalPages = Math.ceil(
-      (await ResultModel.countDocuments(filterQuery)) / resultsPerPage
-    );
+    const skip = (page - 1) * resultsPerPage;
 
-    const response = { results, totalPages };
 
-    // Try Redis SET
+
+    const results = await ResultModel.aggregate([
+      { $match: filterQuery },
+      { $sort: { "rank.college": 1 } },
+      { $skip: skip },
+      { $limit: resultsPerPage },
+      {
+        $addFields: {
+          lastSemester: { $last: "$semesters" },
+          secondLastSemester: {
+            $cond: [
+              { $gte: [{ $size: "$semesters" }, 2] },
+              {
+                $arrayElemAt: [
+                  "$semesters",
+                  { $subtract: [{ $size: "$semesters" }, 2] },
+                ],
+              },
+              null,
+            ],
+          }
+        },
+      },
+      {
+        $addFields: {
+          cgpi: "$lastSemester.cgpi",
+          prevCgpi: "$secondLastSemester.cgpi",
+
+        },
+      },
+      {
+        $project: {
+          semesters: 0,
+          lastSemester: 0,
+          secondLastSemester: 0,
+        },
+      },
+    ]);
+
+
+    const totalCount = results[0].totalCount || 0;
+    const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));
+
+    const response = { results, totalPages, totalCount };
+
+    // cache the whole response
     try {
-      await redis.set(
-        cacheKey,
-        JSON.stringify(response),
-        "EX",
-        60 * 60 * 24 // 1 week
-      );
-      console.log("Results cached successfully");
-    } catch (redisSetErr) {
-      console.log("Redis SET error:", redisSetErr);
+      await redis.set(cacheKey, JSON.stringify(response), "EX", 60 * 60 * 24); // 1 day
+    } catch (e) {
+      console.log("Redis SET error:", e);
     }
 
     return response;
-  } catch (error) {
-    console.error("Error fetching results:", error);
-    throw new Error("Failed to fetch results. Please try again later.");
+  } catch (err) {
+    console.error("Error in getResults:", err);
+    throw new Error("Failed to fetch results");
   }
 }
-
 type CachedLabels = {
   branches: string[];
   batches: string[];
   programmes: string[];
 };
-
-export async function getCachedLabels(
-  new_cache?: boolean
-): Promise<CachedLabels> {
-  const cacheKey = "cached_labels";
-  let cachedLabels: CachedLabels | null = null;
-
-  try {
-    if (!new_cache) {
-      try {
-        const cachedData = await redis.get(cacheKey);
-        if (cachedData) {
-          console.log("Cache hit for key:", cacheKey);
-          cachedLabels = JSON.parse(cachedData) as CachedLabels;
-        }
-      } catch (redisGetErr) {
-        console.log("Redis GET error:", redisGetErr);
-      }
-    } else {
-      try {
-        await redis.del(cacheKey);
-        console.log("Cache cleared for key:", cacheKey);
-      } catch (redisDelErr) {
-        console.log("Redis DEL error:", redisDelErr);
-      }
+export const getCachedLabels = cache(async (new_cache?: boolean): Promise<CachedLabels> => {
+  const cacheKey = "cached_labels_v1";
+  if (!new_cache) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      console.log("Redis GET error:", e);
     }
-
-    if (!cachedLabels) {
-      await dbConnect();
-      const branches = await ResultModel.distinct("branch");
-      const batches = await ResultModel.distinct("batch");
-      const programmes = await ResultModel.distinct("programme");
-
-      cachedLabels = { branches, batches, programmes };
-
-      try {
-        await redis.set(
-          cacheKey,
-          JSON.stringify(cachedLabels),
-          "EX",
-          60 * 60 * 24 * 30 * 6 // 6 months
-        );
-        console.log("Cached labels set successfully");
-      } catch (redisSetErr) {
-        console.log("Redis SET error:", redisSetErr);
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching cached labels:", error);
-    return { branches: [], batches: [], programmes: [] };
+  } else {
+    try { await redis.del(cacheKey); } catch (e) { console.log("Redis DEL error:", e); }
   }
 
-  return cachedLabels || { branches: [], batches: [], programmes: [] };
-}
+  try {
+    await dbConnect();
+    // distinct is fine for small label sets
+    const [branches, batches, programmes] = await Promise.all([
+      ResultModel.distinct("branch"),
+      ResultModel.distinct("batch"),
+      ResultModel.distinct("programme"),
+    ]);
+
+    const labels = { branches, batches, programmes };
+    try {
+      await redis.set(cacheKey, JSON.stringify(labels), "EX", 60 * 60 * 24 * 30 * 6); // 6 months
+    } catch (e) {
+      console.log("Redis SET error:", e);
+    }
+    return labels;
+  } catch (err) {
+    console.error("Error fetching labels:", err);
+    return { branches: [], batches: [], programmes: [] };
+  }
+});
+
 
 /*
 /*  For admin
@@ -187,32 +201,30 @@ export async function getResultByRollNo(
 ): Promise<ResultTypeWithId | null> {
   const cacheKey = `result_r_${rollNo}`;
   try {
-    let cachedResult: ResultTypeWithId | null = null;
     if (!is_new && !update) {
       try {
-        const cachedData = await redis.get(cacheKey);
-        if (cachedData) {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
           console.log("Cache hit for key:", cacheKey);
-          cachedResult = JSON.parse(cachedData) as ResultTypeWithId;
+          return JSON.parse(cached) as ResultTypeWithId;
         }
-      } catch (redisGetErr) {
-        console.log("Redis GET error:", redisGetErr);
+      } catch (e) {
+        console.log("Redis GET error:", e);
       }
     } else {
       try {
         await redis.del(cacheKey);
-        console.log("Cache cleared for key:", cacheKey);
-      } catch (redisDelErr) {
-        console.log("Redis DEL error:", redisDelErr);
+      } catch (e) {
+        console.log("Redis DEL error:", e);
       }
     }
-  } catch (error) {
-    console.log("Cache Error in getResultByRollNo:", error);
+  } catch (e) {
+    console.log("Cache Error in getResultByRollNo:", e);
   }
+
   await dbConnect();
-  const result = await ResultModel.findOne({
-    rollNo,
-  }).exec();
+  const result = await ResultModel.findOne({ rollNo }).lean().exec() as ResultTypeWithId | null;
+
   if (result && update) {
     const response = await serverFetch<{
       data: ResultTypeWithId | null;
@@ -222,12 +234,17 @@ export async function getResultByRollNo(
       method: "POST",
       params: { rollNo },
     });
-    if (response.error || !response.data) {
-      return JSON.parse(JSON.stringify(null));
-    }
+    if (response.error || !response.data) return null;
     await assignRanks();
-    return JSON.parse(JSON.stringify(response.data.data));
+    // cache updated data if present
+    try {
+      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60 * 15);
+    } catch (e) {
+      console.log("Redis SET error:", e);
+    }
+    return response.data.data;
   }
+
   if (!result && is_new) {
     const response = await serverFetch<{
       data: ResultTypeWithId | null;
@@ -237,32 +254,30 @@ export async function getResultByRollNo(
       method: "POST",
       params: { rollNo },
     });
-    if (response.error || !response.data) {
-      return JSON.parse(JSON.stringify(null));
-    }
+    if (response.error || !response.data) return null;
     await assignRanks();
-
-    return JSON.parse(JSON.stringify(response.data.data));
+    try {
+      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60 * 15);
+    } catch (e) {
+      console.log("Redis SET error:", e);
+    }
+    return response.data.data;
   }
-  // cache the result
+
   if (!result) {
     console.log("Result not found for rollNo:", rollNo);
-    return JSON.parse(JSON.stringify(null));
-  }
-  try {
-    await redis.set(
-      cacheKey,
-      JSON.stringify(result),
-      "EX",
-      60 * 15 // 15 minutes
-    );
-    console.log("Result cached successfully for rollNo:", rollNo);
-  } catch (redisSetErr) {
-    console.log("Redis SET error:", redisSetErr);
+    return null;
   }
 
-  return JSON.parse(JSON.stringify(result));
+  try {
+    await redis.set(cacheKey, JSON.stringify(result), "EX", 60 * 15);
+  } catch (e) {
+    console.log("Redis SET error:", e);
+  }
+
+  return result;
 }
+
 
 export async function assignRanks() {
   const response = await serverFetch<{
@@ -287,40 +302,32 @@ const freshersDataSchema = z.array(
     gender: z.enum(["male", "female", "not_specified"]),
   })
 );
-export async function bulkUpdateGenders(
-  data: z.infer<typeof freshersDataSchema>
-) {
-  try {
-    const parsedData = freshersDataSchema.safeParse(data);
-    if (!parsedData.success) {
-      console.log("not success");
-      return {
-        error: true,
-        message: "Invalid data",
-        data: parsedData.error,
-      };
-    }
-    await dbConnect();
 
-    const batchSize = 8;
-    for (let i = 0; i < parsedData.data.length; i += batchSize) {
-      const batch = parsedData.data.slice(i, i + batchSize);
-      await Promise.allSettled(
-        batch.map(async (student) => {
-          const result = await ResultModel.findOne({ rollNo: student.rollNo });
-          if (result && result.gender === "not_specified") {
-            result.gender = student.gender;
-            console.log(student.gender);
-            await result.save();
-          }
-        })
-      );
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+export async function bulkUpdateGenders(data: z.infer<typeof freshersDataSchema>) {
+  const parsed = freshersDataSchema.safeParse(data);
+  if (!parsed.success) return { error: true, message: "Invalid data", data: parsed.error };
 
-    return Promise.resolve(true);
-  } catch (e) {
-    console.error(e);
-    return Promise.resolve(false);
+  await dbConnect();
+
+  const ops = parsed.data.map((s) => ({
+    updateOne: {
+      filter: { rollNo: s.rollNo, gender: "not_specified" }, // only update unspecified
+      update: { $set: { gender: s.gender } },
+      upsert: false,
+    },
+  }));
+
+  // execute in batches to avoid huge payloads
+  const BATCH = 500;
+  for (let i = 0; i < ops.length; i += BATCH) {
+    const batchOps = ops.slice(i, i + BATCH);
+    try {
+      await ResultModel.bulkWrite(batchOps, { ordered: false });
+    } catch (e) {
+      console.error("bulkWrite error:", e);
+      // continue with next batch
+    }
   }
+
+  return { error: false, message: "OK" };
 }
