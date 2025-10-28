@@ -38,7 +38,8 @@ export default function ErrorBoundary({
         <AlertDescription className="mb-2 text-muted-foreground">
           If you are still facing following issues then follow steps or please
           contact the support team.
-        </AlertDescription>
+        <div className="w-full flex-1 mt-5">
+
         <StaticStep step={1} title="How to add my result to portal?">
           Open the this in new tab{" "}
           <a
@@ -68,16 +69,18 @@ export default function ErrorBoundary({
             /results?cache=new
           </a>
         </StaticStep>
-        <ButtonLink
-          href={appConfig.contact}
-          className="mt-4"
-          variant="dark"
-          size="sm"
-          target="_blank"
-        >
-          <Contact />
-          Contact Support
-        </ButtonLink>
+          <ButtonLink
+            href={appConfig.contact}
+            className="mt-4"
+            variant="dark"
+            size="sm"
+            target="_blank"
+          >
+            <Contact />
+            Contact Support
+          </ButtonLink>
+        </div>
+        </AlertDescription>
       </Alert>
     </div>
   );

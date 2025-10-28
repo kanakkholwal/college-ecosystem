@@ -6,9 +6,12 @@ import { ButtonLink } from "@/components/utils/link";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { submitBenefitsLink } from "root/resources/benefits";
+import { benefitsCategories, benefitsList, submitBenefitsLink } from "root/resources/benefits";
 
 const words = ["builders", "hackers", "founders", "creators", "developers"];
+
+const totalBenefits = benefitsList.length;
+const totalCategories = benefitsCategories.length - 1; // Exclude 'all' category
 
 export default function HeroSection() {
   const [index, setIndex] = useState(0);
@@ -103,6 +106,21 @@ export default function HeroSection() {
           Curated free tools, software credits, and fellowships for college
           builders. Everything you need to build without breaking the bank.
         </p>
+        {/* Quick Stats */}
+        <div className="flex gap-6 text-sm mx-auto mt-8 justify-center">
+          <div>
+            <NumberTicker value={totalBenefits} suffix="+" className="mx-1 text-2xl font-bold" />
+            <div className="text-muted-foreground">Resources</div>
+          </div>
+          <div>
+            <NumberTicker value={totalCategories} suffix="+" className="mx-1 text-2xl font-bold" />
+            <div className="text-muted-foreground">Categories</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-emerald-500">Free</div>
+            <div className="text-muted-foreground">Always</div>
+          </div>
+        </div>
       </motion.div>
 
       {/* CTA Button */}

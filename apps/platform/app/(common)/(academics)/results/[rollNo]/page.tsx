@@ -1,4 +1,4 @@
-
+import { MagicCard } from "@/components/animation/magic-card";
 import AdUnit from "@/components/common/adsense";
 import {
   Accordion,
@@ -7,10 +7,23 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PreviousPageLink } from "@/components/utils/link";
-import { ArrowDownUp, Mail } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Award,
+  BarChart3,
+  BookOpen,
+  Calendar,
+  GraduationCap,
+  Mail,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  TrendingUpDown,
+  Trophy
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,17 +36,6 @@ type Props = {
   params: Promise<{ rollNo: string }>;
   searchParams?: Promise<{ update?: string; new?: string }>;
 };
-
-export async function generateMetadata(
-  { params }: Props
-): Promise<Metadata> {
-  const { rollNo } = await params;
-  return {
-    title: `${rollNo} | Results`,
-    description: `Check the results of ${rollNo}`,
-    alternates: { canonical: "/results/" + rollNo },
-  };
-}
 
 export default async function ResultsPage(props: Props) {
   const params = await props.params;
@@ -48,159 +50,252 @@ export default async function ResultsPage(props: Props) {
   const maxCgpi = Math.max(...result.semesters.map((s) => s.cgpi));
   const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi));
   const cgpi = result.semesters.at(-1)?.cgpi ?? 0;
+  const prevCgpi = result.semesters.length > 1 ? result.semesters.at(-2)?.cgpi : undefined;
+  const totalCourses = result.semesters.reduce((acc, s) => acc + s.courses.length, 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-12">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
       {/* Header Section */}
-      <section
-        id="hero"
-        className="w-full py-10 flex flex-col gap-6 lg:gap-10 relative"
-      >
-        <div>
-          <PreviousPageLink size="sm" variant="ghost" />
+      <section id="hero" className="w-full py-6 md:py-10">
+        <PreviousPageLink size="sm" variant="ghost" className="mb-4" />
+
+        {/* Hero Card - Minimal */}
+        <MagicCard className="rounded-2xl bg-card/20" layerClassName="bg-card">
+
+          <CardContent className="p-6 md:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+              {/* Student Info */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className={cn(
+                    "flex items-center justify-center size-16 md:w-20 md:h-20 rounded-xl bg-primary/10 text-primary shrink-0",
+                    result.rank.college <= 3 ? getRankColor(result.rank.college) :
+                      " bg-primary/10 border border-primary/20",
+                    result.rank.college <= 3 ? " bg-gradient-to-br" : "",
+                  )}>
+                    <div className="text-center">
+                      {result.rank.college <= 3 ? (
+                        <Trophy className="size-5 md:size-6 text-white mx-auto mb-1" />
+                      ) : <Award className="size-5 md:size-6 text-primary mx-auto mb-1" />}
+                      <span className={cn("text-xs md:text-base font-bold", result.rank.college <= 3 ? "text-white" : " text-primary")}>#{result.rank.college}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h1 className="font-bold text-2xl md:text-3xl lg:text-4xl tracking-tight mb-2 text-foreground">
+                      {result.name}
+                    </h1>
+
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="text-sm md:text-base font-medium text-muted-foreground">
+                        {result.rollNo}
+                      </span>
+                      <Link
+                        href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}
+                        className="text-primary hover:text-primary/80 transition-colors"
+                        title="Contact via mail"
+                      >
+                        <Mail className="w-4 h-4" />
+                      </Link>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="gap-1">
+                        <Calendar className="size-3" />
+                        {getYear(result)}
+                      </Badge>
+                      <Badge className="gap-1">
+                        <BookOpen className="size-3" />
+                        {result.branch}
+                      </Badge>
+                      <Badge className="gap-1">
+                        <GraduationCap className="size-3" />
+                        {result.programme}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CGPI Highlight */}
+              <div className="flex flex-col justify-center items-center lg:items-end">
+                <div className="bg-muted/50 hover:bg-muted border rounded-xl p-4 md:p-6 w-full max-w-xs text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    {prevCgpi !== undefined && (
+                      <>
+                        {cgpi > prevCgpi ? (
+                          <TrendingUp className="size-4 text-green-600 dark:text-green-400" />
+                        ) : cgpi < prevCgpi ? (
+                          <TrendingDown className="size-4 text-red-600 dark:text-red-400" />
+                        ) : (
+                          <TrendingUpDown className="size-4 text-muted-foreground" />
+                        )}
+                      </>
+                    )}
+                    <p className="text-sm font-medium text-muted-foreground">Current CGPI</p>
+                  </div>
+                  <p className={cn("text-4xl md:text-5xl font-bold mb-1", getCgpiTrendColor(cgpi, prevCgpi))}>
+                    {cgpi.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {result.semesters.length} Semesters • {totalCourses} Courses
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </MagicCard>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4">
+          <StatCard icon={Target} label="Max CGPI" value={maxCgpi.toFixed(2)} color="blue" />
+          <StatCard icon={BarChart3} label="Min CGPI" value={minCgpi.toFixed(2)} color="purple" />
+          <StatCard icon={Award} label="Batch Rank" value={`#${result.rank.batch}`} color="orange" />
+          <StatCard icon={Trophy} label="Branch Rank" value={`#${result.rank.branch}`} color="green" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Student Info */}
-          <div className="flex flex-col gap-4">
-            <h1 className="font-bold text-4xl lg:text-5xl tracking-tight">
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                {result.name}
-              </span>
-            </h1>
-            <h5 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
-              {result.rollNo}
-              <Link
-                href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}
-                className="text-primary hover:text-primary/80 transition-colors"
-                title="Contact via mail"
-              >
-                <Mail className="w-5 h-5" />
-              </Link>
-            </h5>
+        <AdUnit adSlot="display-horizontal" key={"results-page-ad-header-" + result.rollNo} />
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge>{getYear(result)}</Badge>
-              <Badge>{result.branch}</Badge>
-              <Badge>{result.programme}</Badge>
-            </div>
-          </div>
-
-          {/* Performance Card */}
-          <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-            <h4 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <ArrowDownUp className="size-5" />
-              Performance Snapshot
-            </h4>
-            <div className="grid grid-cols-3 gap-y-6 text-center">
-              <Stat label="Max CGPI" value={maxCgpi} />
-              <Stat label="Current CGPI" value={cgpi} />
-              <Stat label="Min CGPI" value={minCgpi} />
-              <Stat label="Batch Rank" value={result.rank.batch} />
-              <Stat label="Branch Rank" value={result.rank.branch} />
-              <Stat label="Class Rank" value={result.rank.class} />
-            </div>
-          </div>
-        </div>
-
-        <AdUnit
-          adSlot="display-horizontal"
-          key={"results-page-ad-header-" + result.rollNo}
-        />
       </section>
 
       {/* Semester Results */}
-      <section className="mt-12">
-        <h2 className="text-2xl lg:text-3xl font-bold text-center mb-8">
-          Semester-wise Results
-        </h2>
+      <section className="mt-8 md:mt-12 mb-8">
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Academic Performance</h2>
+          <p className="text-sm text-muted-foreground">Semester-wise breakdown of courses and grades</p>
+        </div>
 
         <Tabs defaultValue="table" className="w-full">
           <div className="flex justify-center mb-6">
             <TabsList>
-              <TabsTrigger value="table">Tabular View</TabsTrigger>
-              <TabsTrigger value="graph">Graphical View</TabsTrigger>
+              <TabsTrigger value="table" className="gap-2">
+                <BookOpen className="w-4 h-4" />
+                Courses
+              </TabsTrigger>
+              <TabsTrigger value="graph" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Progress
+              </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Table View */}
-          <TabsContent value="table">
-            <Accordion
-              type="single"
-              collapsible
-              defaultValue={result.semesters?.[0]?.semester.toString()}
-              className="grid gap-4"
-            >
+          <TabsContent value="table" className="space-y-3">
+            <Accordion type="single" collapsible defaultValue={result.semesters?.[0]?.semester.toString()}>
               {result.semesters?.map((semester) => (
-                <AccordionItem
-                  value={semester.semester.toString()}
-                  key={semester.semester}
-                  className="bg-card border border-border/40 rounded-xl p-4"
-                >
-                  <AccordionTrigger className="flex justify-between flex-wrap gap-4 ">
-                    <h4 className="text-base font-semibold">
-                      Semester {semester.semester}
-                    </h4>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap mr-4">
-                      <span>CGPI: {semester.cgpi}</span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span>SGPI: {semester.sgpi}</span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span>{semester.courses.length} Courses</span>
-                      <Separator orientation="vertical" className="h-4" />
-                      <span>
-                        Credits: {semester.sgpi_total}/{semester.cgpi_total}
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="mt-4 space-y-3">
-                    {semester.courses.map((course) => (
-                      <div
-                        key={course.code}
-                        className="flex justify-between items-center py-2 px-3 rounded-lg border border-border/40 hover:bg-muted/40 transition"
-                      >
-                        <div>
-                          <h4 className="text-sm font-medium">
-                            {course.name.replaceAll("&amp;", "&")}
-                          </h4>
-                          <p className="text-xs text-muted-foreground">
-                            {course.code}
-                          </p>
+                <AccordionItem value={semester.semester.toString()} key={semester.semester} className="border-0 mb-3">
+                  <Card className="overflow-hidden hover:border-primary/50 transition-colors">
+                    <AccordionTrigger className="hover:no-underline px-4 md:px-6 py-4">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full pr-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 px-3 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-primary">{semester.semester}</span>
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-base font-semibold">Semester {semester.semester}</h4>
+                            <p className="text-xs text-muted-foreground">{semester.courses.length} courses</p>
+                          </div>
                         </div>
-                        <div className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                          {course.cgpi}
+
+                        <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm">
+                          <div className="bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-md font-medium">
+                            CGPI: {semester.cgpi}
+                          </div>
+                          <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-medium">
+                            SGPI: {semester.sgpi}
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </AccordionContent>
+                    </AccordionTrigger>
+
+                    <AccordionContent className="px-4 md:px-6 pb-4">
+                      <div className="space-y-2 pt-2">
+                        {semester.courses.map((course) => (
+                          <div key={course.code} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                            <div className="flex-1 min-w-0 mr-4">
+                              <h4 className="text-sm font-medium truncate">{course.name.replaceAll("&amp;", "&")}</h4>
+                              <p className="text-xs text-muted-foreground mt-0.5">{course.code}</p>
+                            </div>
+                            <div className="shrink-0">
+                              <div className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full min-w-[3rem] text-center">
+                                {course.cgpi}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </Card>
                 </AccordionItem>
               ))}
             </Accordion>
           </TabsContent>
 
-          {/* Graph View */}
           <TabsContent value="graph">
-              <CGPIChart semesters={result.semesters} />
+            <CGPIChart semesters={result.semesters} />
           </TabsContent>
         </Tabs>
       </section>
 
-      <AdUnit
-        adSlot="display-horizontal"
-        key={"results-page-ad-footer-" + result.rollNo}
-      />
+      <AdUnit adSlot="display-horizontal" key={"results-page-ad-footer-" + result.rollNo} />
     </div>
   );
 }
+const getRankColor = (rank: number) => {
+  if (rank === 1)
+    return "from-[#FEE140] to-[#FA709A]"; // gold-pink
+  if (rank === 2)
+    return "from-[#89F7FE] to-[#66A6FF]"; // icy blue-silver
+  if (rank === 3)
+    return "from-[#FAD961] to-[#F76B1C]"; // bronze-orange
+  return "from-[#6EE7B7] to-[#3B82F6]"; // default vibrant teal-blue
+};
+const getCgpiTrendColor = (cgpi: number, prevCgpi?: number) => {
+  if (prevCgpi === undefined) return "text-muted-foreground";
+  if (cgpi > prevCgpi) return "text-emerald-600 dark:text-emerald-400";
+  if (cgpi < prevCgpi) return "text-rose-600 dark:text-rose-400";
+  return "text-muted-foreground";
+};
+/* Stat Card Component */
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color = "primary"
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  color?: "blue" | "green" | "purple" | "orange" | "primary";
+}) {
+  const colorClasses = {
+    blue: "from-blue-500/10 to-cyan-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400",
+    green: "from-green-500/10 to-emerald-500/10 border-green-500/20 text-green-600 dark:text-green-400",
+    purple: "from-purple-500/10 to-violet-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400",
+    orange: "from-orange-500/10 to-amber-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400",
+    primary: "from-primary/10 to-primary/5 border-primary/20 text-primary"
+  };
 
-/* Small stat card */
-function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className="text-lg font-semibold">{value}</p>
-    </div>
+    <Card className={`bg-gradient-to-br ${colorClasses[color]} border`}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Icon className="w-4 h-4" />
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        </div>
+        <p className="text-xl md:text-2xl font-bold">{value}</p>
+      </CardContent>
+    </Card>
   );
+}
+export async function generateMetadata(
+  { params }: Props
+): Promise<Metadata> {
+  const { rollNo } = await params;
+  return {
+    title: `${rollNo} | Results`,
+    description: `Check the results of ${rollNo}`,
+    alternates: { canonical: "/results/" + rollNo },
+  };
 }
 
 function getYear(result: ResultTypeWithId): string | null {

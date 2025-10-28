@@ -20,7 +20,7 @@ const benefits: Record<string, benefitsItem[]> = {
     {
       id: "comet-student-offer",
       resource: "Comet Browser ",
-      value: "Early Access + Free Perplexity Pro",
+      value: "Free",
       description: "Get early access to Comet Browser + free Perplexity Pro (1 month) with student email",
       href: "https://perplexity.ai/browser/claim/W7FPUV05G7",
       tags: ["AI", "Pro Membership", "Student Exclusive", "Upgrade", "Referral"],
