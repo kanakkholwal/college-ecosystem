@@ -33,7 +33,7 @@ import { changeCase } from "~/utils/string";
 
 export default function FreeStuffTable() {
     const [query, setQuery] = useQueryState("q", { defaultValue: "" });
-    const [region, setRegion] = useQueryState("region", { defaultValue: "" });
+    const [region, setRegion] = useQueryState("region", { defaultValue: "all" });
     const [viewMode, setViewMode] = useQueryState("view", { defaultValue: "grid" });
     const filteredBenefits = useMemo(() => {
         return benefitsList.filter((benefit) => {
@@ -74,12 +74,14 @@ export default function FreeStuffTable() {
                                     type="search"
                                     placeholder="Search benefits, tools, credits..."
                                     className="pl-10 h-11  border-0 bg-background"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
                                 />
                             </div>
 
                             {/* Region Select */}
                             <div className="md:col-span-2">
-                                <Select defaultValue="all">
+                                <Select defaultValue={region} onValueChange={(value) => setRegion(value)} >
                                     <SelectTrigger className="md:h-11">
                                         <Globe className="size-4 mr-2" />
                                         <SelectValue placeholder="Region" />
@@ -95,7 +97,7 @@ export default function FreeStuffTable() {
 
                             {/* View Mode */}
                             <div className="md:col-span-2">
-                                <Select defaultValue="grid">
+                                <Select defaultValue={viewMode} onValueChange={(value) => setViewMode(value)}>
                                     <SelectTrigger className="md:h-11">
                                         <LayoutGrid className="size-4 mr-2" />
                                         <SelectValue />
