@@ -43,21 +43,21 @@ export default function ErrorBoundary({
         <StaticStep step={1} title="How to add my result to portal?">
           Open the this in new tab{" "}
           <a
-            href={`${pathname}?update=true`}
+            href={`${pathname}?update=1`}
             className="ml-2 text-primary underline"
             rel="noopener noreferrer"
             target="_blank"
           >
-            {pathname}?update=true
+            {pathname}?update=1
           </a>
         </StaticStep>
         <StaticStep step={2} title="How to update my result?">
           Open the this in new tab{" "}
           <a
-            href={`${pathname}?new=true`}
+            href={`${pathname}?new=1`}
             className="ml-2 text-primary underline"
           >
-            {pathname}?new=true
+            {pathname}?new=1
           </a>
         </StaticStep>
         <StaticStep step={3} title="How to update my result?">

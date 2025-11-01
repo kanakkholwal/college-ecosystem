@@ -2,6 +2,7 @@
 import { cache } from "react";
 import type { ResultTypeWithId } from "~/models/result";
 
+import { PipelineStage } from "mongoose";
 import { z } from "zod";
 import dbConnect from "~/lib/dbConnect";
 import { serverFetch } from "~/lib/fetch-server";
@@ -89,10 +90,7 @@ export async function getResults(
 
 
     const skip = (page - 1) * resultsPerPage;
-
-
-
-    const results = await ResultModel.aggregate([
+    const aggregationPipeline: PipelineStage[] = [
       { $match: filterQuery },
       { $sort: { "rank.college": 1 } },
       { $skip: skip },
@@ -118,7 +116,6 @@ export async function getResults(
         $addFields: {
           cgpi: "$lastSemester.cgpi",
           prevCgpi: "$secondLastSemester.cgpi",
-
         },
       },
       {
@@ -128,10 +125,13 @@ export async function getResults(
           secondLastSemester: 0,
         },
       },
-    ]);
+    ]
 
 
-    const totalCount = results[0].totalCount || 0;
+    const results = await ResultModel.aggregate(aggregationPipeline);
+
+
+    const totalCount = (results[0]?.totalCount || 0) as number;
     const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));
 
     const response = { results, totalPages, totalCount };

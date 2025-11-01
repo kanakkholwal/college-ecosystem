@@ -41,17 +41,23 @@ export default async function ResultsPage(props: Props) {
   const params = await props.params;
   const searchParams = await props.searchParams;
 
-  const update_result = searchParams?.update === "true";
-  const is_new = searchParams?.new === "true";
+  const update_result = searchParams?.update === "1";
+  const is_new = searchParams?.new === "1";
   const result = await getResultByRollNo(params.rollNo, update_result, is_new);
 
   if (!result) return notFound();
 
-  const maxCgpi = Math.max(...result.semesters.map((s) => s.cgpi));
-  const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi));
+  const maxCgpi = Math.max(...result.semesters.map((s) => s.cgpi), 0);
+  const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi), 0);
   const cgpi = result.semesters.at(-1)?.cgpi ?? 0;
   const prevCgpi = result.semesters.length > 1 ? result.semesters.at(-2)?.cgpi : undefined;
   const totalCourses = result.semesters.reduce((acc, s) => acc + s.courses.length, 0);
+
+  // course with 0 cgpi are considered as not passed
+  const failedCourses = result.semesters.reduce(
+    (acc, s) => acc + s.courses.filter((c) => c.cgpi === 0).length,
+    0
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -139,6 +145,11 @@ export default async function ResultsPage(props: Props) {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {result.semesters.length} Semesters • {totalCourses} Courses
+                    {failedCourses > 0 && (
+                      <span className="text-rose-600 dark:text-rose-400">
+                        , {failedCourses} Failed
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -180,6 +191,11 @@ export default async function ResultsPage(props: Props) {
           </div>
 
           <TabsContent value="table" className="space-y-3">
+            {result.semesters.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground">
+                No semester data available.
+              </p>
+            )}
             <Accordion type="single" collapsible defaultValue={result.semesters?.[0]?.semester.toString()}>
               {result.semesters?.map((semester) => (
                 <AccordionItem value={semester.semester.toString()} key={semester.semester} className="border-0 mb-3">

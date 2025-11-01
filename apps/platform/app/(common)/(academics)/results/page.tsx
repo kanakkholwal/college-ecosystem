@@ -13,28 +13,24 @@ import { NoteSeparator } from "@/components/common/note-separator";
 import ConditionalRender from "@/components/utils/conditional-render";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import type { Metadata } from "next";
+import { type SearchParams } from 'nuqs/server';
 import { appConfig, orgConfig } from "~/project.config";
+import { searchParamsCache } from "./utils";
 
 
 async function ResultDisplay({ searchParams }: {
-  searchParams?: {
-    query?: string;
-    page?: string;
-    batch?: string;
-    branch?: string;
-    programme?: string;
-    cache?: string;
-
-  }
+  searchParams: Promise<SearchParams>;
 }) {
-  const query = searchParams?.query?.trim() || "";
-  const currentPage = Number(searchParams?.page) || 1;
+  const { query, page, batch, branch, programme, cache, include_freshers } = await searchParamsCache.parse(searchParams)
+
+  const currentPage = Number(page) || 1;
   const filter = {
-    batch: Number(searchParams?.batch),
-    branch: searchParams?.branch || "",
-    programme: searchParams?.programme || "",
+    batch: Number(batch),
+    branch: branch || "",
+    programme: programme || "",
+    include_freshers: include_freshers === "1",
   };
-  const new_cache = searchParams?.cache === "new";
+  const new_cache = cache === "new";
 
   const resData = await getResults(query, currentPage, filter, new_cache);
   const { results, totalPages } = resData;
@@ -77,14 +73,7 @@ async function ResultDisplay({ searchParams }: {
 }
 
 export default async function ResultPage(props: {
-  searchParams?: Promise<{
-    query?: string;
-    page?: string;
-    batch?: string;
-    branch?: string;
-    programme?: string;
-    cache?: string;
-  }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
 
@@ -130,7 +119,7 @@ and track academic performance"
           </div>
         }
       >
-        <ResultDisplay searchParams={searchParams} />
+        <ResultDisplay searchParams={props.searchParams} />
 
       </ErrorBoundaryWithSuspense>
 

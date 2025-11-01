@@ -113,7 +113,7 @@ export default function BaseSearchBox({
                   title={filterDialogTitle}
                   description={filterDialogDescription}
                   btnProps={{
-                    variant: "light",
+                    variant: "default_light",
                     rounded: "full",
                     size: isDesktop ? "default" : "icon_sm",
                     "aria-label": "Filter Options",
@@ -197,9 +197,9 @@ export default function BaseSearchBox({
             type="button"
             aria-label="Search"
             title="Search"
-            variant="rainbow_outline"
+            variant="light"
             rounded="full"
-            className="h-auto"
+            className="justify-center"
             transition="damped"
             size={isDesktop ? "default" : "sm"}
             disabled={disabled}

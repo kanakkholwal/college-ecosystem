@@ -237,6 +237,8 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 
+    /* --color-white: hsla(0, 0%, 93%, 1); */
+
     --font-mono: 'Space Mono', 'Fira Code', 'Courier New', 'Courier', 'monospace';
     --font-sans: 'Inter', 'Helvetica', 'Arial', sans-serif;
 

@@ -32,7 +32,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
       />
       <NextThemesProvider
         themes={all_themes as unknown as string[]}
-        defaultTheme="system"
+        defaultTheme="light"
       >
         <div
           aria-hidden="true"
