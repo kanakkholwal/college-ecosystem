@@ -48,7 +48,7 @@ export default async function ResultsPage(props: Props) {
   if (!result) return notFound();
 
   const maxCgpi = Math.max(...result.semesters.map((s) => s.cgpi), 0);
-  const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi), 0);
+  const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi), ...(result.semesters.length > 0 ? [maxCgpi] : [0]));
   const cgpi = result.semesters.at(-1)?.cgpi ?? 0;
   const prevCgpi = result.semesters.length > 1 ? result.semesters.at(-2)?.cgpi : undefined;
   const totalCourses = result.semesters.reduce((acc, s) => acc + s.courses.length, 0);
