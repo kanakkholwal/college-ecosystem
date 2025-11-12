@@ -497,7 +497,7 @@ export function ChartPie<
     </ChartContainer>
   );
 }
-export function RoundedPieChart<TData extends Record<string, any>, TConfig extends ChartConfig>({
+export function   RoundedPieChart<TData extends Record<string, any>, TConfig extends ChartConfig>({
   data,
   config,
   dataKey,

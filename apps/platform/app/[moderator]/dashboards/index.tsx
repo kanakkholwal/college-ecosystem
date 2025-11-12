@@ -25,7 +25,12 @@ const dashboard_templates = new Map([
   ["chief_warden", ChiefWardenDashboard],
 ]);
 
-export function DashboardTemplate({ user_role }: { user_role: string }) {
+interface DashboardTemplateProps {
+  user_role: string;
+  searchParams: Record<string, string | undefined>;
+}
+
+export function DashboardTemplate({ user_role, searchParams }: DashboardTemplateProps) {
   if (dashboard_templates.has(user_role)) {
     const DashboardComponent = dashboard_templates.get(user_role);
     if (DashboardComponent) {
@@ -54,7 +59,7 @@ export function DashboardTemplate({ user_role }: { user_role: string }) {
               />
             }
           >
-            <DashboardComponent role={user_role} />
+            <DashboardComponent role={user_role} searchParams={searchParams} />
           </ErrorBoundaryWithSuspense>
         </>
       );

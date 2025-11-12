@@ -10,102 +10,204 @@ import CommunityPostModel from "~/models/community";
 import { EventModel } from "~/models/events";
 import PollModel from "~/models/poll";
 import ResultModel from "~/models/result";
+import { calculateGrowthPercentage, calculateTrend, DateRange, generateGraphData, getDateRanges, getPeriodLabel, GraphDataPoint, PeriodSummary, TimeInterval } from "~/utils/process";
 import { updateHostelStudent } from "./hostel.core";
 
-export async function users_CountAndGrowth(timeInterval: string): Promise<{
-  count: number;
-  total: number;
+export interface UserCountAndGrowthResult {
+  currentPeriodCount: number;
+  totalUsers: number;
   growth: number;
   growthPercent: number;
   trend: -1 | 1 | 0;
-}> {
-  let startTime: Date;
-  let endTime: Date | null = null; // Used for the current partial interval
-  let prevStartTime: Date;
-  let prevEndTime: Date;
-
-  // Determine the start and previous intervals based on the time interval
-  switch (timeInterval) {
-    case "last_hour": {
-      startTime = new Date(Date.now() - 60 * 60 * 1000);
-      prevStartTime = new Date(startTime.getTime() - 60 * 60 * 1000);
-      prevEndTime = startTime;
-      break;
-    }
-    case "last_24_hours": {
-      startTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      prevStartTime = new Date(startTime.getTime() - 24 * 60 * 60 * 1000);
-      prevEndTime = startTime;
-      break;
-    }
-    case "last_week": {
-      const today = new Date();
-      const startOfWeek = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() - today.getDay()
-      );
-      startTime = startOfWeek;
-      endTime = today; // Current week up to now
-      prevStartTime = new Date(startTime.getTime() - 7 * 24 * 60 * 60 * 1000);
-      prevEndTime = startTime;
-      break;
-    }
-    case "last_month": {
-      const today = new Date();
-      startTime = new Date(today.getFullYear(), today.getMonth(), 1); // Start of this month
-      endTime = today; // Current month up to now
-      prevStartTime = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Start of last month
-      prevEndTime = new Date(today.getFullYear(), today.getMonth(), 0); // Last day of last month
-      break;
-    }
-    case "last_year": {
-      const today = new Date();
-      startTime = new Date(today.getFullYear(), 0, 1); // Start of this year
-      endTime = today; // Current year up to now
-      prevStartTime = new Date(today.getFullYear() - 1, 0, 1); // Start of last year
-      prevEndTime = new Date(today.getFullYear() - 1, 11, 31); // Last day of last year
-      break;
-    }
-    default:
-      throw new Error("Invalid time interval provided");
-  }
-
-  // Fetch the total user count
-  const totalUsers = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(users)
-
-    .execute();
-  const total = totalUsers[0]?.count ?? 0;
-
-  // Fetch the count of users in the previous interval
-  const periodCountQuery = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(users)
-    .where(
-      and(
-        gte(users.createdAt, startTime),
-        lte(users.createdAt, endTime || new Date())
-      )
-    );
-
-  const periodCount = periodCountQuery[0]?.count || 0;
-
-  // Calculate growth and growth percentage
-  const growth = total - periodCount;
-  const growthPercent =
-    periodCount === 0
-      ? 100
-      : (growth / (periodCount === 0 ? 1 : periodCount)) * 100;
-
-  return {
-    count: total,
-    total,
-    growth,
-    growthPercent,
-    trend: growth > 0 ? 1 : growth < 0 ? -1 : 0,
+  periodStart: Date;
+  periodEnd: Date;
+  previousPeriodCount: number;
+  graphData: GraphDataPoint[];
+  summary: {
+    currentPeriod: PeriodSummary;
+    previousPeriod: PeriodSummary;
   };
+}
+
+
+
+
+
+/**
+ * Calculate user count and growth metrics for a given time interval
+ * @param timeInterval - The time period to analyze
+ * @returns User count, growth metrics, trend information, and graph-ready data
+ * @throws {Error} If an invalid time interval is provided or database query fails
+ */
+export async function users_CountAndGrowth(
+  timeInterval: TimeInterval
+): Promise<UserCountAndGrowthResult> {
+  try {
+    const now = new Date();
+    
+    // Get current and previous period date ranges
+    const { current, previous } = getDateRanges(timeInterval, now);
+
+    // Execute all queries in parallel for better performance
+    const [totalUsersResult, currentPeriodResult, previousPeriodResult, timeSeriesData] = 
+      await Promise.all([
+        // Total user count (all time)
+        db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .execute(),
+        
+        // Current period count
+        db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, current.start),
+              lte(users.createdAt, current.end)
+            )
+          )
+          .execute(),
+        
+        // Previous period count
+        db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, previous.start),
+              lte(users.createdAt, previous.end)
+            )
+          )
+          .execute(),
+
+        // Time series data for graph
+        fetchTimeSeriesData(timeInterval, current, previous),
+      ]);
+
+    const totalUsers = totalUsersResult[0]?.count ?? 0;
+    const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
+    const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
+
+    // Calculate growth metrics
+    const growth = currentPeriodCount - previousPeriodCount;
+    const growthPercent = calculateGrowthPercentage(
+      currentPeriodCount,
+      previousPeriodCount
+    );
+    const trend = calculateTrend(growth);
+
+    // Generate graph data
+    const graphData = generateGraphData(timeSeriesData, timeInterval);
+
+    return {
+      currentPeriodCount,
+      totalUsers,
+      growth,
+      growthPercent,
+      trend,
+      periodStart: current.start,
+      periodEnd: current.end,
+      previousPeriodCount,
+      graphData,
+      summary: {
+        currentPeriod: {
+          start: current.start,
+          end: current.end,
+          userCount: currentPeriodCount,
+          label: getPeriodLabel(timeInterval, 'current'),
+        },
+        previousPeriod: {
+          start: previous.start,
+          end: previous.end,
+          userCount: previousPeriodCount,
+          label: getPeriodLabel(timeInterval, 'previous'),
+        },
+      },
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to calculate user count and growth: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+
+/**
+ * Fetch time series data for graphing
+ */
+async function fetchTimeSeriesData(
+  timeInterval: TimeInterval,
+  current: DateRange,
+  previous: DateRange
+) {
+  const truncateExpression = getTruncateExpression(timeInterval);
+  
+  // Fetch data for both current and previous periods
+  const [currentData, previousData] = await Promise.all([
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(users)
+      .where(
+        and(
+          gte(users.createdAt, current.start),
+          lte(users.createdAt, current.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+    
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(users)
+      .where(
+        and(
+          gte(users.createdAt, previous.start),
+          lte(users.createdAt, previous.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+  ]);
+
+  return { currentData, previousData };
+}
+
+
+/**
+ * Get the appropriate SQL date truncation expression based on interval
+ * This works for PostgreSQL - adjust for other databases
+ */
+function getTruncateExpression(timeInterval: TimeInterval) {
+  switch (timeInterval) {
+    case "last_hour":
+      // Truncate to minute
+      return sql`DATE_TRUNC('minute', ${users.createdAt})`;
+    case "last_24_hours":
+      // Truncate to hour
+      return sql`DATE_TRUNC('hour', ${users.createdAt})`;
+    case "last_week":
+      // Truncate to day
+      return sql`DATE_TRUNC('day', ${users.createdAt})`;
+    case "last_month":
+      // Truncate to day
+      return sql`DATE_TRUNC('day', ${users.createdAt})`;
+    case "last_year":
+      // Truncate to month
+      return sql`DATE_TRUNC('month', ${users.createdAt})`;
+    default:
+      return sql`DATE_TRUNC('day', ${users.createdAt})`;
+  }
 }
 
 interface PlatformDBStats {

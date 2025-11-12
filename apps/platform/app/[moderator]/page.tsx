@@ -8,10 +8,12 @@ interface Props {
   params: Promise<{
     moderator: string;
   }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }
 
 export default async function ModeratorDashboard(props: Props) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const headersList = await headers();
   const session = await auth.api.getSession({
     headers: headersList,
@@ -31,7 +33,7 @@ export default async function ModeratorDashboard(props: Props) {
           </Paragraph>
         </div>
       </section>
-      <DashboardTemplate user_role={params.moderator} />
+      <DashboardTemplate user_role={params.moderator} searchParams={searchParams} />
     </div>
   );
 }

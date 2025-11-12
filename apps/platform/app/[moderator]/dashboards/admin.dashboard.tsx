@@ -31,16 +31,24 @@ import {
   getDepartmentName
 } from "~/constants/core.departments";
 import { extractVisitorCount } from "~/lib/third-party/github";
+import { TimeInterval } from "~/utils/process";
 import { changeCase } from "~/utils/string";
 
-export default async function AdminDashboard() {
+interface AdminDashboardProps {
+  role?: string;
+  searchParams: {
+    period?: TimeInterval;
+  }
+}
+export default async function AdminDashboard({ searchParams }: AdminDashboardProps) {
+  const period = (searchParams?.period || "last_week") as TimeInterval;
+  const result = await users_CountAndGrowth(period);
   const {
-    total: totalUsers,
+    totalUsers,
     growthPercent: userGrowth,
     growth,
     trend: userTrend,
-  } = await users_CountAndGrowth("last_week");
-
+  } = result;
   const [usersByGender, usersByRole, usersByDepartment, activeSessions] =
     await Promise.all([
       getUsersByGender(),
@@ -102,8 +110,9 @@ export default async function AdminDashboard() {
                 )}
                 {userGrowth?.toFixed(2)}%
               </span>{" "}
-              from last month
+              from {changeCase(period, "title")}
             </p>
+
           </StatsCard>
 
           {/* Active Sessions Card */}
