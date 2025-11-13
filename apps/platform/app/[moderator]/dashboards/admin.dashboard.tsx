@@ -35,7 +35,7 @@ import { TimeInterval } from "~/utils/process";
 import { changeCase } from "~/utils/string";
 
 interface AdminDashboardProps {
-  role?: string;
+  role: string;
   searchParams: {
     period?: TimeInterval;
   }

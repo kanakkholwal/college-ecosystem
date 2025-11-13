@@ -5,17 +5,21 @@ import EmptyArea from "@/components/common/empty-area";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
 // import { RocketIcon } from "@radix-ui/react-icons";
+import React from "react";
 import AdminDashboard from "./admin.dashboard";
 import ChiefWardenDashboard from "./chief_warden.dashboard";
 import CRDashboard from "./cr.dashboard";
 import GuardDashboard from "./guard.dashboard";
 import StudentDashboard from "./student.dashboard";
 import WardenDashboard from "./warden.dashboard";
-// import type { JSX } from "react";
 
-// type DashboardTemplateType = Promise<JSX.Element> | JSX.Element;
+type DashboardComponentProps = {
+  role: string;
+  searchParams: Record<string, string | undefined>;
+};
+type DashboardTemplateType = Promise<React.ReactNode> | React.FC<DashboardComponentProps>;
 
-const dashboard_templates = new Map([
+const dashboard_templates = new Map<string, DashboardTemplateType>([
   ["admin", AdminDashboard],
   ["cr", CRDashboard],
   ["guard", GuardDashboard],
@@ -32,7 +36,7 @@ interface DashboardTemplateProps {
 
 export function DashboardTemplate({ user_role, searchParams }: DashboardTemplateProps) {
   if (dashboard_templates.has(user_role)) {
-    const DashboardComponent = dashboard_templates.get(user_role);
+    const DashboardComponent = dashboard_templates.get(user_role) as React.FC<DashboardComponentProps>;
     if (DashboardComponent) {
       return (
         <>
