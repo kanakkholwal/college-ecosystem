@@ -508,7 +508,7 @@ export function   RoundedPieChart<TData extends Record<string, any>, TConfig ext
   showLabelList = true,
   tooltipProps,
   tooltipContentProps,
-  showLegend = true,
+  showLegend = false,
   pieClassName,
 }: PieBaseProps<TData, TConfig>) {
 
@@ -541,6 +541,17 @@ export function   RoundedPieChart<TData extends Record<string, any>, TConfig ext
             />
           )}
         </Pie>
+         {showLegend && (
+          <ChartLegend
+            content={({ payload }) => (
+              <ChartLegendContent
+                nameKey={nameKey.toString()}
+                payload={payload}
+              />
+            )}
+            className="-translate-y-2 flex-wrap gap-2 basis-4/5 lg:*:basis-1/4 *:justify-center"
+          />
+        )}
       </PieChart>
     </ChartContainer>
   );

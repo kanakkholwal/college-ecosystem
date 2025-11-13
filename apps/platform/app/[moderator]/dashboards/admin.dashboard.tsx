@@ -4,7 +4,9 @@ import {
   RoundedPieChart
 } from "@/components/application/charts";
 import { StatsCard } from "@/components/application/stats-card";
+import { GenericAreaChart } from "@/components/extended/chart.area";
 import { Icon } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   Briefcase,
@@ -13,7 +15,7 @@ import {
   Network,
   Transgender,
   TrendingDown,
-  TrendingUp,
+  TrendingUp
 } from "lucide-react";
 import { TbUsersGroup } from "react-icons/tb";
 import {
@@ -22,6 +24,9 @@ import {
   getUsersByDepartment,
   getUsersByGender,
   getUsersByRole,
+  SessionCountAndGrowthResult,
+  sessions_CountAndGrowth,
+  UserCountAndGrowthResult,
   users_CountAndGrowth,
 } from "~/actions/dashboard.admin";
 import { ROLES } from "~/constants";
@@ -42,13 +47,13 @@ interface AdminDashboardProps {
 }
 export default async function AdminDashboard({ searchParams }: AdminDashboardProps) {
   const period = (searchParams?.period || "last_week") as TimeInterval;
-  const result = await users_CountAndGrowth(period);
-  const {
-    totalUsers,
-    growthPercent: userGrowth,
-    growth,
-    trend: userTrend,
-  } = result;
+  const [usersStats, sessionsStats] = await Promise.all(
+    [
+      users_CountAndGrowth(period),
+      sessions_CountAndGrowth(period),
+    ]
+  )
+
   const [usersByGender, usersByRole, usersByDepartment, activeSessions] =
     await Promise.all([
       getUsersByGender(),
@@ -62,6 +67,8 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
     getPlatformDBStats(),
   ]);
 
+
+
   return (
     <div className="space-y-6 my-5">
       <div className="flex justify-between gap-2 w-full flex-col @4xl:flex-row divide-y @4xl:divide-x divide-border">
@@ -74,58 +81,97 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
             Icon={<Icon name="users" className="inline-block mr-2 size-4" />}
           >
             <NumberTicker
-              value={totalUsers}
+              value={usersStats.totalUsers}
               className={cn(
                 "text-3xl font-bold text-primary after:text-xs",
-                userTrend === 1
+                usersStats.trend === 1
                   ? "after:text-green-500"
-                  : userTrend === -1
+                  : usersStats.trend === -1
                     ? "after:text-red-500"
                     : "after:text-primary/80"
               )}
               suffix={
-                userTrend === 1
-                  ? "↑" + growth
-                  : userTrend === -1
-                    ? "↓" + growth
+                usersStats.trend === 1
+                  ? "↑" + usersStats.growthPercent
+                  : usersStats.trend === -1
+                    ? "↓" + usersStats.growthPercent
                     : ""
               }
             />
 
             <p className="text-xs text-muted-foreground">
               <span
-                className={`${userTrend === 1
+                className={`${usersStats.trend === 1
                   ? "text-green-500"
-                  : userTrend === -1
+                  : usersStats.trend === -1
                     ? "text-red-500"
                     : "text-primary/80"
                   } text-base`}
               >
-                {userTrend === 1 ? (
+                {usersStats.trend === 1 ? (
                   <TrendingUp className="inline-block mr-2 size-4" />
-                ) : userTrend === -1 ? (
+                ) : usersStats.trend === -1 ? (
                   <TrendingDown className="inline-block mr-2 size-4" />
                 ) : (
                   <CircleDashed className="inline-block mr-2 size-4" />
                 )}
-                {userGrowth?.toFixed(2)}%
+                {usersStats.growthPercent?.toFixed(2)}%
               </span>{" "}
               from {changeCase(period, "title")}
             </p>
 
           </StatsCard>
 
-          {/* Active Sessions Card */}
+          {/* Sessions Card */}
           <StatsCard
             className="col-span-1   @4xl:col-span-4"
-            title="Active Sessions"
-            Icon={<TbUsersGroup className="inline-block mr-2 size-4" />}
+            title="Total Sessions"
+            Icon={<div>
+              <Badge size="sm" variant="default_light" className="mr-2">
+                {sessionsStats.activeSessions}  Online
+              </Badge>
+              <TbUsersGroup className="inline-block mr-2 size-4" />
+
+            </div>}
           >
-            <h4 className="text-3xl font-bold text-primary">
-              {activeSessions}
-            </h4>
+            <NumberTicker
+              value={sessionsStats.totalSessions}
+              className={cn(
+                "text-3xl font-bold text-primary after:text-xs",
+                sessionsStats.trend === 1
+                  ? "after:text-green-500"
+                  : sessionsStats.trend === -1
+                    ? "after:text-red-500"
+                    : "after:text-primary/80"
+              )}
+              suffix={
+                sessionsStats.trend === 1
+                  ? "↑" + sessionsStats.growth
+                  : sessionsStats.trend === -1
+                    ? "↓" + sessionsStats.growth
+                    : ""
+              }
+            />
             <p className="text-xs text-muted-foreground">
-              Currently active sessions
+              <span
+                className={`${sessionsStats.trend === 1
+                  ? "text-green-500"
+                  : sessionsStats.trend === -1
+                    ? "text-red-500"
+                    : "text-primary/80"
+                  } text-base`}
+              >
+                {sessionsStats.trend === 1 ? (
+                  <TrendingUp className="inline-block mr-2 size-4" />
+                ) : sessionsStats.trend === -1 ? (
+                  <TrendingDown className="inline-block mr-2 size-4" />
+                ) : (
+                  <CircleDashed className="inline-block mr-2 size-4" />
+                )}
+                {sessionsStats.growthPercent?.toFixed(2)}%
+              </span>{" "}
+              from {changeCase(period, "title")}
+
             </p>
           </StatsCard>
           {/* Total Visitors Card */}
@@ -143,9 +189,27 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
             </p>
           </StatsCard>
 
+          {/* Combined analytics overview */}
+
+          <GenericAreaChart
+            data={cumulateStats(usersStats, sessionsStats)}
+            series={[
+              { dataKey: "users", label: "New Users", color: "var(--chart-1)" },
+              { dataKey: "sessions", label: "Sessions", color: "var(--chart-2)" },
+            ]}
+            title="Users & Sessions Overview"
+            description={`Overview over ${changeCase(period, "title")}`}
+            showTimeRangeFilter={true}
+            chartHeight={350}
+            stacked={false}
+            showLegend={true}
+            showYAxis={true}
+            className="col-span-1  @4xl:col-span-12"
+          />
+
           {/* Users by Gender Card */}
 
-          <StatsCard className="col-span-1  @4xl:col-span-4"
+          <StatsCard className="col-span-1  @4xl:col-span-6"
             title="Users by Gender"
             Icon={<Transgender className="inline-block mr-2 size-4" />}
           >
@@ -183,7 +247,7 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
 
 
           {/* Users by Role Card */}
-          <StatsCard className="col-span-1   @4xl:col-span-4"
+          <StatsCard className="col-span-1   @4xl:col-span-6"
             title="Users by Role"
             Icon={<Briefcase className="inline-block mr-2 size-4" />}
           >
@@ -215,7 +279,7 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
 
           {/* Users by Department Card */}
           <StatsCard
-            className="col-span-1   @4xl:col-span-4"
+            className="col-span-1   @4xl:col-span-5"
             title="Users by Department"
             Icon={<Network className="inline-block mr-2 size-4" />}
           >
@@ -280,4 +344,24 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
       </div>
     </div>
   );
+}
+
+function cumulateStats(usersStats: UserCountAndGrowthResult, sessionsStats: SessionCountAndGrowthResult) {
+  const allTimestamps = new Set([
+    ...usersStats.graphData.map((d: any) => d.timestamp.getTime()),
+    ...sessionsStats.graphData.map((d: any) => d.timestamp.getTime()),
+  ])
+  const userMap = new Map(
+    usersStats.graphData.map((d: any) => [d.timestamp.getTime(), d.count])
+  )
+  const sessionMap = new Map(
+    sessionsStats.graphData.map((d: any) => [d.timestamp.getTime(), d.count])
+  )
+  return Array.from(allTimestamps)
+    .sort((a, b) => a - b)
+    .map(timestamp => ({
+      timestamp: new Date(timestamp),
+      users: userMap.get(timestamp) || 0,
+      sessions: sessionMap.get(timestamp) || 0,
+    }))
 }

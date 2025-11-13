@@ -44,19 +44,19 @@ export async function users_CountAndGrowth(
 ): Promise<UserCountAndGrowthResult> {
   try {
     const now = new Date();
-    
+
     // Get current and previous period date ranges
     const { current, previous } = getDateRanges(timeInterval, now);
 
     // Execute all queries in parallel for better performance
-    const [totalUsersResult, currentPeriodResult, previousPeriodResult, timeSeriesData] = 
+    const [totalUsersResult, currentPeriodResult, previousPeriodResult, timeSeriesData] =
       await Promise.all([
         // Total user count (all time)
         db
           .select({ count: sql<number>`COUNT(*)` })
           .from(users)
           .execute(),
-        
+
         // Current period count
         db
           .select({ count: sql<number>`COUNT(*)` })
@@ -68,7 +68,7 @@ export async function users_CountAndGrowth(
             )
           )
           .execute(),
-        
+
         // Previous period count
         db
           .select({ count: sql<number>`COUNT(*)` })
@@ -114,21 +114,20 @@ export async function users_CountAndGrowth(
         currentPeriod: {
           start: current.start,
           end: current.end,
-          userCount: currentPeriodCount,
+          count: currentPeriodCount,
           label: getPeriodLabel(timeInterval, 'current'),
         },
         previousPeriod: {
           start: previous.start,
           end: previous.end,
-          userCount: previousPeriodCount,
+          count: previousPeriodCount,
           label: getPeriodLabel(timeInterval, 'previous'),
         },
       },
     };
   } catch (error) {
     throw new Error(
-      `Failed to calculate user count and growth: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Failed to calculate user count and growth: ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -144,7 +143,7 @@ async function fetchTimeSeriesData(
   previous: DateRange
 ) {
   const truncateExpression = getTruncateExpression(timeInterval);
-  
+
   // Fetch data for both current and previous periods
   const [currentData, previousData] = await Promise.all([
     db
@@ -162,7 +161,7 @@ async function fetchTimeSeriesData(
       .groupBy(sql`${truncateExpression}`)
       .orderBy(sql`${truncateExpression}`)
       .execute(),
-    
+
     db
       .select({
         timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
@@ -180,36 +179,259 @@ async function fetchTimeSeriesData(
       .execute(),
   ]);
 
+  /**
+   * Get the appropriate SQL date truncation expression based on interval
+   * This works for PostgreSQL - adjust for other databases
+   */
+  function getTruncateExpression(timeInterval: TimeInterval) {
+    switch (timeInterval) {
+      case "last_hour":
+        // Truncate to minute
+        return sql`DATE_TRUNC('minute', ${users.createdAt})`;
+      case "last_24_hours":
+        // Truncate to hour
+        return sql`DATE_TRUNC('hour', ${users.createdAt})`;
+      case "last_week":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${users.createdAt})`;
+      case "last_month":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${users.createdAt})`;
+      case "last_year":
+        // Truncate to month
+        return sql`DATE_TRUNC('month', ${users.createdAt})`;
+      default:
+        return sql`DATE_TRUNC('day', ${users.createdAt})`;
+    }
+  }
+
   return { currentData, previousData };
 }
 
 
+
+export interface SessionCountAndGrowthResult {
+  currentPeriodCount: number;
+  totalSessions: number;
+  activeSessions: number;
+  growth: number;
+  growthPercent: number;
+  trend: -1 | 1 | 0;
+  periodStart: Date;
+  periodEnd: Date;
+  previousPeriodCount: number;
+  graphData: GraphDataPoint[];
+  summary: {
+    currentPeriod: PeriodSummary;
+    previousPeriod: PeriodSummary;
+  };
+  uniqueUsers: number;
+  avgSessionsPerUser: number;
+}
+
 /**
- * Get the appropriate SQL date truncation expression based on interval
- * This works for PostgreSQL - adjust for other databases
+ * Calculate session count and growth metrics for a given time interval
+ * @param timeInterval - The time period to analyze
+ * @returns Session count, growth metrics, trend information, and graph-ready data
+ * @throws {Error} If an invalid time interval is provided or database query fails
  */
-function getTruncateExpression(timeInterval: TimeInterval) {
-  switch (timeInterval) {
-    case "last_hour":
-      // Truncate to minute
-      return sql`DATE_TRUNC('minute', ${users.createdAt})`;
-    case "last_24_hours":
-      // Truncate to hour
-      return sql`DATE_TRUNC('hour', ${users.createdAt})`;
-    case "last_week":
-      // Truncate to day
-      return sql`DATE_TRUNC('day', ${users.createdAt})`;
-    case "last_month":
-      // Truncate to day
-      return sql`DATE_TRUNC('day', ${users.createdAt})`;
-    case "last_year":
-      // Truncate to month
-      return sql`DATE_TRUNC('month', ${users.createdAt})`;
-    default:
-      return sql`DATE_TRUNC('day', ${users.createdAt})`;
+export async function sessions_CountAndGrowth(
+  timeInterval: TimeInterval
+): Promise<SessionCountAndGrowthResult> {
+  try {
+    const now = new Date();
+
+    // Get current and previous period date ranges
+    const { current, previous } = getDateRanges(timeInterval, now);
+
+    // Execute all queries in parallel for better performance
+    const [
+      totalSessionsResult,
+      activeSessionsResult,
+      currentPeriodResult,
+      previousPeriodResult,
+      uniqueUsersCurrentResult,
+      timeSeriesData
+    ] = await Promise.all([
+      // Total session count (all time)
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .execute(),
+
+      // Active sessions (not expired)
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .where(gte(sessions.expiresAt, now))
+        .execute(),
+
+      // Current period count
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .where(
+          and(
+            gte(sessions.createdAt, current.start),
+            lte(sessions.createdAt, current.end)
+          )
+        )
+        .execute(),
+
+      // Previous period count
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .where(
+          and(
+            gte(sessions.createdAt, previous.start),
+            lte(sessions.createdAt, previous.end)
+          )
+        )
+        .execute(),
+
+      // Unique users in current period
+      db
+        .select({ count: sql<number>`COUNT(DISTINCT ${sessions.userId})` })
+        .from(sessions)
+        .where(
+          and(
+            gte(sessions.createdAt, current.start),
+            lte(sessions.createdAt, current.end)
+          )
+        )
+        .execute(),
+
+      // Time series data for graph
+      fetchSessionTimeSeriesData(timeInterval, current, previous),
+    ]);
+
+    const totalSessions = totalSessionsResult[0]?.count ?? 0;
+    const activeSessions = activeSessionsResult[0]?.count ?? 0;
+    const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
+    const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
+    const uniqueUsers = uniqueUsersCurrentResult[0]?.count ?? 0;
+    const avgSessionsPerUser = uniqueUsers > 0 ? currentPeriodCount / uniqueUsers : 0;
+
+    // Calculate growth metrics
+    const growth = currentPeriodCount - previousPeriodCount;
+    const growthPercent = calculateGrowthPercentage(
+      currentPeriodCount,
+      previousPeriodCount
+    );
+    const trend = calculateTrend(growth);
+
+    // Generate graph data
+    const graphData = generateGraphData(timeSeriesData, timeInterval);
+
+    return {
+      currentPeriodCount,
+      totalSessions,
+      activeSessions,
+      growth,
+      growthPercent,
+      trend,
+      periodStart: current.start,
+      periodEnd: current.end,
+      previousPeriodCount,
+      graphData,
+      summary: {
+        currentPeriod: {
+          start: current.start,
+          end: current.end,
+          count: currentPeriodCount,
+          label: getPeriodLabel(timeInterval, 'current'),
+        },
+        previousPeriod: {
+          start: previous.start,
+          end: previous.end,
+          count: previousPeriodCount,
+          label: getPeriodLabel(timeInterval, 'previous'),
+        },
+      },
+      uniqueUsers,
+      avgSessionsPerUser: Number(avgSessionsPerUser.toFixed(2)),
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to calculate session count and growth: ${error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 
+/**
+ * Fetch time series data for session graphing
+ */
+async function fetchSessionTimeSeriesData(
+  timeInterval: TimeInterval,
+  current: DateRange,
+  previous: DateRange
+) {
+  const truncateExpression = getTruncateExpression(timeInterval);
+
+  // Fetch data for both current and previous periods
+  const [currentData, previousData] = await Promise.all([
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(sessions)
+      .where(
+        and(
+          gte(sessions.createdAt, current.start),
+          lte(sessions.createdAt, current.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(sessions)
+      .where(
+        and(
+          gte(sessions.createdAt, previous.start),
+          lte(sessions.createdAt, previous.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+  ]);
+
+  /**
+   * Get the appropriate SQL date truncation expression based on interval
+   * This works for PostgreSQL - adjust for other databases
+   */
+  function getTruncateExpression(timeInterval: TimeInterval) {
+    switch (timeInterval) {
+      case "last_hour":
+        // Truncate to minute
+        return sql`DATE_TRUNC('minute', ${sessions.createdAt})`;
+      case "last_24_hours":
+        // Truncate to hour
+        return sql`DATE_TRUNC('hour', ${sessions.createdAt})`;
+      case "last_week":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
+      case "last_month":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
+      case "last_year":
+        // Truncate to month
+        return sql`DATE_TRUNC('month', ${sessions.createdAt})`;
+      default:
+        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
+    }
+  }
+  return { currentData, previousData };
+}
 interface PlatformDBStats {
   results: number;
   polls: number;
