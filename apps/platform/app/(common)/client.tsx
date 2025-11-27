@@ -27,6 +27,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "~/auth";
@@ -362,9 +363,15 @@ export function IntroSection({
         <div className="mt-6 flex flex-1 flex-col items-center lg:items-end">
           {/* Screenshot / preview placeholder */}
           <StaggerChildrenItem
-            className="mb-6 w-full max-w-md rounded-2xl border border-border bg-card shadow-xl backdrop-blur-sm"
+            className="mb-6 w-full max-w-md"
           >
-            <HeroBentoMockup />
+            {/* <HeroBentoMockup /> */}
+            <Image
+            src={"/assets/images/illustration_dashboard.png"}
+            alt="Dashboard Image"
+            height={600}
+            width={720}
+            />
             {/* <FeaturesShowcase features={FEATURES} autoplay intervalMs={6000} /> */}
           </StaggerChildrenItem>
 
