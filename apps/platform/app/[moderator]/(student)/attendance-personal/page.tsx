@@ -1,7 +1,7 @@
 // app/attendance/page.tsx
 import EmptyArea from "@/components/common/empty-area"
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog"
-import { BookUser } from "lucide-react"
+import { BookUser, Plus } from "lucide-react"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { getAttendanceRecords } from "~/actions/student.record_personal"
@@ -18,43 +18,52 @@ export default async function PersonalAttendanceManager() {
   const attendance_records = await getAttendanceRecords()
 
   return (
-    <div className="relative z-10 w-full max-w-7xl space-y-8 @container/attendance">
+    <div className="w-full max-w-7xl mx-auto space-y-10 py-6 px-4">
+
       {/* Analytics Section */}
-      <AttendanceAnalytics records={attendance_records} />
+      <section>
+        <AttendanceAnalytics records={attendance_records} />
+      </section>
 
-      {/* Header */}
-      <div className="flex w-full items-center justify-between gap-2 rounded-lg border bg-card/80 backdrop-blur-sm p-4 shadow-sm">
-        <h3 className="text-lg font-semibold tracking-tight text-foreground">
-          Attendance Records
-          <span className="ml-2 text-sm font-normal text-muted-foreground">
-            ({attendance_records.length})
-          </span>
-        </h3>
-        <CreateAttendanceRecordButton />
-      </div>
+      {/* Main Content Area */}
+      <section className="space-y-6">
 
-      {/* Empty State */}
-      {attendance_records.length === 0 && (
-        <EmptyArea
-          icons={[BookUser]}
-          title="No attendance records"
-          description="There are no attendance records yet. Create one to get started."
-        />
-      )}
-
-      {/* Records Grid */}
-      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading...</div>}>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {attendance_records.map((record, index) => (
-            <AttendanceRecord
-              record={record}
-              key={record.id}
-              className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-              style={{ animationDelay: `${index * 50}ms` }}
-            />
-          ))}
+        {/* Controls Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold tracking-tight">Your Subjects</h3>
+            <p className="text-sm text-muted-foreground">
+              Manage attendance for {attendance_records.length} active courses.
+            </p>
+          </div>
+          <CreateAttendanceRecordButton />
         </div>
-      </Suspense>
+
+        {/* Empty State */}
+        {attendance_records.length === 0 && (
+          <div className="rounded-xl border border-dashed p-8 bg-muted/30">
+            <EmptyArea
+              icons={[BookUser]}
+              title="No subjects tracked"
+              description="Start by adding a subject to track your daily attendance."
+            />
+          </div>
+        )}
+
+        {/* Records Grid */}
+        <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">Loading records...</div>}>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+            {attendance_records.map((record, index) => (
+              <AttendanceRecord
+                record={record}
+                key={record.id}
+                className="animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-backwards"
+                style={{ animationDelay: `${index * 100}ms` }}
+              />
+            ))}
+          </div>
+        </Suspense>
+      </section>
     </div>
   )
 }
@@ -62,12 +71,18 @@ export default async function PersonalAttendanceManager() {
 function CreateAttendanceRecordButton() {
   return (
     <ResponsiveDialog
-      title="Create Attendance Record"
-      description="Add a new attendance record for a subject."
+      title="Add New Subject"
+      description="Create a tracker for a new course."
       btnProps={{
-        variant: "default_light",
+        variant: "default",
         size: "sm",
-        children: "Create Record",
+        className: "shadow-lg shadow-primary/20",
+        children: (
+          <>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Subject
+          </>
+        ),
       }}
     >
       <CreateAttendanceRecord />

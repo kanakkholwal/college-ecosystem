@@ -70,12 +70,12 @@
     --border-secondary: hsla(0, 0%, 100%, 0.08);
     --button-shadow: 0px -1px 0px 0px hsla(0, 0%, 100%, 0.04), 0px 0px 0px 1px hsla(0, 0%, 100%, 0.12), 0px 0px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 4px 2px 0px rgba(0, 0, 0, 0.04), 0px 6px 3px 0px rgba(0, 0, 0, 0.04);
 
-    /* chart colors */
-    --chart-1: hsl(238.73deg 83.53% 66.67%);
-    --chart-2: hsl(349.72deg 89.16% 60.2%);
-    --chart-3: hsl(16.79deg 86.55% 56.27%);
-    --chart-4: hsl(160.12deg 84.08% 39.41%);
-    --chart-5: hsl(43 74% 66%);
+   /* Charts: Adjusted for harmony with the violet theme */
+    --chart-1: hsl(262 80% 50%);
+    --chart-2: hsl(199 89% 48%);
+    --chart-3: hsl(340 75% 55%);
+    --chart-4: hsl(160 84% 39%);
+    --chart-5: hsl(43 90% 55%);
     --chart-6: hsl(27 87% 67%);
     --chart-7: hsl(188.74deg 94.5% 42.75%);
     --chart-8: hsl(33.3 5.5% 32.4%);
@@ -149,11 +149,12 @@
     --ring: var(--primary, hsl(250deg 100% 80%));
 
     /* dark:chart colors */
-    --chart-1: hsl(238.73deg 83.53% 66.67%);
-    --chart-2: hsl(349.72deg 89.16% 60.2%);
-    --chart-3: hsl(16.79deg 86.55% 56.27%);
-    --chart-4: hsl(160.12deg 84.08% 39.41%);
-    --chart-5: hsl(43 74% 66%);
+   /* Charts: Bright Pastels for dark mode */
+    --chart-1: hsl(263 70% 65%);
+    --chart-2: hsl(199 80% 60%);
+    --chart-3: hsl(340 80% 65%);
+    --chart-4: hsl(160 70% 50%);
+    --chart-5: hsl(43 90% 65%);
     --chart-6: hsl(27 87% 67%);
     --chart-7: hsl(188.74deg 94.5% 42.75%);
     --chart-8: hsl(210 20% 98%);

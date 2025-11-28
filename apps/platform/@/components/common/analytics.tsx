@@ -1,12 +1,17 @@
-"use client";
-
+// components/common/analytics.tsx
 import { cn } from "@/lib/utils";
-import { ResponsiveContainer } from "./container";
+import {
+  BarChart2,
+  Megaphone,
+  MessageSquare,
+  MessagesSquare
+} from "lucide-react";
 
 interface StatItem {
   label: string;
   value: string | number;
-  status?: "success" | "warning" | "error" | "default";
+  // We can optionally map specific keys to icons if you want logic here
+  icon?: React.ReactNode; 
 }
 
 interface AnalyticsGridProps {
@@ -14,34 +19,39 @@ interface AnalyticsGridProps {
   className?: string;
 }
 
+// Helper to map labels to icons (you can move this or pass it in)
+const getIconForLabel = (label: string) => {
+  if (label.includes("Post")) return <MessageSquare className="size-4" />;
+  if (label.includes("Comment")) return <MessagesSquare className="size-4" />;
+  if (label.includes("Poll")) return <BarChart2 className="size-4" />;
+  if (label.includes("Announcement")) return <Megaphone className="size-4" />;
+  return <BarChart2 className="size-4" />;
+};
+
 export function AnalyticsGrid({ stats, className }: AnalyticsGridProps) {
   return (
-    <ResponsiveContainer
-      className={cn(
-        "@5xl:grid-cols-3 pr-1.5 @4xl:pr-0",
-        className
-      )}
-    >
+    <div className={cn("grid grid-cols-2 lg:grid-cols-4 gap-4", className)}>
       {stats.map((stat, i) => (
         <div
           key={i}
-          className="p-4 border rounded-lg shadow-sm bg-card flex flex-col items-start"
+          className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-primary/50 hover:shadow-md"
         >
-          <h5 className="text-sm font-medium text-muted-foreground">
-            {stat.label}
-          </h5>
-          <p
-            className={cn(
-              "text-xl font-semibold mt-1",
-              stat.status === "success" && "text-green-500",
-              stat.status === "warning" && "text-yellow-500",
-              stat.status === "error" && "text-red-500"
-            )}
-          >
-            {stat.value}
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-muted-foreground text-balance">
+              {stat.label}
+            </span>
+            <div className="text-muted-foreground/50 group-hover:text-primary transition-colors">
+              {getIconForLabel(stat.label)}
+            </div>
+          </div>
+          
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold tracking-tight text-foreground">
+               {stat.value}
+            </span>
+          </div>
         </div>
       ))}
-    </ResponsiveContainer>
+    </div>
   );
 }

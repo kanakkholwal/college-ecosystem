@@ -373,3 +373,4 @@ async function getUserInfo(user: User & Record<string, unknown>): Promise<getUse
 }
 
 export type Session = typeof auth.$Infer.Session;
+export type SessionUser = typeof auth.$Infer.Session.user;

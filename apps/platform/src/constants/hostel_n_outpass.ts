@@ -91,12 +91,6 @@ export const IN_CHARGES_EMAILS = [
   {
     gender: "male",
     slug: "himgiri-boys-hostel",
-    email: "wardenhimgiri@nith.ac.in",
-    role: "warden",
-  },
-  {
-    gender: "male",
-    slug: "himgiri-boys-hostel",
     email: "kunjari@nith.ac.in",
     role: "assistant_warden",
   },

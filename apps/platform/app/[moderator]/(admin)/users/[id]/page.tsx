@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import { getUser } from "~/actions/dashboard.admin";
-import { UserDisplay, UserSessions, UserUpdate } from "./components";
-
-import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
 import { getHostels } from "~/actions/hostel.core";
+import { UserContent, UserHeader, UserSidebar } from "./components";
 
 interface PageProps {
   params: Promise<{
@@ -12,39 +10,32 @@ interface PageProps {
 }
 
 export default async function UpdateUserPage({ params }: PageProps) {
-  const user = await getUser((await params).id);
-  if (!user) {
-    return notFound();
-  }
+  const { id } = await params;
+  
+  // Parallel fetching for performance
+  const [user, hostelRes] = await Promise.all([
+    getUser(id),
+    getHostels()
+  ]);
 
-  const { data } = await getHostels();
+  if (!user) return notFound();
 
   return (
-    <div className="space-y-6 my-5">
-      <Tabs
-        defaultValue="user_details"
-        className="w-full max-w-(--max-app-width) mx-auto"
-      >
-        <VercelTabsList
-          tabs={[
-            { label: "User Details", id: "user_details" },
-            { label: "User Sessions", id: "user_sessions" },
-            { label: "Update User", id: "user_update" },
-          ]}
-          onTabChangeQuery="tab"
-        />
-        <div className="w-full max-w-(--max-app-width) mx-auto bg-card p-4 rounded-lg shadow mt-4">
-          <TabsContent value="user_details">
-            <UserDisplay currentUser={user} />
-          </TabsContent>
-          <TabsContent value="user_sessions">
-            <UserSessions currentUser={user} />
-          </TabsContent>
-          <TabsContent value="user_update">
-            <UserUpdate currentUser={user} hostels={data} />
-          </TabsContent>
-        </div>
-      </Tabs>
+    <div className="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 space-y-8">
+      {/* 1. Global Header with Breadcrumbs/Title */}
+      <UserHeader user={user} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
+        {/* 2. Sidebar: Quick Actions, ID, Read-only meta */}
+        <aside className="space-y-6 lg:sticky lg:top-8">
+             <UserSidebar user={user} />
+        </aside>
+
+        {/* 3. Main Content: Forms & Sessions */}
+        <main>
+             <UserContent user={user} hostels={hostelRes.data || []} />
+        </main>
+      </div>
     </div>
   );
 }

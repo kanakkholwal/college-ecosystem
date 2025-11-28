@@ -94,7 +94,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="glassmorphism px-2 sm:px-4 pb-2 pt-4 rounded-lg space-y-4">
+    <div className="glassmorphism px-2 sm:px-4 pb-2 pt-4 space-y-4 rounded-xl border bg-card shadow-sm">
       <div className="flex items-center justify-between gap-2 flex-col md:flex-row">
         {header}
       </div>

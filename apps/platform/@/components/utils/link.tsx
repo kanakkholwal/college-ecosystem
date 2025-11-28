@@ -48,8 +48,11 @@ export function PreviousPageLink({ ...props }: ButtonProps) {
       }}
       {...props}
     >
-      <ArrowLeft />
-      Go Back
+      {props.children ? props.children : <>
+        <ArrowLeft />
+
+        Go Back
+      </>}
     </Button>
   );
 }
@@ -127,7 +130,7 @@ function AuthActionButton({
         )}
 
         <AuthButtonLink
-          href={nextUrl ? nextUrl :pathname}
+          href={nextUrl ? nextUrl : pathname}
           authorized={false}
           className="w-full mt-6 flex items-center justify-center gap-2 rounded-xl bg-primary text-white py-2.5 font-medium shadow-md hover:shadow-lg transition-all"
         >

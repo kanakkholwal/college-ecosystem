@@ -1,77 +1,64 @@
+// components/application/stats-card.tsx
+import { MagicCard } from "@/components/animation/magic-card";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useQueryState } from "nuqs";
-import { MagicCard } from "../animation/magic-card";
+import { LucideIcon } from "lucide-react";
 
 export type StatsCardProps = {
   title: string;
   children: React.ReactNode;
-  Icon?: React.ReactNode;
+  description?: string;
+  icon?: LucideIcon;
+  action?: React.ReactNode;
   className?: string;
+  variant?: "default" | "destructive";
 };
 
 export function StatsCard({
   title,
   children,
-  Icon,
+  description,
+  icon: Icon,
+  action,
   className,
+  variant = "default",
 }: StatsCardProps) {
   return (
     <MagicCard
-      layerClassName="bg-card"
-      className={cn("hover:-translate-y-2.5 hover:shadow duration-500 rounded-lg shadow", className)}
+      gradientSize={700}
+      gradientOpacity={0.1}
+      layerClassName={cn(
+        "bg-card transition-colors duration-300",
+        variant === "destructive" && "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900"
+      )}
+      className={cn(
+        "relative overflow-hidden rounded-xl border border-border shadow-sm transition-all duration-300 hover:shadow-md",
+        className
+      )}
     >
-
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 @2xl:p-4">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {Icon}
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5 pb-2">
+        <div className="space-y-1">
+          <CardTitle className="text-sm font-semibold tracking-tight text-muted-foreground uppercase">
+            {title}
+          </CardTitle>
+          {description && (
+            <p className="text-xs text-muted-foreground/70">{description}</p>
+          )}
+        </div>
+        {Icon && (
+          <div className={cn(
+            "p-2 rounded-lg bg-primary/10 text-primary",
+            variant === "destructive" && "bg-red-500/10 text-red-600"
+          )}>
+            <Icon className="size-4" />
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="space-y-2 @2xl:p-4 @2xl:pt-0">
-        {children}
-      </CardContent>
-    </MagicCard>
-  );
-}
-
-export function StatsCardWithSearchParams({
-  title,
-  children,
-  className,
-  searchKey,
-  options,
-}: StatsCardProps & { searchKey: string, options: { value: string, label: string }[] }) {
-  const [searchValue, setSearchValue] = useQueryState(searchKey, { defaultValue: options?.[0]?.value || "" });
-
-  return (
-    <MagicCard
-      layerClassName="bg-card"
-      className={cn("hover:-translate-y-2.5 hover:shadow duration-500 rounded-lg shadow", className)}
-    >
-
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 @2xl:p-4">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Select defaultValue={searchValue} onValueChange={(value) => setSearchValue(value)}>
-          <SelectTrigger className="md:h-11">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </CardHeader>
-      <CardContent className="space-y-2 @2xl:p-4 @2xl:pt-0">
-        {children}
+      <CardContent className="p-5 pt-2">
+        <div className="flex items-end justify-between">
+          <div className="w-full">{children}</div>
+          {action && <div className="mb-1">{action}</div>}
+        </div>
       </CardContent>
     </MagicCard>
   );

@@ -164,42 +164,63 @@ export async function allowEntryExit(
       .populate("hostel")
       .populate("student")
       .exec();
+
+    // 1. Basic Validation
     if (!outPass) {
       return Promise.reject("Outpass not found");
     }
-    if (outPass.status !== "pending") {
-      return Promise.reject("Outpass is not approved yet");
+
+    // 2. Check for Invalid States (Rejected/Pending)
+    if (outPass.status === "rejected") {
+      return Promise.reject("This Outpass was REJECTED by the warden.");
     }
-    if (outPass.status === "in_use" && action_type === "exit") {
-      return Promise.reject("Already allowed exit");
+    if (outPass.status === "pending") {
+      return Promise.reject("This Outpass is still PENDING approval.");
     }
-    if (outPass.status === "processed" && action_type === "entry") {
-      return Promise.reject("Already processed entry");
+    if (outPass.status === "processed") {
+      return Promise.reject("This Outpass has already been used and processed.");
     }
 
-    if (action_type === "entry") {
-      if (outPass.actualInTime) {
-        return Promise.reject("Already allowed entry");
-      }
-
-      outPass.actualInTime = new Date();
-      outPass.status = "processed";
-      await outPass.save();
-      return Promise.resolve("Outpass updated successfully");
-    }
+    // 3. Handle EXIT Logic
     if (action_type === "exit") {
+      // Check if already exited
       if (outPass.actualOutTime) {
-        return Promise.reject("Already allowed exit");
+        return Promise.reject("Student has already exited campus.");
       }
+
+      // Update timestamps and status
       outPass.actualOutTime = new Date();
-      outPass.status = "in_use";
+      outPass.status = "in_use"; // Mark as "Currently Outside"
+
       await outPass.save();
-      return Promise.resolve("Outpass updated successfully");
+      return Promise.resolve("Exit allowed successfully.");
     }
-    return Promise.reject("Invalid action type");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject(err?.toString() || "Something went wrong");
+
+    // 4. Handle ENTRY Logic
+    if (action_type === "entry") {
+      // Security Check: Cannot enter if never exited
+      if (!outPass.actualOutTime) {
+        return Promise.reject("Cannot verify Entry: Student has not scanned Exit yet.");
+      }
+
+      // Check if already entered
+      if (outPass.actualInTime) {
+        return Promise.reject("Student has already entered campus.");
+      }
+
+      // Update timestamps and status
+      outPass.actualInTime = new Date();
+      outPass.status = "processed"; // Mark as "Completed/History"
+
+      await outPass.save();
+      return Promise.resolve("Entry allowed successfully.");
+    }
+
+    return Promise.reject("Invalid action type provided.");
+
+  } catch (err: any) {
+    console.error("Entry/Exit Error:", err);
+    return Promise.reject(err?.message || "Internal Server Error");
   }
 }
 

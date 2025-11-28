@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 export type EmptyAreaProps = {
   icons?: LucideIcon[] | React.FC<React.SVGProps<SVGSVGElement>>[];
   title: string;
   description: string | React.ReactNode;
-  actionProps?: React.ComponentProps<typeof Button>;
+  actionProps?: React.ComponentProps<typeof Button> & {
+    href?: string;
+  }
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export default function EmptyArea({
@@ -78,10 +81,16 @@ export default function EmptyArea({
         {description}
       </div>
       {actionProps && (
-        <Button
-          {...actionProps}
-          className={cn("shadow-sm active:shadow-none", actionProps.className)}
-        />
+        actionProps.href ?
+          <Button asChild {...actionProps} className={cn("shadow-sm active:shadow-none", actionProps.className)}>
+           <Link href={actionProps.href}>
+             {actionProps.children}
+           </Link>
+          </Button> :
+          <Button
+            {...actionProps}
+            className={cn("shadow-sm active:shadow-none", actionProps.className)}
+          />
       )}
     </div>
   );

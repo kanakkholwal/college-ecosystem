@@ -1,9 +1,10 @@
 "use server";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
 import { db } from "~/db/connect";
 import {
   personalAttendance,
@@ -151,10 +152,7 @@ export async function forceUpdateAttendanceRecord(
   recordId: string,
   data: Partial<InsertPersonalAttendanceRecord>
 ) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+  const session = await getSession();
   if (!session) {
     throw new Error("You need to be logged in to update an attendance record.");
   }
@@ -177,5 +175,41 @@ export async function forceUpdateAttendanceRecord(
   } catch (err) {
     console.error(err);
     throw new Error("Failed to update attendance record.");
+  }
+}
+
+export async function getAttendanceRecordById(recordId: string) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      throw new Error("You need to be logged in to fetch an attendance record.");
+    }
+    // 1. Fetch the parent record
+    const parent = await db
+      .select()
+      .from(personalAttendance)
+      .where(and(
+        eq(personalAttendance.id, recordId),
+        eq(personalAttendance.userId, session.user.id)
+      ))
+      .limit(1);
+
+    if (parent.length === 0) return null;
+
+    // 2. Fetch the child records
+    const logs = await db
+      .select()
+      .from(personalAttendanceRecords)
+      .where(eq(personalAttendanceRecords.recordId, recordId))
+      .orderBy(desc(personalAttendanceRecords.date));
+
+    // 3. Combine them to match the type PersonalAttendanceWithRecords
+    return {
+      ...parent[0],
+      records: logs,
+    };
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to fetch attendance record.");
   }
 }

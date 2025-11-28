@@ -1,32 +1,32 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator"; // Ensure you have this or use a <div className="h-px bg-border" />
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Save } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { BiLockOpenAlt } from "react-icons/bi";
 import * as z from "zod";
 import { changeUserPassword, updateUser } from "~/actions/dashboard.admin";
 import type { Session } from "~/auth/client";
 import { emailSchema } from "~/constants";
 
+// --- Types & Schemas ---
 interface Props {
   currentUser: Session["user"];
 }
 
-const formSchema = z.object({
+const profileSchema = z.object({
   gender: z.enum(["male", "female", "not_specified"]),
   other_emails: z
     .array(z.union([emailSchema, z.string().email()]))
@@ -34,118 +34,6 @@ const formSchema = z.object({
     .default([]),
 });
 
-function AccountFormContent({ currentUser }: Props) {
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      other_emails: currentUser.other_emails || [],
-      gender: currentUser.gender as "male" | "female" | "not_specified",
-    },
-  });
-
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log(data);
-    toast.promise(
-      updateUser(currentUser.id, {
-        ...data,
-      }),
-      {
-        loading: "Updating user...",
-        success: "User updated successfully",
-        error: "Failed to update user",
-      }
-    );
-  };
-
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="grid gap-4"
-      >
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Gender</FormLabel>
-              <FormDescription>
-                {currentUser.gender === "not_specified"
-                  ? "You can set your gender here."
-                  : "You cannot change your gender."}
-              </FormDescription>
-              <FormControl>
-                <ToggleGroup
-                  defaultValue={"not_specified"}
-                  value={field.value}
-                  onValueChange={(value) =>
-                    currentUser.gender !== "not_specified" &&
-                    field.onChange(value)
-                  }
-                  className="justify-start"
-                  type="single"
-                  disabled={currentUser.gender === "not_specified"}
-                >
-                  {["male", "female", "not_specified"].map((item) => (
-                    <ToggleGroupItem
-                      value={item}
-                      key={item}
-                      size="sm"
-                      className="capitalize"
-                      disabled={currentUser.gender !== "not_specified"}
-                    >
-                      {item.replace("_", " ")}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </FormControl>
-
-
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="other_emails"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Other Emails</FormLabel>
-              <FormDescription>
-                You can add multiple emails separated by commas.
-              </FormDescription>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="Enter other emails separated by commas"
-                  value={field.value?.join(", ")}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value.split(",").map((email) => email.trim())
-                    )
-                  }
-                />
-              </FormControl>
-
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div>
-          <Button
-            type="submit"
-            variant="default_light"
-            size="sm"
-            disabled={form.formState.isSubmitting}
-          >
-            <Save /> Update Account
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-}
 const passwordSchema = z.object({
   password: z
     .string()
@@ -153,10 +41,160 @@ const passwordSchema = z.object({
     .max(128, "Password must be at most 128 characters long")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/, {
       message:
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+        "Password must contain uppercase, lowercase, and numeric characters.",
     }),
 });
-function ChangePasswordForm({ currentUser }: Props) {
+
+// --- Components ---
+
+export function AccountForm({ currentUser }: Props) {
+  return (
+    <div className="space-y-10">
+      <ProfileSection currentUser={currentUser} />
+      <Separator />
+      <SecuritySection currentUser={currentUser} />
+    </div>
+  );
+}
+
+function ProfileSection({ currentUser }: Props) {
+  const isGenderLocked = currentUser.gender !== "not_specified";
+
+  const form = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      other_emails: currentUser.other_emails || [],
+      gender: currentUser.gender as "male" | "female" | "not_specified",
+    },
+  });
+
+  const onSubmit = async (data: z.infer<typeof profileSchema>) => {
+    toast.promise(
+      updateUser(currentUser.id, {
+        ...data,
+      }),
+      {
+        loading: "Saving profile...",
+        success: "Profile updated successfully",
+        error: "Failed to update profile",
+      }
+    );
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-medium">Profile</h3>
+          <p className="text-sm text-muted-foreground">
+            Manage your public profile and personal details.
+          </p>
+        </div>
+
+        {/* Gender Field */}
+        <div className="grid gap-4 md:grid-cols-3 md:gap-8">
+          <div className="space-y-1">
+            <h4 className="text-sm font-medium leading-none">Gender Identity</h4>
+            <p className="text-xs text-muted-foreground">
+              {isGenderLocked
+                ? "This field is locked as it has already been set."
+                : "Please select your gender. This cannot be changed later."}
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ToggleGroup
+                      type="single"
+                      defaultValue={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isGenderLocked}
+                      className="justify-start"
+                    >
+                      {["male", "female", "not_specified"].map((option) => (
+                        <ToggleGroupItem
+                          key={option}
+                          value={option}
+                          className="h-9 px-4 text-sm capitalize data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-input bg-transparent hover:bg-accent hover:text-accent-foreground"
+                        >
+                          {option.replace("_", " ")}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Emails Field */}
+        <div className="grid gap-4 md:grid-cols-3 md:gap-8 border-t pt-6">
+          <div className="space-y-1">
+            <h4 className="text-sm font-medium leading-none">
+              Alternative Emails
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              Add comma-separated emails for account recovery.
+            </p>
+          </div>
+          <div className="md:col-span-2 space-y-4">
+            <FormField
+              control={form.control}
+              name="other_emails"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="alt@example.com, work@example.com"
+                        className="pl-9"
+                        value={field.value?.join(", ")}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value
+                              .split(",")
+                              .map((email) => email.trim())
+                          )
+                        }
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" /> Save Preferences
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+function SecuritySection({ currentUser }: Props) {
+  const [showPassword, setShowPassword] = useState(false);
+
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
@@ -164,12 +202,12 @@ function ChangePasswordForm({ currentUser }: Props) {
     },
   });
 
-  const changePassword = async (data: z.infer<typeof passwordSchema>) => {
+  const onChangePassword = async (data: z.infer<typeof passwordSchema>) => {
     toast
       .promise(changeUserPassword(currentUser.id, data.password), {
-        loading: "Updating password..",
+        loading: "Updating password...",
         success: "Password updated successfully",
-        error: "Something went wrong",
+        error: "Failed to update password",
       })
       .finally(() => {
         passwordForm.reset();
@@ -179,85 +217,76 @@ function ChangePasswordForm({ currentUser }: Props) {
   return (
     <Form {...passwordForm}>
       <form
-        onSubmit={passwordForm.handleSubmit(changePassword)}
-        className="space-y-4 mt-2"
+        onSubmit={passwordForm.handleSubmit(onChangePassword)}
+        className="space-y-8"
       >
-        <FormField
-          control={passwordForm.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <Label htmlFor={field.name}>New Password</Label>
-              <div className="relative group">
-                <FormLabel className="absolute top-1/2 -translate-y-1/2 left-4 z-50">
-                  <BiLockOpenAlt className="w-4 h-4 group-focus-within:text-primary" />
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="*********"
-                    type="password"
-                    autoCapitalize="none"
-                    autoComplete="password"
-                    autoCorrect="off"
-                    className="pl-10 pr-5 !mt-0"
-                    {...field}
-                  />
-                </FormControl>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-medium">Security</h3>
+          <p className="text-sm text-muted-foreground">
+            Update your password and security settings.
+          </p>
+        </div>
 
-        <Button
-          variant="default_light"
-          type="submit"
-          size="sm"
-          disabled={passwordForm.formState.isSubmitting}
-        >
-          <Save />
-          Update Password
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
-const panels = [
-  {
-    value: "account-details",
-    label: "Account Details",
-    description: "Update your account settings.",
-    content: AccountFormContent,
-  },
-  {
-    value: "password",
-    label: "Password",
-    description: "Change your password.",
-    content: ChangePasswordForm,
-  },
-];
-
-export function AccountForm({ currentUser }: Props) {
-  return (
-    <>
-      {panels.map((panel) => {
-        return (
-          <div
-            key={panel.value}
-            className="relative w-full flex-col rounded-lg border bg-card"
-          >
-            <div className="px-3 pt-3 font-medium text-sm"> {panel.label}</div>
-            <p className="text-xs text-muted-foreground mt-0.5 px-3">
-              {panel.description}
+        <div className="grid gap-4 md:grid-cols-3 md:gap-8">
+          <div className="space-y-1">
+            <h4 className="text-sm font-medium leading-none">New Password</h4>
+            <p className="text-xs text-muted-foreground">
+              Please use at least 8 characters, including one uppercase, one
+              lowercase, and a number.
             </p>
-            <div className="my-3 h-px w-full bg-border" />
-            <div className="p-4">
-              <panel.content currentUser={currentUser} />
+          </div>
+          <div className="md:col-span-2 space-y-4">
+            <FormField
+              control={passwordForm.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter new password"
+                        className="pl-9 pr-10"
+                        autoComplete="new-password"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                variant="destructive"
+                size="sm"
+                disabled={passwordForm.formState.isSubmitting}
+              >
+                {passwordForm.formState.isSubmitting ? (
+                  "Updating..."
+                ) : (
+                  <>Update Password</>
+                )}
+              </Button>
             </div>
           </div>
-        );
-      })}
-    </>
+        </div>
+      </form>
+    </Form>
   );
 }

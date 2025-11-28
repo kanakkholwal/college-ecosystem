@@ -1,19 +1,24 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Check, X, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Check, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 interface Props {
   updateAttendanceRecord: (present: boolean) => Promise<string>;
   deleteAttendanceRecord: () => Promise<string>;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  className?: string;
+  deleteFloating?: boolean;
 }
 
-export default function UpdateAttendanceRecord({
+export function UpdateAttendanceRecord({
   updateAttendanceRecord,
   deleteAttendanceRecord,
   children,
+  className,
+  deleteFloating = true,
 }: Props) {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -49,29 +54,39 @@ export default function UpdateAttendanceRecord({
   };
 
   return (
-    <div className="flex gap-2 items-center justify-start mt-4">
+    <div className={cn("flex gap-2 items-center justify-start mt-4", className)}>
       <Button
         variant="success_light"
         disabled={updating}
-        size="icon_sm"
+        size="sm"
         onClick={() => handleUpdate(true)}
+        className="overflow-hidden [&:hover_.check-icon]:scale-110 [&:hover_.check-text]:max-w-xs [&:hover_.check-text]:opacity-100 [&:hover_.check-text]:ml-2"
       >
-        <Check />
+        <Check className="check-icon transition-transform duration-200" />
+        <span className="check-text inline-block max-w-0 opacity-0 transition-all duration-300 ease-out whitespace-nowrap overflow-hidden">
+          Mark as Present
+        </span>
       </Button>
       <Button
         variant="destructive_light"
-        size="icon_sm"
+        size="sm"
         disabled={updating}
         onClick={() => handleUpdate(false)}
+        className="overflow-hidden [&:hover_.check-icon]:scale-110 [&:hover_.check-text]:max-w-xs [&:hover_.check-text]:opacity-100 [&:hover_.check-text]:ml-2"
       >
-        <X />
+        <X className="x-icon transition-transform duration-200" />
+        <span className="check-text inline-block max-w-0 opacity-0 transition-all duration-300 ease-out whitespace-nowrap overflow-hidden">
+          Mark as Absent
+        </span>
       </Button>
       <Button
         variant="destructive_light"
         size="icon_sm"
         disabled={updating}
         onClick={() => handleDelete()}
-        className="absolute right-2 top-2 left-auto bg-transparent"
+        className={cn(
+          deleteFloating && "absolute right-2 top-2 left-auto bg-transparent",
+        )}
       >
         <Trash2 />
       </Button>

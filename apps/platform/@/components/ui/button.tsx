@@ -37,7 +37,7 @@ const buttonVariants = cva(
         light:
           "bg-white shadow text-gray-700 hover:text-gray-700 border border-border",
         glass:
-          "bg-white/90 dark:bg-white/5 backdrop-blur-xl border-slate-600/10 dark:border-border/70",
+          "bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 text-foreground shadow-sm hover:bg-white/90 dark:hover:bg-black/60",
         rainbow:
           "animate-rainbow border-0 bg-[linear-gradient(#121213,#121213),linear-gradient(#121213_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-primary-foreground dark:text-black [background-clip:padding-box,border-box,border-box] [background-origin:border-box] [border:calc(0.125rem)_solid_transparent] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#fff,#fff),linear-gradient(#fff_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
         rainbow_outline:
@@ -81,21 +81,20 @@ const buttonVariants = cva(
         icon_lg: "size-12 p-3.5 [&>svg]:size-6",
         icon_xl: "size-14 p-4 [&>svg]:size-8",
         responsive_lg: "h-9 px-4 py-2 text-sm md:h-11 md:px-5 md:py-3 md:text-base [&>svg]:size-4 md:[&>svg]:size-6 ",
+
       },
       effect: {
         none: "",
-        expandIcon:
-          "group relative group-hover:gap-4 [&>svg.icon]:transition-transform [&>svg.icon]:group-hover:translate-x-1",
-        ringHover:
-          "transition-all duration-300 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2",
+        expandIcon: "group gap-0",
+        ringHover: "hover:ring-2 hover:ring-primary/20 hover:ring-offset-2 transition-all",
         shine:
-          "before:animate-shine relative overflow-hidden before:absolute before:inset-0 before:rounded-[inherit] before:bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.5)_50%,transparent_75%,transparent_100%)] before:bg-[length:250%_250%,100%_100%] before:bg-no-repeat background-position_0s_ease",
+          "before:animate-shine relative overflow-hidden before:absolute before:inset-0 before:rounded-[inherit] before:bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%,transparent_100%)] before:bg-[length:250%_250%,100%_100%] before:bg-no-repeat background-position_0s_ease",
         shineHover:
-          "relative overflow-hidden before:absolute before:inset-0 before:rounded-[inherit] before:bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.5)_50%,transparent_75%,transparent_100%)] before:bg-[length:250%_250%,100%_100%] before:bg-[position:200%_0,0_0] before:bg-no-repeat before:transition-[background-position_0s_ease] hover:before:bg-[position:-100%_0,0_0] before:duration-1000",
+          "relative overflow-hidden before:absolute before:inset-0 before:rounded-[inherit] before:bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%,transparent_100%)] before:bg-[length:250%_250%,100%_100%] before:bg-[position:200%_0,0_0] before:bg-no-repeat before:transition-[background-position_0s_ease] hover:before:bg-[position:-100%_0,0_0] before:duration-1000",
         gooeyRight:
-          "relative z-0 overflow-hidden transition-all duration-600 before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-gradient-to-r from-white/40 before:transition-transform before:duration-1000  hover:before:translate-x-[0%] hover:before:translate-y-[0%]",
+          "relative z-0 overflow-hidden transition-all duration-300 before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-gradient-to-r from-white/20 before:transition-transform before:duration-500 hover:before:translate-x-[0%] hover:before:translate-y-[0%]",
         gooeyLeft:
-          "relative z-0 overflow-hidden transition-all duration-600 after:absolute after:inset-0 after:-z-10 after:translate-x-[-150%] after:translate-y-[150%] after:scale-[2.5] after:rounded-[100%] after:bg-gradient-to-l from-white/40 after:transition-transform after:duration-1000  hover:after:translate-x-[0%] hover:after:translate-y-[0%]",
+          "relative z-0 overflow-hidden transition-all duration-300 after:absolute after:inset-0 after:-z-10 after:translate-x-[-150%] after:translate-y-[150%] after:scale-[2.5] after:rounded-[100%] after:bg-gradient-to-l from-white/20 after:transition-transform after:duration-500 hover:after:translate-x-[0%] hover:after:translate-y-[0%]",
         underline:
           "relative !no-underline after:absolute after:bg-primary after:bottom-2 after:h-[1px] after:w-2/3 after:origin-bottom-left after:scale-x-100 hover:after:origin-bottom-right hover:after:scale-x-0 after:transition-transform after:ease-in-out after:duration-300",
         hoverUnderline:
@@ -122,29 +121,23 @@ const buttonVariants = cva(
       },
       transition: {
         none: "",
-        damped: "active:scale-95",
+        damped: "active:scale-[0.98]",
         scale: "hover:scale-105 active:scale-95",
       },
+      // Shadows are now mostly integrated into variants for better "native" feel, 
+      // but these helpers remain for overrides.
       shadow: {
         none: "shadow-none",
-        default: "shadow-lg shadow-primary/50",
-        default_light: "shadow-md shadow-primary/20",
-        destructive: "shadow-lg shadow-destructive/50",
-        destructive_light: "shadow-md shadow-destructive/10",
-        success: "shadow-md shadow-green-500/50",
-        success_light: "shadow-md shadow-green-500/10",
-        warning: "shadow-md shadow-yellow-500/50",
-        warning_light: "shadow-md shadow-yellow-500/10",
-        dark: "shadow-lg shadow-neutral-900/50",
+        default: "shadow-lg shadow-primary/25",
+        default_light: "shadow-md shadow-primary/10",
+        destructive: "shadow-lg shadow-destructive/20",
+        success: "shadow-md shadow-emerald-500/20",
+        warning: "shadow-md shadow-amber-500/20",
+        dark: "shadow-lg shadow-black/20",
         light: "shadow-md shadow-gray-200/50",
-        glass: "shadow-lg shadow-white/20 dark:shadow-black/20",
+        glass: "shadow-lg shadow-black/5",
       },
     },
-    // compoundVariants:[
-    //   {
-    //     size: "lg",
-    //   }
-    // ],
     defaultVariants: {
       variant: "default",
       size: "default",
@@ -152,7 +145,6 @@ const buttonVariants = cva(
       hoverEffect: "none",
       effect: "none",
       rounded: "default",
-      // shadow: "none",
     },
   }
 );
@@ -240,3 +232,4 @@ const Button = React.forwardRef<
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
+
