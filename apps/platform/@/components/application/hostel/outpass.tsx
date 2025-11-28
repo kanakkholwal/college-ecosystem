@@ -15,9 +15,10 @@ import {
   CalendarClock,
   CheckCircle2,
   Clock,
+  Hash,
   MapPin,
   User,
-  XCircle
+  XCircle,
 } from "lucide-react";
 import type { OutPassType } from "~/models/hostel_n_outpass";
 
@@ -26,48 +27,42 @@ interface OutpassDetailsProps {
   actionEnabled?: boolean;
 }
 
-// 1. Configuration for Status Colors
+// 1. Configuration for Status Colors (Using primary brand colors for subtlety)
 const statusConfig = {
   approved: {
-    border: "border-l-emerald-500",
-    bg: "bg-emerald-50/50 dark:bg-emerald-900/10",
-    text: "text-emerald-700 dark:text-emerald-400",
-    badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100 hover:bg-emerald-200",
+    accent: "text-emerald-500",
+    bg: "bg-emerald-50/70 dark:bg-emerald-950/20",
+    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
     icon: CheckCircle2,
   },
   pending: {
-    border: "border-l-amber-500",
-    bg: "bg-amber-50/50 dark:bg-amber-900/10",
-    text: "text-amber-700 dark:text-amber-400",
-    badge: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 hover:bg-amber-200",
+    accent: "text-amber-500",
+    bg: "bg-amber-50/70 dark:bg-amber-950/20",
+    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
     icon: Clock,
   },
   rejected: {
-    border: "border-l-rose-500",
-    bg: "bg-rose-50/50 dark:bg-rose-900/10",
-    text: "text-rose-700 dark:text-rose-400",
-    badge: "bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100 hover:bg-rose-200",
+    accent: "text-rose-500",
+    bg: "bg-rose-50/70 dark:bg-rose-950/20",
+    badge: "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300",
     icon: XCircle,
   },
   processed: {
-    border: "border-l-blue-500",
-    bg: "bg-blue-50/50 dark:bg-blue-900/10",
-    text: "text-blue-700 dark:text-blue-400",
-    badge: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 hover:bg-blue-200",
+    accent: "text-blue-500",
+    bg: "bg-blue-50/70 dark:bg-blue-950/20",
+    badge: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
     icon: CheckCircle2,
   },
   in_use: {
-    border: "border-l-indigo-500",
-    bg: "bg-indigo-50/50 dark:bg-indigo-900/10",
-    text: "text-indigo-700 dark:text-indigo-400",
-    badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100 hover:bg-indigo-200",
+    accent: "text-indigo-500",
+    bg: "bg-indigo-50/70 dark:bg-indigo-950/20",
+    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
     icon: MapPin,
   },
   // Fallback
   default: {
-    border: "border-l-muted",
-    bg: "bg-card",
-    text: "text-muted-foreground",
+    accent: "text-muted-foreground",
+    bg: "bg-muted/50",
     badge: "secondary",
     icon: Clock,
   }
@@ -80,146 +75,168 @@ export function OutpassDetails({
   const theme = statusConfig[outpass.status] || statusConfig.default;
   const StatusIcon = theme.icon;
 
+  // Helper component for consistent info rows
+  const InfoRow = ({ Icon, label, value, tooltipContent }: { Icon: React.ElementType, label: string, value: string, tooltipContent?: string }) => (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-muted-foreground/80">
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <div className="text-sm font-semibold text-right max-w-[60%] truncate">
+        {tooltipContent ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help">{value}</span>
+              </TooltipTrigger>
+              <TooltipContent><p>{tooltipContent}</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <span>{value}</span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <Card className={cn(
-      "group relative overflow-hidden transition-all duration-200 hover:shadow-md border-l-[4px]",
-      theme.border
+      "group relative overflow-hidden transition-all duration-300 rounded-xl",
+      "hover:shadow-lg hover:ring-1 hover:ring-border", // Soft shadow and border on hover for elevation
     )}>
       
-      {/* --- Header: Identity & Status --- */}
-      <div className="p-4 flex justify-between items-start gap-3">
-        <div className="flex gap-3 overflow-hidden">
-          <Avatar className="h-10 w-10 border border-border shrink-0">
-             {/* Fallback if no image available */}
-            {/* <AvatarImage src={outpass.student?.name} alt={outpass.student?.name} /> */}
-            <AvatarFallback className="bg-muted text-muted-foreground">
+      {/* Subtle Status Indicator Line (Modern Alternative to Thick Border) */}
+      <div className={cn(
+        "absolute top-0 left-0 w-full h-1", 
+        theme.bg, // Use background color
+        theme.accent // Use text color for a subtle accent line
+      )}>
+        <div className={cn("h-full w-1/4", theme.accent)}></div> {/* Small color accent dot/line on the left */}
+      </div>
+
+      {/* --- Header: Student Identity & Status --- */}
+      <div className="p-5 pt-6 flex justify-between items-center gap-3">
+        <div className="flex gap-3 items-center overflow-hidden">
+          <Avatar className="h-11 w-11 border border-border/50 shrink-0"> 
+            <AvatarFallback className="bg-primary/5 text-primary font-bold text-base">
               {outpass.student?.name?.slice(0, 2).toUpperCase() || <User className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex flex-col min-w-0">
-            <h4 className="font-semibold text-sm leading-none truncate text-foreground" title={outpass.student?.name}>
+            <h3 className="font-semibold text-base leading-snug truncate text-foreground" title={outpass.student?.name}> 
               {outpass.student?.name || "Unknown Student"}
-            </h4>
-            <span className="text-xs text-muted-foreground font-mono mt-1">
-              {outpass.student?.rollNumber}
+            </h3>
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
+              <Hash className="h-3 w-3 opacity-60" /> {outpass.student?.rollNumber}
             </span>
           </div>
         </div>
 
-        {/* Status Badge */}
-        <Badge className={cn("uppercase text-[10px] font-bold tracking-wider gap-1.5 pl-1.5 pr-2.5 h-6 shadow-none border-0", theme.badge)}>
-          <StatusIcon className="h-3 w-3" />
-          {outpass.status}
+        {/* Status Badge - Subtle, high-contrast text */}
+        <Badge className={cn("uppercase text-[10px] font-bold tracking-wider gap-1.5 pl-2 pr-3 h-6 shadow-none border-0 transition-colors", theme.badge)}>
+          <StatusIcon className={cn("h-3 w-3", theme.accent)} />
+          {outpass.status.replace(/_/g, ' ')} 
         </Badge>
       </div>
 
-      <Separator className="opacity-50" />
+      <Separator className="opacity-50 mx-5 w-auto" />
 
-      {/* --- Body: Trip Details --- */}
-      <div className="p-4 space-y-4">
+      {/* --- Body: Trip Details (Date, Location, Reason) --- */}
+      <div className="p-5 space-y-5">
         
-        {/* Location Grid */}
-        <div className="grid grid-cols-2 gap-3">
-             <div className="flex flex-col gap-1 bg-muted/40 p-2 rounded-md">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
-                    <BedDouble className="h-3 w-3" /> Hostel
-                </span>
-                <span className="text-xs font-medium truncate" title={`${outpass.hostel.name} - ${outpass.roomNumber}`}>
-                    {outpass.hostel.name} <span className="text-muted-foreground">#{outpass.roomNumber}</span>
-                </span>
-             </div>
-             <div className="flex flex-col gap-1 bg-muted/40 p-2 rounded-md">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> Destination
-                </span>
-                 <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                         <span className="text-xs font-medium truncate cursor-help">
-                            {outpass.address}
-                         </span>
-                      </TooltipTrigger>
-                      <TooltipContent><p>{outpass.address}</p></TooltipContent>
-                    </Tooltip>
-                 </TooltipProvider>
-             </div>
+        {/* Timeline Visual - Using theme background for emphasis */}
+        <div className={cn("rounded-lg p-4 flex items-center justify-between border", theme.bg)}>
+          
+          {/* Out Time */}
+          <div className="flex flex-col">
+            <span className="text-[11px] uppercase font-semibold text-muted-foreground mb-1">Departure</span>
+            <div className="flex items-center gap-2">
+              <CalendarClock className={cn("h-4 w-4", theme.accent)} />
+              <div className="flex flex-col text-sm">
+                <span className="font-bold leading-none">{format(new Date(outpass.expectedOutTime || ""), "dd MMM")}</span>
+                <span className="text-xs font-medium text-muted-foreground/90">{format(new Date(outpass.expectedOutTime || ""), "HH:mm")}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Direction Arrow */}
+          <ArrowRight className={cn("h-4 w-4 opacity-50", theme.accent)} />
+
+          {/* In Time */}
+          <div className="flex flex-col text-right">
+            <span className="text-[11px] uppercase font-semibold text-muted-foreground mb-1">Return</span>
+            <div className="flex items-center justify-end gap-2">
+              <div className="flex flex-col text-sm">
+                <span className="font-bold leading-none">{format(new Date(outpass.expectedInTime || ""), "dd MMM")}</span>
+                <span className="text-xs font-medium text-muted-foreground/90">{format(new Date(outpass.expectedInTime || ""), "HH:mm")}</span>
+              </div>
+              <CalendarClock className={cn("h-4 w-4", theme.accent)} />
+            </div>
+          </div>
         </div>
 
-        {/* Reason Text */}
-        <div className="text-xs">
-            <span className="text-muted-foreground">Reason: </span>
-            <span className="font-medium text-foreground">{outpass.reason}</span>
-        </div>
+        {/* Location & Reason List */}
+        <div className="space-y-3 pt-1">
+          
+          <InfoRow 
+            Icon={BedDouble} 
+            label="Hostel/Room" 
+            value={`${outpass.hostel.name} #${outpass.roomNumber}`} 
+          />
 
-        {/* Timeline Visual */}
-        <div className={cn("rounded-lg border p-3 flex items-center justify-between", theme.bg)}>
-            {/* Out Time */}
-            <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold opacity-70 mb-0.5">Leaving</span>
-                <div className="flex items-center gap-1.5">
-                    <CalendarClock className={cn("h-3.5 w-3.5", theme.text)} />
-                    <span className="text-xs font-semibold">
-                         {format(new Date(outpass.expectedOutTime || ""), "dd MMM, HH:mm")}
-                    </span>
-                </div>
-            </div>
-
-            {/* Direction Arrow */}
-            <ArrowRight className={cn("h-4 w-4 opacity-40", theme.text)} />
-
-            {/* In Time */}
-            <div className="flex flex-col text-right">
-                <span className="text-[10px] uppercase font-bold opacity-70 mb-0.5">Returning</span>
-                <div className="flex items-center justify-end gap-1.5">
-                    <span className="text-xs font-semibold">
-                         {format(new Date(outpass.expectedInTime || ""), "dd MMM, HH:mm")}
-                    </span>
-                    <CalendarClock className={cn("h-3.5 w-3.5", theme.text)} />
-                </div>
-            </div>
+          <InfoRow 
+            Icon={MapPin} 
+            label="Destination" 
+            value={outpass.address} 
+            tooltipContent={outpass.address}
+          />
+        
+          <div className="text-sm pt-2">
+              <p className="font-semibold text-foreground/90 mb-1">Reason:</p>
+              <blockquote className="text-muted-foreground/90 italic text-[13px] leading-snug">
+                {outpass.reason}
+              </blockquote>
+          </div>
         </div>
       </div>
 
-      {/* --- Footer: Actions --- */}
-      {/* Logic: 
-         1. If "Pending" AND actionEnabled -> Show Action Buttons (Approve/Reject).
-         2. Else, preserve the visual space or show Checkbox if enabled for other statuses.
-      */}
+      {/* --- Footer: Actions / Status Log --- */}
       {actionEnabled && (
-         <div className="bg-muted/20 px-4 py-3 border-t flex items-center justify-between gap-3">
-             
-             {/* If Pending, show the Footer Actions (Approve/Reject buttons presumably) */}
-             {outpass.status === "pending" ? (
-                 <div className="w-full">
-                     <OutpassActionFooter outpassId={outpass._id} />
-                 </div>
-             ) : (
-                 <div className="text-[10px] text-muted-foreground italic w-full text-center py-1">
-                    {outpass.status === 'approved' ? "Action completed" : "No actions available"}
-                 </div>
-             )}
+          <div className="bg-muted/30 px-5 py-3 border-t flex items-center justify-between gap-4">
+              
+              {/* Conditional Action Buttons or Status Message */}
+              {outpass.status === "pending" ? (
+                  <div className="w-full">
+                      {/* OutpassActionFooter should contain clear, full-width Approve/Reject buttons */}
+                      <OutpassActionFooter outpassId={outpass._id} />
+                  </div>
+              ) : (
+                  <div className="text-xs text-muted-foreground italic w-full text-center py-1">
+                      {outpass.status === 'approved' ? "Action completed. Outpass is valid." : 
+                       outpass.status === 'rejected' ? "Request has been rejected." : 
+                       "No immediate actions required."}
+                  </div>
+              )}
 
-             {/* Checkbox (Preserved from original code) */}
-             {/* Only show checkbox if it's not pending (since pending has buttons), 
-                 OR if you want to allow bulk selection of pending items too. 
-                 Positioning it to the side. */}
-             <div className="shrink-0">
-                <Checkbox 
-                    className="h-5 w-5 border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                    checked={outpass.status === "approved"} // Kept original logic
-                    onCheckedChange={() => {}} // Add handler if needed
-                />
-             </div>
-         </div>
+              {/* Checkbox for bulk selection */}
+              <div className="shrink-0 pl-4 border-l border-border/80">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Checkbox 
+                            aria-label="Select Outpass"
+                            className="h-4 w-4 border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground transition-colors"
+                            checked={false} 
+                            onCheckedChange={() => {}} 
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent><p>Select for bulk action</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+              </div>
+          </div>
       )}
-
-      {/* Hover Menu (Optional Enhancement) */}
-      {/* <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-         <Button variant="ghost" size="icon" className="h-8 w-8">
-             <MoreVertical className="h-4 w-4" />
-         </Button>
-      </div> */}
 
     </Card>
   );

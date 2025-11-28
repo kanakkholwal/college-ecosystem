@@ -179,7 +179,7 @@ export default function OutPassRequestsPage() {
                   
                   {/* Grid Layout */}
                   {!isEmpty ? (
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 5xl:grid-cols-4 gap-4">
                         {items.map((outpass, idx) => (
                            <div key={outpass._id} style={{ animationDelay: `${idx * 50}ms` }} className="animate-in fade-in fill-mode-backwards">
                                <OutpassDetails
