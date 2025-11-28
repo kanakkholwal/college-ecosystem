@@ -45,12 +45,9 @@ export function StatsCard({
           )}
         </div>
         {Icon && (
-          <div className={cn(
-            "p-2 rounded-lg bg-primary/10 text-primary",
-            variant === "destructive" && "bg-red-500/10 text-red-600"
-          )}>
+          <>
             {typeof Icon === "function" ? <Icon className="size-4" /> : Icon}
-          </div>
+          </>
         )}
       </CardHeader>
       <CardContent className="p-5 pt-2">

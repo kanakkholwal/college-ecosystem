@@ -197,9 +197,7 @@ export default function OutpassRender({
             {/* Header */}
             <div className="flex justify-between items-start border-b border-slate-100 pb-5 mb-6">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center text-white">
-                  <Building2 className="h-5 w-5" />
-                </div>
+            
                 <div>
                   <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
                     {orgConfig.name}

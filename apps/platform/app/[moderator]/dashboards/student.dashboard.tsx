@@ -31,20 +31,19 @@ export default async function StudentDashboard({ role }: { role: string }) {
 
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-10 py-8 px-4 sm:px-6">
-      
-      {/* SECTION 1: HERO STATS (Bento Layout) */}
+
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-           <LayoutGrid className="size-5 text-muted-foreground" />
-           <h2 className="text-lg font-semibold tracking-tight">Overview</h2>
+          <LayoutGrid className="size-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold tracking-tight">Overview</h2>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          
+
           {/* Rank Card - Takes prominence */}
-          <StatsCard 
-            title="Class Rank" 
-            Icon={Trophy}
+          <StatsCard
+            title="Class Rank"
+            Icon={<Trophy className="size-4" />}
             description="Your standing within your batch & branch."
             className="lg:col-span-1"
           >
@@ -61,9 +60,9 @@ export default async function StudentDashboard({ role }: { role: string }) {
           </StatsCard>
 
           {/* Hostel Card - Handles Banned State visually */}
-          <StatsCard 
-            title="Hostel Status" 
-             Icon={BedDouble}
+          <StatsCard
+            title="Hostel Status"
+            Icon={<BedDouble className="size-4" />}
             variant={dashboardData.hosteler?.banned ? "destructive" : "default"}
             description={dashboardData.hosteler ? "Your current residence." : "No hostel assigned."}
             className="lg:col-span-1"
@@ -74,11 +73,11 @@ export default async function StudentDashboard({ role }: { role: string }) {
                   {dashboardData.hosteler.hostelName}
                 </h5>
                 <div className="flex items-center gap-3">
-                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
-                      <span className="font-medium">Room:</span> 
-                      {dashboardData.hosteler.roomNumber}
-                   </div>
-                   {dashboardData.hosteler?.banned && (
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+                    <span className="font-medium">Room:</span>
+                    {dashboardData.hosteler.roomNumber}
+                  </div>
+                  {dashboardData.hosteler?.banned && (
                     <Badge variant="destructive" className="animate-pulse">
                       Banned
                     </Badge>
@@ -87,16 +86,16 @@ export default async function StudentDashboard({ role }: { role: string }) {
               </div>
             ) : (
               <div className="flex flex-col justify-center h-full min-h-[60px]">
-                 <p className="text-sm text-muted-foreground">Contact admin for allotment.</p>
+                <p className="text-sm text-muted-foreground">Contact admin for allotment.</p>
               </div>
             )}
           </StatsCard>
 
           {/* Outpass Card */}
           {dashboardData.hosteler && (
-            <StatsCard 
-              title="Outpasses" 
-               Icon={Ticket}
+            <StatsCard
+              title="Outpasses"
+              Icon={<Ticket className="size-4" />}
               description="Total approved exits this semester."
               className="lg:col-span-1"
             >
@@ -123,10 +122,10 @@ export default async function StudentDashboard({ role }: { role: string }) {
       {/* SECTION 3: QUICK LINKS */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-           <Link2 className="size-5 text-muted-foreground" />
-           <h2 className="text-lg font-semibold tracking-tight">Quick Actions</h2>
+          <Link2 className="size-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold tracking-tight">Quick Actions</h2>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {quick_links.map((link, i) => (
             <RouterCard
