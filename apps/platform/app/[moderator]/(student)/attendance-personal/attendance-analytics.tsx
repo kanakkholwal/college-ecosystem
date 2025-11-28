@@ -61,21 +61,21 @@ const AttendanceAnalytics: React.FC<AttendanceAnalyticsProps> = ({ records }) =>
          <StatBox 
             label="Classes Attended" 
             value={presentClasses} 
-            icon={CheckCircle2}
+             Icon={CheckCircle2}
             color="text-emerald-600"
             bg="bg-emerald-500/10"
          />
          <StatBox 
             label="Classes Missed" 
             value={absentClasses} 
-            icon={XCircle}
+             Icon={XCircle}
             color="text-red-600"
             bg="bg-red-500/10"
          />
          <StatBox 
             label="Total Sessions" 
             value={totalClasses} 
-            icon={Calculator}
+             Icon={Calculator}
             color="text-blue-600"
             bg="bg-blue-500/10"
             className="col-span-2"

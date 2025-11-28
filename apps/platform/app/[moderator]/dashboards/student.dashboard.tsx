@@ -44,7 +44,7 @@ export default async function StudentDashboard({ role }: { role: string }) {
           {/* Rank Card - Takes prominence */}
           <StatsCard 
             title="Class Rank" 
-            icon={Trophy}
+            Icon={Trophy}
             description="Your standing within your batch & branch."
             className="lg:col-span-1"
           >
@@ -63,7 +63,7 @@ export default async function StudentDashboard({ role }: { role: string }) {
           {/* Hostel Card - Handles Banned State visually */}
           <StatsCard 
             title="Hostel Status" 
-            icon={BedDouble}
+             Icon={BedDouble}
             variant={dashboardData.hosteler?.banned ? "destructive" : "default"}
             description={dashboardData.hosteler ? "Your current residence." : "No hostel assigned."}
             className="lg:col-span-1"
@@ -96,7 +96,7 @@ export default async function StudentDashboard({ role }: { role: string }) {
           {dashboardData.hosteler && (
             <StatsCard 
               title="Outpasses" 
-              icon={Ticket}
+               Icon={Ticket}
               description="Total approved exits this semester."
               className="lg:col-span-1"
             >

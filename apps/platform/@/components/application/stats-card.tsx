@@ -2,13 +2,12 @@
 import { MagicCard } from "@/components/animation/magic-card";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
 
 export type StatsCardProps = {
   title: string;
   children: React.ReactNode;
   description?: string;
-  icon?: LucideIcon;
+  Icon?: React.FC<React.SVGProps<SVGSVGElement>> |  React.ReactNode;
   action?: React.ReactNode;
   className?: string;
   variant?: "default" | "destructive";
@@ -18,7 +17,7 @@ export function StatsCard({
   title,
   children,
   description,
-  icon: Icon,
+  Icon,
   action,
   className,
   variant = "default",
@@ -50,7 +49,7 @@ export function StatsCard({
             "p-2 rounded-lg bg-primary/10 text-primary",
             variant === "destructive" && "bg-red-500/10 text-red-600"
           )}>
-            <Icon className="size-4" />
+            {typeof Icon === "function" ? <Icon className="size-4" /> : Icon}
           </div>
         )}
       </CardHeader>

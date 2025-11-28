@@ -1,7 +1,7 @@
 "use client";
 import { Icon } from "@/components/icons";
-import { BannerPanel } from "@/components/utils/banner";
-import ConditionalRender from "@/components/utils/conditional-render";
+// import { BannerPanel } from "@/components/utils/banner";
+// import ConditionalRender from "@/components/utils/conditional-render";
 import type { Session } from "~/auth/client";
 
 
@@ -43,7 +43,7 @@ const PROMO = {
 export function LayoutClient({ user }: { user?: Session["user"] }) {
     return null; // Disable the banner for now
     return <>
-        <ConditionalRender
+        {/* <ConditionalRender
             condition={true} //PROMO.getConditionByUser(user) <--- Uncomment this line to enable the banner based on condition
         >
 
@@ -53,7 +53,7 @@ export function LayoutClient({ user }: { user?: Session["user"] }) {
                 description={PROMO.description}
                 redirectUrl={PROMO.getRedirectUrl()}
                 isClosable={true}
-                icon={<Icon name="rocket" className="size-4 text-primary" />}
+                 Icon={<Icon name="rocket" className="size-4 text-primary" />}
                 btnProps={{
                     children: null,
                     className:"hidden"
@@ -66,7 +66,7 @@ export function LayoutClient({ user }: { user?: Session["user"] }) {
             // And user role and
 
             />
-        </ConditionalRender>
+        </ConditionalRender> */}
 
 
     </>;

@@ -42,7 +42,7 @@ export function DashboardTemplate({ user_role, searchParams }: DashboardTemplate
         <>
           {/* <ConditionalRender condition={user_role === "student"}>
             <BannerPanel
-              icon={<RocketIcon className="size-4 text-muted-foreground" />}
+               Icon={<RocketIcon className="size-4 text-muted-foreground" />}
               isClosable={true}
               className="rounded-xl bg-card"
               title="Suggest a Feature"

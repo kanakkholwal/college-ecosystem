@@ -33,6 +33,7 @@ import { getHostels } from "~/actions/hostel.core";
 import { auth } from "~/auth";
 import type { HostelType } from "~/models/hostel_n_outpass";
 import { CreateHostelForm, ImportFromSiteButton } from "./client";
+
 export default async function ChiefWardenPage({
   params,
 }: {
@@ -162,7 +163,7 @@ interface HostelCardProps {
   disabled: boolean;
 }
 
-export function HostelCard({ hostel, href, disabled }: HostelCardProps) {
+function HostelCard({ hostel, href, disabled }: HostelCardProps) {
   const isGirls = hostel.gender === "female";
 
   // Visual Theme Configuration based on Gender/Status

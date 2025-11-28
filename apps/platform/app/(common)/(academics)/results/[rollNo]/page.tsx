@@ -159,10 +159,10 @@ export default async function ResultsPage(props: Props) {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4">
-          <StatCard icon={Target} label="Max CGPI" value={maxCgpi.toFixed(2)} color="blue" />
-          <StatCard icon={BarChart3} label="Min CGPI" value={minCgpi.toFixed(2)} color="purple" />
-          <StatCard icon={Award} label="Batch Rank" value={`#${result.rank.batch}`} color="orange" />
-          <StatCard icon={Trophy} label="Branch Rank" value={`#${result.rank.branch}`} color="green" />
+          <StatCard  Icon={Target} label="Max CGPI" value={maxCgpi.toFixed(2)} color="blue" />
+          <StatCard  Icon={BarChart3} label="Min CGPI" value={minCgpi.toFixed(2)} color="purple" />
+          <StatCard  Icon={Award} label="Batch Rank" value={`#${result.rank.batch}`} color="orange" />
+          <StatCard  Icon={Trophy} label="Branch Rank" value={`#${result.rank.branch}`} color="green" />
         </div>
 
         <AdUnit adSlot="display-horizontal" key={"results-page-ad-header-" + result.rollNo} />
@@ -273,12 +273,12 @@ const getCgpiTrendColor = (cgpi: number, prevCgpi?: number) => {
 };
 /* Stat Card Component */
 function StatCard({
-  icon: Icon,
+  Icon,
   label,
   value,
   color = "primary"
 }: {
-  icon: React.ElementType;
+  Icon: React.ElementType;
   label: string;
   value: string;
   color?: "blue" | "green" | "purple" | "orange" | "primary";

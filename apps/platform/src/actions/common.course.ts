@@ -5,10 +5,10 @@ import { headers } from "next/headers";
 import { auth } from "~/auth";
 import { db } from "~/db/connect";
 import {
-    booksAndReferences,
-    chapters,
-    courses,
-    previousPapers,
+  booksAndReferences,
+  chapters,
+  courses,
+  previousPapers,
 } from "~/db/schema";
 
 // Infer types for courses
@@ -127,9 +127,28 @@ export async function getCourseById(id: string) {
   return (course[0] as CourseSelect) || null;
 }
 
-export async function createCourse(course: CourseInsert) {
-  const newCourse = await db.insert(courses).values(course).returning();
-  return newCourse[0] as CourseSelect;
+export async function createCourse(data: Omit<CourseInsert, "id" | "createdAt" | "updatedAt">) {
+  const headersList = await headers();
+  const session = await auth.api.getSession({ headers: headersList });
+  
+  if (!session) throw new Error("Unauthorized");
+  
+  // Authorization check (Admin, Faculty, CR)
+  const { role, other_roles } = session.user;
+  const isAuthorized = role === "admin" || other_roles.includes("cr") || other_roles.includes("faculty");
+  
+  if (!isAuthorized) throw new Error("You do not have permission to create courses.");
+
+  // Insert
+  const [newCourse] = await db
+    .insert(courses)
+    .values({
+        ...data,
+        outcomes: data.outcomes || [], // Ensure array if undefined
+    })
+    .returning();
+
+  return newCourse as CourseSelect;
 }
 
 export async function updateCourseByCr(course: Partial<CourseSelect>) {
@@ -163,6 +182,51 @@ export async function updateCourseByCr(course: Partial<CourseSelect>) {
   return updatedCourse[0] as CourseSelect;
 }
 
+export async function updateOrInsertChapterForCourseId(
+  courseId: string,
+  action: "update" | "insert",
+  chapterData: Partial<ChapterSelect>,
+  chapterId?: string,
+) {
+  try{
+    if (action === "update") {
+      if (!chapterId) {
+        throw new Error("Chapter id is required for update");
+      }
+      const updatedChapter = await db
+        .update(chapters)
+        .set(chapterData)
+        .where(
+          and(eq(chapters.id, chapterId), eq(chapters.courseId, courseId))
+        )
+        .returning();
+      return updatedChapter[0] as ChapterSelect;
+    } else if (action === "insert") {
+      const newChapter = await db
+        .insert(chapters)
+        .values({
+          courseId,
+          title: chapterData.title || "New Chapter",
+          lectures: chapterData.lectures || 0,
+          topics: chapterData.topics || [],
+        })
+        .returning();
+      return newChapter[0] as ChapterSelect;
+    }
+   
+  } catch (error) {
+    throw new Error("Failed to update chapter: " + (error as Error).message);
+  }
+}
+export async function deleteChapter(chapterId: string, courseId: string) {
+  const deletedChapter = await db
+    .delete(chapters)
+    .where(
+      and(eq(chapters.id, chapterId), eq(chapters.courseId, courseId))
+    )
+    .returning();
+  return deletedChapter[0] as ChapterSelect;
+}
 export async function updateBooksAndRefPublic(
   courseId: string,
   booksRef: Pick<BookReferenceInsert, "name" | "link" | "type">
@@ -225,3 +289,4 @@ export async function deleteCourse(id: string) {
     .returning();
   return deletedCourse[0] as CourseSelect;
 }
+

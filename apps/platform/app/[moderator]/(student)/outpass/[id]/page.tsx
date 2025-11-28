@@ -69,7 +69,7 @@ export default async function OutPassDetailsPage({
                             <TimelineStep
                                 title="Request Submitted"
                                 date={outpass.createdAt}
-                                icon={Clock}
+                                 Icon={Clock}
                                 status="completed"
                                 description="Waiting for approval from warden."
                             />
@@ -78,7 +78,7 @@ export default async function OutPassDetailsPage({
                             <TimelineStep
                                 title={outpass.status === 'rejected' ? "Request Rejected" : "Warden Approval"}
                                 date={outpass.status !== 'pending' ? (outpass.updatedAt || new Date()) : undefined}
-                                icon={outpass.status === 'rejected' ? XCircle : ShieldCheck}
+                                 Icon={outpass.status === 'rejected' ? XCircle : ShieldCheck}
                                 status={outpass.status === 'pending' ? 'current' : (outpass.status === 'rejected' ? 'error' : 'completed')}
                                 description={
                                     outpass.status === 'pending' ? "Review in progress..." :
@@ -91,7 +91,7 @@ export default async function OutPassDetailsPage({
                             <TimelineStep
                                 title="Exited Campus"
                                 date={outpass.actualOutTime}
-                                icon={DoorOpen}
+                                 Icon={DoorOpen}
                                 status={
                                     ['in_use', 'processed'].includes(outpass.status) ? 'completed' :
                                         outpass.status === 'approved' ? 'upcoming' : 'locked'
@@ -103,7 +103,7 @@ export default async function OutPassDetailsPage({
                             <TimelineStep
                                 title="Returned to Campus"
                                 date={outpass.actualInTime}
-                                icon={MapPin}
+                                 Icon={MapPin}
                                 status={outpass.status === 'processed' ? 'completed' : 'locked'}
                                 description="Outpass closed."
                                 isLast
@@ -136,13 +136,13 @@ export default async function OutPassDetailsPage({
 interface TimelineStepProps {
     title: string;
     date?: Date | string | null;
-    icon: React.ElementType;
+    Icon: React.ElementType;
     status: 'completed' | 'current' | 'upcoming' | 'locked' | 'error';
     description?: string;
     isLast?: boolean;
 }
 
-function TimelineStep({ title, date, icon: Icon, status, description, isLast }: TimelineStepProps) {
+function TimelineStep({ title, date, Icon, status, description, isLast }: TimelineStepProps) {
     const statusStyles = {
         completed: "bg-primary/20 text-primary border-transparent",
         current: "bg-background text-primary border-primary ring-4 ring-primary/10",
