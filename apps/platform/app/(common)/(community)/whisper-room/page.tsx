@@ -1,111 +1,128 @@
 "use client";
 
-import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ButtonLink } from "@/components/utils/link";
 import { motion } from "framer-motion";
-import { PenLine, Podcast, ShieldCheck, Users } from "lucide-react";
-import Link from "next/link";
-import { RiSpeakLine } from "react-icons/ri";
+import {
+  ArrowRight,
+  Ghost,
+  MessageSquareQuote,
+  ShieldCheck,
+  Sparkles,
+  VenetianMask
+} from "lucide-react";
 
 const features = [
   {
-    icon: <ShieldCheck className="h-8 w-8 text-primary" />,
-    title: "Safe & Anonymous",
-    desc: "Confess, vent, or share thoughts freely. Your identity stays protected unless you choose otherwise.",
+    icon: <VenetianMask className="size-6 text-indigo-500" />,
+    title: "True Anonymity",
+    desc: "Your identity is cryptographically secure. Speak your mind without the fear of judgment.",
   },
   {
-    icon: <Users className="h-8 w-8 text-primary" />,
-    title: "Real College Voices",
-    desc: "Read unfiltered experiences, opinions, and stories from your campus peers.",
+    icon: <MessageSquareQuote className="size-6 text-rose-500" />,
+    title: "Unfiltered Dialogue",
+    desc: "From confessions to critiques—experience the raw, authentic voice of the campus.",
   },
   {
-    icon: <PenLine className="h-8 w-8 text-primary" />,
-    title: "Express Yourself",
-    desc: "Write posts, polls, and attach media. From shower thoughts to bold critiques—everything belongs.",
+    icon: <ShieldCheck className="size-6 text-emerald-500" />,
+    title: "Community Moderated",
+    desc: "A safe space maintained by the community. Toxic behavior is filtered out, truth remains.",
   },
 ];
+
 export default function WhisperLandingPage() {
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 py-12">
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-3xl"
-      >
-        <div className="flex items-center justify-center mb-4">
-          <Podcast className="h-10 w-10 text-primary animate-pulse" />
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
-          Whisper Room
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          A safe, anonymous corner of your campus community. Share confessions,
-          criticisms, praises, and unfiltered thoughts—without judgment.
-        </p>
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
+      
+      {/* Background Ambience */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none opacity-50 dark:opacity-20" />
+      
+      <div className="relative z-10 max-w-5xl mx-auto w-full flex flex-col items-center gap-16 py-20">
+        
+        {/* --- Hero Section --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center space-y-6 max-w-3xl mx-auto"
+        >
+          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-2 ring-1 ring-indigo-500/20 shadow-lg shadow-indigo-500/10">
+            <Ghost className="size-8" />
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
+            The Whisper Room
+          </h1>
+          
+          <p className="text-xl text-muted-foreground leading-relaxed text-balance max-w-2xl mx-auto">
+            A digital sanctuary for anonymous expression. 
+            Share your confessions, secrets, and unfiltered thoughts with the campus community.
+          </p>
 
-        <div className="mt-6 flex gap-4 justify-center">
-          <ButtonLink size="lg"href="/whisper-room/whisper">
-            <RiSpeakLine />
-            Start Whispering
-          </ButtonLink>
-          <ButtonLink variant="outline" size="lg"  href="/whisper-room/feed">
-            Explore Feed
-            <Icon name="arrow-right"  />
-          </ButtonLink>
-        </div>
-      </motion.div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <ButtonLink 
+                href="/whisper-room/whisper" 
+                size="lg" 
+                variant="default"
+                className="h-12 px-8 rounded-full text-base shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:scale-105"
+            >
+              <Sparkles className="mr-2 size-4" /> Start Whispering
+            </ButtonLink>
+            <ButtonLink 
+                href="/whisper-room/feed" 
+                size="lg" 
+                variant="outline"
+                className="h-12 px-8 rounded-full text-base bg-background/50 backdrop-blur-sm border-border/50 hover:bg-background/80"
+            >
+              Read Confessions <ArrowRight className="ml-2 size-4" />
+            </ButtonLink>
+          </div>
+        </motion.div>
 
-      {/* Features Section */}
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        transition={{ staggerChildren: 0.15 }}
-        className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl"
-      >
-        {features.map((f, i) => (
-          <motion.div
-            key={i}
-            variants={{
-              hidden: { opacity: 0, y: 30 },
-              visible: { opacity: 1, y: 0 },
-            }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card className="shadow-md hover:shadow-lg transition-all">
-              <CardContent className="p-6 flex flex-col items-center text-center">
+        {/* --- Features Grid --- */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={{
+            visible: { transition: { staggerChildren: 0.1 } },
+          }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full"
+        >
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="group relative p-8 rounded-3xl border border-border/50 bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5"
+            >
+              <div className="mb-4 inline-flex p-3 rounded-xl bg-background border border-border/50 shadow-sm group-hover:scale-110 transition-transform duration-300">
                 {f.icon}
-                <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                {f.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {f.desc}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
 
-      {/* Closing CTA */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-        className="mt-20 max-w-2xl"
-      >
-        <h2 className="text-2xl font-bold">
-          Your thoughts deserve to be heard.
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          Whether it’s a secret, an idea, or just a random shower thought—let it
-          out in the Whisper Room.
-        </p>
-        <Button asChild size="lg" className="mt-6">
-          <Link href="/whisper-room/page">Create a Whisper</Link>
-        </Button>
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 1 }}
+          className="text-center space-y-6 pt-10"
+        >
+          <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground/60">
+            Safe • Anonymous • Encrypted
+          </p>
+          <div className="h-px w-24 bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
+        </motion.div>
+
+      </div>
     </div>
   );
 }

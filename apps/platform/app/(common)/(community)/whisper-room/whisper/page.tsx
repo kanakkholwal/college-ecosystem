@@ -1,433 +1,65 @@
 "use client";
 
-import { BaseHeroSection } from "@/components/application/base-hero";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioStyle } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { ButtonLink } from "@/components/utils/link";
+import { useActionState } from "@/hooks/useActionState";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Content, JSONContent } from "@tiptap/react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BarChart2,
+  Dice5,
+  Ghost,
+  Hash,
+  Loader2,
+  Send,
+  User,
+  VenetianMask,
+  X
+} from "lucide-react";
+import { nanoid } from "nanoid";
+import { NexoEditor } from "nexo-editor";
+import "nexo-editor/index.css";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { createWhisperPost } from "~/actions/community.whisper";
 import {
   CATEGORY_OPTIONS,
   rawWhisperPostSchema,
   VISIBILITY_OPTIONS,
 } from "~/constants/community.whispers";
 
-import { Icon } from "@/components/icons";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { ButtonLink } from "@/components/utils/link";
-import { useActionState } from "@/hooks/useActionState";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { Content, JSONContent } from "@tiptap/react";
-import { nanoid } from "nanoid";
-import {
-  NexoEditor
-} from "nexo-editor";
-import "nexo-editor/index.css";
-import { useFieldArray, useForm } from "react-hook-form";
-import { createWhisperPost } from "~/actions/community.whisper";
-
-
-export default function WhisperRoomPage() {
-  const [contentSize, setContentSize] = useState<number>(0);
-
-  const [savePost, state] = useActionState(createWhisperPost)
-  const form = useForm<z.infer<typeof rawWhisperPostSchema>>({
-    resolver: zodResolver(rawWhisperPostSchema),
-    defaultValues: {
-      content_json: {
-        type: "doc",
-        content: [
-
-        ],
-      } as Content,
-      visibility: VISIBILITY_OPTIONS[0].value,
-      category: CATEGORY_OPTIONS[0].value,
-      poll: undefined,
-    },
-  });
-
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "poll.options",
-    shouldUnregister: true, // this prevents keeping stale poll data when poll is turned off
-  });
-  const pollEnabled = form.watch("poll") !== undefined;
-
-  async function onSubmit(values: z.infer<typeof rawWhisperPostSchema>) {
-    try {
-      setLoading(true);
-      console.log("Submitting whisper:", values);
-
-      const toastId = toast.loading('Whispering your secret...');
-      const post = await savePost(values);
-
-      if (post.data) {
-        toast.dismiss(toastId);
-        console.log("Whisper shared successfully!");
-        toast.success("✨ Whisper shared successfully!");
-        router.push("/whisper-room/feed");
-      }
-      if (post.error) {
-        toast.dismiss(toastId);
-        throw post.error;
-      }
-    } catch {
-      toast.error("Something went wrong 😵", {
-        // title: "Something went wrong 😵",
-        description: "Try again in a moment.",
-        // variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-  const hasErrors = Object.keys(form.formState.errors).length > 0;
-  if (hasErrors) {
-    console.log("Form errors:", form.formState.errors);
-    console.log("Form is not valid:", form.getValues());
-  }
-
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-6xl mx-auto"
-      >
-        <BaseHeroSection
-          title="Whisper Room 💬 (Beta)"
-          description="Drop your confessions, shower thoughts, or praises. Be real, be anonymous, be pseudo."
-        >
-          <ButtonLink href="/whisper-room/feed" shadow="none" variant="default_light"><Icon name="podcast" />Go to Feed</ButtonLink>
-        </BaseHeroSection>
-
-        <Card className="border-none shadow-lg p-0">
-          <CardContent className="gap-8 grid grid-cols-12 p-3 md:p-6">
-            {/* Editor Section */}
-            <FormField
-              control={form.control}
-              name="content_json"
-              render={({ field }) => (
-                <FormItem className="flex flex-col space-y-3 md:col-span-8 col-span-12 bg-card p-4 rounded-lg border">
-                  <div className="flex items-center gap-3 flex-wrap justify-between">
-                    <FormLabel>Your Whisper</FormLabel>
-                    <Badge variant={contentSize > 5000 ? "destructive" : "default"} className="ml-auto">
-                      {contentSize} / 5000 characters
-                    </Badge>
-                  </div>
-                  <FormControl>
-                    <NexoEditor
-                      content={field.value as Content}
-                      placeholder="What’s on your mind? 🤔 (Max 5000 chars)"
-                      onChange={(content) => {
-                        field.onChange(content);
-
-                        const size = contentJsonToText(content as JSONContent).length;
-                        setContentSize(size);
-                        if (size > 5000) {
-                          toast.success("Content too long 😵", {
-                            description: "Please limit your whisper to 5000 characters.",
-                            // variant: "destructive",
-                          });
-                          return;
-                        } else if (size < 3) {
-                          return;
-                        }
-                      }}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Markdown supported. Be respectful and keep it safe for campus 🌸
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Sidebar Section */}
-            <div className="md:col-span-4 col-span-12 space-y-6">
-              {/* Visibility */}
-              <FormField
-                control={form.control}
-                name="visibility"
-                render={({ field }) => (
-                  <FormItem className="space-y-2 bg-card p-4 rounded-lg border">
-                    <FormLabel>Choose your vibe ✨</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        className="space-y-4 mt-2"
-                      >
-                        {VISIBILITY_OPTIONS.map((option) => (
-                          <div key={option.value}>
-                            <Label
-                              htmlFor={option.value}
-                              className={cn(
-                                "flex items-center space-x-2 cursor-pointer font-medium"
-                              )}
-                            >
-                              <input
-                                type="radio"
-                                name={field.name}
-                                value={option.value}
-                                id={option.value}
-                                checked={field.value === option.value}
-                                onChange={() => field.onChange(option.value)}
-                                className={cn(RadioStyle.input, "border-4")}
-                              />
-                              <span>{option.label}</span>
-                            </Label>
-                            <p className="text-xs text-muted-foreground mt-1 ml-6">
-                              {option.description}
-                            </p>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    {field.value === "PSEUDO" && (
-                      <motion.div
-                        className="pl-6"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                      >
-                        <Label htmlFor="pseudo" className="font-medium text-xs">
-                          Pick your pseudo handle 🎨
-                        </Label>
-                        <Input
-                          id="pseudo"
-                          value={form.getValues("pseudo")?.handle || ""}
-                          onChange={(e) =>
-                            form.setValue("pseudo", { handle: e.target.value }, { shouldValidate: true, shouldDirty: true })
-                          }
-                          placeholder="@campus_crush_01"
-                          custom-size="sm"
-                        />
-                        <span className="text-[8px] text-muted-foreground">
-                          Fun nicknames encouraged. Keep it safe for campus 🌸
-                        </span>
-                      </motion.div>
-                    )}
-                    <FormMessage />
-                    <FormDescription>
-                      Don’t worry, nobody knows it’s you… unless you want them to 😉
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-
-              {/* Category */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem className="space-y-2 bg-card p-4 rounded-lg border">
-                    <FormLabel>Choose category</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="poll"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-wrap">
-                    <div className="space-y-0.5">
-                      <FormLabel>
-                        Add a Poll? <span className="text-xs text-muted-foreground">(Optional)</span>
-                      </FormLabel>
-                      <FormDescription>
-                        Let the community vote on your question! (2-10 options)
-                      </FormDescription>
-                    </div>
-
-                    <FormControl>
-                      <Switch onCheckedChange={(checked) => {
-                        if (!checked) {
-                          field.onChange(undefined, { shouldValidate: true, shouldDirty: true });
-                          return;
-                        }
-                        field.onChange({ options: [], anonymousVotes: false, }, { shouldValidate: true, shouldDirty: true });
-                      }} />
-                    </FormControl>
-
-                  </FormItem>
-                )}
-              />
-              {pollEnabled && (<FormField
-                control={form.control}
-                name="poll.anonymousVotes"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel>
-                        Anonymous Voting? <span className="text-xs text-muted-foreground">(Optional)</span>
-                      </FormLabel>
-                      <FormDescription>
-                        Keep votes private to encourage honest opinions.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />)}
-
-            </div>
-            {pollEnabled && (<div className="md:col-span-8 col-span-12 text-sm text-muted-foreground border p-3 rounded-xl">
-              <FormField
-                control={form.control}
-                name="poll.options"
-                render={() => (
-                  <FormItem>
-                    <div className="flex items-center space-x-2 justify-between">
-                      <FormLabel className="mb-0">
-                        Poll Options
-                      </FormLabel>
-                      <Button
-                        size="xs"
-                        type="button"
-                        variant="ghost"
-                        transition="none"
-                        onClick={() =>
-                          append({
-                            id: nanoid(),
-                            text: "",
-                            votes: [],
-                          })
-                        }
-                      >
-                        Add Option
-                      </Button>
-                    </div>
-                    <FormDescription>Add the options for the poll</FormDescription>
-                    {fields.map((field, index) => (
-                      <FormField
-                        key={field.id}
-                        control={form.control}
-                        name={`poll.options.${index}`}
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row space-x-3 space-y-0">
-                            <FormLabel className="bg-card text-muted-foreground aspect-square rounded-lg size-8 inline-flex justify-center items-center mb-0">
-                              {index + 1}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder={`Enter Option ${index + 1}`}
-                                id={`options.${index}.id`}
-                                {...form.register(`poll.options.${index}.text`)}
-                                custom-size="sm"
-                                disabled={form.formState.isSubmitting}
-                              />
-                            </FormControl>
-                            <Button
-                              type="button"
-                              size="icon_sm"
-                              variant="destructive_light"
-                              disabled={fields.length <= 2}
-                              onClick={() => remove(index)}
-                            >
-                              -
-                            </Button>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>)}
-            <div className="md:col-span-4 col-span-12 space-y-6">
-              <Button
-                disabled={loading || !form.formState.isValid || state.loading}
-
-                type="submit"
-                size="lg"
-                className="w-full"
-              >
-                {(loading || state.loading) ? "Whispering..." : "Publish Whisper"}
-              </Button>
-            </div>
-            {state.error && (
-              <Alert className="md:col-span-8 col-span-12" variant="destructive">
-                <Icon name="alert-circle" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  {state.error.message || "Something went wrong. Please try again."}
-                </AlertDescription>
-              </Alert>
-            )}
-            {hasErrors && (
-              <Alert className="md:col-span-8 col-span-12" variant="destructive">
-                <Icon name="alert-circle" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  Please fix the following errors:
-                  <ul>
-                    {Object.entries(form.formState.errors).map(([key, error]) => (
-                      <li key={key}>
-                        {error.message}
-                      </li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-      </form>
-    </Form>
-  );
+// --- Helper: Random Handle Generator ---
+function generateRandomHandle() {
+  const adjectives = ["Anonymous", "Secret", "Hidden", "Silent", "Shadow", "Misty"];
+  const nouns = ["Student", "Voice", "Echo", "Whisper", "Observer", "Panda"];
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const number = Math.floor(Math.random() * 999);
+  return `@${adjective}_${noun}_${number}`;
 }
 
+// --- Helper: Text Extractor ---
 function contentJsonToText(content: JSONContent): string {
   if (!content || !content.content) return "";
   let text = "";
@@ -436,18 +68,354 @@ function contentJsonToText(content: JSONContent): string {
       text += node.text + " ";
     }
     if (node.content) {
-      if (node.content) {
-        text += contentJsonToText({ type: node.type, content: node.content });
-      }
+      text += contentJsonToText({ type: node.type, content: node.content });
     }
   });
   return text.trim();
 }
-function generateRandomHandle() {
-  const adjectives = ["curious", "brave", "silly", "witty", "fancy", "jolly"];
-  const nouns = ["lion", "tiger", "bear", "eagle", "shark", "panda"];
-  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  const number = Math.floor(Math.random() * 100);
-  return `@${adjective}_${noun}_${number}`;
+
+export default function WhisperRoomPage() {
+  const router = useRouter();
+  const [savePost, state] = useActionState(createWhisperPost);
+  const [contentSize, setContentSize] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof rawWhisperPostSchema>>({
+    resolver: zodResolver(rawWhisperPostSchema),
+    defaultValues: {
+      content_json: {
+        type: "doc",
+        content: [],
+      } as Content,
+      visibility: VISIBILITY_OPTIONS[0].value, // Default to Real Name usually, or make Anonymous default for safety
+      category: CATEGORY_OPTIONS[0].value,
+      poll: undefined,
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "poll.options",
+    shouldUnregister: true,
+  });
+
+  const pollEnabled = form.watch("poll") !== undefined;
+  const currentVisibility = form.watch("visibility");
+
+  async function onSubmit(values: z.infer<typeof rawWhisperPostSchema>) {
+    try {
+      setLoading(true);
+      const result = await savePost(values);
+      if (result.data) {
+        toast.success("Whisper released into the void. 🌌");
+        router.push("/whisper-room/feed");
+      } else if (result.error) {
+        toast.error(result.error.message || "Failed to whisper.");
+      }
+    } catch (e) {
+      toast.error("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen pb-20 w-full max-w-7xl mx-auto ">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          
+          <header className="sticky top-0 z-30 w-full border-b border-border/40 ">
+            <div className="px-4 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <ButtonLink href="/whisper-room/feed" variant="ghost" size="icon_sm" className="rounded-full text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="size-4" />
+                </ButtonLink>
+                <div className="flex flex-col">
+                   <h1 className="text-sm font-semibold flex items-center gap-2">
+                      New Whisper <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 rounded">BETA</span>
+                   </h1>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="default"
+                  className="gap-2 rounded-full px-6 shadow-lg shadow-primary/20"
+                  disabled={loading || state.loading || !form.formState.isValid}
+                >
+                  {(loading || state.loading) ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Send className="size-4" />
+                  )}
+                  Publish
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          <main className="w-full px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Category Selector (Pills) */}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORY_OPTIONS.map((cat) => (
+                      <button
+                        key={cat.value}
+                        type="button"
+                        onClick={() => field.onChange(cat.value)}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
+                          field.value === cat.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/30 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <Hash className="size-3" />
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              />
+
+              {/* Main Editor */}
+              <FormField
+                control={form.control}
+                name="content_json"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <FormControl>
+                      <div className="min-h-[300px] prose prose-zinc dark:prose-invert max-w-none">
+                        <NexoEditor
+                          content={field.value as Content}
+                          placeholder="What's your secret?..."
+                          onChange={(content) => {
+                            field.onChange(content);
+                            const size = contentJsonToText(content as JSONContent).length;
+                            setContentSize(size);
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <div className="flex justify-end pt-2">
+                       <span className={cn("text-[10px] font-mono", contentSize > 5000 ? "text-red-500" : "text-muted-foreground/50")}>
+                          {contentSize} / 5000
+                       </span>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Poll Builder Block */}
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                       <BarChart2 className="size-4" />
+                       Add a Poll
+                    </div>
+                    <Switch 
+                        checked={pollEnabled}
+                        onCheckedChange={(checked) => {
+                            if (!checked) {
+                                form.setValue("poll", undefined);
+                            } else {
+                                form.setValue("poll", { options: [], anonymousVotes: false });
+                            }
+                        }}
+                    />
+                 </div>
+
+                 {pollEnabled && (
+                    <Card className="border-dashed bg-muted/20 animate-in slide-in-from-top-2 fade-in">
+                       <CardContent className="p-4 space-y-4">
+                          <FormField
+                             control={form.control}
+                             name="poll.anonymousVotes"
+                             render={({ field }) => (
+                                <div className="flex items-center gap-2">
+                                   <Switch id="anon-vote" checked={field.value} onCheckedChange={field.onChange} />
+                                   <Label htmlFor="anon-vote" className="text-xs text-muted-foreground">Hide voter identity (Anonymous Voting)</Label>
+                                </div>
+                             )}
+                          />
+                          
+                          <div className="space-y-2">
+                             {fields.map((field, index) => (
+                                <div key={field.id} className="flex gap-2">
+                                   <Input 
+                                      {...form.register(`poll.options.${index}.text` as const)}
+                                      placeholder={`Option ${index + 1}`}
+                                      className="h-9 text-sm bg-background"
+                                   />
+                                   <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                                      onClick={() => remove(index)}
+                                      disabled={fields.length <= 2}
+                                   >
+                                      <X className="size-4" />
+                                   </Button>
+                                </div>
+                             ))}
+                          </div>
+                          
+                          <Button
+                             type="button"
+                             variant="outline"
+                             size="sm"
+                             className="w-full h-8 text-xs border-dashed"
+                             onClick={() => append({ id: nanoid(), text: "", votes: [] })}
+                             disabled={fields.length >= 10}
+                          >
+                             + Add Option
+                          </Button>
+                       </CardContent>
+                    </Card>
+                 )}
+              </div>
+            </div>
+
+            {/* --- RIGHT: Identity & Settings (5 Cols) --- */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Identity Card Selector */}
+              <FormField
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                        Choose Your Persona
+                    </FormLabel>
+                    <FormControl>
+                        <div className="grid grid-cols-1 gap-3">
+                            
+                            {/* Option: Real Name */}
+                            <IdentityCard 
+                                active={field.value === 'REAL_NAME'}
+                                onClick={() => field.onChange('REAL_NAME')}
+                                icon={User}
+                                title="Real Identity"
+                                desc="Post as yourself. Build reputation."
+                                colorClass="text-blue-500 bg-blue-500/10 border-blue-500/20"
+                            />
+
+                            {/* Option: Pseudo */}
+                            <IdentityCard 
+                                active={field.value === 'PSEUDO'}
+                                onClick={() => field.onChange('PSEUDO')}
+                                icon={VenetianMask}
+                                title="Pseudo Handle"
+                                desc="Use a generated alias. Traceable but discreet."
+                                colorClass="text-purple-500 bg-purple-500/10 border-purple-500/20"
+                            >
+                                {field.value === 'PSEUDO' && (
+                                    <div className="mt-3 flex gap-2 animate-in fade-in zoom-in-95">
+                                        <Input 
+                                            value={form.watch("pseudo.handle") || ""}
+                                            onChange={(e) => form.setValue("pseudo.handle", e.target.value)}
+                                            placeholder="@alias_name"
+                                            className="h-8 text-xs font-mono bg-background"
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            size="icon" 
+                                            className="h-8 w-8 shrink-0" 
+                                            variant="outline"
+                                            onClick={() => form.setValue("pseudo.handle", generateRandomHandle())}
+                                            title="Randomize"
+                                        >
+                                            <Dice5 className="size-3.5" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </IdentityCard>
+
+                            {/* Option: Anonymous */}
+                            <IdentityCard 
+                                active={field.value === 'ANONYMOUS'}
+                                onClick={() => field.onChange('ANONYMOUS')}
+                                icon={Ghost}
+                                title="Total Anonymity"
+                                desc="No name. No traces. Just your voice."
+                                colorClass="text-rose-500 bg-rose-500/10 border-rose-500/20"
+                            />
+                        </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-amber-600/80 text-xs leading-relaxed flex gap-3">
+                 <AlertTriangle className="size-4 shrink-0 mt-0.5" />
+                 <p>
+                    <strong>Community Guidelines:</strong> Even when anonymous, hate speech, harassment, and threats are not tolerated. We use basic moderation to keep the campus safe.
+                 </p>
+              </div>
+
+            </div>
+          </main>
+        </form>
+      </Form>
+    </div>
+  );
+}
+
+// --- Sub-component: Identity Selection Card ---
+function IdentityCard({ 
+    active, 
+    onClick, 
+    icon: Icon, 
+    title, 
+    desc, 
+    colorClass,
+    children 
+}: { 
+    active: boolean; 
+    onClick: () => void; 
+    icon: React.FC<React.SVGProps<SVGSVGElement>>; 
+    title: string; 
+    desc: string; 
+    colorClass: string;
+    children?: React.ReactNode;
+}) {
+    return (
+        <div 
+            onClick={onClick}
+            className={cn(
+                "cursor-pointer rounded-xl border p-4 transition-all duration-200",
+                active 
+                    ? `ring-1 ring-offset-0 ${colorClass}` 
+                    : "bg-card border-border hover:border-primary/30 hover:bg-muted/50"
+            )}
+        >
+            <div className="flex items-start gap-4">
+                <div className={cn("p-2 rounded-lg", active ? "bg-background/50" : "bg-muted")}>
+                    <Icon className="size-5" />
+                </div>
+                <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold">{title}</h4>
+                        {active && <div className="size-2 rounded-full bg-current" />}
+                    </div>
+                    <p className={cn("text-xs mt-1", active ? "opacity-90" : "text-muted-foreground")}>
+                        {desc}
+                    </p>
+                    {children}
+                </div>
+            </div>
+        </div>
+    )
 }

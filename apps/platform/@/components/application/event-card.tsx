@@ -21,7 +21,7 @@ function EventCard({
   return (
     <div
       className={cn(
-        "rounded-lg p-2 bg-muted/80 border border-border/50 hover:shadow hover:bg-muted hover:border-border transition-all",
+        "rounded-lg p-2 bg-card/80 border border-border/50 hover:shadow hover:bg-card hover:border-border transition-all",
         className
       )}
     >
@@ -50,3 +50,4 @@ function EventCard({
 EventCard.displayName = "EventCard";
 
 export { EventCard };
+

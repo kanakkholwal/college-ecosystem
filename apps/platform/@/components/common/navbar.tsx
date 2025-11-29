@@ -68,7 +68,7 @@ export default function Navbar({ user }: NavbarProps) {
     <header
       id="navbar"
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300",
+        "z-50 w-full transition-all duration-300",
         "bg-background/80 backdrop-blur-xl border-b border-border/40 supports-[backdrop-filter]:bg-background/60"
       )}
     >

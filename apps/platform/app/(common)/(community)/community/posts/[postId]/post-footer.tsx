@@ -1,10 +1,13 @@
 "use client";
 
 import ShareButton from "@/components/common/share-button";
-import { Icon } from "@/components/icons";
-import { Badge } from "@/components/ui/badge";
 import { AuthActionButton } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
+import {
+  Bookmark,
+  Heart,
+  Send
+} from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import toast from "react-hot-toast";
 import type { CommunityPostTypeWithId } from "src/models/community";
@@ -13,59 +16,45 @@ import type { Session } from "~/auth";
 import { appConfig } from "~/project.config";
 import { formatNumber } from "~/utils/number";
 
-export default function PostFooterOptimistic({
-  post,
-  user,
-}: FooterProps) {
-
-  return (
-    <div className="inline-flex items-center gap-3 w-full justify-between">
-      <div className="flex gap-2 items-center h-7">
-        <OptimisticFooterActionBar
-          post={post}
-          user={user}
-        />
-        {/* Share */}
-        <ShareButton
-          data={{
-            title: post.title,
-            text: "Check out this post on our community platform!",
-            url: appConfig.url + `/community/posts/${post._id}`,
-          }}
-          variant="ghost"
-          size="xs"
-          className="rounded-2xl bg-background flex items-center gap-1.5 px-4 py-2 h-full hover:ring-1 hover:ring-primary transition-all"
-        >
-          <Icon name="send" />
-          <span className="max-sm:hidden">
-            Share
-          </span>
-        </ShareButton>
-      </div>
-    </div>
-  );
-}
-
 interface FooterProps {
   post: CommunityPostTypeWithId;
   user?: Session["user"];
   className?: string;
 }
 
-function OptimisticFooterActionBar({
-  post,
-  user,
-  className
-}: FooterProps) {
+export default function PostFooterOptimistic({ post, user, className }: FooterProps) {
+  return (
+    <div className={cn("mt-4 pt-4 border-t border-border/40", className)}>
+      <div className="flex items-center justify-between">
+        
+        {/* --- Left: Interaction Group --- */}
+        <OptimisticFooterActionBar post={post} user={user} />
+
+        {/* --- Right: Share Action --- */}
+        <ShareButton
+          data={{
+            title: post.title,
+            text: "Check out this discussion!",
+            url: `${appConfig.url}/community/posts/${post._id}`,
+          }}
+          variant="ghost"
+          size="sm"
+          className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-2 transition-all"
+        >
+          <Send className="size-4" />
+          <span className="text-xs font-medium hidden sm:inline">Share</span>
+        </ShareButton>
+      </div>
+    </div>
+  );
+}
+
+export function OptimisticFooterActionBar({ post, user }: FooterProps) {
   const [isPending, startTransition] = useTransition();
 
-  // Optimistic state — toggles instantly on UI
   const [optimisticPost, setOptimisticPost] = useOptimistic(
     post,
-    (
-      current,
-      action: { type: "toggleLike" | "toggleSave"; userId: string }
-    ) => {
+    (current, action: { type: "toggleLike" | "toggleSave"; userId: string }) => {
       if (action.type === "toggleLike") {
         const liked = current.likes.includes(action.userId);
         return {
@@ -93,8 +82,7 @@ function OptimisticFooterActionBar({
     startTransition(() => {
       setOptimisticPost({ type: "toggleLike", userId: user.id });
       void updatePost(post._id, { type: "toggleLike" }).catch((error) => {
-        toast.error("Failed to update post: " + error.message);
-        console.error("Failed to update post:", error);
+        toast.error("Failed to like post");
       });
     });
   };
@@ -104,78 +92,69 @@ function OptimisticFooterActionBar({
     startTransition(() => {
       setOptimisticPost({ type: "toggleSave", userId: user.id });
       void updatePost(post._id, { type: "toggleSave" }).catch((error) => {
-        toast.error("Failed to update post: " + error.message);
-        console.error("Failed to update post:", error);
+        toast.error("Failed to save post");
       });
     });
   };
 
+  const isLiked = user && optimisticPost.likes.includes(user.id);
+  const isSaved = user && optimisticPost.savedBy.includes(user.id);
+
   return (
-    <div className={cn("flex gap-2 items-center h-7", className)}>
-      {/* Like */}
+    <div className="flex items-center gap-1">
+      
+      {/* LIKE BUTTON */}
       <AuthActionButton
-        variant="raw"
+        variant="ghost"
+        size="sm"
         authorized={!!user}
         dialog={{
-          title: "Sign In Required",
-          description: "You need to sign in to like or save this post.",
+          title: "Join the conversation",
+          description: "Sign in to like posts and support authors.",
         }}
         onClick={handleLike}
-        className="grow rounded-md px-4 py-2 transition hover:bg-accent"
-
+        className={cn(
+          "group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all hover:bg-red-500/10 active:scale-95",
+          isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+        )}
       >
-        <Icon
-          name={
-            user && optimisticPost.likes.includes(user.id)
-              ? "heart"
-              : "heart-empty"
-          }
-          className={cn(
-            "size-4",
-            user && optimisticPost.likes.includes(user.id) && "text-red-500"
-          )}
+        <Heart 
+            className={cn("size-4 transition-transform group-hover:scale-110", isLiked && "fill-current scale-110")} 
         />
-        <span className="inline font-medium opacity-90 text-[14px] transition hover:opacity-100">
+        <span className="text-xs font-semibold tabular-nums">
           {formatNumber(optimisticPost.likes.length)}
-          <span className="max-sm:hidden">
-            {optimisticPost.likes.length < 1 ? " Like" : " Likes"}
-          </span>
         </span>
       </AuthActionButton>
 
+      {/* SAVE BUTTON */}
       <AuthActionButton
-        variant="raw"
+        variant="ghost"
+        size="sm"
         authorized={!!user}
-        nextUrl={`/community#post-${post._id}`}
         dialog={{
-          title: "Sign In Required",
-          description: "You need to sign in to like or save this post.",
+          title: "Save for later",
+          description: "Sign in to bookmark posts to your profile.",
         }}
         onClick={handleSave}
-
-        className="flex grow items-center justify-center gap-3 rounded-md px-4 py-2 transition hover:bg-accent"
+        className={cn(
+          "group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all hover:bg-emerald-500/10 active:scale-95",
+          isSaved ? "text-emerald-500" : "text-muted-foreground hover:text-emerald-500"
+        )}
       >
-        <Icon
-          name={
-            user && optimisticPost.savedBy.includes(user.id)
-              ? "bookmark-check"
-              : "bookmark"
-          }
-          className={cn(
-            "size-4",
-            user && optimisticPost.savedBy.includes(user.id) && "text-emerald-500"
-          )}
+        <Bookmark 
+            className={cn("size-4 transition-transform group-hover:scale-110", isSaved && "fill-current scale-110")} 
         />
-        <span className="inline font-medium opacity-90 text-[14px] transition hover:opacity-100">
-          {formatNumber(optimisticPost.savedBy.length)}
-          <span className="max-sm:hidden">
-            {optimisticPost.savedBy.length < 1 ? " Saved" : " Saves"}
-          </span>
+        <span className={cn("text-xs font-semibold tabular-nums", !isSaved && "hidden sm:inline")}>
+          {isSaved ? "Saved" : "Save"}
         </span>
       </AuthActionButton>
+
+      {/* COMMENT COUNT (Visual Only for now) */}
+      {/* <div className="hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-all cursor-pointer">
+         <MessageCircle className="size-4" />
+         <span className="text-xs font-semibold tabular-nums">0</span>
+      </div> */}
+
     </div>
   );
 }
-
-OptimisticFooterActionBar.displayName = "OptimisticFooterActionBar";
-export { OptimisticFooterActionBar };

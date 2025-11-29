@@ -1,15 +1,14 @@
-import { Button } from "@/components/ui/button";
 import EditCommunityPost from "./form";
 
 import EmptyArea from "@/components/common/empty-area";
+import { ButtonLink } from "@/components/utils/link";
 import { ArrowLeft } from "lucide-react";
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostById } from "~/actions/common.community";
-import { Session } from "~/auth";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
+import { auth, Session } from "~/auth";
 
 interface Props {
   searchParams: Promise<{
@@ -50,17 +49,7 @@ export default async function CommunityPostEditPage(props: Props) {
   // console.log(post);
   return (
     <main className="md:col-span-3 space-y-4 pr-2">
-      <div className="bg-card w-full rounded-lg inline-flex justify-between items-center gap-3 px-2 lg:px-4 py-1 lg:py-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/community">
-            <ArrowLeft />
-            Back to Community
-          </Link>
-        </Button>
-        <h3 className="text-sm font-medium text-muted-foreground">
-          Editing Post
-        </h3>
-      </div>
+    
       <EditCommunityPost postId={post._id} post={post} />
     </main>
   );

@@ -10,8 +10,8 @@ import { ButtonLink } from "@/components/utils/link";
 import { format } from "date-fns";
 import { ArrowUpRight, CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
-import { getEvents } from "~/actions/common.events";
 import { headers } from "next/headers";
+import { getEvents } from "~/actions/common.events";
 import { auth } from "~/auth";
 
 type Props = {
@@ -99,6 +99,7 @@ export default async function AcademicCalenderPage(props: Props) {
       <Tabs defaultValue="calendar" className="bg-card p-4 lg:p-5 rounded-lg">
         <VercelTabsList
           className="mb-4 mx-auto"
+          tabsListClassName="bg-transparent"
           tabs={[
             {
               label: "Calendar View",

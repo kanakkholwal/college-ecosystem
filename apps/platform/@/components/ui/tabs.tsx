@@ -65,6 +65,7 @@ interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
   activeTab?: string;
   triggerClassName?: string;
   triggerHeight?: string;
+  tabsListClassName?: string;
   onTabChange?: (tabId: string) => void;
   onTabChangeQuery?: string;
 }
@@ -78,6 +79,7 @@ const VercelTabsList = React.forwardRef<HTMLDivElement, TabsProps>(
       onTabChange,
       onTabChangeQuery,
       triggerHeight = "h-[30px]",
+      tabsListClassName,
       ...props
     },
     ref
@@ -157,7 +159,7 @@ const VercelTabsList = React.forwardRef<HTMLDivElement, TabsProps>(
           className="absolute top-auto z-10 bottom-0 h-0.5 bg-primary rounded-full transition-all duration-300 ease-out"
           style={activeStyle}
         />
-        <TabsList className="inline-flex space-x-[6px] items-center border">
+        <TabsList className={cn("inline-flex space-x-[6px] items-center border",tabsListClassName)}>
           {tabs.map((tab, index) => (
             <TabsTrigger
               value={tab.id}
@@ -198,3 +200,4 @@ const VercelTabsList = React.forwardRef<HTMLDivElement, TabsProps>(
 VercelTabsList.displayName = "VercelTabs";
 
 export { Tabs, TabsContent, TabsList, TabsTrigger, VercelTabsList };
+

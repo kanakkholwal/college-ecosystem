@@ -1,33 +1,26 @@
-import Link from "next/link";
 import { CATEGORIES } from "~/constants/common.community";
 
 import AdUnit from "@/components/common/adsense";
-import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { AuthButtonLink } from "@/components/utils/link";
-import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Globe,
+  LayoutGrid,
+  MessageSquarePlus
+} from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getPostsByCategory } from "~/actions/common.community";
+import { getSession } from "~/auth/server";
 import CommunityPostList from "./list";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
 
 export const metadata: Metadata = {
-  title: "Communities",
-  description: "Explore different communities",
+  title: "Community Feed",
+  description: "Join the conversation.",
   alternates: {
     canonical: "/community",
   },
-  keywords: [
-    "NITH",
-    "Communities",
-    "Community Posts",
-    "NITH Community",
-    "NITH Community Posts",
-    "NITH Community Discussions",
-    "NITH Community Forum",
-    "NITH Community Engagement",
-  ],
 };
 
 export default async function CommunitiesPage(props: {
@@ -38,76 +31,126 @@ export default async function CommunitiesPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
-  const category = searchParams.c || "all"; // Default to 'all' if no category is provided
+  const category = searchParams.c || "all";
   const page = searchParams.page || 1;
   const limit = searchParams.limit || 10;
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+
+  const session = await getSession();
+
   const posts = await getPostsByCategory(category, page, limit);
+  const activeCategory = CATEGORIES.find((c) => c.value === category);
 
-  const activePopularCategory = CATEGORIES.find((c) => c.value === category);
   return (
-    <>
-      {/* Feed */}
-      <main className="md:col-span-3 lg:col-span-2 space-y-4 pr-2 min-h-screen">
-        <div className="md:sticky md:top-4 z-50 w-full mx-1.5 lg:mx-auto flex justify-between items-center gap-2 bg-card px-2 lg:px-4 py-1 lg:py-2 rounded-lg border">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          <Icon name="globe" className="inline-block size-6 text-primary" />
-          <div>
-            <h3 className="text-sm font-semibold">
-              Community Posts
-              {activePopularCategory && (
-                <span className="text-sm text-muted-foreground ml-1">
-                  in c/{activePopularCategory.name}
-                  <Link
-                    href="/community"
-                    className="ml-1 hover:text-primary cursor-pointer"
-                    shallow
-                  >
-                    <X className="inline-block size-3" />
-                  </Link>
-                </span>
-              )}
-              <Badge size="sm" className="ml-2">
-                {posts.length}
-              </Badge>
-            </h3>
-            <p className="text-muted-foreground text-xs">
-              Sub-reddits like public communities
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 sm:ml-auto">
+      {/* --- CENTER COLUMN: FEED --- */}
+      <div className="lg:col-span-2 min-h-screen space-y-6">
+
+        {/* Sticky Header */}
+        <div className="sticky top-4 z-30 rounded-xl border border-border/40 bg-card/80 backdrop-blur-xl px-4 py-3 shadow-sm transition-all">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "flex size-10 items-center justify-center rounded-lg border shadow-sm",
+                activeCategory ? "bg-background" : "bg-primary/10 text-primary border-primary/20"
+              )}>
+                {activeCategory ? (
+                  <div className="relative size-full overflow-hidden rounded-lg">
+                    <Image src={activeCategory.image} alt="" fill className="object-cover" />
+                  </div>
+                ) : (
+                  <Globe className="size-5" />
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                <h1 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  {activeCategory ? `c/${activeCategory.name}` : "Global Feed"}
+                  <Badge variant="default" size="xs" className="font-mono">
+                    {posts.length}
+                  </Badge>
+                </h1>
+                <p className="text-xs text-muted-foreground line-clamp-1">
+                  {activeCategory ? "Community Discussions" : "All public conversations"}
+                </p>
+              </div>
+            </div>
+
             <AuthButtonLink
               authorized={!!session?.user}
-              variant="ghost"
+              href={`/community/create${activeCategory ? `?c=${activeCategory.value}` : ""}`}
               size="sm"
-              href="/community/create"
+              variant="default"
+              className="gap-2 shadow-md shadow-primary/20"
             >
-              Create Post
-              <Icon name="arrow-right" />
+              <MessageSquarePlus className="size-4" />
+              <span className="hidden sm:inline">New Post</span>
             </AuthButtonLink>
           </div>
         </div>
-        <CommunityPostList posts={posts} user={session?.user} />
-      </main>
-      {/* Active Feed Details */}
-      <aside className="hidden lg:block md:col-span-1 space-y-4 md:sticky md:top-4 h-fit">
-        {activePopularCategory ? (
-          <div className="bg-card rounded-2xl shadow p-4">
-            <h2 className="text-base font-medium mb-2">
-              c/{activePopularCategory.name}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {activePopularCategory.description}
-            </p>
+
+        {/* Post List */}
+        <div className="space-y-4">
+          <CommunityPostList posts={posts} user={session?.user} />
+        </div>
+      </div>
+
+      <div className="hidden lg:block lg:col-span-1 space-y-6">
+
+        <div className="sticky top-24 space-y-6">
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden shadow-sm">
+            <div className="h-16 bg-accent/50 w-full relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent" />
+            </div>
+
+            <div className="px-5 pb-5 -mt-8">
+              {/* Icon */}
+              <div className="relative size-16 rounded-xl border-4 border-card bg-background overflow-hidden shadow-sm mb-3">
+                {activeCategory ? (
+                  <Image src={activeCategory.image} alt="" fill className="object-cover" />
+                ) : (
+                  <div className="size-full flex items-center justify-center bg-primary/5 text-primary">
+                    <LayoutGrid className="size-8" />
+                  </div>
+                )}
+              </div>
+
+              <h2 className="text-lg font-bold">
+                {activeCategory ? `c/${activeCategory.name}` : "Community"}
+              </h2>
+
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {activeCategory?.description || "Welcome to the NITH community forum. A place to share ideas, ask questions, and connect with peers."}
+              </p>
+
+              <div className="flex gap-4 mt-4 py-4 border-t border-b border-border/50">
+                <div className="flex flex-col">
+                  <span className="text-base font-bold">{posts.length}</span>
+                  <span className="text-xs text-muted-foreground">Posts</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base font-bold">--</span>
+                  <span className="text-xs text-muted-foreground">Online</span>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  Posting Rules
+                </h4>
+                <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4">
+                  <li>Be respectful and civil.</li>
+                  <li>No spam or self-promotion.</li>
+                  <li>Keep discussions relevant.</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        ) : null}
-        <AdUnit adSlot="display-vertical" key="communities-page-sidebar" />
 
+          <AdUnit adSlot="display-vertical" key="communities-context-sidebar" />
+        </div>
+      </div>
 
-      </aside>
-    </>
+    </div>
   );
 }
