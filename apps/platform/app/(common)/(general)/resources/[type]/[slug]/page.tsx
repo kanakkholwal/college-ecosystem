@@ -286,7 +286,7 @@ export default async function ResourcePage({ params }: PageProps) {
           </div>
 
           <article
-            className="prose mx-auto p-6 prose-gray prose-sm dark:prose-invert container max-w-full bg-card rounded-lg mt-4"
+            className="prose mx-auto p-6 prose-gray dark:prose-invert container max-w-full bg-card rounded-lg mt-4"
             itemProp="articleBody"
           >
             <ClientMdx mdxSource={mdxSource} />

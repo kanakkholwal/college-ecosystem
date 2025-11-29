@@ -130,7 +130,7 @@ export default function HeroSection() {
         transition={{ duration: 0.6, delay: 0.4 }}
         className="flex flex-col sm:flex-row gap-4"
       >
-        <ButtonLink href="#benefits" size="lg" variant="rainbow_outline">
+        <ButtonLink href="#benefits" size="lg" variant="rainbow">
           Check out the benefits
           <Icon name="arrow-right" />
         </ButtonLink>

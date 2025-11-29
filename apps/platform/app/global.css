@@ -22,7 +22,7 @@
     --tertiary: hsl(199, 86%, 53%);
     --tertiary-foreground: hsl(0deg 0% 92.16%);
 
-    --muted:  hsl(0deg 0.24% 96.06%);
+    --muted: hsl(0, 0%, 92%);
     --muted-foreground: hsl(220 8.9% 46.1%);
 
     --accent: hsl(344.79deg 33.25% 96.34%);
