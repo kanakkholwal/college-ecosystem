@@ -1,5 +1,6 @@
 "use client";
 
+import { brand_themes, BrandThemeType } from "@/components/common/theme-switcher";
 import { Separator } from "@/components/ui/separator";
 import useStorage from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
@@ -7,29 +8,7 @@ import { Check, Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-// --- Data: Elemental Brand Themes ---
-export interface BrandThemeType {
-  id: string;
-  label: string;
-  color: string;
-}
 
-export const brand_themes: BrandThemeType[] = [
-  { id: "violet", label: "Violet", color: "#7c3aed" },
-  { id: "indigo", label: "Indigo", color: "#4f46e5" },
-  { id: "blue", label: "Ocean", color: "#2563eb" },
-  { id: "sky", label: "Sky", color: "#0284c7" },
-  { id: "teal", label: "Teal", color: "#0d9488" },
-  { id: "emerald", label: "Emerald", color: "#059669" },
-  { id: "amber", label: "Amber", color: "#d97706" },
-  { id: "orange", label: "Tangerine", color: "#ea580c" },
-  { id: "rose", label: "Rose", color: "#e11d48" },
-  { id: "crimson", label: "Crimson", color: "#dc2626" },
-  { id: "slate", label: "Graphite", color: "#475569" },
-  { id: "zinc", label: "Carbon", color: "#27272a" },
-];
-
-// --- Main Component ---
 
 export default function AppearanceForm() {
   const [mounted, setMounted] = React.useState(false);
@@ -57,7 +36,6 @@ export default function AppearanceForm() {
   );
 }
 
-/* ----------------------- Theme Mode Selector ----------------------- */
 
 const ThemeModeSelector = () => {
   const { theme, setTheme } = useTheme();
@@ -194,7 +172,6 @@ function ThemeCard({
   );
 }
 
-/* ----------------------- Brand Theme Selector ----------------------- */
 
 const BrandThemeSelector = () => {
   const [currentTheme, setCurrentTheme] = useStorage<BrandThemeType>(

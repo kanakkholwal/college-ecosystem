@@ -48,7 +48,7 @@ export default function ForgotPassword() {
     setIsSubmitting(true);
 
     try {
-      const res = await authClient.forgetPassword({
+      const res = await authClient.requestPasswordReset({
         email: data.email,
         redirectTo: "/auth/sign-in?tab=reset-password",
       }, {

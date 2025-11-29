@@ -149,7 +149,6 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 };
 
 
-// --- 1. REFINED THEMES (Ecosystem/Professional Focused) ---
 export interface BrandThemeType {
   id: string;
   label: string;
@@ -157,21 +156,20 @@ export interface BrandThemeType {
 }
 
 export const brand_themes: BrandThemeType[] = [
-  { id: "violet", label: "Violet (Default)", color: "#7c3aed" }, // Violet-600
-  { id: "indigo", label: "Indigo", color: "#4f46e5" }, // Indigo-600
-  { id: "blue", label: "Ocean", color: "#2563eb" }, // Blue-600
-  { id: "sky", label: "Sky", color: "#0284c7" }, // Sky-600
-  { id: "teal", label: "Teal", color: "#0d9488" }, // Teal-600
-  { id: "emerald", label: "Emerald", color: "#059669" }, // Emerald-600
-  { id: "amber", label: "Amber", color: "#d97706" }, // Amber-600
-  { id: "orange", label: "Tangerine", color: "#ea580c" }, // Orange-600
-  { id: "rose", label: "Rose", color: "#e11d48" }, // Rose-600
-  { id: "crimson", label: "Crimson", color: "#dc2626" }, // Red-600
-  { id: "slate", label: "Graphite", color: "#475569" }, // Slate-600
-  { id: "zinc", label: "Carbon", color: "#27272a" }, // Zinc-800
+  { id: "violet", label: "Violet", color: "#7c3aed" },
+  { id: "indigo", label: "Indigo", color: "#4f46e5" },
+  { id: "blue", label: "Ocean", color: "#2563eb" },
+  { id: "sky", label: "Sky", color: "#0284c7" },
+  { id: "teal", label: "Teal", color: "#0d9488" },
+  { id: "emerald", label: "Emerald", color: "#059669" },
+  { id: "amber", label: "Amber", color: "#d97706" },
+  { id: "orange", label: "Tangerine", color: "#ea580c" },
+  { id: "rose", label: "Rose", color: "#e11d48" },
+  { id: "crimson", label: "Crimson", color: "#dc2626" },
+  { id: "slate", label: "Graphite", color: "#475569" },
+  { id: "zinc", label: "Carbon", color: "#27272a" },
 ];
 
-// --- 2. REDESIGNED COMPONENT ---
 
 export function ThemePopover({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false);

@@ -127,7 +127,7 @@ export default function AboutPage() {
         {/* --- FOOTER DISCLAIMER --- */}
         <div className="text-center max-w-2xl mx-auto space-y-6">
             <p className="text-sm text-muted-foreground italic">
-                "The goal is not to replace the institute{"'"}s authority, but to enhance the student{"'"}s capability."
+                {'"'}The goal is not to replace the institute{"'"}s authority, but to enhance the student{"'"}s capability.{'"'}
             </p>
             <div className="pt-4">
                  <AdUnit adSlot="multiplex" key="contact-page-ad-footer" />
