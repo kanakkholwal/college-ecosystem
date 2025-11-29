@@ -1,8 +1,8 @@
 "use server";
 
+import { headers } from "next/headers";
 import dbConnect from "src/lib/dbConnect";
 import Timetable, { type TimeTableWithID } from "src/models/time-table";
-import { headers } from "next/headers";
 import { auth } from "~/auth";
 import type { RawTimetableType as RawTimetable } from "~/constants/common.time-table";
 

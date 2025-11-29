@@ -1,25 +1,33 @@
+
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, Paintbrush } from "lucide-react";
-import * as React from "react";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import useStorage from "@/hooks/useLocalStorage";
+import { cn } from "@/lib/utils";
+import { sendGAEvent } from "@next/third-parties/google";
 import { AnimatePresence, motion } from "framer-motion";
+import { Check, Palette } from "lucide-react";
+import React from "react";
 
-import { Button } from "@/components/ui/button";
+
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type themeType } from "@/constants/theme";
-import useStorage from "@/hooks/useLocalStorage";
-import { cn } from "@/lib/utils";
-import { sendGAEvent } from "@next/third-parties/google";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -141,131 +149,166 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 };
 
 
-
-// Define brand themes
-export interface brandThemeType {
-  name: string
-  color: string
+// --- 1. REFINED THEMES (Ecosystem/Professional Focused) ---
+export interface BrandThemeType {
+  id: string;
+  label: string;
+  color: string;
 }
-export const brand_themes = [
-  { name: "Nexo Purple", color: "#7F57F1" },
-  { name: "Google Blue", color: "#4285F4" },
-  { name: "Facebook Blue", color: "#1877F2" },
-  { name: "Netflix Red", color: "#E50914" },
-  { name: "Spotify Green", color: "#1DB954" },
-  { name: "Amazon Orange", color: "#FF9900" },
-  { name: "Apple Gray", color: "#333333" },
-  { name: "Microsoft Teal", color: "#00A4EF" },
-  { name: "LinkedIn Blue", color: "#0A66C2" },
-  { name: "YouTube Red", color: "#FF0000" },
-  { name: "Twitch Purple", color: "#9146FF" },
-  { name: "Discord Blurple", color: "#5865F2" },
-  { name: "Reddit Orange", color: "#FF4500" },
-  { name: "Instagram Gradient", color: "#E1306C" }, // base pink from gradient
-  { name: "Snapchat Yellow", color: "#FFFC00" },
-  { name: "Tesla Red", color: "#CC0000" },
-  { name: "Slack Plum", color: "#611F69" },
-  { name: "PayPal Blue", color: "#003087" },
+
+export const brand_themes: BrandThemeType[] = [
+  { id: "violet", label: "Violet (Default)", color: "#7c3aed" }, // Violet-600
+  { id: "indigo", label: "Indigo", color: "#4f46e5" }, // Indigo-600
+  { id: "blue", label: "Ocean", color: "#2563eb" }, // Blue-600
+  { id: "sky", label: "Sky", color: "#0284c7" }, // Sky-600
+  { id: "teal", label: "Teal", color: "#0d9488" }, // Teal-600
+  { id: "emerald", label: "Emerald", color: "#059669" }, // Emerald-600
+  { id: "amber", label: "Amber", color: "#d97706" }, // Amber-600
+  { id: "orange", label: "Tangerine", color: "#ea580c" }, // Orange-600
+  { id: "rose", label: "Rose", color: "#e11d48" }, // Rose-600
+  { id: "crimson", label: "Crimson", color: "#dc2626" }, // Red-600
+  { id: "slate", label: "Graphite", color: "#475569" }, // Slate-600
+  { id: "zinc", label: "Carbon", color: "#27272a" }, // Zinc-800
 ];
 
-
+// --- 2. REDESIGNED COMPONENT ---
 
 export function ThemePopover({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false);
-  const [currentTheme, setCurrentTheme] = useStorage<brandThemeType>("theme-brand", brand_themes[0]);
+  const [currentTheme, setCurrentTheme] = useStorage<BrandThemeType>(
+    "theme-brand",
+    brand_themes[0]
+  );
 
-  // Apply theme color to :root CSS variables
+  // Apply CSS Variables
   React.useEffect(() => {
-    const selected = brand_themes.find((t) => t.name === currentTheme.name);
-    if (selected) {
-      const root = document.documentElement;
-      root.style.setProperty("--primary", selected.color);
-      root.style.setProperty("--ring", selected.color);
-      // root.style.setProperty("--primary-foreground", "#ffffff");
-      // Update <meta name="theme-color">
-      let themeMeta = document.querySelector<HTMLMetaElement>(
-        'meta[name="theme-color"]'
-      );
-      if (!themeMeta) {
-        themeMeta = document.createElement("meta");
-        themeMeta.name = "theme-color";
-        document.head.appendChild(themeMeta);
-      }
-      themeMeta.content = selected.color;
+    // Fallback to default if storage has invalid data
+    const selected =
+      brand_themes.find((t) => t.id === currentTheme.id) || brand_themes[0];
+
+    const root = document.documentElement;
+
+    // Inject Hex Color
+    root.style.setProperty("--primary", selected.color);
+    root.style.setProperty("--ring", selected.color);
+    // Optional: If you use HSL in Tailwind (e.g. 262 80% 50%)
+    // You might need a hexToHsl helper here if your tailwind.config uses <alpha-value>
+
+    // Update Meta Theme Color for Mobile Browsers
+    let themeMeta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]'
+    );
+    if (!themeMeta) {
+      themeMeta = document.createElement("meta");
+      themeMeta.name = "theme-color";
+      document.head.appendChild(themeMeta);
     }
+
+    themeMeta.content = selected.color;
   }, [currentTheme]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="default_light" size="icon_sm" className={cn(className)}>
-          <Paintbrush className="text-primary" />
-          <span className="sr-only">Change Theme</span>
-        </Button>
-      </PopoverTrigger>
-
-      <AnimatePresence>
-        {open && (
-          <PopoverContent
-            align="end"
-            className="min-w-56 p-0 w-auto max-w-fit"
-            asChild
+    <TooltipProvider delayDuration={0}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon_sm"
+            className={cn(
+              "relative size-9 rounded-full border border-border/40 bg-background transition-all hover:bg-muted group",
+              className
+            )}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="rounded-md border bg-popover shadow-md"
+            {/* Active Color Indicator */}
+            <span
+              className="absolute inset-0 m-auto size-4 rounded-full transition-transform group-hover:scale-110"
+              style={{ backgroundColor: currentTheme.color }}
+            />
+            <span className="sr-only">Change Theme</span>
+          </Button>
+        </PopoverTrigger>
+
+        <AnimatePresence>
+          {open && (
+            <PopoverContent
+              sideOffset={8}
+              align="end"
+              className="w-64 p-3 rounded-xl border border-border/50 backdrop-blur-xl shadow-xl"
+              asChild
             >
-              <p className="text-xs text-muted-foreground p-2">
-                Select your favorite brand theme
-              </p>
               <motion.div
-                className="grid gap-2 p-2 grid-cols-2 sm:grid-cols-3"
-                initial="hidden"
-                animate="show"
-                exit="hidden"
-                variants={{
-                  hidden: { transition: { staggerChildren: 0.02, staggerDirection: 1 } },
-                  show: { transition: { staggerChildren: 0.04 } },
-                }}
+                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
               >
-                {brand_themes.map((theme) => (
-                  <motion.button
-                    key={theme.name}
-                    onClick={() => {
-                      setCurrentTheme(theme);
-                      setOpen(false);
-                      sendGAEvent("event", "brand_theme_switch", {
-                        theme: theme.name,
-                        color: theme.color,
-                      });
-                    }}
-                    className={cn(
-                      "flex items-center justify-start rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent w-full",
-                      currentTheme.name === theme.name && "bg-accent"
-                    )}
-                    variants={{
-                      hidden: { opacity: 0, x: -10 },
-                      show: { opacity: 1, x: 0 },
-                    }}
-                  >
-                    <div className="flex items-center gap-2  whitespace-nowrap">
-                      <span
-                        className="size-4 aspect-square rounded-full border"
-                        style={{ backgroundColor: theme.color }}
-                      />
-                      {theme.name}
-                    </div>
-                    {currentTheme.name === theme.name && <Check className="size-4" />}
-                  </motion.button>
-                ))}
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Interface Color
+                  </span>
+                  <Palette className="size-3.5 text-muted-foreground" />
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
+                  {brand_themes.map((theme) => {
+                    const isActive = currentTheme.id === theme.id;
+
+                    return (
+                      <Tooltip key={theme.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => {
+                              setCurrentTheme(theme);
+                              // setOpen(false); // Optional: Keep open to let user preview
+                              sendGAEvent("event", "brand_theme_switch", {
+                                label: theme.label,
+                                color: theme.color,
+                              });
+                            }}
+                            className={cn(
+                              "group relative flex items-center justify-center size-10 rounded-full border border-transparent transition-all hover:scale-105 focus:outline-hidden",
+                              isActive
+                                ? "border-foreground/20 shadow-xs"
+                                : "hover:border-border"
+                            )}
+                            style={{
+                              backgroundColor: isActive
+                                ? "var(--accent)"
+                                : "transparent",
+                            }}
+                          >
+                            {/* Color Circle */}
+                            <span
+                              className={cn(
+                                "size-6 rounded-full shadow-sm transition-all",
+                                isActive && "scale-110"
+                              )}
+                              style={{ backgroundColor: theme.color }}
+                            />
+
+                            {/* Active Checkmark overlay */}
+                            {isActive && (
+                              <span className="absolute inset-0 flex items-center justify-center text-white mix-blend-plus-lighter">
+                                <Check className="size-3.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          className="text-xs font-medium"
+                        >
+                          {theme.label}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
               </motion.div>
-            </motion.div>
-          </PopoverContent>
-        )}
-      </AnimatePresence>
-    </Popover>
+            </PopoverContent>
+          )}
+        </AnimatePresence>
+      </Popover>
+    </TooltipProvider>
   );
 }

@@ -39,7 +39,7 @@ export default async function Dashboard({ params }: Props) {
   return (
     <>
       <div className="mt-5 p-3">
-        <PreviousPageLink size="sm" variant="light" />
+        <PreviousPageLink size="sm" variant="ghost" />
       </div>
 
       <TimeTableViewer timetableData={timetableData} />

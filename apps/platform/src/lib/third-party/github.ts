@@ -1,4 +1,5 @@
 import { createFetch } from "@better-fetch/fetch";
+import { cache } from "react";
 import { appConfig } from "~/project.config";
 
 export const githubApiFetch = createFetch({
@@ -18,9 +19,9 @@ export const githubApiFetch = createFetch({
   },
 });
 
-export async function getRepoStarGazers(
+export const getRepoStarGazers = cache(async (
   repoUri = appConfig.githubUri
-): Promise<number> {
+): Promise<number> => {
   try {
     if (process.env.NODE_ENV !== "production") {
       return 12; // Fallback value for non-production environments
@@ -43,8 +44,8 @@ export async function getRepoStarGazers(
     console.warn("Error fetching GitHub stars:", error);
     return 12; // Fallback value
   }
-}
-export async function extractVisitorCount(): Promise<number> {
+})
+export const extractVisitorCount = cache(async (): Promise<number> => {
   const url =
     "https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge";
 
@@ -73,15 +74,15 @@ export async function extractVisitorCount(): Promise<number> {
     }
 
     console.warn("Visitor count not found in SVG");
-    return 345221; // Default value to last remembered count
+    return 10_00_000; // Default value to last remembered count
   } catch (error) {
     console.error("Error extracting visitor count:", error);
     throw error;
   }
-}
-export async function getRepoStats(
+})
+export const getRepoStats = cache(async (
   repoUri = appConfig.githubUri
-): Promise<StatsData> {
+): Promise<StatsData> => {
   try {
     if (process.env.NODE_ENV !== "production") {
       return { stars: 12, forks: 2, contributors: 1, visitors: 345221 };
@@ -115,8 +116,8 @@ export async function getRepoStats(
     console.error("Caught Error fetching GitHub repository data:", error);
     return Promise.reject(error);
   }
-}
-export async function getRepoContributors(
+})
+export const getRepoContributors = cache(async (
   repoUri = appConfig.githubUri
 ): Promise<
   {
@@ -125,7 +126,7 @@ export async function getRepoContributors(
     avatar: string;
     contributions: number;
   }[]
-> {
+> => {
   try {
     const response = await githubApiFetch<Contributor[]>(
       `/repos/${repoUri}/contributors`
@@ -143,7 +144,7 @@ export async function getRepoContributors(
     console.error("Error fetching GitHub contributors:", error);
     return Promise.reject(error);
   }
-}
+})
 
 export type StatsData = {
   stars: number;

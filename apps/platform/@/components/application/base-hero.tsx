@@ -21,7 +21,7 @@ function BaseHeroSection(props: BaseHeroSectionProps) {
     >
       <h2
         className={cn(
-          "mb-2 text-2xl lg:text-4xl font-semibold text-center text-pretty md:whitespace-nowrap bg-gradient-to-r bg-clip-text text-transparent  from-primary to-sky-500  hover:from-sky-500 hover:to-primary",
+          "mb-2 text-2xl lg:text-4xl font-semibold text-center text-pretty md:whitespace-nowrap bg-linear-to-l from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90% bg-clip-text text-transparent",
           props.titleClassName
         )}
       >
@@ -47,3 +47,4 @@ function BaseHeroSection(props: BaseHeroSectionProps) {
 }
 BaseHeroSection.displayName = "BaseHeroSection";
 export { BaseHeroSection };
+

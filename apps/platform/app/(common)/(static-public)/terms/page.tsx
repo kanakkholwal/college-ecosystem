@@ -1,161 +1,253 @@
-// app/terms/page.tsx
 import AdUnit from "@/components/common/adsense";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { AlertTriangle, Scale } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service & Disclaimer",
   description:
-    "Read the Terms of Service and Disclaimer for nith.eu.org and app.nith.eu.org. Learn about usage, disclaimers, limitations of liability, and user responsibilities.",
+    "Read the Terms of Service and Disclaimer for nith.eu.org. Learn about usage, disclaimers, limitations of liability, and user responsibilities.",
   robots: { index: true, follow: true },
 };
 
-const Updated = () => {
+// --- Sticky Navigation ---
+const TableOfContents = () => {
+  const sections = [
+    { id: "acceptance", title: "1. Acceptance of Terms" },
+    { id: "unofficial", title: "2. Unofficial Platform" },
+    { id: "usage", title: "3. Use of Services" },
+    { id: "academic", title: "4. Academic Data" },
+    { id: "accuracy", title: "5. No Accuracy Guarantee" },
+    { id: "ads", title: "6. Ads & Affiliates" },
+    { id: "liability", title: "7. Limitation of Liability" },
+    { id: "indemnification", title: "8. Indemnification" },
+    { id: "ip", title: "9. Intellectual Property" },
+    { id: "termination", title: "10. Termination" },
+    { id: "law", title: "11. Governing Law" },
+    { id: "changes", title: "12. Changes to Terms" },
+    { id: "contact", title: "13. Contact" },
+  ];
+
+  return (
+    <nav className="hidden lg:block sticky top-24 h-fit w-64 pr-8">
+      <h4 className="mb-4 text-sm font-semibold tracking-tight text-foreground">
+        Clauses
+      </h4>
+      <ScrollArea className="h-[calc(100vh-10rem)]">
+        <ul className="space-y-2 border-l border-border/40 ml-1">
+          {sections.map((item) => (
+            <li key={item.id}>
+              <Link
+                href={`#${item.id}`}
+                className="block border-l-2 border-transparent pl-4 text-xs font-medium text-muted-foreground hover:border-primary hover:text-foreground transition-all line-clamp-1"
+              >
+                {item.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </ScrollArea>
+    </nav>
+  );
+};
+
+const LastUpdated = () => {
   const d = new Date();
-  const lastUpdated = d.toLocaleDateString(undefined, {
+  const dateString = d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  return <time dateTime={d.toISOString()}>{lastUpdated}</time>;
+  return <span className="font-mono text-xs">{dateString}</span>;
 };
 
 export default function TermsPage() {
   return (
-    <main className="px-4 py-10 md:py-16">
-      <article className="prose prose-zinc dark:prose-invert max-w-none">
-        <h1>Terms of Service & Disclaimer</h1>
-        <p>
-          Welcome to <strong>nith.eu.org</strong> and{" "}
-          <strong>app.nith.eu.org</strong> (the “Site”, “App”, “we”, “our” or
-          “us”). By accessing or using our services, you agree to the following
-          Terms of Service (“Terms”). Please read them carefully.
-        </p>
-        <p>
-          <strong>Last updated:</strong> <Updated />
-        </p>
+    <div className="relative min-h-screen">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(#80808012_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-        <h2>1. Acceptance of Terms</h2>
-        <p>
-          By accessing or using the Site or App, you agree to be bound by these
-          Terms, our Privacy Policy, and any other guidelines or policies we may
-          post. If you do not agree, do not use our services.
-        </p>
+      <main className="container relative z-10 mx-auto max-w-7xl px-4 py-12 md:py-20">
+        
+        {/* --- Header --- */}
+        <div className="mb-16 max-w-3xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Badge variant="outline" className="rounded-full py-1 border-primary/20 bg-primary/5 text-primary">
+              <Scale className="mr-1.5 size-3" />
+              Legal Agreements
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              Last updated: <LastUpdated />
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+            Terms of Service
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            By accessing <strong>nith.eu.org</strong> or <strong>app.nith.eu.org</strong>, 
+            you agree to the following terms. Please read them carefully to understand 
+            your rights and responsibilities.
+          </p>
+        </div>
 
-        <h2>2. Unofficial Platform</h2>
-        <p>
-          This is a <strong>student-run, unofficial project</strong>. We are not
-          affiliated with, endorsed by, or representing the{" "}
-          <strong>National Institute of Technology, Hamirpur</strong>. All
-          trademarks, logos, and names belong to their respective owners.
-        </p>
+        <div className="flex flex-col lg:flex-row gap-12">
+          {/* Sidebar */}
+          <div className="shrink-0">
+             <TableOfContents />
+          </div>
 
-        <h2>3. Use of Services</h2>
-        <ul>
-          <li>
-            You may use our services only for lawful purposes and in compliance
-            with these Terms.
-          </li>
-          <li>
-            You must not misuse, hack, interfere with, or disrupt our services.
-          </li>
-          <li>
-            You must not upload or share illegal, abusive, defamatory,
-            infringing, or harmful content.
-          </li>
-          <li>
-            You are responsible for any content you submit, including ensuring
-            you have the right to share it.
-          </li>
-        </ul>
+          {/* Content */}
+          <article className="flex-1 prose prose-zinc dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-primary prose-a:no-underline hover:prose-a:underline">
+            
+            {/* Critical Disclaimer Block */}
+            <div className="not-prose bg-amber-500/10 border border-amber-500/20 rounded-xl p-6 mb-12">
+               <div className="flex items-start gap-4">
+                  <div className="p-2 bg-amber-500/20 rounded-lg text-amber-600 dark:text-amber-400">
+                     <AlertTriangle className="size-5" />
+                  </div>
+                  <div>
+                     <h3 className="text-base font-semibold text-foreground mb-1">Unofficial Platform Disclaimer</h3>
+                     <p className="text-sm text-muted-foreground leading-relaxed">
+                        This is a <strong>student-run project</strong>. We are NOT affiliated with, endorsed by, or representing the <strong>National Institute of Technology, Hamirpur</strong>. All academic data is for informational purposes only.
+                     </p>
+                  </div>
+               </div>
+            </div>
 
-        <h2>4. Academic Data & Privacy</h2>
-        <p>
-          We may provide access to academic resources (e.g., syllabus,
-          results-related tools). This data is provided solely for convenience
-          and informational purposes. We do not guarantee accuracy,
-          completeness, or timely updates. You are responsible for verifying
-          official data with the institute.
-        </p>
+            <section id="acceptance">
+              <h2>1. Acceptance of Terms</h2>
+              <p>
+                By accessing or using the Site or App, you agree to be bound by these
+                Terms, our Privacy Policy, and any other guidelines we may post. 
+                If you do not agree, you must discontinue use immediately.
+              </p>
+            </section>
 
-        <h2>5. No Guarantee of Accuracy</h2>
-        <p>
-          While we aim to provide helpful and accurate information, all content
-          is provided “as is” without warranties of any kind. We disclaim all
-          responsibility for errors, omissions, delays, or inaccuracies in
-          content.
-        </p>
+            <Separator className="my-8 opacity-50" />
 
-        <h2>6. Advertising & Affiliate Links</h2>
-        <p>
-          Our Site may contain advertising or affiliate links. We may earn a
-          commission when you click or purchase through these links, at no
-          additional cost to you. Ads and affiliate content are provided by
-          third parties, and we do not control or endorse the products,
-          services, or claims.
-        </p>
+            <section id="unofficial">
+              <h2>2. Unofficial Platform</h2>
+              <p>
+                We expressly disclaim any official representation of NIT Hamirpur. 
+                All trademarks, logos, and institute names mentioned belong to their 
+                respective owners and are used solely for descriptive purposes.
+              </p>
+            </section>
 
-        <h2>7. Limitation of Liability</h2>
-        <p>
-          To the fullest extent permitted by law, we are not liable for any
-          direct, indirect, incidental, special, consequential, or punitive
-          damages arising from your use of or inability to use the Site or App.
-        </p>
+            <section id="usage">
+              <h2>3. Use of Services</h2>
+              <p>You agree to use our services lawfully. You must not:</p>
+              <ul>
+                <li>Misuse, hack, interfere with, or disrupt our infrastructure.</li>
+                <li>Upload illegal, abusive, defamatory, or infringing content.</li>
+                <li>Scrape data without express permission.</li>
+              </ul>
+              <p>You maintain responsibility for any content you submit to community sections.</p>
+            </section>
 
-        <h2>8. Indemnification</h2>
-        <p>
-          You agree to indemnify and hold harmless nith.eu.org, its operators,
-          contributors, and affiliates from any claims, damages, or expenses
-          arising out of your use of the services or violation of these Terms.
-        </p>
+            <section id="academic">
+               <h2>4. Academic Data & Privacy</h2>
+               <p>
+                 Tools providing academic resources (syllabus, results) are for convenience only.
+                 <strong> We do not guarantee real-time accuracy.</strong> You are responsible 
+                 for verifying critical academic data with official institute sources.
+               </p>
+            </section>
 
-        <h2>9. Intellectual Property</h2>
-        <p>
-          Content we create (e.g., original guides, articles, tools, and
-          designs) is protected by intellectual property laws. You may not
-          reproduce, modify, or distribute our content without permission,
-          except as allowed by law or fair use.
-        </p>
+            <Separator className="my-8 opacity-50" />
 
-        <h2>10. Service Changes & Termination</h2>
-        <p>
-          We may modify, suspend, or discontinue any part of our services at any
-          time, with or without notice. We are not liable for any resulting loss
-          or inconvenience.
-        </p>
+            <section id="accuracy">
+               <h2>5. No Guarantee of Accuracy</h2>
+               <p>
+                 The service is provided &ldquo;as is.&rdquo; We disclaim all warranties regarding 
+                 the completeness, reliability, or availability of the content. We are not liable 
+                 for errors or omissions.
+               </p>
+            </section>
 
-        <h2>11. Governing Law</h2>
-        <p>
-          These Terms are governed by and construed under the laws of India. Any
-          disputes shall be subject to the jurisdiction of courts located in
-          Himachal Pradesh, India.
-        </p>
+            <section id="ads">
+               <h2>6. Advertising & Affiliate Links</h2>
+               <p>
+                 Our Site includes third-party advertising (e.g., Google AdSense) and affiliate links. 
+                 We may earn commissions on clicks or purchases. We do not endorse products advertised 
+                 by third parties.
+               </p>
+               <div className="not-prose my-6">
+                 <AdUnit adSlot="multiplex" />
+               </div>
+            </section>
 
-        <h2>12. Changes to These Terms</h2>
-        <p>
-          We may update these Terms from time to time. Continued use of the Site
-          after changes means you accept the revised Terms.
-        </p>
+            <section id="liability">
+               <h2>7. Limitation of Liability</h2>
+               <p>
+                 To the fullest extent permitted by law, the operators of nith.eu.org shall not be 
+                 liable for any direct, indirect, incidental, or consequential damages arising 
+                 from your use of the platform.
+               </p>
+            </section>
 
-        <h2>13. Contact</h2>
-        <p>
-          If you have questions about these Terms or this Disclaimer, please
-          contact us at{" "}
-          <a href="mailto:contact@nith.eu.org">contact@nith.eu.org</a>.
-        </p>
+            <section id="indemnification">
+               <h2>8. Indemnification</h2>
+               <p>
+                 You agree to indemnify and hold harmless the platform operators and contributors 
+                 from any claims arising out of your violation of these Terms.
+               </p>
+            </section>
 
-        <hr />
-        <p>
-          <em>
-            Disclaimer: This platform is unofficial and not affiliated with the
-            National Institute of Technology, Hamirpur. Use of the Site is at
-            your own risk. Always confirm official academic information with the
-            institute.
-          </em>
-        </p>
-            <AdUnit
-        adSlot="multiplex"
-      />
-      </article>
-    </main>
+            <Separator className="my-8 opacity-50" />
+
+            <section id="ip">
+               <h2>9. Intellectual Property</h2>
+               <p>
+                 Original content created by us (code, designs, guides) is protected. 
+                 You may not reproduce or distribute our proprietary content without permission.
+               </p>
+            </section>
+
+            <section id="termination">
+               <h2>10. Service Changes & Termination</h2>
+               <p>
+                 We reserve the right to modify, suspend, or discontinue the platform at any time 
+                 without notice.
+               </p>
+            </section>
+
+            <section id="law">
+               <h2>11. Governing Law</h2>
+               <p>
+                 These Terms are governed by the laws of India. Any disputes are subject to the 
+                 jurisdiction of courts located in <strong>Himachal Pradesh, India</strong>.
+               </p>
+            </section>
+
+            <section id="changes">
+               <h2>12. Changes to These Terms</h2>
+               <p>
+                 Continued use of the Site after we post changes to these Terms constitutes 
+                 acceptance of the revised Terms.
+               </p>
+            </section>
+
+            <section id="contact">
+               <h2>13. Contact</h2>
+               <p>
+                 For legal inquiries: <a href="mailto:contact@nith.eu.org">contact@nith.eu.org</a>
+               </p>
+            </section>
+
+            <div className="mt-12 not-prose border-t border-border pt-8">
+               <p className="text-sm text-muted-foreground italic">
+                 <strong>Final Disclaimer:</strong> Use of the Site is at your own risk. 
+                 Always confirm official academic information with the institute.
+               </p>
+            </div>
+
+          </article>
+        </div>
+      </main>
+    </div>
   );
 }

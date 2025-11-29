@@ -82,32 +82,32 @@ export const testimonialsContent = [
     description: "Everything I need is just here.",
     image: "https://i.pravatar.cc/150?img=11",
     name: "Ankit Sharma",
-    handle: "@21122",
+    handle: "@19122",
   },
   {
     description: "This platform makes campus life smoother and more connected.",
     image: "https://i.pravatar.cc/150?img=22",
     name: "Ujjwal Singh",
-    handle: "@21147",
+    handle: "@19147",
   },
   {
     description:
       "From results to Syllabus, this platform actually makes NITH life simpler.",
     image: "https://i.pravatar.cc/150?img=33",
     name: "Rahul Mehta",
-    handle: "@21089",
+    handle: "@19089",
   },
   {
     description: "The UI is modern and simple to use. I love the features!",
     image: "https://i.pravatar.cc/150?img=44",
     name: "Ayushi Yadav",
-    handle: "@21201",
+    handle: "@19201",
   },
   {
     description:
       "The College Ecosystem really bridges academics and social life at NITH. ",
     image: "https://i.pravatar.cc/150?img=55",
     name: "Aditya Verma",
-    handle: "@21057",
+    handle: "@19057",
   },
 ];

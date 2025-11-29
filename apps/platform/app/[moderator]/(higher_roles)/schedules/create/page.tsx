@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function CreateTimeTablePage() {
   return (
     <>
-      <PreviousPageLink variant="light" size="sm" />
+      <PreviousPageLink variant="ghost" size="sm" />
 
       <TimeTableEditor mode="create" />
     </>

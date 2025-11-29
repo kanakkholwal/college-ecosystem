@@ -1,4 +1,3 @@
-import { MagicCard } from "@/components/animation/magic-card";
 import AdUnit from "@/components/common/adsense";
 import {
   Accordion,
@@ -6,22 +5,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PreviousPageLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import {
+  ArrowUpRight,
   Award,
-  BarChart3,
   BookOpen,
   Calendar,
   GraduationCap,
+  LineChart,
   Mail,
   Target,
   TrendingDown,
   TrendingUp,
-  TrendingUpDown,
   Trophy
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -37,308 +37,292 @@ type Props = {
   searchParams?: Promise<{ update?: string; new?: string }>;
 };
 
+// --- Helpers ---
+const getRankColor = (rank: number) => {
+  if (rank === 1) return "bg-pink-500/10 text-pink-600 border-pink-500/20";
+  if (rank === 2) return "bg-rose-400/10 text-rose-600 border-rose-400/20";
+  if (rank === 3) return "bg-amber-500/10 text-amber-600 border-amber-500/20";
+  return "bg-primary/5 text-primary border-primary/20";
+};
+
+function getYear(result: ResultTypeWithId): string {
+  const s = result.semesters.length;
+  if (s <= 2) return "First Year";
+  if (s <= 4) return "Second Year";
+  if (s <= 6) return "Third Year";
+  return result.programme.includes("Dual") && s > 8 ? "Super Final Year" : "Final Year";
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { rollNo } = await params;
+  return {
+    title: `${rollNo} | Academic Performance`,
+    description: `Detailed academic results and performance analysis for ${rollNo}`,
+    alternates: { canonical: "/results/" + rollNo },
+  };
+}
+
 export default async function ResultsPage(props: Props) {
   const params = await props.params;
   const searchParams = await props.searchParams;
-
   const update_result = searchParams?.update === "1";
   const is_new = searchParams?.new === "1";
-  const result = await getResultByRollNo(params.rollNo, update_result, is_new);
 
+  const result = await getResultByRollNo(params.rollNo, update_result, is_new);
   if (!result) return notFound();
 
-  const maxCgpi = Math.max(...result.semesters.map((s) => s.cgpi), 0);
-  const minCgpi = Math.min(...result.semesters.map((s) => s.cgpi), ...(result.semesters.length > 0 ? [maxCgpi] : [0]));
-  const cgpi = result.semesters.at(-1)?.cgpi ?? 0;
+  // --- Calculations ---
+  const cgpiValues = result.semesters.map((s) => s.cgpi);
+  const maxCgpi = Math.max(...cgpiValues, 0);
+  const minCgpi = Math.min(...cgpiValues, maxCgpi); // Prevent 0 min if not true
+  const currentCgpi = result.semesters.at(-1)?.cgpi ?? 0;
   const prevCgpi = result.semesters.length > 1 ? result.semesters.at(-2)?.cgpi : undefined;
-  const totalCourses = result.semesters.reduce((acc, s) => acc + s.courses.length, 0);
+  const trend = prevCgpi ? currentCgpi - prevCgpi : 0;
 
-  // course with 0 cgpi are considered as not passed
+  const totalCourses = result.semesters.reduce((acc, s) => acc + s.courses.length, 0);
   const failedCourses = result.semesters.reduce(
     (acc, s) => acc + s.courses.filter((c) => c.cgpi === 0).length,
     0
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-      {/* Header Section */}
-      <section id="hero" className="w-full py-6 md:py-10">
-        <PreviousPageLink size="sm" variant="ghost" className="mb-4" />
+    <div className="min-h-screen pb-20">
+      {/* Background Decor */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(#80808012_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-        {/* Hero Card - Minimal */}
-        <MagicCard className="rounded-2xl bg-card/20" layerClassName="bg-card">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6">
+        <PreviousPageLink size="sm" variant="ghost" className="mb-6 text-muted-foreground" />
 
-          <CardContent className="p-6 md:p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              {/* Student Info */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "flex items-center justify-center size-16 md:w-20 md:h-20 rounded-xl bg-primary/10 text-primary shrink-0",
-                    result.rank.college <= 3 ? getRankColor(result.rank.college) :
-                      " bg-primary/10 border border-primary/20",
-                    result.rank.college <= 3 ? " bg-gradient-to-br" : "",
-                  )}>
-                    <div className="text-center">
-                      {result.rank.college <= 3 ? (
-                        <Trophy className="size-5 md:size-6 text-white mx-auto mb-1" />
-                      ) : <Award className="size-5 md:size-6 text-primary mx-auto mb-1" />}
-                      <span className={cn("text-xs md:text-base font-bold", result.rank.college <= 3 ? "text-white" : " text-primary")}>#{result.rank.college}</span>
-                    </div>
-                  </div>
+        {/* --- 1. PROFILE HEADER --- */}
+        <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
+          <div className="flex items-start gap-5">
+            {/* Avatar Placeholder */}
+            <div className="flex items-center justify-center size-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 text-2xl font-bold text-primary shadow-sm">
+              {result.name.charAt(0)}
+            </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h1 className="font-bold text-2xl md:text-3xl lg:text-4xl tracking-tight mb-2 text-foreground">
-                      {result.name}
-                    </h1>
-
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className="text-sm md:text-base font-medium text-muted-foreground">
-                        {result.rollNo}
-                      </span>
-                      <Link
-                        href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}
-                        className="text-primary hover:text-primary/80 transition-colors"
-                        title="Contact via mail"
-                      >
-                        <Mail className="w-4 h-4" />
-                      </Link>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="gap-1">
-                        <Calendar className="size-3" />
-                        {getYear(result)}
-                      </Badge>
-                      <Badge className="gap-1">
-                        <BookOpen className="size-3" />
-                        {result.branch}
-                      </Badge>
-                      <Badge className="gap-1">
-                        <GraduationCap className="size-3" />
-                        {result.programme}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+            <div className="space-y-1.5">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+                {result.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">
+                  {result.rollNo}
+                </span>
+                <span className="hidden md:inline">•</span>
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="size-3.5" /> {result.branch}
+                </span>
+                <span className="hidden md:inline">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="size-3.5" /> {getYear(result)}
+                </span>
               </div>
-
-              {/* CGPI Highlight */}
-              <div className="flex flex-col justify-center items-center lg:items-end">
-                <div className="bg-muted/50 hover:bg-muted border rounded-xl p-4 md:p-6 w-full max-w-xs text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    {prevCgpi !== undefined && (
-                      <>
-                        {cgpi > prevCgpi ? (
-                          <TrendingUp className="size-4 text-green-600 dark:text-green-400" />
-                        ) : cgpi < prevCgpi ? (
-                          <TrendingDown className="size-4 text-red-600 dark:text-red-400" />
-                        ) : (
-                          <TrendingUpDown className="size-4 text-muted-foreground" />
-                        )}
-                      </>
-                    )}
-                    <p className="text-sm font-medium text-muted-foreground">Current CGPI</p>
-                  </div>
-                  <p className={cn("text-4xl md:text-5xl font-bold mb-1", getCgpiTrendColor(cgpi, prevCgpi))}>
-                    {cgpi.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {result.semesters.length} Semesters • {totalCourses} Courses
-                    {failedCourses > 0 && (
-                      <span className="text-rose-600 dark:text-rose-400">
-                        , {failedCourses} Failed
-                      </span>
-                    )}
-                  </p>
-                </div>
+              <div className="pt-2 flex gap-2">
+                <Button size="xs" variant="outline" className="h-7 text-xs gap-1.5" asChild>
+                  <Link href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}>
+                    <Mail className="size-3" /> Email Student
+                  </Link>
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </MagicCard>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-4">
-          <StatCard  Icon={Target} label="Max CGPI" value={maxCgpi.toFixed(2)} color="blue" />
-          <StatCard  Icon={BarChart3} label="Min CGPI" value={minCgpi.toFixed(2)} color="purple" />
-          <StatCard  Icon={Award} label="Batch Rank" value={`#${result.rank.batch}`} color="orange" />
-          <StatCard  Icon={Trophy} label="Branch Rank" value={`#${result.rank.branch}`} color="green" />
-        </div>
-
-        <AdUnit adSlot="display-horizontal" key={"results-page-ad-header-" + result.rollNo} />
-
-      </section>
-
-      {/* Semester Results */}
-      <section className="mt-8 md:mt-12 mb-8">
-        <div className="text-center mb-6 md:mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Academic Performance</h2>
-          <p className="text-sm text-muted-foreground">Semester-wise breakdown of courses and grades</p>
-        </div>
-
-        <Tabs defaultValue="table" className="w-full">
-          <div className="flex justify-center mb-6">
-            <TabsList>
-              <TabsTrigger value="table" className="gap-2">
-                <BookOpen className="w-4 h-4" />
-                Courses
-              </TabsTrigger>
-              <TabsTrigger value="graph" className="gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Progress
-              </TabsTrigger>
-            </TabsList>
           </div>
 
-          <TabsContent value="table" className="space-y-3">
-            {result.semesters.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground">
-                No semester data available.
-              </p>
-            )}
-            <Accordion type="single" collapsible defaultValue={result.semesters?.[0]?.semester.toString()}>
-              {result.semesters?.map((semester) => (
-                <AccordionItem value={semester.semester.toString()} key={semester.semester} className="border-0 mb-3">
-                  <Card className="overflow-hidden hover:border-primary/50 transition-colors">
-                    <AccordionTrigger className="hover:no-underline px-4 md:px-6 py-4">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 w-full pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 px-3 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold text-primary">{semester.semester}</span>
+          {/* Quick Rank Badge (Mobile/Desktop) */}
+          <div className="flex flex-col items-end gap-2">
+            <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider", getRankColor(result.rank.college))}>
+              <Trophy className="size-3.5" />
+              College Rank #{result.rank.college}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
+
+          {/* Main Stat: CGPI */}
+          <Card className="md:col-span-4 lg:col-span-3 border-border/50 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-3 opacity-10">
+              <Target className="size-24" />
+            </div>
+            <CardContent className="p-6 flex flex-col justify-between h-full">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Cumulative GPI</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold tracking-tighter text-foreground">
+                    {currentCgpi.toFixed(2)}
+                  </span>
+                  <span className="text-sm text-muted-foreground font-medium">/ 10</span>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center gap-2">
+                <div className={cn("flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md", trend >= 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600")}>
+                  {trend > 0 ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
+                  {Math.abs(trend).toFixed(2)}
+                </div>
+                <span className="text-xs text-muted-foreground">vs last sem</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Rank Breakdown */}
+          <Card className="md:col-span-8 lg:col-span-5 border-border/50 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-medium text-muted-foreground flex items-center gap-2">
+                <Award className="size-4" /> Rankings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 pt-2">
+              <div className="grid grid-cols-3 gap-4">
+                <RankBox label="Batch" rank={result.rank.batch} total="All" />
+                <div className="w-px bg-border/50 h-full mx-auto" />
+                <RankBox label="Branch" rank={result.rank.branch} total={result.branch} />
+                <div className="w-px bg-border/50 h-full mx-auto" />
+                <RankBox label="Class" rank={result.rank.class} total="Sec" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats Summary */}
+          <Card className="md:col-span-12 lg:col-span-4 border-border/50 shadow-sm bg-card">
+            <CardContent className="p-6 flex flex-col justify-center h-full space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <GraduationCap className="size-4" /> Total Courses
+                </span>
+                <span className="font-mono font-medium">{totalCourses}</span>
+              </div>
+              <Separator className="bg-border/50" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <ArrowUpRight className="size-4" /> Highest SGPI
+                </span>
+                <span className="font-mono font-medium text-emerald-600">{maxCgpi.toFixed(2)}</span>
+              </div>
+              <Separator className="bg-border/50" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <TrendingDown className="size-4" /> Lowest SGPI
+                </span>
+                <span className="font-mono font-medium text-amber-600">{minCgpi.toFixed(2)}</span>
+              </div>
+              {failedCourses > 0 && (
+                <>
+                  <Separator className="bg-border/50" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-rose-600 font-medium flex items-center gap-2">
+                      Backlogs
+                    </span>
+                    <span className="font-mono font-bold text-rose-600">{failedCourses}</span>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <AdUnit adSlot="display-horizontal" key={"results-header-ad"} />
+
+        {/* --- 3. ACADEMIC TIMELINE --- */}
+        <div className="mt-12">
+          <Tabs defaultValue="table" className="w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold tracking-tight">Academic History</h2>
+              <TabsList className="h-9">
+                <TabsTrigger value="table" className="text-xs gap-1.5"><BookOpen className="size-3.5" /> Detail</TabsTrigger>
+                <TabsTrigger value="graph" className="text-xs gap-1.5"><LineChart className="size-3.5" /> Graph</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="table" className="space-y-4">
+              {result.semesters.map((sem, idx) => (
+                <Accordion type="single" collapsible key={sem.semester} defaultValue={idx === 0 ? sem.semester.toString() : undefined}>
+                  <AccordionItem value={sem.semester.toString()} className="border border-border/50 rounded-xl bg-card overflow-hidden shadow-sm mb-4 px-0">
+                    <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline transition-all group">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex flex-col items-center justify-center size-10 rounded-lg bg-primary/5 border border-primary/10 group-hover:border-primary/30 transition-colors">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Sem</span>
+                            <span className="text-sm font-bold text-primary">{sem.semester}</span>
                           </div>
                           <div className="text-left">
-                            <h4 className="text-base font-semibold">Semester {semester.semester}</h4>
-                            <p className="text-xs text-muted-foreground">{semester.courses.length} courses</p>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              Credits: {sem.courses.length * 4} {/* Approx */}
+                            </p>
+                            <div className="flex gap-3 mt-0.5">
+                              <span className="text-sm font-medium">
+                                SGPI: <span className="text-foreground font-bold">{sem.sgpi}</span>
+                              </span>
+                              <span className="text-sm font-medium text-muted-foreground">
+                                CGPI: <span className="text-foreground">{sem.cgpi}</span>
+                              </span>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm">
-                          <div className="bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-md font-medium">
-                            CGPI: {semester.cgpi}
-                          </div>
-                          <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-medium">
-                            SGPI: {semester.sgpi}
-                          </div>
+                        {/* Visual Bar for SGPI */}
+                        <div className="hidden sm:block w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full", sem.sgpi >= 8.5 ? "bg-emerald-500" : sem.sgpi >= 7 ? "bg-primary" : "bg-amber-500")}
+                            style={{ width: `${(sem.sgpi / 10) * 100}%` }}
+                          />
                         </div>
                       </div>
                     </AccordionTrigger>
 
-                    <AccordionContent className="px-4 md:px-6 pb-4">
-                      <div className="space-y-2 pt-2">
-                        {semester.courses.map((course) => (
-                          <div key={course.code} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                            <div className="flex-1 min-w-0 mr-4">
-                              <h4 className="text-sm font-medium truncate">{course.name.replaceAll("&amp;", "&")}</h4>
-                              <p className="text-xs text-muted-foreground mt-0.5">{course.code}</p>
+                    <AccordionContent className="px-0 pb-0 border-t border-border/50">
+                      <div className="divide-y divide-border/40">
+                        {sem.courses.map((course) => (
+                          <div key={course.code} className="flex items-center justify-between p-3 px-4 hover:bg-muted/20 transition-colors">
+                            <div className="flex-1 min-w-0 pr-4">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                {course.name.replace(/&amp;/g, '&')}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                {course.code}
+                              </p>
                             </div>
-                            <div className="shrink-0">
-                              <div className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full min-w-[3rem] text-center">
-                                {course.cgpi}
-                              </div>
+                            <div className={cn(
+                              "flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border",
+                              course.cgpi >= 9 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                                course.cgpi >= 7 ? "bg-primary/5 text-primary border-primary/20" :
+                                  course.cgpi === 0 ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
+                                    "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            )}>
+                              {course.cgpi}
                             </div>
                           </div>
                         ))}
                       </div>
                     </AccordionContent>
-                  </Card>
-                </AccordionItem>
+                  </AccordionItem>
+                </Accordion>
               ))}
-            </Accordion>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="graph">
-            <CGPIChart semesters={result.semesters} />
-          </TabsContent>
-        </Tabs>
-      </section>
+            <TabsContent value="graph" className="p-4 border rounded-xl bg-card min-h-[400px]">
+              <CGPIChart semesters={result.semesters} />
+            </TabsContent>
+          </Tabs>
+        </div>
 
-      <AdUnit adSlot="display-horizontal" key={"results-page-ad-footer-" + result.rollNo} />
+        <AdUnit adSlot="display-horizontal" key={"results-footer-ad"} />
+      </div>
     </div>
   );
 }
-const getRankColor = (rank: number) => {
-  if (rank === 1)
-    return "from-[#FEE140] to-[#FA709A]"; // gold-pink
-  if (rank === 2)
-    return "from-[#89F7FE] to-[#66A6FF]"; // icy blue-silver
-  if (rank === 3)
-    return "from-[#FAD961] to-[#F76B1C]"; // bronze-orange
-  return "from-[#6EE7B7] to-[#3B82F6]"; // default vibrant teal-blue
-};
-const getCgpiTrendColor = (cgpi: number, prevCgpi?: number) => {
-  if (prevCgpi === undefined) return "text-muted-foreground";
-  if (cgpi > prevCgpi) return "text-emerald-600 dark:text-emerald-400";
-  if (cgpi < prevCgpi) return "text-rose-600 dark:text-rose-400";
-  return "text-muted-foreground";
-};
-/* Stat Card Component */
-function StatCard({
-  Icon,
-  label,
-  value,
-  color = "primary"
-}: {
-  Icon: React.ElementType;
-  label: string;
-  value: string;
-  color?: "blue" | "green" | "purple" | "orange" | "primary";
-}) {
-  const colorClasses = {
-    blue: "from-blue-500/10 to-cyan-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400",
-    green: "from-green-500/10 to-emerald-500/10 border-green-500/20 text-green-600 dark:text-green-400",
-    purple: "from-purple-500/10 to-violet-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400",
-    orange: "from-orange-500/10 to-amber-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400",
-    primary: "from-primary/10 to-primary/5 border-primary/20 text-primary"
-  };
 
+// --- Sub-components ---
+
+function RankBox({ label, rank, total }: { label: string; rank: number; total: string }) {
   return (
-    <Card className={`bg-gradient-to-br ${colorClasses[color]} border`}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Icon className="w-4 h-4" />
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        </div>
-        <p className="text-xl md:text-2xl font-bold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
-export async function generateMetadata(
-  { params }: Props
-): Promise<Metadata> {
-  const { rollNo } = await params;
-  return {
-    title: `${rollNo} | Results`,
-    description: `Check the results of ${rollNo}`,
-    alternates: { canonical: "/results/" + rollNo },
-  };
-}
-
-function getYear(result: ResultTypeWithId): string | null {
-  switch (result.semesters.length) {
-    case 0:
-    case 1:
-      return "First Year";
-    case 2:
-    case 3:
-      return "Second Year";
-    case 4:
-    case 5:
-      return "Third Year";
-    case 6:
-    case 7:
-      return result.programme === "B.Tech"
-        ? "Final Year"
-        : "Final Year (Dual Degree)";
-    case 8:
-      return result.programme === "B.Tech"
-        ? "Alumni"
-        : "Super Final Year (Dual Degree)";
-    case 9:
-      return "Super Final Year (Dual Degree)";
-    case 10:
-      return "Alumni";
-    default:
-      return "Unknown Year";
-  }
+    <div className="flex flex-col items-center justify-center text-center">
+      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        {label}
+      </span>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-bold text-foreground">#{rank}</span>
+      </div>
+      <span className="text-[10px] text-muted-foreground/60">{total}</span>
+    </div>
+  )
 }

@@ -3,7 +3,6 @@ import Footer from "@/components/common/footer";
 import GithubBanner from "@/components/common/github-banner";
 import Navbar from "@/components/common/navbar";
 import { getSession } from "~/auth/server";
-import { LayoutClient } from "./layout.client";
 
 
 
@@ -40,14 +39,6 @@ export default async function Layout({ children }: LayoutProps) {
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-0 w-[28rem] h-[28rem] bg-tertiary/20 rounded-full blur-3xl animate-pulse delay-700" />
       </div>
-      <LayoutClient user={session?.user} />
-      {/* <div
-        aria-hidden="true"
-        className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20 "
-      >
-        <div className="blur-[106px] h-56 bg-gradient-to-br from-primary to-secondary" />
-        <div className="blur-[106px] h-32 bg-gradient-to-r from-secondary to-primary" />
-      </div> */}
       <Footer />
     </div>
   );

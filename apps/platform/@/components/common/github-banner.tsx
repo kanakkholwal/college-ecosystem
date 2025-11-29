@@ -1,13 +1,11 @@
 import { StaggerChildrenContainer, StaggerChildrenItem } from "@/components/animation/motion";
 import { Icon, IconType } from "@/components/icons";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
-import { GitBranch, StarIcon, Users } from "lucide-react";
-import Link from "next/link";
+import { GitBranch, Github, Star, Users } from "lucide-react";
 import { getRepoStats, StatsData } from "~/lib/third-party/github";
 import { appConfig } from "~/project.config";
 import { marketwiseLink } from "~/utils/string";
+import { ButtonLink } from "../utils/link";
 
 interface GithubBannerProps {
   className?: string;
@@ -23,178 +21,182 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
       stars: 12,
       forks: 2,
       contributors: 1,
-      visitors: 2_40_000, // Fallback value
+      visitors: 10_40_000,
     };
   }
 
   return (
-    <StaggerChildrenContainer
-      className={cn(
-        "flex flex-col items-center pt-5 px-3 pb-10 md:pb-14 xl:pb-[60px]",
-        className
-      )}
-    >
-      <Badge variant="default">
-        <Link
-          href={marketwiseLink(appConfig.githubRepo, {
-            utm_medium: "app",
-            utm_campaign: "github-banner",
-          })}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1"
-        >
-          <GitHubLogoIcon className="mr-1 h-4 w-4" />
-          GitHub Community
-        </Link>
-      </Badge>
-      <h5 className="mt-4 text-xl leading-7 font-semibold tracking-tight text-foreground md:text-center xl:text-3xl">
-        About This Project
-      </h5>
-      <p className="mt-2 text-lg text-muted-foreground md:text-center xl:mt-3 xl:text-lg max-w-5xl">
-        This platform was created by students for students. It is completely
-        free and aims to make academic and campus resources accessible in one
-        place.
-      </p>
-      <StaggerChildrenItem className="mx-auto mt-10 flex w-full max-w-2xl flex-col items-center">
-        <div
-          data-slot="card"
-          className="bg-card text-card-foreground relative flex w-full flex-col items-start gap-6 overflow-hidden rounded-2xl border border-border p-8 shadow-lg md:flex-row lg:items-center"
-        >
-          <div className="pointer-events-none absolute right-0 bottom-0 z-0 h-2/3 w-2/3">
-            <svg
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 fill-gray-400/30 stroke-gray-400/30 h-full w-full"
-              style={{
-                maskImage:
-                  "radial-gradient(circle at 100% 100%, black 60%, transparent 100%)",
-                WebkitMaskImage:
-                  "radial-gradient(circle at 100% 100%, black 60%, transparent 100%)",
-                opacity: "0.4",
-              }}
-            >
-              <defs>
-                <pattern
-                  id=":S1:"
-                  width={40}
-                  height={40}
-                  patternUnits="userSpaceOnUse"
-                  x={-1}
-                  y={-1}
-                >
-                  <path d="M.5 40V.5H40" fill="none" strokeDasharray={0} />
-                </pattern>
-              </defs>
-              <rect
-                width="100%"
-                height="100%"
-                strokeWidth={0}
-                fill="url(#:S1:)"
-              />
-            </svg>
-          </div>
-          <div className="z-10 flex flex-shrink-0 flex-col items-start">
-            <a
-              href={marketwiseLink(appConfig.githubRepo, {
-                utm_medium: "app",
-                utm_campaign: "github-banner",
+    <section className={cn("py-20 lg:py-28 overflow-hidden", className)}>
+      <StaggerChildrenContainer className="container mx-auto px-4 max-w-5xl">
 
-              })}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon name="github" className="mb-2 h-16 w-16 text-foreground" />
-            </a>
-            <span className="text-xl font-semibold text-foreground">
-              {appConfig.name}
-            </span>
-            <a
-              href={marketwiseLink(appConfig.githubRepo,{
-                utm_medium: "app",
-                utm_campaign: "github-banner",
-
-              })}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 text-sm text-muted-foreground underline hover:text-foreground"
-            >
-              github.com/{appConfig.githubUri.split("/")[0]}
-            </a>
+        {/* --- HEADER --- */}
+        <div className="text-center space-y-4 mb-12">
+          <div className="inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+            <Github className="mr-2 size-3" /> Open Source
           </div>
-          <div className="z-10 flex flex-1 flex-col items-start">
-            <p className="mb-4 text-left text-muted-foreground">
-              Your contributions help us improve and expand our platform for
-              everyone.
-              {/* Dive into our code, contribute, and join a thriving open-source community. */}
-            </p>
-            <div className="flex flex-col gap-4 text-sm md:flex-row md:gap-6">
-              <a
-                href={appConfig.githubRepo + "/stargazers"}
-                rel="noopener noreferrer"
-                target="_blank" className="flex items-center gap-1">
-                <StarIcon className="size-4 text-yellow-400" />
-                <span className="font-semibold text-foreground">
-                  {stats.stars}
-                </span>
-                <span className="ml-1 text-muted-foreground">Stars</span>
-              </a>
-              <a
-                href={appConfig.githubRepo + "/network/members"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1"
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
+            Transparency at Core.
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
+            This platform is built by students, for students. We believe in open collaboration
+            to make academic resources accessible to everyone.
+          </p>
+        </div>
+
+        {/* --- REPO PREVIEW CARD --- */}
+        <StaggerChildrenItem>
+          <div className="group relative w-full overflow-hidden rounded-3xl border border-border/40 bg-card/60 backdrop-blur-sm shadow-xl transition-all hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5">
+
+            {/* Background Grid Pattern */}
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(#8080801a_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_100%,transparent_100%)] opacity-70" />
+            <div className="pointer-events-none absolute right-0 bottom-0 z-0 h-2/3 w-2/3">
+              <svg
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 fill-gray-400/30 stroke-gray-400/30 h-full w-full"
+                style={{
+                  maskImage:
+                    "radial-gradient(circle at 100% 100%, black 60%, transparent 100%)",
+                  WebkitMaskImage:
+                    "radial-gradient(circle at 100% 100%, black 60%, transparent 100%)",
+                  opacity: "0.4",
+                }}
               >
-                <GitBranch className="size-4 text-muted-foreground" />
-                <span className="font-semibold text-foreground">
-                  {stats.forks}
-                </span>
-                <span className="ml-1 text-muted-foreground">Forks</span>
-              </a>
-              <a
-                rel="noopener noreferrer"
-                href={appConfig.githubRepo + "/graphs/contributors"}
-                target="_blank"
-                className="flex items-center gap-1">
-                <Users className="size-4 text-muted-foreground" />
-                <span className="font-semibold text-foreground">
-                  {stats.contributors}+
-                </span>
-                <span className="ml-1 text-muted-foreground">Contributors</span>
-              </a>
+                <defs>
+                  <pattern
+                    id=":S1:"
+                    width={40}
+                    height={40}
+                    patternUnits="userSpaceOnUse"
+                    x={-1}
+                    y={-1}
+                  >
+                    <path d="M.5 40V.5H40" fill="none" strokeDasharray={0} />
+                  </pattern>
+                </defs>
+                <rect
+                  width="100%"
+                  height="100%"
+                  strokeWidth={0}
+                  fill="url(#:S1:)"
+                />
+              </svg>
+            </div>
+            <div className="flex flex-col lg:flex-row">
+
+              {/* Left: Repo Info */}
+              <div className="flex-1 p-8 lg:p-12 space-y-8">
+                <div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2 font-mono">
+                    <Icon name="github" className="size-4" />
+                    <span>github.com</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-foreground">
+                    {appConfig.githubUri.split("/")[0]} <span className="text-muted-foreground">/</span> {appConfig.githubUri.split("/")[1]}
+                  </h3>
+                </div>
+
+                {/* Stats Row */}
+                <div className="flex items-center gap-6 sm:gap-12 border-t border-border/40 pt-8">
+                  <StatItem
+                    Icon={Star}
+                    value={stats.stars}
+                    label="Stars"
+                    href={`${appConfig.githubRepo}/stargazers`}
+                  />
+                  <div className="h-8 w-px bg-border/40" />
+                  <StatItem
+                    Icon={GitBranch}
+                    value={stats.forks}
+                    label="Forks"
+                    href={`${appConfig.githubRepo}/network/members`}
+                  />
+                  <div className="h-8 w-px bg-border/40" />
+                  <StatItem
+                    Icon={Users}
+                    value={`${stats.contributors}+`}
+                    label="Contributors"
+                    href={`${appConfig.githubRepo}/graphs/contributors`}
+                  />
+                </div>
+              </div>
+
+              {/* Right: Actions (Desktop) / Bottom (Mobile) */}
+              <div className="lg:w-72 bg-muted/20 border-t lg:border-t-0 lg:border-l border-border/40 p-8 flex flex-col justify-center gap-4">
+                <ButtonLink
+                  href={marketwiseLink(appConfig.githubRepo, {
+                    utm_medium: "app",
+                    utm_campaign: "github-banner",
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  width="full"
+                  variant="rainbow"
+                  size="lg"
+                  >
+                  <Star  /> Star Repository
+                </ButtonLink>
+
+                <ButtonLink
+                  href={`${appConfig.githubRepo}/issues`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  width="full"
+                  variant="outline"
+                  size="lg"
+                >
+                  <GitBranch  /> Fork & Contribute
+                </ButtonLink>
+              </div>
             </div>
           </div>
-        </div>
-      </StaggerChildrenItem>
-      <StaggerChildrenItem className="mt-8">
-        <h6 className="text-base font-semibold text-center text-foreground/90 tracking-tight">
-          Connect with Project Creator
-        </h6>
-        <p className="mt-1 text-sm text-center text-muted-foreground">
-          Follow on social media to stay updated
-        </p>
-      </StaggerChildrenItem>
 
-      <StaggerChildrenItem className="mt-6 flex justify-center gap-5 flex-wrap px-3">
-        {(Object.entries(appConfig.socials) as [IconType, string][]).map(
-          ([key, value]) => (
-            <a
-              key={key}
-              href={value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-28 flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30 hover:bg-muted/60 active:scale-95"
-            >
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
-                <Icon name={key} className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-medium capitalize text-foreground/80">
-                {key}
-              </span>
-            </a>
-          )
-        )}
-      </StaggerChildrenItem>
+        </StaggerChildrenItem>
 
-    </StaggerChildrenContainer>
+        {/* --- SOCIAL DOCK (Footer) --- */}
+        <StaggerChildrenItem className="mt-16 text-center space-y-6">
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Maintained By</h4>
+            <p className="text-lg font-medium text-foreground">{appConfig.creator || "The Community"}</p>
+          </div>
+
+          <div className="inline-flex items-center justify-center p-1.5 rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
+            {(Object.entries(appConfig.socials) as [IconType, string][]).map(([key, value]) => (
+              <a
+                key={key}
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center justify-center size-10 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all active:scale-95"
+                aria-label={`Visit our ${key}`}
+              >
+                <Icon name={key} className="size-5 transition-transform group-hover:-translate-y-0.5 group-hover:text-primary" />
+
+                {/* Tooltip */}
+                <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary/10 text-primary text-xs font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none capitalize whitespace-nowrap backdrop-blur font-mono">
+                  {key}
+                </span>
+              </a>
+            ))}
+          </div>
+        </StaggerChildrenItem>
+
+      </StaggerChildrenContainer>
+    </section>
   );
+}
+
+// --- SUB-COMPONENTS ---
+
+function StatItem({ Icon, value, label, href }: { Icon: React.FC<React.SVGProps<SVGSVGElement>>, value: string | number, label: string, href: string }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="group flex flex-col gap-1 hover:opacity-80 transition-opacity">
+      <div className="flex items-center gap-2 text-2xl font-bold tabular-nums text-foreground">
+        <Icon className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
+        {value}
+      </div>
+      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-7">
+        {label}
+      </span>
+    </a>
+  )
 }

@@ -40,6 +40,7 @@ export const rawTimetableSchema = z.object({
           endTime: z.number().int().min(0).max(10),
           events: z.array(
             z.object({
+              _id: z.string().optional(),
               title: z.string(),
               description: z.string().optional(),
             })
@@ -48,5 +49,6 @@ export const rawTimetableSchema = z.object({
       ),
     })
   ),
+  status: z.enum(["draft", "published","archived"]).default("draft"),
 });
 export type RawTimetableType = z.infer<typeof rawTimetableSchema>;

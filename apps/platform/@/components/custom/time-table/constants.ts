@@ -36,4 +36,5 @@ export const rawTimetableData: RawTimetableType = {
       events: [] as RawEvent[],
     })),
   })),
+  status: "draft",
 };

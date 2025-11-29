@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Quote } from "lucide-react";
 
 interface Testimonial {
   name: string;
@@ -28,7 +29,7 @@ const AnimatedCanopy = ({
   <div
     {...props}
     className={cn(
-      "group relative flex h-full w-full overflow-hidden p-2 [--duration:10s] [--gap:12px] [gap:var(--gap)]",
+      "group relative flex h-full w-full overflow-hidden p-2 [--duration:40s] [--gap:1rem] [gap:var(--gap)]",
       vertical ? "flex-col" : "flex-row",
       className
     )}
@@ -36,7 +37,7 @@ const AnimatedCanopy = ({
     {Array.from({ length: repeat }).map((_, index) => (
       <div
         key={`item-${index}`}
-        className={cn("flex shrink-0 [gap:var(--gap)]", {
+        className={cn("flex shrink-0 [gap:var(--gap)] items-center", {
           "group-hover:[animation-play-state:paused]": pauseOnHover,
           "[animation-direction:reverse]": reverse,
           "animate-canopy-horizontal flex-row": !vertical,
@@ -49,8 +50,10 @@ const AnimatedCanopy = ({
     {applyMask && (
       <div
         className={cn(
-          "pointer-events-none absolute inset-0 z-10 h-full w-full from-white/50 from-5% via-transparent via-50% to-white/50 to-95% dark:from-gray-800/50 dark:via-transparent dark:to-gray-800/50",
-          vertical ? "bg-gradient-to-b" : "bg-gradient-to-r"
+          "pointer-events-none absolute inset-0 z-10 h-full w-full",
+          vertical
+            ? "bg-gradient-to-b from-background via-transparent to-background"
+            : "bg-gradient-to-r from-background via-transparent to-background"
         )}
       />
     )}
@@ -64,35 +67,39 @@ const TestimonialCard = ({
   testimonial: Testimonial;
   className?: string;
 }) => (
-  <div
+  <figure
     className={cn(
-      "group mx-2 flex h-32 w-80 shrink-0 cursor-pointer overflow-hidden rounded-xl bg-card border border-transparent p-3 transition-all hover:border-primary hover:shadow-[0_0_10px_#60a5fa] dark:hover:border-primary",
+      "relative h-full w-80 shrink-0 cursor-default overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-300",
+      // Hover effects: Lift + Shadow, NO Bold Border
+      "hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/10",
       className
     )}
   >
-    <div className="flex items-start gap-3">
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-border">
+    <div className="flex flex-row items-center gap-3">
+      <div className="relative size-10 shrink-0 overflow-hidden rounded-full bg-muted">
         <img
           src={testimonial.image}
           alt={testimonial.name}
-          className="h-full w-full not-prose object-cover"
+          className="h-full w-full object-cover"
         />
       </div>
-      <div className="flex-1">
-        <div className="flex items-baseline gap-2">
-          <span className="text-sm font-bold text-foreground">
-            {testimonial.name}
-          </span>
-          <span className="text-xs text-muted-foreground sr-only">
-            {testimonial.handle}
-          </span>
-        </div>
-        <p className="mt-1 line-clamp-3 text-sm text-foreground">
-          {testimonial.description}
+      <div className="flex flex-col overflow-hidden">
+        <figcaption className="flex flex-row items-center whitespace-nowrap text-sm font-semibold text-foreground">
+          {testimonial.name}
+        </figcaption>
+        <p className="text-xs font-medium text-muted-foreground truncate">
+          {testimonial.handle}
         </p>
       </div>
+      <div className="ml-auto text-primary/20">
+         <Quote className="size-4" fill="currentColor" />
+      </div>
     </div>
-  </div>
+    
+    <blockquote className="mt-4 text-sm leading-relaxed text-muted-foreground/90 text-pretty">
+      {testimonial.description}
+    </blockquote>
+  </figure>
 );
 
 export const AnimatedTestimonials = ({
@@ -103,25 +110,36 @@ export const AnimatedTestimonials = ({
   data: Testimonial[];
   className?: string;
   cardClassName?: string;
-}) => (
-  <div className={cn("w-full overflow-x-hidden py-4", className)}>
-    {[false, true, false].map((reverse, index) => (
-      <AnimatedCanopy
-        key={`Canopy-${index}`}
-        reverse={reverse}
-        className="[--duration:25s]"
-        pauseOnHover
-        applyMask={false}
-        repeat={3}
-      >
-        {data.map((testimonial) => (
+}) => {
+  // Split data into rows for visual variety
+  const firstRow = data.slice(0, Math.ceil(data.length / 2));
+  const secondRow = data.slice(Math.ceil(data.length / 2));
+
+  return (
+    <div className={cn("relative flex w-full flex-col gap-4 overflow-hidden py-10", className)}>
+      <AnimatedCanopy pauseOnHover className="[--duration:40s]">
+        {firstRow.map((testimonial) => (
           <TestimonialCard
-            key={testimonial.name}
+            key={testimonial.handle}
             testimonial={testimonial}
             className={cardClassName}
           />
         ))}
       </AnimatedCanopy>
-    ))}
-  </div>
-);
+      
+      <AnimatedCanopy reverse pauseOnHover className="[--duration:40s]">
+        {secondRow.map((testimonial) => (
+          <TestimonialCard
+            key={testimonial.handle}
+            testimonial={testimonial}
+            className={cardClassName}
+          />
+        ))}
+      </AnimatedCanopy>
+      
+      {/* Decorative background elements behind the marquee */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background to-transparent z-20" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background to-transparent z-20" />
+    </div>
+  );
+};
