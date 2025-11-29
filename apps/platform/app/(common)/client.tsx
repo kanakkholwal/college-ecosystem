@@ -280,7 +280,7 @@ export function FeatureSection() {
               </span>
             </h2>
             <p className="text-lg text-muted-foreground text-balance">
-              From checking results to finding hostel rooms, we've digitized the friction points of college life.
+              From checking results to finding hostel rooms, we{"'"}ve digitized the friction points of college life.
             </p>
           </div>
 

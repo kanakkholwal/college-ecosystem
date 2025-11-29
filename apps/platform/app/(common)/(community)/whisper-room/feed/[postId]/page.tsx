@@ -1,134 +1,190 @@
-
 import PollingFunctional from "@/components/application/polling";
 import AdUnit from "@/components/common/adsense";
-import EmptyArea from "@/components/common/empty-area";
 import { Icon } from "@/components/icons";
-import { CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { ButtonLink } from "@/components/utils/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { HatGlasses, Info } from "lucide-react";
+import {
+    ArrowLeft,
+    BarChart2,
+    Ghost,
+    Hash,
+    MessageSquareDashed,
+    MoreHorizontal,
+    ShieldQuestion
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { getWhisperPostById, updateWhisperPoll } from "~/actions/community.whisper";
 import { getSession } from "~/auth/server";
-import { getCategory, getVisibility } from "~/constants/community.whispers";
-import { changeCase } from "~/utils/string";
+import { getCategory } from "~/constants/community.whispers";
 import { WhisperCardFooter } from "../components/whisper-card";
 import { RenderPostContent } from "./client";
 
 interface WhisperFeedPageProps {
     params: Promise<{ postId: string }>;
 }
+
 export default async function WhisperFeedPage({ params }: WhisperFeedPageProps) {
     const { postId } = await params;
     const whisper = await getWhisperPostById(postId);
+
     if (!whisper) {
         return notFound();
     }
 
-
     const session = await getSession();
     const category = getCategory(whisper.category);
-    const visibility = getVisibility(whisper.visibility);
+
+    // Identity Logic
+    const isAnonymous = whisper.visibility === "ANONYMOUS";
+    const isPseudo = whisper.visibility === "PSEUDO";
+
+    const avatarSrc = isPseudo && whisper.pseudo?.avatar
+        ? whisper.pseudo.avatar
+        : `https://api.dicebear.com/7.x/initials/svg?seed=${isPseudo ? whisper.pseudo?.handle : isAnonymous ? "Anonymous" : whisper.authorId}`;
+
+    const displayName = isPseudo
+        ? whisper.pseudo?.handle
+        : isAnonymous
+            ? "Anonymous"
+            : whisper.authorId;
+
     return (
-        <div className="max-w-6xl mx-auto w-full grid justify-start items-start gap-4 grid-cols-1 px-2 lg:px-4 pr-4">
-            <div className="md:sticky md:top-4 mt-4 z-50 w-full mx-1.5 lg:mx-auto flex justify-between items-center gap-2 bg-card px-2 lg:px-4 py-1 lg:py-2 rounded-lg border">
-                <ButtonLink variant="ghost" size="sm" href="/whisper-room/feed">
-                    <Icon name="arrow-left" />
-                    Back to Feed
-                </ButtonLink>
-                <ButtonLink variant="ghost" size="sm"
-                    href={`feed?postedBy=${whisper.visibility === "PSEUDO" ? whisper.pseudo?.handle : whisper.visibility === "ANONYMOUS" ? "anonymous" : whisper.authorId}`}>
-                    More by
-                    {whisper.visibility === "PSEUDO"
-                        ? ` @${whisper.pseudo?.handle}`
-                        : whisper.visibility === "ANONYMOUS" ? " Anonymous"
-                            : ` ${whisper.authorId}`}
-                    <Icon name="arrow-right" />
-                </ButtonLink>
-            </div>
-            <div className="w-full flex flex-col justify-start whitespace-nowrap gap-2 bg-card border rounded-lg p-4 lg:px-6">
-                <CardHeader className="inline-flex items-center gap-2 flex-row p-3">
-                    {whisper.visibility === "ANONYMOUS" ? <div className="bg-muted size-8 rounded-full overflow-hidden flex justify-center items-center">
-                        <HatGlasses className="size-5 text-muted-foreground" />
-                    </div> :
-                        <Avatar className="size-8 rounded-full overflow-hidden">
-                            <AvatarImage
-                                alt="Post Author"
-                                width={32}
-                                height={32}
-                                src={
-                                    whisper.visibility === "PSEUDO" ? whisper.pseudo?.avatar
-                                        ? whisper.pseudo?.avatar
-                                        : `https://api.dicebear.com/5.x/initials/svg?seed=${whisper.pseudo?.handle}` :
-                                        whisper.visibility === "ANONYMOUS" ? `https://api.dicebear.com/5.x/initials/svg?seed=Anonymous` :
-                                            `https://api.dicebear.com/5.x/initials/svg?seed=${whisper.authorId}`
-                                }
-                            />
-                            <AvatarFallback>
-                                {whisper.visibility === "PSEUDO"
-                                    ? whisper.pseudo?.handle.charAt(0).toUpperCase()
-                                    : whisper.visibility === "ANONYMOUS" ? "A"
-                                        : whisper.authorId?.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>}
-                    <div className="text-muted-foreground grid gap-1 text-sm">
-                        <span
-                            className="text-xs lg:text-sm text-foreground font-medium"
-                        >
-                            {whisper.visibility === "PSEUDO"
-                                ? whisper.pseudo?.handle
-                                : visibility?.label}
-                        </span>
+        <div className="min-h-screen  pb-20">
 
-                        <span className="text-xs text-muted-foreground">
-                            Posted{" "}
-                            {whisper.createdAt &&
-                                formatDistanceToNow(new Date(whisper.createdAt), {
-                                    addSuffix: true,
-                                })} · {category?.label}
+            <nav className="sticky top-0 z-40 w-full max-w-3xl mx-auto  border-b border-border/40 bg-background/80 rounded-lg backdrop-blur-xl">
+                <div className="px-4 h-14 flex items-center justify-between">
+                    <ButtonLink
+                        variant="ghost"
+                        size="sm"
+                        href="/whisper-room/feed"
+                        className="text-muted-foreground hover:text-foreground -ml-2 gap-2"
+                    >
+                        <ArrowLeft className="size-4" />
+                        <span className="font-medium">Back to Feed</span>
+                    </ButtonLink>
+
+                    <Button variant="ghost" size="icon_sm" className="text-muted-foreground">
+                        <MoreHorizontal className="size-4" />
+                    </Button>
+                </div>
+            </nav>
+
+            <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+
+                <div className="relative">
+                    {/* Ambient Background Glow for the card */}
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-transparent blur-3xl rounded-[3rem] opacity-50" />
+
+                    <article className="rounded-2xl border border-border/50 bg-card shadow-sm overflow-hidden">
+
+                        {/* Header: Identity */}
+                        <div className="flex items-start justify-between p-6 pb-4 border-b border-border/40 bg-muted/20">
+                            <div className="flex items-center gap-4">
+                                <Avatar className={cn("size-12 border-2 shadow-sm", isAnonymous ? "border-muted-foreground/20" : "border-background")}>
+                                    {isAnonymous ? (
+                                        <div className="size-full bg-muted flex items-center justify-center">
+                                            <Ghost className="size-6 text-muted-foreground" />
+                                        </div>
+                                    ) : (
+                                        <AvatarImage src={avatarSrc} alt={displayName || "User"} />
+                                    )}
+                                    <AvatarFallback>{displayName?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-foreground text-lg">{displayName}</span>
+                                        {isAnonymous && (
+                                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted/50 text-muted-foreground border-border/50">
+                                                <ShieldQuestion className="size-3 mr-1" /> Hidden
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <span>{formatDistanceToNow(new Date(whisper.createdAt || ""), { addSuffix: true })}</span>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-1 text-primary">
+                                            <Hash className="size-3" /> {category?.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content Body */}
+                        <div className="p-6 md:p-8 space-y-8">
+                            <div className="prose prose-zinc dark:prose-invert max-w-none leading-relaxed text-base md:text-lg">
+                                <ErrorBoundaryWithSuspense loadingFallback={<div className="h-20 animate-pulse bg-muted rounded-lg" />}>
+                                    <RenderPostContent content={whisper.content_json} />
+                                </ErrorBoundaryWithSuspense>
+                            </div>
+
+                            {/* Poll Widget */}
+                            {whisper.poll && (
+                                <div className="mt-8 rounded-xl border border-border/60 bg-muted/30 p-1">
+                                    <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        <BarChart2 className="size-3.5" />
+                                        Live Poll • {whisper.poll.anonymousVotes ? "Anonymous Voting" : "Public Voting"}
+                                    </div>
+                                    <div className="p-4">
+                                        <PollingFunctional
+                                            poll={whisper.poll}
+                                            pollRefId={whisper._id!}
+                                            user={session?.user!}
+                                            updatePoll={updateWhisperPoll}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="bg-muted/10 border-t border-border/40 p-4 md:px-8">
+                            <WhisperCardFooter post={whisper} user={session?.user} className="justify-between w-full" />
+                        </div>
+                    </article>
+                </div>
+
+                {/* --- 3. Context & Ads --- */}
+
+                {/* "More by User" Link */}
+                <div className="flex justify-center">
+                    <ButtonLink
+                        href={`/whisper-room/feed?postedBy=${isPseudo ? whisper.pseudo?.handle : isAnonymous ? "anonymous" : whisper.authorId}`}
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full gap-2 text-xs text-muted-foreground"
+                    >
+                        View more whispers from
+                        <span className="font-semibold text-foreground">
+                            {isAnonymous ? "Anonymous Sources" : displayName}
                         </span>
+                        <Icon name="arrow-right" className="size-3" />
+                    </ButtonLink>
+                </div>
+
+                {/* Ad Unit */}
+                <div className="py-4">
+                    <AdUnit adSlot="display-horizontal" key={`whispers-page-ad-${whisper._id}`} />
+                </div>
+
+                {/* Comments Placeholder (Styled) */}
+                <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-8 text-center">
+                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted mb-4">
+                        <MessageSquareDashed className="size-6 text-muted-foreground/50" />
                     </div>
-                </CardHeader>
-                <ErrorBoundaryWithSuspense
-                    loadingFallback={<div className="animate-pulse h-4 bg-muted rounded w-full" />}
+                    <h3 className="text-sm font-semibold">Comments Disabled</h3>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+                        To maintain the safety and anonymity of the Whisper Room, direct comments are currently turned off.
+                    </p>
+                </div>
 
-                >
-                    <RenderPostContent content={whisper.content_json} />
-                </ErrorBoundaryWithSuspense>
-
-                {whisper.poll && (<>
-                    <div className="gap-3 flex flex-wrap items-center">
-                        <span className="rounded-md bg-muted text-muted-foreground px-2 py-1 text-xs inline-flex items-center">
-                            <Info className="mr-1 inline-block size-3" />
-                            {changeCase(whisper.category, "title")}
-                        </span>
-                        {whisper.poll && (<span className="rounded-md bg-muted text-muted-foreground px-2 py-1 text-xs inline-flex items-center">
-                            <HatGlasses className="mr-1 inline-block size-3" />
-                            {whisper.poll?.anonymousVotes ? "Anonymous votes" : "Public votes"}
-                        </span>)}
-                        {/* {closesAlready && (
-                        <Badge variant="destructive_light">Poll closed</Badge>
-                    )} */}
-                    </div>
-                    <PollingFunctional
-                        poll={whisper.poll}
-                        pollRefId={whisper._id!}
-                        user={session?.user!}
-                        updatePoll={updateWhisperPoll}
-                    />
-                </>)}
-                <WhisperCardFooter post={whisper} user={session?.user} className="mt-4 w-full justify-start" btnSize="default" />
-            </div>
-            <EmptyArea
-                title="Comments are coming soon!"
-                description="We're working hard to bring you the ability to comment on Whisper Room. Feel free to contribute on GitHub!"
-            />
-            <AdUnit
-                adSlot="display-horizontal"
-                key={`whispers-page-ad-${whisper._id}`}
-            />
+            </main>
         </div>
     );
 }

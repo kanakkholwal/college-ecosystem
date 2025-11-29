@@ -3,14 +3,14 @@ import AdUnit from "@/components/common/adsense";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  AlertTriangle,
-  Code2,
-  Github,
-  Globe,
-  HeartHandshake,
-  Mail,
-  MessageSquare,
-  Users
+    AlertTriangle,
+    Code2,
+    Github,
+    Globe,
+    HeartHandshake,
+    Mail,
+    MessageSquare,
+    Users
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -127,7 +127,7 @@ export default function AboutPage() {
         {/* --- FOOTER DISCLAIMER --- */}
         <div className="text-center max-w-2xl mx-auto space-y-6">
             <p className="text-sm text-muted-foreground italic">
-                "The goal is not to replace the institute's authority, but to enhance the student's capability."
+                "The goal is not to replace the institute{"'"}s authority, but to enhance the student{"'"}s capability."
             </p>
             <div className="pt-4">
                  <AdUnit adSlot="multiplex" key="contact-page-ad-footer" />
@@ -139,9 +139,8 @@ export default function AboutPage() {
   );
 }
 
-// --- SUB-COMPONENTS ---
 
-function ContactCard({ icon: Icon, title, desc, action, href }: { icon: any, title: string, desc: string, action: string, href: string }) {
+function ContactCard({ icon: Icon, title, desc, action, href }: { icon: React.FC<React.SVGProps<SVGSVGElement>>, title: string, desc: string, action: string, href: string }) {
     return (
         <Link 
             href={href} 

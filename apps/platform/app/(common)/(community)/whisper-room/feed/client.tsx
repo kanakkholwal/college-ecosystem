@@ -19,7 +19,6 @@ import { useSession } from "~/auth/client";
 import { CATEGORY_OPTIONS, WhisperPostT } from "~/constants/community.whispers";
 import WhisperCard from "./components/whisper-card";
 
-// --- Configuration ---
 const tabs = [
     { label: "All Whispers", id: "all", icon: Podcast },
     ...CATEGORY_OPTIONS.map(c => ({ label: c.label, id: c.value, icon: c.Icon })),
@@ -52,7 +51,6 @@ export default function WhisperFeedClient({ whispers }: { whispers: WhisperPostT
                 <div className="sticky top-0 z-30 w-full border-b border-border/40 bg-card/80 backdrop-blur-xl rounded-lg">
                     <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
-                        {/* Left: Title (Mobile) / Tabs (Desktop) */}
                         <div className="flex-1 min-w-0 overflow-hidden">
                             <ScrollArea className="w-full whitespace-nowrap" type="scroll">
                                 <TabsList className="h-10 w-full justify-start bg-transparent p-0 gap-2">
@@ -81,7 +79,6 @@ export default function WhisperFeedClient({ whispers }: { whispers: WhisperPostT
                             </ScrollArea>
                         </div>
 
-                        {/* Right: CTA */}
                         <div className="shrink-0">
                             <Button size="sm" className="rounded-full shadow-lg shadow-primary/20 gap-2" asChild>
                                 <Link href="/whisper-room/whisper">
@@ -93,7 +90,6 @@ export default function WhisperFeedClient({ whispers }: { whispers: WhisperPostT
                     </div>
                 </div>
 
-                {/* --- 2. Main Content Feed --- */}
                 <div className="max-w-7xl mx-auto px-4 py-8">
                     {tabs.map((cat) => (
                         <TabsContent key={cat.id} value={cat.id} className="mt-0 focus-visible:outline-none">
