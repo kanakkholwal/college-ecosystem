@@ -195,7 +195,7 @@ export function HostelImporter({ hostelId }: { hostelId: string }) {
 
             <MappingField 
               label="Room Capacity (Seater)"
-              description="Number of students per room (e.g., '2', 'Double')."
+              description={`Number of students per room (e.g., '2', 'Double').`}
               value={mappings.capacityKey}
               onChange={(val) => setMappings(prev => ({ ...prev, capacityKey: val }))}
               options={extractedKeys}
@@ -205,7 +205,7 @@ export function HostelImporter({ hostelId }: { hostelId: string }) {
           </CardContent>
           <CardFooter className="bg-muted/30 py-4 flex justify-between items-center">
              <p className="text-xs text-muted-foreground">
-               * "Words to Numbers" is enabled (e.g., "Three" → 3).
+               {`* "Words to Numbers" is enabled (e.g., "Three" → 3).`}
              </p>
              <Button 
                 onClick={processImport} 
