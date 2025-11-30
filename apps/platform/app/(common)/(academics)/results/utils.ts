@@ -16,6 +16,6 @@ export const searchParamsCache = createSearchParamsCache({
 
     cache: parseAsString.withDefault(''),
 
-    include_freshers: parseAsString.withDefault('0'),
+    freshers: parseAsString.withDefault('0'),
     
 })

@@ -21,20 +21,20 @@ import { searchParamsCache } from "./utils";
 async function ResultDisplay({ searchParams }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { query, page, batch, branch, programme, cache, include_freshers } = await searchParamsCache.parse(searchParams)
+  const { query, page, batch, branch, programme, cache, freshers } = await searchParamsCache.parse(searchParams)
 
   const currentPage = Number(page) || 1;
   const filter = {
     batch: Number(batch),
     branch: branch || "",
     programme: programme || "",
-    include_freshers: include_freshers === "1",
+    include_freshers: freshers === "1",
   };
   const new_cache = cache === "new";
 
   const resData = await getResults(query, currentPage, filter, new_cache);
-  const { results, totalPages } = resData;
-
+  const { results, totalPages,totalCount } = resData;
+  console.log("Results fetched:", results.length, "Total Pages:", totalPages, "Total Count:", totalCount);
   return <>
     <NoteSeparator label={`${results.length} Results found`} />
 

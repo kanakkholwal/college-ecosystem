@@ -144,7 +144,6 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
   );
 }
 
-// --- Optimized Sub-component ---
 function JumpToPage({ totalPages, onJump }: { totalPages: number, onJump: (page: number) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [val, setVal] = useState("");

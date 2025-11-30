@@ -68,28 +68,26 @@ export async function getResults(
 
     await dbConnect();
 
-    // Build filter query
     const filterQuery: any = {};
     if (query && query.trim() !== "") {
       const q = query.trim();
-      // Prefer indexed exact matches first (rollNo), fallback to regex on name.
       filterQuery.$or = [
-        { rollNo: q },
-        { name: { $regex: q, $options: "i" } },
+        { rollNo: q }, 
+        { name: { $regex: q, $options: "i" } }, 
       ];
     }
 
     if (filter.branch && filter.branch !== "all") filterQuery.branch = filter.branch;
-    if (filter.programme && filter.programme !== "all")
-      filterQuery.programme = filter.programme;
+    if (filter.programme && filter.programme !== "all") filterQuery.programme = filter.programme;
     if (filter.batch && filter.batch.toString() !== "all") filterQuery.batch = filter.batch;
+    
+    // Handle Freshers
     if (!filter.include_freshers) {
-      // filterQuery.$expr = { $gt: [{ $size: "$semesters" }, 0] };
       filterQuery["semesters.0"] = { $exists: true };
     }
 
-
     const skip = (page - 1) * resultsPerPage;
+
     const aggregationPipeline: PipelineStage[] = [
       { $match: filterQuery },
       { $sort: { "rank.college": 1 } },
@@ -101,15 +99,10 @@ export async function getResults(
           secondLastSemester: {
             $cond: [
               { $gte: [{ $size: "$semesters" }, 2] },
-              {
-                $arrayElemAt: [
-                  "$semesters",
-                  { $subtract: [{ $size: "$semesters" }, 2] },
-                ],
-              },
+              { $arrayElemAt: ["$semesters", { $subtract: [{ $size: "$semesters" }, 2] }] },
               null,
             ],
-          }
+          },
         },
       },
       {
@@ -125,17 +118,16 @@ export async function getResults(
           secondLastSemester: 0,
         },
       },
-    ]
+    ];
 
 
-    const results = await ResultModel.aggregate(aggregationPipeline);
+    const [results, totalCount] = await Promise.all([
+      ResultModel.aggregate(aggregationPipeline),
+      ResultModel.countDocuments({}) 
+    ]);
 
-
-    const totalCount = (results[0]?.totalCount || 0) as number;
     const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));
-
     const response = { results, totalPages, totalCount };
-
     // cache the whole response
     try {
       await redis.set(cacheKey, JSON.stringify(response), "EX", 60 * 60 * 24); // 1 day
