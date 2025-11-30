@@ -1,11 +1,3 @@
-import EmptyArea from "@/components/common/empty-area";
-import ConditionalRender from "@/components/utils/conditional-render";
-import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
-import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
-import { cn } from "@/lib/utils";
-// import { getSession } from "~/lib/auth-server";
-import { Lock, Unlock } from "lucide-react";
-import { MdOutlineChair } from "react-icons/md";
 import {
   getAllotmentProcess,
   getHostRoom,
@@ -14,177 +6,87 @@ import {
 } from "~/actions/hostel.allotment-process";
 import { getHostelForStudent } from "~/actions/hostel.core";
 
-import type { HostelRoomJson } from "~/models/allotment";
-import { ViewRoomButton } from "./client";
-
-import { ResponsiveContainer } from "@/components/common/container";
+// UI Components
+import EmptyArea from "@/components/common/empty-area";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
+import { AllotmentHeader, RoomGrid } from "./client"; // We will create these
 
 export default async function HostelRoomAllotmentPage() {
+  // 1. Fetch Core Data
   const hostelResponse = await getHostelForStudent();
 
-  if (
-    !hostelResponse.success ||
-    !hostelResponse.hosteler ||
-    !hostelResponse.hostel
-  ) {
-    console.log(hostelResponse);
+  if (!hostelResponse.success || !hostelResponse.hosteler || !hostelResponse.hostel) {
     return (
-      <div className="w-full">
+      <div className="w-full min-h-[50vh] flex items-center justify-center">
         <EmptyArea
-          title={hostelResponse.message}
-          description="Please contact the admin to assign you a hostel."
+          title={hostelResponse.message || "No Hostel Assigned"}
+          description="Please contact the administration to resolve your hostel allocation."
         />
       </div>
     );
   }
+
   const { hostel, hosteler } = hostelResponse;
-  const allotmentProcess = await getAllotmentProcess(hosteler._id);
-  console.log("allotment process:", allotmentProcess);
 
-  const { data } = await getHostRoom(hosteler?._id as string);
+  // 2. Fetch Process Status & User's Current Room
+  const [allotmentProcess, userRoomData] = await Promise.all([
+    getAllotmentProcess(hosteler._id),
+    getHostRoom(hosteler._id as string),
+  ]);
 
-  let hostelRoomsResponse: Awaited<ReturnType<typeof getHostelRooms>> | null =
-    null;
-  let upcomingSlotsResponse: Awaited<
-    ReturnType<typeof getUpcomingSlots>
-  > | null = null;
+  const hostJoinedRoom = userRoomData?.data?.room;
 
+  // 3. Conditional Data Fetching (Only if open)
+  let rooms = [];
+  let slots = [];
+  
   if (allotmentProcess?.status === "open") {
-    hostelRoomsResponse = await getHostelRooms(hostel._id);
-    if (hostelRoomsResponse?.error) {
-      console.log(hostelRoomsResponse.message);
-    }
-
-    upcomingSlotsResponse = await getUpcomingSlots(hostel._id);
-    if (upcomingSlotsResponse?.error) {
-      console.log(upcomingSlotsResponse.message);
-    }
+    const [roomsRes, slotsRes] = await Promise.all([
+      getHostelRooms(hostel._id),
+      getUpcomingSlots(hostel._id)
+    ]);
+    rooms = roomsRes.data || [];
+    slots = slotsRes.data || [];
   }
 
-  const hostJoinedRoom = data?.room;
-  console.log(hostJoinedRoom);
-
   return (
-    <div className="space-y-5 my-2">
-      <ErrorBoundaryWithSuspense
-        loadingFallback={<SkeletonCardArea className="mx-auto" />}
-      >
-        <ConditionalRender condition={allotmentProcess?.status === "closed"}>
-          <EmptyArea
-            title="Allotment Process Closed"
-            description="Allotment process is closed for this hostel"
+    <div className="space-y-8 my-6 max-w-7xl mx-auto px-4 sm:px-6">
+      {/* Header Section */}
+      <AllotmentHeader 
+        status={allotmentProcess?.status} 
+        joinedRoom={hostJoinedRoom?.roomNumber}
+      />
+
+      <ErrorBoundaryWithSuspense loadingFallback={<SkeletonCardArea count={8} />}>
+        {/* State Handling */}
+        {allotmentProcess?.status !== "open" ? (
+          <StatusMessage status={allotmentProcess?.status} />
+        ) : (
+          <RoomGrid 
+            rooms={rooms} 
+            hostId={hosteler._id as string} 
+            userRoomId={hostJoinedRoom?._id}
           />
-        </ConditionalRender>
-
-        <ConditionalRender condition={allotmentProcess?.status === "paused"}>
-          <EmptyArea
-            title="Allotment Process Paused"
-            description="Allotment process is paused for this hostel for some reason"
-          />
-        </ConditionalRender>
-
-        <ConditionalRender condition={allotmentProcess?.status === "completed"}>
-          <EmptyArea
-            title="Allotment Process Completed"
-            description="Allotment process is completed for this hostel"
-          />
-        </ConditionalRender>
-
-        <ConditionalRender condition={allotmentProcess?.status === "waiting"}>
-          <EmptyArea
-            title="Allotment Process Waiting"
-            description="Allotment process is waiting for the admin to start the process"
-          />
-        </ConditionalRender>
-
-        <ConditionalRender condition={allotmentProcess?.status === "open"}>
-          {upcomingSlotsResponse?.error && (
-            <EmptyArea
-              title="Something went while fetching slots"
-              description={upcomingSlotsResponse?.message}
-            />
-          )}
-          {hostelRoomsResponse?.error && (
-            <EmptyArea
-              title="Something went while fetching rooms"
-              description={hostelRoomsResponse?.message}
-            />
-          )}
-
-          <div>
-            <h2 className="text-lg font-semibold">Hostel Room Allotment</h2>
-            <p className="text-sm text-muted-foreground">
-              Select a room to view details and allotment options.
-            </p>
-          </div>
-          <ResponsiveContainer className="mx-auto">
-            {hostelRoomsResponse?.data?.map((room) => {
-              const joinable =
-                !hostJoinedRoom ||
-                (room.occupied_seats < room.capacity && !room.isLocked);
-
-              return (
-                <RoomCard
-                  key={room._id}
-                  room={room}
-                  joinable={joinable}
-                  hostId={hosteler?._id as string}
-                />
-              );
-            })}
-          </ResponsiveContainer>
-        </ConditionalRender>
+        )}
       </ErrorBoundaryWithSuspense>
     </div>
   );
 }
 
-type RoomCardProps = {
-  room: HostelRoomJson;
-  joinable: boolean;
-  hostId: string;
-};
+function StatusMessage({ status }: { status: string }) {
+  const messages = {
+    closed: { title: "Allotment Closed", desc: "The allocation window has ended." },
+    paused: { title: "Process Paused", desc: "Admin has temporarily paused allocation." },
+    waiting: { title: "Starting Soon", desc: "The allocation window has not opened yet." },
+    completed: { title: "Allotment Done", desc: "The process is complete for this semester." },
+  };
 
-function RoomCard({ room, joinable, hostId }: RoomCardProps) {
+  const msg = messages[status as keyof typeof messages] || messages.waiting;
+
   return (
-    <div className="bg-card rounded-lg shadow-md p-4 space-y-3 hover:shadow-lg border hover:border-primary transition-shadow duration-300">
-      <div>
-        <h6 className="text-base font-semibold mb-2">
-          {room.roomNumber}
-          {room.isLocked ? (
-            <Lock className="text-red-500 inline-block size-4 ml-2" />
-          ) : (
-            <Unlock className="text-green-500 inline-block size-4 ml-2" />
-          )}
-        </h6>
-        <p className="text-sm text-muted-foreground">
-          {room.capacity} Seater |{" "}
-          <span className="text-muted-foreground font-bold inline-block">
-            {room.occupied_seats}/ {room.capacity}
-          </span>
-        </p>
-      </div>
-      <div className="flex flex-row items-center gap-2">
-        {Array.from({ length: room.capacity }).map((_, index) => {
-          return (
-            <MdOutlineChair
-              key={`room.${index.toString()}`}
-              className={cn(
-                `text-muted-foreground font-bold inline-block ${index + 1 <= room.occupied_seats ? "text-green-500" : "text-muted-foreground"}`
-              )}
-            />
-          );
-        })}
-      </div>
-      <div className="">
-        {room.occupied_seats >= room.capacity && !room.isLocked ? (
-          <>
-            <span className="text-sm text-red-500">Room is full</span>
-          </>
-        ) : (
-          <ViewRoomButton room={room} joinable={joinable} hostId={hostId} />
-        )}
-      </div>
+    <div className="p-12">
+      <EmptyArea title={msg.title} description={msg.desc} />
     </div>
   );
 }

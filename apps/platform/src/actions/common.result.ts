@@ -123,7 +123,7 @@ export async function getResults(
 
     const [results, totalCount] = await Promise.all([
       ResultModel.aggregate(aggregationPipeline),
-      ResultModel.countDocuments({}) 
+      ResultModel.countDocuments(filterQuery) 
     ]);
 
     const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));

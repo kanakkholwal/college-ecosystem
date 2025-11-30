@@ -1,107 +1,101 @@
-import { StatsCard } from "@/components/application/stats-card";
-import { ResponsiveContainer } from "@/components/common/container";
-import EmptyArea from "@/components/common/empty-area";
-import { Badge } from "@/components/ui/badge";
-import { Heading, Paragraph } from "@/components/ui/typography";
-import { LuBuilding } from "react-icons/lu";
+import EmptyArea from "@/components/common/empty-area"; // Keep your existing
 import {
-  getAllotmentProcess,
-  getHostelRooms,
-} from "~/actions/hostel.allotment-process";
+  AlertCircle
+} from "lucide-react";
+import { getAllotmentProcess, getHostelRooms } from "~/actions/hostel.allotment-process";
 import { getHostel } from "~/actions/hostel.core";
 import {
-  ChangeAllotmentProcessStatusButton,
-  DistributeSlotsButton,
-  DownloadSlotButton,
-  RoomsTable,
+  AdminHeader,
+  ProcessControlCard,
+  RoomsTableWrapper,
+  SlotManagementCard
 } from "./client";
-
-import {
-  SLOT_CAPACITY,
-  SLOT_DURATION,
-  SLOT_TIME_GAP,
-} from "~/constants/hostel.allotment-process";
 
 export default async function HostelRoomAllotmentPage({
   params,
 }: {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }) {
   const slug = (await params).slug;
-  const response = await getHostel(slug);
-  const { success, hostel } = response;
+  const hostelRes = await getHostel(slug);
 
-  if (!success || !hostel) {
+  if (!hostelRes.success || !hostelRes.hostel) {
     return (
-      <EmptyArea
-        icons={[LuBuilding]}
-        title="No Hostel Found"
-        description={`Hostel with slug ${slug} not found`}
-      />
+      <div className="flex h-[50vh] items-center justify-center">
+        <EmptyArea
+          title="Hostel Not Found"
+          description={`Could not locate hostel data for slug: ${slug}`}
+        />
+      </div>
     );
   }
 
-  const allotmentProcess = await getAllotmentProcess(hostel._id);
-  console.log("allotment process from admin:", allotmentProcess);
-  const hostelRoomsResponse = await getHostelRooms(hostel._id);
-  if (hostelRoomsResponse.error) {
-    console.log(hostelRoomsResponse.message);
-  }
+  const { hostel } = hostelRes;
+
+  // Parallel Fetching for Admin Performance
+  const [allotmentProcess, roomsRes] = await Promise.all([
+    getAllotmentProcess(hostel._id),
+    getHostelRooms(hostel._id)
+  ]);
+
+  const rooms = roomsRes.data || [];
+  
+  // Calculate Quick Stats for Dashboard
+  const totalRooms = rooms.length;
+  const totalCapacity = rooms.reduce((acc: number, r: any) => acc + r.capacity, 0);
+  const totalOccupied = rooms.reduce((acc: number, r: any) => acc + r.occupied_seats, 0);
+  const occupancyRate = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
 
   return (
-    <div className="space-y-5 my-2">
-      <div className="flex justify-between w-full">
-        <div className="w-1/2">
-          <Heading level={4}>{hostel.name}</Heading>
-          <Paragraph className="capitalize !mt-0">
-            {hostel.gender} Hostel
-          </Paragraph>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      {/* 1. Dashboard Header */}
+      <AdminHeader 
+        hostelName={hostel.name} 
+        gender={hostel.gender}
+        stats={{ totalRooms, totalCapacity, totalOccupied, occupancyRate }}
+      />
+
+      {/* 2. Control Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Status Control */}
+        <ProcessControlCard 
+          hostelId={hostel._id} 
+          currentStatus={allotmentProcess?.status || "waiting"} 
+        />
+        
+        {/* Slot Operations */}
+        <SlotManagementCard hostelId={hostel._id} />
+
+        {/* Quick Tips / Info (Optional 3rd Column) */}
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+              System Status
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              System is operating normally. Ensure slots are distributed before opening the process.
+            </p>
+          </div>
+          <div className="mt-4 pt-4 border-t flex justify-between text-sm">
+             <span className="text-muted-foreground">Last Updated</span>
+             <span className="font-mono">Just now</span>
+          </div>
         </div>
       </div>
 
-      <ResponsiveContainer>
-        <StatsCard title="Allotment Process">
-          <p className="text-xs text-muted-foreground">
-            Allotment process is{" "}
-            <Badge variant="link" size="sm" className="capitalize">
-              {allotmentProcess?.status}
-            </Badge>{" "}
-            for this hostel
-          </p>
-
-          <ChangeAllotmentProcessStatusButton
-            currentStatus={allotmentProcess?.status}
-            hostelId={hostel._id}
-          />
-        </StatsCard>
-        <StatsCard title="Allotment Slots">
-          <p className="text-xs text-muted-foreground">
-            Create slots for allotment process with duration of {SLOT_DURATION}
-            min with gap of {SLOT_TIME_GAP}min and capacity of {SLOT_CAPACITY}{" "}
-            students per slot
-          </p>
-
-          <DistributeSlotsButton hostelId={hostel._id} />
-          <DownloadSlotButton hostelId={hostel._id} />
-        </StatsCard>
-      </ResponsiveContainer>
-
-      <div className="w-full ">
-        <Heading level={4} className="mb-2">
-          Manual Check
-        </Heading>
-        <Paragraph className="text-muted-foreground">
-          Allotment process is
-          <Badge variant="default_light" size="sm" className="capitalize mx-1">
-            {allotmentProcess?.status}
-          </Badge>{" "}
-          for this hostel
-        </Paragraph>
-
-        <RoomsTable rooms={hostelRoomsResponse.data} />
+      {/* 3. Rooms Data Table */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+             <h2 className="text-lg font-semibold tracking-tight">Room Inventory</h2>
+             <p className="text-sm text-muted-foreground">Manage locks and view detailed occupancy.</p>
+          </div>
+        </div>
+        <RoomsTableWrapper rooms={rooms} />
       </div>
+
     </div>
   );
 }

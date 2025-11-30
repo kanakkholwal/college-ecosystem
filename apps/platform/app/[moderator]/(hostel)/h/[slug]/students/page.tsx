@@ -7,19 +7,19 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import {
-  Building2,
-  CheckCircle2,
-  FileSpreadsheet,
-  Plus,
-  Search,
-  UserPlus,
-  Users
+   Building2,
+   CheckCircle2,
+   FileSpreadsheet,
+   Plus,
+   Search,
+   UserPlus,
+   Users
 } from "lucide-react";
 import {
-  getEligibleStudentsForHostel,
-  getHostel,
-  getStudentsByHostelId,
-  importStudentsWithCgpi,
+   getEligibleStudentsForHostel,
+   getHostel,
+   getStudentsByHostelId,
+   importStudentsWithCgpi,
 } from "~/actions/hostel.core";
 import { ImportStudents } from "./client";
 
@@ -51,7 +51,6 @@ export default async function HostelPage({
   return (
     <div className="w-full max-w-[1600px] mx-auto space-y-8 py-8 px-4 sm:px-6">
       
-      {/* --- Property Header --- */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-5">
            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -71,14 +70,12 @@ export default async function HostelPage({
            </div>
         </div>
         <div className="flex items-center gap-2">
-           {/* Placeholder for future actions */}
            <Button variant="outline">Edit Configuration</Button>
         </div>
       </div>
 
       <Separator />
 
-      {/* --- Management Tabs --- */}
       <Tabs defaultValue="view_students" className="w-full space-y-6">
         <div className="flex items-center justify-between">
             <TabsList className="bg-muted/50 p-1 border">
