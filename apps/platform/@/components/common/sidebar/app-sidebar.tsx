@@ -20,6 +20,7 @@ import { ApplicationSvgLogo } from "@/components/logo";
 import { getSideNavLinks } from "@/constants/links";
 import { useCookieWithUtils } from "@/hooks/use-cookie";
 import Link from "next/link";
+import { useMemo } from "react";
 import { appConfig, orgConfig } from "~/project.config";
 
 
@@ -39,7 +40,7 @@ export function AppSidebar({
 }: SidebarProps) {
   const { value } = useCookieWithUtils('hostel:slug');
 
-  const links = getSideNavLinks(moderator, prefixPath, value);
+  const links = useMemo(() => getSideNavLinks(moderator, prefixPath, value), [moderator, prefixPath, value]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border" {...props}>

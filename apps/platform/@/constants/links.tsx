@@ -209,6 +209,13 @@ export const sidebar_links: rawLinkType[] = [
     path: "/events",
     category: "view",
     allowed_roles: [ROLES_ENUMS.ADMIN],
+    items: [
+      {
+        title: "Create Event",
+        path: "/create",
+        allowed_roles: [ROLES_ENUMS.ADMIN],
+      },
+    ],
   },
   {
     title: "Courses",
@@ -221,6 +228,13 @@ export const sidebar_links: rawLinkType[] = [
       ROLES_ENUMS.HOD,
       ROLES_ENUMS.CR,
     ],
+    items: [
+      {
+        title: "Create Course",
+        path: "/create",
+        allowed_roles: [ROLES_ENUMS.ADMIN],
+      },
+    ],
   },
   {
     title: "Schedules",
@@ -232,6 +246,13 @@ export const sidebar_links: rawLinkType[] = [
       ROLES_ENUMS.FACULTY,
       ROLES_ENUMS.HOD,
       ROLES_ENUMS.CR,
+    ],
+    items: [
+      {
+        title: "Create Schedule",
+        path: "/create",
+        allowed_roles: [ROLES_ENUMS.ADMIN],
+      },
     ],
   },
   {

@@ -27,7 +27,7 @@ export default async function Schedules(props: {
   const params = await props.params;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20">
       <HeaderBar
         Icon={CalendarDays}
         titleNode={

@@ -4,28 +4,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button"; // If you use the footer button
 import { cn } from "@/lib/utils";
 import {
-    Activity,
-    AlertTriangle,
-    CheckCircle2,
-    Database,
-    GitBranch,
-    Mail,
-    RefreshCw,
-    ShieldCheck,
-    Trash2,
-    Trophy
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Database,
+  GitBranch,
+  Mail,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+  Trophy
 } from "lucide-react";
 import {
-    assignBranchChange,
-    assignRank,
-    getAbnormalResults,
-    getBasicInfo,
+  assignBranchChange,
+  assignRank,
+  getAbnormalResults,
+  getBasicInfo,
 } from "./actions";
 import {
-    AbnormalResultsDiv,
-    DeleteResultDiv,
-    GetResultDiv,
-    MailResultUpdateDiv,
+  AbnormalResultsDiv,
+  DeleteResultDiv,
+  GetResultDiv,
+  MailResultUpdateDiv,
 } from "./client";
 export default async function AdminResultPage() {
   const { counts, asOf } = await getBasicInfo();
@@ -33,7 +33,6 @@ export default async function AdminResultPage() {
 
   return (
     <div className="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 space-y-8">
-      {/* 1. Header & Primary Metric */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-8">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -44,7 +43,6 @@ export default async function AdminResultPage() {
           </p>
         </div>
 
-        {/* Hero Metric Card */}
         <div className="flex items-center gap-4 bg-card border rounded-2xl p-4 shadow-sm min-w-[240px]">
           <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <Database className="h-6 w-6" />
@@ -67,10 +65,8 @@ export default async function AdminResultPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* 2. Left Column: Operations */}
         <div className="xl:col-span-2 space-y-8">
 
-          {/* Section: Batch Jobs */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Batch Operations
@@ -114,7 +110,6 @@ export default async function AdminResultPage() {
             </div>
           </div>
 
-          {/* Section: Data Ingestion & Comms */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Database className="h-4 w-4" /> Data Management
