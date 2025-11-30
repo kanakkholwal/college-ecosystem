@@ -142,7 +142,7 @@ function TimetableCard({ timetable, href, index }: { timetable: Partial<TimeTabl
                     </span>
                 </div>
                 
-                <div className="flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                     View Details <ArrowUpRight className="size-3" />
                 </div>
             </div>

@@ -1,6 +1,6 @@
 import { ResponsiveContainer } from "@/components/common/container";
 import EmptyArea from "@/components/common/empty-area";
-import { RouterCard } from "@/components/common/router-card";
+import { RouterCard, RouterCardLink } from "@/components/common/router-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +8,15 @@ import { Separator } from "@/components/ui/separator";
 import { getHostelRoutes } from "@/constants/links";
 import { cn } from "@/lib/utils";
 import {
+  FolderKanban,
+  HistoryIcon,
   LayoutGrid,
   ShieldCheck,
+  Tickets,
   Users
 } from "lucide-react";
 import { LuBuilding } from "react-icons/lu";
+import { PiStudentFill } from "react-icons/pi";
 import { getHostel } from "~/actions/hostel.core";
 
 export default async function HostelPage({

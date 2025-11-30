@@ -3,26 +3,26 @@
 import { format } from "date-fns";
 import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { headers } from "next/headers";
+import { z } from "zod";
 import { auth } from "~/auth";
 import { genderSchema, ROLES_ENUMS } from "~/constants";
 import {
-    createHostelSchema,
-    createHostelStudentSchema,
-    updateHostelAbleStudentSchema,
-    updateHostelSchema,
-    updateHostelStudentSchema,
+  createHostelSchema,
+  createHostelStudentSchema,
+  updateHostelAbleStudentSchema,
+  updateHostelSchema,
+  updateHostelStudentSchema,
 } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import serverApis from "~/lib/server-apis/server";
 import {
-    HostelModel,
-    type HostelStudentJson,
-    HostelStudentModel,
-    type HostelStudentType,
-    type HostelType,
-    type IHostelType,
+  HostelModel,
+  type HostelStudentJson,
+  HostelStudentModel,
+  type HostelStudentType,
+  type HostelType,
+  type IHostelType,
 } from "~/models/hostel_n_outpass";
 import ResultModel from "~/models/result";
 import { orgConfig } from "~/project.config";
@@ -633,6 +633,32 @@ export async function getHostels(): Promise<{
     });
   } catch (err) {
     return Promise.resolve({ success: false, data: [] });
+  }
+}
+export async function getHostelsStats(): Promise<{
+  success: boolean;
+  data: {
+    hostels: HostelType[];
+    totalStudents: number;
+  };
+}> {
+  try {
+    await dbConnect();
+    const hostels = await HostelModel.find({}).lean();
+    // TODO: optimize count query and add creteria if needed
+    const totalStudents = await HostelStudentModel.countDocuments();
+    return Promise.resolve({
+      success: true,
+      data: {
+        hostels: JSON.parse(JSON.stringify(hostels)),
+        totalStudents,
+      },
+    });
+  } catch (err) {
+    return Promise.resolve({ success: false, data: {
+      hostels: [],
+      totalStudents: 0
+    } });
   }
 }
 

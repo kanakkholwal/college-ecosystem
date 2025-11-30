@@ -16,6 +16,9 @@ const inputVariants = cva(
         border: "border-2 focus:border-primary/70 border-solid",
         glass:
           "bg-white/75 dark:bg-white/5 backdrop-blur-lg border border-slate-500/10 dark:border-border/70 focus:border-primary/70",
+        underlined_transparent:
+          "border-0 !rounded-b-none border-b border-b-transparent shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40 !bg-transparent focus-visible:bg-transparent focus:bg-transparent focus:border-primary focus-visible:border-primary h-auto",
+
       },
       rounded: {
         default: "rounded-md",
@@ -41,7 +44,7 @@ export interface InputProps
   // HTMLInputElement,
   //   React.ComponentProps<"input">,
   extends React.InputHTMLAttributes<HTMLInputElement>,
-    VariantProps<typeof inputVariants> {}
+  VariantProps<typeof inputVariants> { }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant, type, rounded, ...props }, ref) => {
@@ -65,3 +68,4 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export { Input };
+

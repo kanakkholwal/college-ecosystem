@@ -3,13 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger
 } from "@/components/ui/select";
 import { Cross2Icon } from "@radix-ui/react-icons";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, LoaderCircle, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -29,7 +29,7 @@ export function OutpassToolbar() {
   const handleSearch = (term: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (term) {
-        params.set("query", term);
+        params.set("query", term?.toUpperCase());
       } else {
         params.delete("query");
       }
@@ -73,6 +73,7 @@ export function OutpassToolbar() {
           }}
           className="pl-9 h-9 focus-visible:ring-offset-0 focus-visible:border-primary transition-all"
         />
+        <LoaderCircle className={`absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground ${isPending ? "animate-spin" : "hidden"}`} />
       </div>
 
       {/* Actions Area */}

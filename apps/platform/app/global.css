@@ -489,14 +489,14 @@
     }
 
     *:autofill,
-    *:-webkit-autofill {
+    *:-webkit-autofill,*:-internal-autofill-selected {
         font: inherit;
         font-size: inherit;
         font-family: inherit;
         -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
         box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
         -webkit-text-fill-color: hsl(var(--foreground)) !important;
-        @apply border-emerald-500 bg-emerald-200 dark:border-emerald-900 dark:bg-emerald-700;
+        @apply border-primary bg-primary/10;
 
     }
 

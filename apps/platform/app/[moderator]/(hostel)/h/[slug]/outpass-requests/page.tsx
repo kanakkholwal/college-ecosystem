@@ -69,9 +69,9 @@ export default function OutPassRequestsPage() {
   return (
     <div className="space-y-6 p-1 md:p-2 min-h-[80vh]">
       
-      {/* --- Header Section --- */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b pb-6">
         <div className="space-y-1">
+    
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <LayoutGrid className="h-6 w-6 text-primary" />
             Outpass Management
@@ -132,7 +132,6 @@ export default function OutPassRequestsPage() {
             </TabsList>
         </div>
 
-        {/* --- Main Content Area --- */}
         <div className="mt-6 min-h-[400px]">
           
           {/* Loading Skeleton */}

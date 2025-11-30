@@ -145,6 +145,7 @@ const buttonVariants = cva(
       hoverEffect: "none",
       effect: "none",
       rounded: "default",
+      shadow: "none",
     },
   }
 );
@@ -201,6 +202,7 @@ const Button = React.forwardRef<
             width,
             effect,
             hoverEffect,
+            
           })
         )}
         ref={ref}

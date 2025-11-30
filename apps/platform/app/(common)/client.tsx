@@ -13,6 +13,7 @@ import { featuresSectionContent } from "@/constants/landing";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
+  BarChart2,
   BarChart3,
   Bell,
   BookOpen,
@@ -64,6 +65,7 @@ export function IntroSection({
 }) {
   // Flatten stats logic for display
   const displayStats = [
+    { label: "Impressions", value: stats.visitors, icon: BarChart2 },
     { label: "Active Students", value: stats.userCount, icon: Users },
     { label: "GitHub Stars", value: stats.githubStats?.stars || 0, icon: Globe },
     { label: "Live Sessions", value: stats.sessionCount, icon: BarChart3 },

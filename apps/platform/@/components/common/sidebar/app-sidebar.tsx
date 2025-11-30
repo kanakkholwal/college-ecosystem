@@ -17,35 +17,12 @@ import {
 import type { Session } from "~/auth/client";
 
 import { ApplicationSvgLogo } from "@/components/logo";
-import { sidebar_links } from "@/constants/links";
+import { getSideNavLinks } from "@/constants/links";
+import { useCookieWithUtils } from "@/hooks/use-cookie";
 import Link from "next/link";
 import { appConfig, orgConfig } from "~/project.config";
 
-const getSideNavLinks = (role: string, prefixPath?: string) => {
-  return sidebar_links
-    .filter(
-      (link) =>
-        link.allowed_roles.includes(role) || link.allowed_roles.includes("*")
-    )
-    .map((link) => ({
-      title: link.title,
-      icon: link.icon,
-      href: prefixPath ? `/${prefixPath}${link.path}` : `/${role}${link.path}`,
-      preserveParams: link?.preserveParams,
-      items: link?.items
-        ?.filter(
-          (link) =>
-            link.allowed_roles.includes(role) ||
-            link.allowed_roles.includes("*")
-        )
-        ?.map((item) => ({
-          title: item.title,
-          href: prefixPath
-            ? `/${prefixPath}${link.path}${item.path}`
-            : `/${role}${link.path}${item.path}`,
-        })),
-    }));
-};
+
 
 interface SidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: Session["user"];
@@ -53,13 +30,16 @@ interface SidebarProps extends React.ComponentProps<typeof Sidebar> {
   prefixPath?: string; // Optional prefix path for links
 }
 
+
 export function AppSidebar({
   user,
   moderator,
   prefixPath,
   ...props
 }: SidebarProps) {
-  const links = getSideNavLinks(moderator, prefixPath);
+  const { value } = useCookieWithUtils('hostel:slug');
+
+  const links = getSideNavLinks(moderator, prefixPath, value);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border" {...props}>
@@ -88,7 +68,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={links} />
-      
+
       </SidebarContent>
 
       <SidebarFooter>
@@ -98,3 +78,4 @@ export function AppSidebar({
     </Sidebar>
   );
 }
+

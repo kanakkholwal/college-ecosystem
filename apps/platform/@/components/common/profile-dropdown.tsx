@@ -92,7 +92,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
             </Link>
           </p>
           <p>
-            <Badge size="sm" className="font-mono">{user.department || "Student"}</Badge>
+            <Badge size="sm" className="font-mono whitespace-nowrap">{user.department || "Student"}</Badge>
           </p>
         </div>
       </div>

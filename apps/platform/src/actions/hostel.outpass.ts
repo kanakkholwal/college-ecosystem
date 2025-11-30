@@ -8,7 +8,7 @@ import dbConnect from "~/lib/dbConnect";
 import {
   HostelStudentModel,
   OutPassModel,
-  type OutPassType,
+  type OutPassType
 } from "~/models/hostel_n_outpass";
 
 /*
@@ -285,13 +285,14 @@ export async function getOutPassHistoryForHostel({
       hostel: hostel._id,
       ...(query && {
         $or: [
-          { "student.name": { $regex: query, $options: "i" } },
-          { "student.rollNumber": { $regex: query, $options: "i" } },
+          { "student.name": { $regex: query.trim(), $options: "i" } },
+          { "student.rollNumber": { $regex: query.trim(), $options: "i" } },
         ],
       }),
     })
       .populate("hostel")
       .populate("student")
+      .collation({ locale: "en", strength: 2 })
       .sort({
         createdAt: sortBy === "asc" ? 1 : -1,
       })

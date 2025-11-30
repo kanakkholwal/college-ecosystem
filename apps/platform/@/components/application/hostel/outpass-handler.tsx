@@ -200,10 +200,9 @@ export default function OutpassVerifier() {
   const actionState = currentOutpass ? getActionState(currentOutpass) : null;
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 font-sans text-foreground">
+    <div className="min-h-screen p-4 md:p-8 font-sans text-foreground">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* --- Header & Search Bar --- */}
         <div className="flex flex-col md:flex-row gap-6 items-center justify-between border-b border-border pb-8">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
@@ -270,7 +269,6 @@ export default function OutpassVerifier() {
           <OutpassSkeleton />
         </ConditionalRender>
 
-        {/* --- Main Content Grid --- */}
         <ConditionalRender condition={!isLoading && !!currentOutpass}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-in fade-in zoom-in-95 duration-300">
 

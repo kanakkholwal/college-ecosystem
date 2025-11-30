@@ -1,100 +1,118 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CardDescription, CardTitle } from "@/components/ui/card";
-import ConditionalRender from "@/components/utils/conditional-render";
-import { ButtonLink } from "@/components/utils/link";
-import { cn } from "@/lib/utils";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
-import { redirect, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Loader2,
+  ShieldAlert,
+  ShieldCheck
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "~/auth/client";
 
 export default function VerifyEmail() {
   const searchParams = useSearchParams();
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verified, setVerified] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  
+  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const token =
-    (searchParams.get("token") ?? "").trim().length > 0
-      ? searchParams.get("token")
-      : null;
+  const token = searchParams.get("token");
 
   useEffect(() => {
-    if (token) {
-      setIsVerifying(true);
-      authClient
-        .verifyEmail({
-          query: {
-            token: token,
-          },
-        }, {
-          credentials: 'include'
-        })
-        .then((res) => {
-          if (res.error) {
-            console.log("Error verifying email:", res);
-            toast.error(
-              res.error?.message ??
-              "An error occurred while verifying your email."
-            );
-            setError(
-              res?.error?.message ??
-              "An error occurred while verifying your email."
-            );
-          } else {
-            setVerified(true);
-            redirect("/auth/sign-in");
-          }
-        })
-        .catch((e) => {
-          console.log("Error verifying email:", e);
-          toast.error(e.toString());
-          setError(e.toString());
-        })
-        .finally(() => {
-          setIsVerifying(false);
-        });
+    if (!token) {
+      setStatus("error");
+      setErrorMessage("Missing or invalid verification token.");
+      return;
     }
-  }, [token]);
 
+    const verify = async () => {
+      setStatus("verifying");
+      try {
+        const res = await authClient.verifyEmail({
+          query: { token },
+        }, {
+            credentials: 'include'
+        });
+
+        if (res.error) {
+          setStatus("error");
+          setErrorMessage(res.error.message || "Verification failed.");
+          toast.error(res.error.message || "Verification failed.");
+        } else {
+          setStatus("success");
+          toast.success("Email verified successfully!");
+          // Optional: Auto-redirect after a delay if desired
+          // setTimeout(() => router.push("/auth/sign-in"), 3000);
+        }
+      } catch (e: any) {
+        setStatus("error");
+        setErrorMessage(e.message || "An unexpected error occurred.");
+      }
+    };
+
+    verify();
+  }, [token, router]);
+
+  // --- RENDER STATES ---
+
+  if (status === "verifying" || status === "idle") {
+    return (
+      <div className="flex flex-col items-center text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="p-4 rounded-full bg-primary/10 text-primary mb-2 ring-1 ring-primary/20">
+          <Loader2 className="size-8 animate-spin" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">Verifying Identity</h2>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            Please wait while we validate your email token secure connection...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <div className="flex flex-col items-center text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-2 ring-1 ring-emerald-500/20">
+          <ShieldCheck className="size-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">Email Verified</h2>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            Your account has been successfully verified. You can now access the platform.
+          </p>
+        </div>
+        <Button className="w-full" asChild>
+          <Link href="/auth/sign-in">Continue to Sign In</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Error State (status === "error")
   return (
-    <div className="px-4 py-6">
-      <ConditionalRender condition={!!token}>
-        <CardTitle>
-          {isVerifying ? "Verifying..." : verified ? "Email verified" : "Error"}
-        </CardTitle>
-        <CardDescription>
-          {isVerifying
-            ? "Please wait while we verify your email."
-            : verified
-              ? "Your email has been verified successfully."
-              : "An error occurred while verifying your email."}
-        </CardDescription>
-
-        <ConditionalRender condition={isVerifying}>
-          <LoaderCircle className="size-12 text-primary animate-spin" />
-        </ConditionalRender>
-        <ConditionalRender condition={verified}>
-          <CheckCircle2 className="size-12 text-green-500" />
-          <ButtonLink href="/" variant="rainbow" size="xs">
-            Go to Home
-          </ButtonLink>
-        </ConditionalRender>
-        <ConditionalRender condition={!!error}>
-          <Alert variant="destructive" className={cn("w-full")}>
-            <AlertDescription>{error?.toString()}</AlertDescription>
-          </Alert>
-        </ConditionalRender>
-      </ConditionalRender>
-      <ConditionalRender condition={!token}>
-        <CardTitle>Token not found</CardTitle>
-        <CardDescription>
-          The token is either invalid or expired. Please try again.
-        </CardDescription>
-      </ConditionalRender>
+    <div className="flex flex-col items-center text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+      <div className="p-4 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 mb-2 ring-1 ring-red-500/20">
+        <ShieldAlert className="size-8" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold tracking-tight">Verification Failed</h2>
+        <p className="text-sm text-muted-foreground max-w-xs mx-auto text-balance">
+          {errorMessage || "The link may be invalid or expired."}
+        </p>
+      </div>
+      <div className="flex gap-4 w-full flex-wrap">
+        <Button variant="outline" className="w-full" asChild>
+            <Link href="/">Home</Link>
+        </Button>
+        <Button variant="default" className="w-full" asChild>
+            <Link href="/auth/sign-in">Back to Sign In</Link>
+        </Button>
+      </div>
     </div>
   );
 }

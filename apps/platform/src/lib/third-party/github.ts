@@ -156,6 +156,8 @@ export type PublicStatsType = {
   sessionCount: number;
   userCount: number;
   githubStats: StatsData;
+  visitors: number;
+
 };
 
 export interface RepoData {

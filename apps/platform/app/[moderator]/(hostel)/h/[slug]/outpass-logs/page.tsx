@@ -97,7 +97,7 @@ export default function OutPassHistoryPage() {
               </div>
             }
           >
-            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <div className="rounded-xl bg-card shadow-sm overflow-hidden">
                 <DataTable 
                     data={data} 
                     columns={columns} 

@@ -137,7 +137,8 @@ export default function CreateCommunityPost() {
                     <FormControl>
                       <Input
                         placeholder="Post Title..."
-                        className="text-3xl md:text-4xl font-bold border-0 rounded-b-none border-b border-b-transparent px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40 !bg-transparent focus-visible:bg-transparent focus:bg-transparent focus:border-primary focus-visible:border-primary h-auto py-2"
+                        variant="underlined_transparent"
+                        className="text-3xl md:text-4xl font-bold h-auto py-2"
                         {...field}
                         autoFocus
                         autoComplete="off"

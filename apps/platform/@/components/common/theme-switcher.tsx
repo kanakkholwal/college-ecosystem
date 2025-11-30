@@ -25,6 +25,7 @@ import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type themeType } from "@/constants/theme";
@@ -34,17 +35,17 @@ import { useEffect, useState } from "react";
 
 const themes_modes = [
   {
-    key: "system",
+    id: "system",
     Icon: Monitor,
     label: "System",
   },
   {
-    key: "light",
+    id: "light",
     Icon: Sun,
     label: "Light",
   },
   {
-    key: "dark",
+    id: "dark",
     Icon: Moon,
     label: "Dark",
   },
@@ -58,92 +59,77 @@ export type ThemeSwitcherProps = {
 
 export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
   const { theme, setTheme } = useTheme();
-
   const [mounted, setMounted] = useState(false);
-
-  // Prevent hydration mismatch
+  const [currentBrandTheme] = useStorage<BrandThemeType>(
+    "theme-brand",
+    brand_themes[0]
+  );
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    brandThemeCallback(currentBrandTheme);
+  }, [currentBrandTheme]);
+
   if (!mounted) {
-    return null;
+    return (
+      <Button variant="ghost" size="icon_sm" className={cn("rounded-full", className)} disabled>
+        <Sun className="size-4 opacity-50" />
+      </Button>
+    );
   }
-  const CurrentTheme = themes_modes.find((t) => t.key === theme);
 
   return (
     <div className={cn("relative", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon_sm" rounded="full">
-            {CurrentTheme ? (
-              <CurrentTheme.Icon className="size-4 absolute inset-0 m-auto" />
-            ) : (
-              <Monitor className="size-4" />
-            )}
-            <span className="sr-only">Open theme switcher</span>
+          <Button variant="ghost" size="icon_sm" className={cn("relative rounded-full text-muted-foreground hover:text-foreground transition-colors", className)}>
+            <Sun className="size-4 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute size-4 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          alignOffset={-8}
-          className="max-w-24 space-y-1"
-        >
-          {themes_modes.map(({ key, Icon: Icon, label }) => {
-            const isActive = theme === key;
-            return (
-              <Button
-                variant="ghost"
-                size="sm"
-                width="full"
-                key={key}
-                onClick={() => {
-                  setTheme(key as themeType);
-                  onChange?.(key as themeType);
-                }}
-                className={cn("justify-start relative text-xs")}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTheme"
-                    className="absolute inset-0 rounded-full bg-primary/10 dark:bg-primary/20"
-                    transition={{ type: "spring", duration: 0.5 }}
-                  />
-                )}
-                <Icon className="size-4 relative" />
-                <span className="relative">{label}</span>
-              </Button>
-            );
-          })}
+
+        <DropdownMenuContent align="end" className="min-w-[140px] p-1.5 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl">
+          <div className="flex flex-col gap-1">
+            {themes_modes.map((t) => {
+              const isActive = theme === t.id;
+              return (
+                <DropdownMenuItem
+                  key={t.id}
+                  onClick={() => {
+                    setTheme(t.id);
+                    onChange?.(t.id as themeType);
+                    sendGAEvent("event", "theme_mode_switch", {
+                      label: t.label,
+                    });
+                  }}
+                  className={cn(
+                    "relative flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium outline-none transition-colors cursor-pointer focus:bg-transparent",
+                    isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {/* Animated Background Pill */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="theme-switcher-active"
+                      className="absolute inset-0 rounded-md bg-muted"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+
+                  {/* Content */}
+                  <div className="relative z-10 flex items-center gap-2.5">
+                    <t.Icon className="size-3.5" />
+                    <span>{t.label}</span>
+                  </div>
+                </DropdownMenuItem>
+              )
+            })}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* {themes.map(({ key, Icon: Icon, label }) => {
-        const isActive = theme === key;
-
-        return (
-          <button
-            type="button"
-            key={key}
-            className="relative size-6 rounded-full"
-            onClick={() => setTheme(key as themeType)}
-            aria-label={label}
-          >
-            {isActive && (
-              <motion.div
-                layoutId="activeTheme"
-                className="absolute inset-0 rounded-full bg-secondary"
-                transition={{ type: "spring", duration: 0.5 }}
-              />
-            )}
-            <Icon
-              className={cn(
-                "relative m-auto size-4",
-                isActive ? "text-white" : "text-muted-foreground"
-              )}
-            />
-          </button>
-        );
-      })} */}
     </div>
   );
 };
@@ -170,16 +156,7 @@ export const brand_themes: BrandThemeType[] = [
   { id: "zinc", label: "Carbon", color: "#27272a" },
 ];
 
-
-export function ThemePopover({ className }: { className?: string }) {
-  const [open, setOpen] = React.useState(false);
-  const [currentTheme, setCurrentTheme] = useStorage<BrandThemeType>(
-    "theme-brand",
-    brand_themes[0]
-  );
-
-  // Apply CSS Variables
-  React.useEffect(() => {
+function brandThemeCallback(currentTheme: BrandThemeType) {
     // Fallback to default if storage has invalid data
     const selected =
       brand_themes.find((t) => t.id === currentTheme.id) || brand_themes[0];
@@ -203,6 +180,19 @@ export function ThemePopover({ className }: { className?: string }) {
     }
 
     themeMeta.content = selected.color;
+}
+
+export function ThemePopover({ className }: { className?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [currentTheme, setCurrentTheme] = useStorage<BrandThemeType>(
+    "theme-brand",
+    brand_themes[0]
+  );
+
+  // Apply CSS Variables
+  React.useEffect(() => {
+    // Fallback to default if storage has invalid data
+    brandThemeCallback(currentTheme);
   }, [currentTheme]);
 
   return (
