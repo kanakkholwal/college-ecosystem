@@ -12,7 +12,7 @@ export const config = {
     SERVER_IDENTITY: process.env.SERVER_IDENTITY as string || "",
     
     // The port on which the server will run
-    PORT: Number.parseInt(process.env.PORT || "8080"),
+        PORT: Number.parseInt(process.env.PORT || "8080"),
 
     // The URL of the database
     MONGODB_URI: process.env.MONGODB_URI || "mongodb://localhost:27017/nith",

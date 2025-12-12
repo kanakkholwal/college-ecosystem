@@ -1,5 +1,6 @@
 import z from "zod";
-import { eventTypesEnums } from "../constants/common.events";
+import { courseSchemaByOCR } from "~/constants/common.course";
+import { eventTypesEnums } from "~/constants/common.events";
 
 export const eventsSchema = z.object({
   title: z.string().describe("Name of the event"),
@@ -54,3 +55,7 @@ export const eventsSchema = z.object({
 export const eventArraySchema = z
   .array(eventsSchema)
   .describe("Array of events, each event must follow the events schema");
+
+  export const courseArraySchema = z
+  .array(courseSchemaByOCR)
+  .describe("Array of courses, each course must follow the course schema");
