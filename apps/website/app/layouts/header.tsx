@@ -150,7 +150,7 @@ export function Header() {
           <NavigationMenuList className='justify-start'>
             {navigationItems.map((navItem) => (
               <NavigationMenuItem key={navItem.title}>
-                <NavigationMenuTrigger className="bg-transparent !text-white !hover:bg-transparent !data-[state=open]:bg-transparent  !data-[state=open]:focus:bg-transparent">
+                <NavigationMenuTrigger className="bg-transparent text-white! !hover:bg-transparent !data-[state=open]:bg-transparent  !data-[state=open]:focus:bg-transparent">
                   {navItem.title}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>

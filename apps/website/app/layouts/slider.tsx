@@ -1,8 +1,8 @@
 "use client"
 import Autoplay from 'embla-carousel-autoplay'
 import useEmblaCarousel from 'embla-carousel-react'
-import { sliderImages } from "../constants"
 import Image from 'next/image'
+import { sliderImages } from "../constants"
 
 
 const EmblaCarousel = () => {
@@ -22,7 +22,9 @@ const EmblaCarousel = () => {
         <div className="embla__container">
           {sliderImages.map((image, index) => (
             <div className="embla__slide" key={index}>
-              <Image src={image.src} alt={image.alt} className='embla__slide__img w-full h-full object-cover' />
+              <Image src={image.src} alt={image.alt} className='embla__slide__img w-full h-full object-cover' 
+              width={1200} height={600}
+              />
             </div>
           ))}
         </div>

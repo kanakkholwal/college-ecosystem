@@ -1,27 +1,32 @@
 // provider.tsx
 "use client";
-import Aos from "aos";
-import "aos/dist/aos.css";
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { Next13ProgressBar } from "next13-progressbar";
-import { useEffect } from "react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import type React from "react";
+
+
 
 export function Provider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    Aos.init({
-      duration: 1000,
-      once: true,
-      easing: "ease-in-out",
-    });
-  }, []);
   return (
     <>
-      {children}
       <Next13ProgressBar
         height="4px"
-        color="hsl(var(--primary))"
+        color="var(--primary)"
         options={{ showSpinner: true, trickle: true }}
         showOnShallow={true}
       />
+      <NextThemesProvider defaultTheme="light">
+        <div className={cn("min-h-screen w-full h-full")}>
+          <NuqsAdapter>{children}</NuqsAdapter>
+        </div>
+      </NextThemesProvider>
+      
+      <Toaster position="bottom-right" richColors />
+   
     </>
   );
 }
+
