@@ -8,20 +8,20 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,13 +31,13 @@ import { Textarea } from "@/components/ui/textarea";
 // Mocking schema for display purposes if you copy-paste this code directly
 import { z } from "zod";
 const applicationSchema = z.object({
-    name: z.string().min(2),
-    collegeId: z.string().email(),
-    mobile: z.string().min(10),
-    collegeYear: z.string(),
-    workLinks: z.array(z.object({ url: z.string().url() })),
-    bestProject: z.string().optional(),
-    bestHack: z.string().optional(),
+  name: z.string().min(2),
+  collegeId: z.string().email(),
+  mobile: z.string().min(10),
+  collegeYear: z.string(),
+  workLinks: z.array(z.object({ url: z.string().url() })),
+  bestProject: z.string().optional(),
+  bestHack: z.string().optional(),
 });
 type ApplicationFormData = z.infer<typeof applicationSchema>;
 
@@ -75,14 +75,14 @@ export function ApplicationForm() {
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        
+
         {/* Section: Identity */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">01</div>
             <h3 className="text-lg font-semibold tracking-tight">Identity</h3>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             <FormField
               control={control}
@@ -97,7 +97,7 @@ export function ApplicationForm() {
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={control}
               name="collegeYear"
               render={({ field }) => (
@@ -135,7 +135,7 @@ export function ApplicationForm() {
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={control}
               name="mobile"
               render={({ field }) => (
@@ -177,12 +177,12 @@ export function ApplicationForm() {
                             <Input placeholder="https://github.com/username" className="pl-9 bg-muted/30 focus:bg-background h-11 font-mono" {...field} />
                           </div>
                         </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
                           className="text-muted-foreground hover:text-destructive h-11 w-11"
-                          onClick={() => remove(index)} 
+                          onClick={() => remove(index)}
                           disabled={fields.length === 1}
                         >
                           <Minus className="h-4 w-4" />
@@ -210,7 +210,7 @@ export function ApplicationForm() {
 
         {/* Section: The Build */}
         <div className="space-y-6">
-           <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">03</div>
             <h3 className="text-lg font-semibold tracking-tight">The Build</h3>
           </div>
@@ -220,12 +220,12 @@ export function ApplicationForm() {
             name="bestProject"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">What is the best thing you've built?</FormLabel>
+                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">What is the best thing you{"'"}ve built?</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Tell us about the stack, the problem, and how you solved it..." 
-                    className="min-h-[120px] bg-muted/30 focus:bg-background resize-y" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Tell us about the stack, the problem, and how you solved it..."
+                    className="min-h-[120px] bg-muted/30 focus:bg-background resize-y"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -238,12 +238,12 @@ export function ApplicationForm() {
             name="bestHack"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Optional: Describe a technical 'Hack' you are proud of</FormLabel>
+                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Optional: Describe a technical {'Hack'} you are proud of</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Did you reverse engineer an API? Optimize a slow query? Bypass a constraint?" 
-                    className="min-h-[100px] bg-muted/30 focus:bg-background resize-y font-mono text-sm" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Did you reverse engineer an API? Optimize a slow query? Bypass a constraint?"
+                    className="min-h-[100px] bg-muted/30 focus:bg-background resize-y font-mono text-sm"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />

@@ -4,7 +4,7 @@ import { ArrowLeft, Terminal } from "lucide-react";
 import { ApplicationForm } from "./form";
 
 // Toggle this to test the "Closed" state UI
-const closed = false;
+const closed = true;
 
 export default function ApplyNowPage() {
     return (
@@ -29,7 +29,7 @@ export default function ApplyNowPage() {
                         <Terminal className="w-6 h-6 text-primary" />
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                        Join Batch <span className="text-primary">'26</span>
+                        Join Batch <span className="text-primary">&apos;26</span>
                     </h1>
                     <p className="text-lg text-muted-foreground max-w-md mx-auto">
                         15 Spots. 10 Days. One Goal. <br />

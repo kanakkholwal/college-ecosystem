@@ -11,12 +11,13 @@ const timeline = [
     { day: "08-09", title: "Polish & Pitch", description: "UI/UX cleanup. Bug bashing. Preparing the pitch deck and demo flow." },
     { day: "10", title: "Demo Day", description: "Live presentations to investors and judges. Networking mixer." }
 ];
-export const programConfig = {
+const programConfig = {
     name: "Builder Club",
     description: "Join the Builder Club at NITH to build real projects with peers.",
     heroVideo: "https://vin9ofcd7b.ufs.sh/f/cp3W6Ixy53KeGfTmPhVk2lCKH03abZPYxMTh6QURgN7DAXm8",
 } as const;
-export default function Home() {
+
+export default function BuilderClubPage() {
 
     return (
         <div className="min-h-screen">
@@ -31,7 +32,7 @@ export default function Home() {
                 <div className="relative z-10 container mx-auto px-6 text-center">
                     <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm bg-muted/50 text-muted-foreground backdrop-blur-sm rounded-full border-border">
                         <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-                        Applications Open for Batch '26
+                        Applications Open for Batch &apos;26
                     </Badge>
 
                     <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-6">
@@ -50,7 +51,7 @@ export default function Home() {
                             Apply for Batch
                             <ArrowRight />
                         </ButtonLink>
-                        <ButtonLink variant="outline" size="lg" className="h-12 px-8 text-base rounded-full bg-transparent hover:bg-muted"href="#manifesto">
+                        <ButtonLink variant="outline" size="lg" className="h-12 px-8 text-base rounded-full bg-transparent hover:bg-muted" href="#manifesto">
                             Read Manifesto
                         </ButtonLink>
                     </div>
@@ -161,61 +162,61 @@ export default function Home() {
             </section>
 
             {/* --- CTA SECTION --- */}
-      <section className="py-24 px-4 sm:px-6">
-      <div className="relative max-w-5xl mx-auto group">
-        
-        {/* Glowing Backdrop (animated on hover) */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-        
-        <div className="relative rounded-[2rem] border border-border bg-card/50 backdrop-blur-xl overflow-hidden p-8 md:p-16 text-center">
-          
-          {/* Background Decor: Grid & Beam */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.05)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
-          
-          <div className="relative z-10 flex flex-col items-center gap-6">
-            
-            {/* Status Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary text-xs font-mono font-medium uppercase tracking-wider mb-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
-              Batch '26 Status: Filling Fast
-            </div>
+            <section className="py-24 px-4 sm:px-6">
+                <div className="relative max-w-5xl mx-auto group">
 
-            {/* Main Typography */}
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground max-w-3xl">
-              Ready to ship your <br/>
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
-                 Magnum Opus?
-              </span>
-            </h2>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-              Don't let your ideas rot in a Notion doc. Join the high-agency environment where builders become founders.
-            </p>
+                    {/* Glowing Backdrop (animated on hover) */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
-              <ButtonLink  size="lg" className="h-14 px-8 rounded-full text-base font-bold shadow-lg shadow-primary/20"
-               href="builder-club/apply-now">
-                  <Terminal className="w-4 h-4 mr-2" />
-                  Initialize Application
-              </ButtonLink>
-              
-              <ButtonLink variant="outline" size="lg" disabled className="h-14 px-8 rounded-full text-base bg-background/50 hover:bg-background border-primary/20 hover:border-primary/50 transition-all" href="/waitlist">
-                  Join Waitlist <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </ButtonLink>
-            </div>
+                    <div className="relative rounded-[2rem] border border-border bg-card/50 backdrop-blur-xl overflow-hidden p-8 md:p-16 text-center">
 
-            {/* Footer Micro-copy */}
-            <p className="text-xs text-muted-foreground/60 font-mono mt-4">
-              15 SLOTS AVAILABLE • 10 DAY SPRINT • SHIPPED OR NOTHING
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
+                        {/* Background Decor: Grid & Beam */}
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--primary)/0.05)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--primary)/0.05)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+
+                        <div className="relative z-10 flex flex-col items-center gap-6">
+
+                            {/* Status Badge */}
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary text-xs font-mono font-medium uppercase tracking-wider mb-2">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                </span>
+                                Batch &apos;26 Status: Filling Fast
+                            </div>
+
+                            {/* Main Typography */}
+                            <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground max-w-3xl">
+                                Ready to ship your <br />
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
+                                    Magnum Opus?
+                                </span>
+                            </h2>
+
+                            <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
+                                Don&apos;t let your ideas rot in a Notion doc. Join the high-agency environment where builders become founders.
+                            </p>
+
+                            {/* Actions */}
+                            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-4">
+                                <ButtonLink size="lg" className="h-14 px-8 rounded-full text-base font-bold shadow-lg shadow-primary/20"
+                                    href="builder-club/apply-now">
+                                    <Terminal className="w-4 h-4 mr-2" />
+                                    Initialize Application
+                                </ButtonLink>
+
+                                <ButtonLink variant="outline" size="lg" disabled className="h-14 px-8 rounded-full text-base bg-background/50 hover:bg-background border-primary/20 hover:border-primary/50 transition-all" href="/waitlist">
+                                    Join Waitlist <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </ButtonLink>
+                            </div>
+
+                            {/* Footer Micro-copy */}
+                            <p className="text-xs text-muted-foreground/60 font-mono mt-4">
+                                15 SLOTS AVAILABLE • 10 DAY SPRINT • SHIPPED OR NOTHING
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <div className="fixed bottom-4 left-4 z-100 right-auto">
                 <ThemeSwitcher />
             </div>
