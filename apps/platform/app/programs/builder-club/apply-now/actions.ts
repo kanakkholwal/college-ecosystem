@@ -1,17 +1,18 @@
-import { applicationSchema } from '@/lib/validation';
 import { Client } from "@notionhq/client";
-import { NextResponse } from 'next/server';
+import { applicationSchema } from './validation';
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
-export async function POST(request: Request) {
+export async function saveApplication(payload: any) {
     try {
-        const body = await request.json();
-        const response = applicationSchema.safeParse(body);
+        const response = applicationSchema.safeParse(payload);
         if (!response.success) {
-            return NextResponse.json(
-                { error: response.error.issues.map(err => err.message) },
-                { status: 400 }
+            return Promise.resolve(
+                { 
+                    error: response.error.issues.map(err => err.message),
+                    data:null,
+                    message: "Validation Error"
+                 }
             );
         }
         const validated = response.data;
@@ -40,12 +41,15 @@ export async function POST(request: Request) {
             }
         });
 
-        return NextResponse.json({ success: true });
+        return Promise.resolve({ success: true, data: null, message: "Application Submitted Successfully" });
     } catch (error) {
         console.error(error);
-        return NextResponse.json(
-            { error: "Submission failed" },
-            { status: 500 }
+        return Promise.resolve(
+            { 
+                error: "Submission failed",
+                data:null,
+                message: "Submission failed"
+             }
         );
     }
 }

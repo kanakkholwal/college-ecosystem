@@ -17,7 +17,7 @@
     --popover-foreground: hsl(0deg 0% 9.8%);
     --primary: hsla(262.1 83.3% 57.8%);
     --primary-foreground: hsl(0deg 0% 92.16%);
-    --secondary: hsl(158.11deg 64.37% 51.57%);
+    --secondary: hsl(86, 100%, 32%);
     --secondary-foreground: hsl(0deg 0% 92.16%);
     --tertiary: hsl(199, 86%, 53%);
     --tertiary-foreground: hsl(0deg 0% 92.16%);
@@ -44,7 +44,7 @@
     --input: hsl(220 13% 91%);
     --input: oklch(.922 0 0);
 
-    --ring: hsl(262.1 83.3% 57.8%);
+    --ring: var(--primary,hsl(262.1 83.3% 57.8%));
     --radius: 0.75rem;
 
     --sidebar: oklch(0.985 0 0);
