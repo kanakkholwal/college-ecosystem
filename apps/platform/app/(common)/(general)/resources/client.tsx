@@ -18,7 +18,7 @@ export function CategoryFilter({ categories }: { categories: string[] }) {
       {["", ...categories].map((cat, index) => (
         <Button
           key={`category-${index}`}
-          variant={category === cat ? "default_light" : "outline"}
+          variant={category === cat ? "default_soft" : "outline"}
           onClick={() => setCategory(cat)}
           rounded="full"
           size="sm"

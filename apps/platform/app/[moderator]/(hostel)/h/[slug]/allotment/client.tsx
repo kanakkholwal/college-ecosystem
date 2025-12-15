@@ -1,26 +1,26 @@
 "use client";
 
 import {
-  CheckCircle2,
-  Clock,
-  Download,
-  Lock,
-  MoreHorizontal,
-  PauseCircle,
-  PlayCircle,
-  RefreshCw,
-  Search,
-  StopCircle,
-  Unlock
+    CheckCircle2,
+    Clock,
+    Download,
+    Lock,
+    MoreHorizontal,
+    PauseCircle,
+    PlayCircle,
+    RefreshCw,
+    Search,
+    StopCircle,
+    Unlock
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner"; // Or react-hot-toast
 
 // Actions
 import {
-  distributeSlots,
-  lockToggleRoom,
-  updateAllotmentProcess,
+    distributeSlots,
+    lockToggleRoom,
+    updateAllotmentProcess,
 } from "~/actions/hostel.allotment-process";
 import type { HostelRoomJson } from "~/models/allotment";
 
@@ -29,22 +29,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -188,7 +188,7 @@ export function SlotManagementCard({ hostelId }: { hostelId: string }) {
           Generate Slots
         </Button>
         <Button 
-          variant="default_light" 
+          variant="default_soft" 
           size="icon" 
           title="Download Schedule"
           onClick={() => toast.success("Download started...")}
@@ -294,9 +294,9 @@ function RoomRow({ room }: { room: HostelRoomJson }) {
 
       <TableCell>
         {isFull ? (
-          <Badge variant="warning_light" className="text-xs">Full</Badge>
+          <Badge variant="warning_soft" className="text-xs">Full</Badge>
         ) : isEmpty ? (
-          <Badge variant="success_light" className="text-xs">Vacant</Badge>
+          <Badge variant="success_soft" className="text-xs">Vacant</Badge>
         ) : (
           <Badge variant="secondary" className="text-xs">Partial</Badge>
         )}

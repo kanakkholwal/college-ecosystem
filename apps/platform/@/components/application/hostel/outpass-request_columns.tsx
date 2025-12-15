@@ -128,12 +128,12 @@ export const columns: ColumnDef<OutPassType>[] = [
           <Badge
             variant={
               row.getValue("status") === "pending"
-                ? "warning_light"
+                ? "warning_soft"
                 : row.getValue("status") === "approved"
-                  ? "success_light"
+                  ? "success_soft"
                   : row.getValue("status") === "rejected"
-                    ? "destructive_light"
-                    : "default_light"
+                    ? "destructive_soft"
+                    : "default_soft"
             }
           >
             {row.getValue("status")}

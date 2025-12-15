@@ -50,7 +50,7 @@ export function DashboardTemplate({ user_role, searchParams }: DashboardTemplate
               redirectUrl="https://forms.gle/v8Angn9VCbt9oVko7"
               btnProps={{
                 children: "Suggest a feature here",
-                variant: "default_light",
+                variant: "default_soft",
               }}
             />
           </ConditionalRender> */}

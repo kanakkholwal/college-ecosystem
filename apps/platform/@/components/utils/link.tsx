@@ -24,7 +24,7 @@ export function RedirectWithSearchParamsLink({
   return (
     <Button
       rounded="full"
-      variant="default_light"
+      variant="default_soft"
       width="sm"
       effect="shineHover"
       {...props}

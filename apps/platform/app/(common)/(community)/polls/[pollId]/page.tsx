@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Info } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPollById, updateVotes } from "src//actions/common.poll";
-import { headers } from "next/headers";
 import { auth } from "~/auth";
 import { PollRender } from "../components/poll-component";
 import Polling from "./polling";
@@ -84,7 +84,7 @@ export default async function Dashboard({ params }: Props) {
             <ClosingBadge poll={poll} />
           </span>
           {closesAlready && (
-            <Badge variant="destructive_light">Poll closed</Badge>
+            <Badge variant="destructive_soft">Poll closed</Badge>
           )}
         </div>
         {closesAlready ? (

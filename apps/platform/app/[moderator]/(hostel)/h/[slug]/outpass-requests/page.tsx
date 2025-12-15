@@ -10,10 +10,10 @@ import ConditionalRender from "@/components/utils/conditional-render";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
-  AlertCircle,
-  FileText,
-  LayoutGrid,
-  RefreshCcw
+    AlertCircle,
+    FileText,
+    LayoutGrid,
+    RefreshCcw
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -116,7 +116,7 @@ export default function OutPassRequestsPage() {
                     {/* Badge Count - Only show if data exists or loading is done */}
                     {data && (
                         <Badge 
-                            variant="default_light" 
+                            variant="default_soft" 
                             className={cn(
                                 "ml-2 h-5 min-w-[1.25rem] px-1 text-[10px] transition-all",
                                 status === 'pending' && count > 0 && "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",

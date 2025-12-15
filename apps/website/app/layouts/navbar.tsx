@@ -18,7 +18,7 @@ export default function Navbar() {
             NITH PORTAL
           </Link>
 
-          <Button variant="default_light" className="rounded-full" asChild>
+          <Button variant="default_soft" className="rounded-full" asChild>
             <Link
               href="https://app.nith.eu.org?utm_source=nith.eu.org"
               target="_blank"

@@ -3,12 +3,12 @@
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import useStorage from "@/hooks/useLocalStorage";
 // import confetti from "canvas-confetti";
@@ -132,14 +132,14 @@ export function CelebrationDialog() {
                         size="lg"
                         rounded="large"
                         className="px-8 py-6"
-                        variant="gradient_purple"
+                        variant="rainbow_outline"
                     >
                         Celebrate Again!
                     </Button> */}
 
           <DialogClose asChild>
             <Button
-              variant="default_light"
+              variant="default_soft"
               width="full"
               size="lg"
               rounded="large"

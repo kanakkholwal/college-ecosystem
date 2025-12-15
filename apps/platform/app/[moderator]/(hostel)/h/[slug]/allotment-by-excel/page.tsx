@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
-  FileSpreadsheet,
-  Plus,
-  Settings2,
-  Trash2,
-  UploadCloud,
-  Users
+    AlertCircle,
+    ArrowRight,
+    CheckCircle2,
+    FileSpreadsheet,
+    Plus,
+    Settings2,
+    Trash2,
+    UploadCloud,
+    Users
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,21 +19,21 @@ import readXlsxFile from "read-excel-file";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
@@ -349,7 +349,7 @@ export default function AllotmentPage() {
             </CardContent>
             <CardFooter className="bg-muted/30 py-3 border-t flex justify-between">
               <span className="text-sm text-muted-foreground">Total Capacity Generated:</span>
-              <Badge variant="default_light">{totalCapacity} Beds</Badge>
+              <Badge variant="default_soft">{totalCapacity} Beds</Badge>
             </CardFooter>
           </Card>
 

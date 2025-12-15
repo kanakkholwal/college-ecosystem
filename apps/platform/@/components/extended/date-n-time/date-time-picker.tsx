@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -204,7 +204,7 @@ function TimeButton({
         <Button
             type="button"
             size={size}
-            variant={active ? "default_light" :"ghost"}
+            variant={active ? "default_soft" :"ghost"}
             {...props}
             onClick={onClick}
             className={cn(

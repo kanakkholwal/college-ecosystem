@@ -2,13 +2,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -222,7 +222,7 @@ export function UpdateStudentsForm({
           />
           <Button
             type="submit"
-            variant="default_light"
+            variant="default_soft"
             className="mx-auto"
             disabled={updating}
           >
@@ -241,7 +241,7 @@ export function UpdateStudentsForm({
                   <Badge
                     size="sm"
                     className="size-5 p-1 cursor-pointer"
-                    variant="destructive_light"
+                    variant="destructive_soft"
                     onClick={() => handleRemoveStudent(index)}
                   >
                     <X className="size-4" />

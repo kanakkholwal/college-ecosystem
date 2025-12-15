@@ -56,7 +56,7 @@ export default function DeletePoll({ pollId }: { pollId: PollType["_id"] }) {
       title="Delete Poll"
       description="Are you sure you want to delete this poll?"
       btnProps={{
-        variant: "destructive_light",
+        variant: "destructive_soft",
         children: <Trash2 />,
         size: "icon_sm",
         className: "absolute right-4 top-4",

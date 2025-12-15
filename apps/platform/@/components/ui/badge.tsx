@@ -26,28 +26,33 @@ const badgeVariants = cva(
         default_light:
           "border-primary/5 bg-primary/5 text-primary hover:bg-primary/20 dark:backdrop-blur",
         secondary: 'bg-secondary text-secondary-foreground',
-        success:
-          'bg-[var(--color-success-accent,var(--color-green-500))] text-[var(--color-success-foreground,var(--color-white))]',
-        warning:
-          'bg-[var(--color-warning-accent,var(--color-yellow-500))] text-[var(--color-warning-foreground,var(--color-white))]',
-        info: 'bg-[var(--color-info-accent,var(--color-violet-500))] text-[var(--color-info-foreground,var(--color-white))]',
         outline: 'bg-transparent border border-border text-foreground',
-        destructive: 'bg-destructive text-destructive-foreground',
 
-        success_light: "bg-green-500/5 text-green-500 hover:bg-green-500/20",
-        warning_light: "bg-yellow-500/5 text-yellow-500 hover:bg-yellow-500/20",
-        info_light: "bg-sky-500/5 text-sky-500 hover:bg-sky-500/20",
-        destructive_light:
-          "bg-red-500/5 text-red-500 hover:bg-red-500/20 dark:bg-red-500/20 dark:text-red-500 hover:dark:bg-red-500/5 hover:dark:text-red-500",
-
-          // legacy
-          dark: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-800",
+        // Colored variants
+        success:
+          "bg-emerald-600 hover:bg-emerald-500 text-emerald-100",
+        success_soft:
+          "bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20",
+        info:
+          "bg-sky-600 hover:bg-sky-500 text-sky-100",
+        info_soft:
+          "bg-sky-600/10 text-sky-600 hover:bg-sky-600/20",
+        warning:
+          "bg-amber-600 hover:bg-amber-500 text-amber-100",
+        warning_soft:
+          "bg-amber-600/10 text-amber-600 hover:bg-amber-600/20",
+        destructive:
+          "bg-rose-600 hover:bg-rose-500 text-rose-100",
+        destructive_soft:
+          "bg-rose-600/10 text-rose-600 hover:bg-rose-600/20",
+        // legacy
+        dark: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-800",
         link: "text-primary underline-offset-4 hover:underline",
-         ghost:
+        ghost:
           "bg-white hover:bg-white hover:text-accent-foreground  dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white",
         slate:
           "bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950 dark:hover:text-slate-100",
-           gradient_blue:
+        gradient_blue:
           "text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br",
         gradient_green:
           "text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br",
@@ -263,3 +268,4 @@ function BadgeDot({ className, ...props }: React.ComponentProps<'span'>) {
 }
 
 export { Badge, BadgeButton, BadgeDot, badgeVariants };
+

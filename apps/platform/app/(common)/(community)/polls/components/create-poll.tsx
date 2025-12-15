@@ -1,13 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
@@ -199,7 +199,7 @@ function PollForm({ className }: { className?: string }) {
                       <Button
                         type="button"
                         size="icon_sm"
-                        variant="destructive_light"
+                        variant="destructive_soft"
                         disabled={fields.length <= 2}
                         onClick={() => remove(index)}
                       >

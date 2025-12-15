@@ -270,7 +270,7 @@ function FilterContent({
                     key={item.value}
                     onClick={() => onSelect(group.key, item.value)}
                     size="xs"
-                    variant={isSelected ? "default_light":"outline"}
+                    variant={isSelected ? "default_soft":"outline"}
                   >
                     {item.label}
                     {isSelected && <Check className="ml-1 size-3" />}

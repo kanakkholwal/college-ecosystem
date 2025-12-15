@@ -56,7 +56,7 @@ export function UpdateAttendanceRecord({
   return (
     <div className={cn("flex gap-2 items-center justify-start mt-4", className)}>
       <Button
-        variant="success_light"
+        variant="success_soft"
         disabled={updating}
         size="sm"
         onClick={() => handleUpdate(true)}
@@ -68,7 +68,7 @@ export function UpdateAttendanceRecord({
         </span>
       </Button>
       <Button
-        variant="destructive_light"
+        variant="destructive_soft"
         size="sm"
         disabled={updating}
         onClick={() => handleUpdate(false)}
@@ -80,7 +80,7 @@ export function UpdateAttendanceRecord({
         </span>
       </Button>
       <Button
-        variant="destructive_light"
+        variant="destructive_soft"
         size="icon_sm"
         disabled={updating}
         onClick={() => handleDelete()}

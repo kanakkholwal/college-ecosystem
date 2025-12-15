@@ -60,7 +60,7 @@ export default function Navbar({
             </Badge>
 
             <Button
-              variant="warning_light"
+              variant="warning_soft"
               size="icon_xs"
               onClick={handleStopImpersonation}
               title="Stop impersonation"

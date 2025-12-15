@@ -4,10 +4,10 @@ import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
 import { ButtonLink } from "@/components/utils/link";
 import { ArrowRight } from "lucide-react";
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { PiSmileySad } from "react-icons/pi";
 import { getHostelById } from "~/actions/hostel.core";
 import { getUserByUsername } from "~/actions/user.core";
-import { headers } from "next/headers";
 import { auth } from "~/auth";
 import { ProfileHeader } from "./components/header";
 
@@ -61,7 +61,7 @@ export default async function PublicUserPage({ params }: UserPageProps) {
               <ButtonLink
                 href="/"
                 size="sm"
-                variant="default_light"
+                variant="default_soft"
                 className="mt-4"
               >
                 Go to home

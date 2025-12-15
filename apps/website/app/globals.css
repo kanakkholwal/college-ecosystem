@@ -8,7 +8,7 @@
 
 :root,
 [data-theme="light"],
-[data-theme="glass_light"] {
+[data-theme="glass_soft"] {
     --background: hsl(0deg 0% 96.08%);
     --foreground: hsl(0deg 0% 9.8%);
     --card: hsl(0, 0%, 100%);

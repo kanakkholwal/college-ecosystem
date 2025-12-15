@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
 import type { ResultType, rawResultSchemaType } from "~/lib/server-apis/types";
@@ -29,7 +29,7 @@ export function ResultCard({
 
       <CardFooter className="justify-between">
         <Badge size="sm">{result.semesters?.at(-1)?.cgpi ?? "0"}</Badge>
-        <Button size="sm" variant="default_light" asChild>
+        <Button size="sm" variant="default_soft" asChild>
           <Link href={`/results/${result.rollNo}`} target="_blank">
             View Result
           </Link>

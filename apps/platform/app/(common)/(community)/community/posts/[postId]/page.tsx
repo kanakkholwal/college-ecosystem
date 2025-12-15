@@ -15,12 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ButtonLink } from "@/components/utils/link";
 import {
-  ArrowLeft,
-  Calendar,
-  Edit3,
-  Eye,
-  MessageSquare,
-  Share2
+    ArrowLeft,
+    Calendar,
+    Edit3,
+    Eye,
+    MessageSquare,
+    Share2
 } from "lucide-react";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
@@ -141,7 +141,7 @@ export default async function CommunityPost(props: Props) {
               </h1>
 
               <div className="flex items-center gap-3">
-                <Badge variant="default_light">
+                <Badge variant="default_soft">
                   <Eye className="size-3.5 text-muted-foreground" />
                   {formatNumber(post.views)} views
                 </Badge>

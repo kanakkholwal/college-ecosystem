@@ -1,7 +1,7 @@
 import { NumberTicker } from "@/components/animation/number-ticker";
 import {
-  ChartBar,
-  RoundedPieChart
+    ChartBar,
+    RoundedPieChart
 } from "@/components/application/charts";
 import { StatsCard } from "@/components/application/stats-card";
 import { GenericAreaChart } from "@/components/extended/chart.area";
@@ -9,31 +9,31 @@ import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
-  Briefcase,
-  CircleDashed,
-  Eye,
-  Network,
-  Transgender,
-  TrendingDown,
-  TrendingUp
+    Briefcase,
+    CircleDashed,
+    Eye,
+    Network,
+    Transgender,
+    TrendingDown,
+    TrendingUp
 } from "lucide-react";
 import { TbUsersGroup } from "react-icons/tb";
 import {
-  getActiveSessions,
-  getPlatformDBStats,
-  getUsersByDepartment,
-  getUsersByGender,
-  getUsersByRole,
-  SessionCountAndGrowthResult,
-  sessions_CountAndGrowth,
-  UserCountAndGrowthResult,
-  users_CountAndGrowth,
+    getActiveSessions,
+    getPlatformDBStats,
+    getUsersByDepartment,
+    getUsersByGender,
+    getUsersByRole,
+    SessionCountAndGrowthResult,
+    sessions_CountAndGrowth,
+    UserCountAndGrowthResult,
+    users_CountAndGrowth,
 } from "~/actions/dashboard.admin";
 import { ROLES } from "~/constants";
 import {
-  DEPARTMENTS_LIST,
-  getDepartmentCode,
-  getDepartmentName
+    DEPARTMENTS_LIST,
+    getDepartmentCode,
+    getDepartmentName
 } from "~/constants/core.departments";
 import { extractVisitorCount } from "~/lib/third-party/github";
 import { TimeInterval } from "~/utils/process";
@@ -127,7 +127,7 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
             className="col-span-1   @4xl:col-span-4"
             title="Total Sessions"
             Icon={<div>
-              <Badge size="sm" variant="default_light" className="mr-2">
+              <Badge size="sm" variant="default_soft" className="mr-2">
                 {sessionsStats.activeSessions}  Online
               </Badge>
               <TbUsersGroup className="inline-block mr-2 size-4" />

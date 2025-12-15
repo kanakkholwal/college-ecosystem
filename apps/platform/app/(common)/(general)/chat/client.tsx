@@ -98,7 +98,7 @@ export default function ChatArea({ chatId, chatData }: ChatAreaProps) {
             </p>
 
             <Button
-              variant="default_light"
+              variant="default_soft"
               rounded="full"
               size="sm"
               title="Start new chat"

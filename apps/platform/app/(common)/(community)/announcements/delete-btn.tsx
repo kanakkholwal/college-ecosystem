@@ -13,7 +13,7 @@ export default function DeleteButton({
   return (
     <Button
       size="icon_sm"
-      variant="destructive_light"
+      variant="destructive_soft"
       onClick={() => {
         if (confirm("Are you sure you want to delete this announcement?")) {
           toast.promise(deleteAnnouncement(announcementId), {

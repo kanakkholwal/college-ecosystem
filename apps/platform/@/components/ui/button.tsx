@@ -5,78 +5,77 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+export const intents = {
+  // Standard variants
+  default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+  default_soft:
+    "bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/10 dark:text-primary hover:dark:bg-primary/5 hover:dark:text-primary",
+  secondary:
+    "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+  secondary_soft:
+    "bg-secondary/10 text-secondary hover:bg-secondary/20 dark:bg-secondary/10 dark:text-secondary hover:dark:bg-secondary/5 hover:dark:text-secondary",
+  tertiary:
+    "bg-tertiary text-tertiary-foreground hover:bg-tertiary/90",
+  tertiary_soft:
+    "bg-tertiary/10 text-tertiary hover:bg-tertiary/20 dark:bg-tertiary/10 dark:text-tertiary hover:dark:bg-tertiary/5 hover:dark:text-tertiary",
+  accent:
+    "bg-accent text-accent-foreground hover:bg-accent/90",
+  muted:
+    "bg-muted text-muted-foreground hover:bg-muted/90",
+
+  // Colored variants
+  success:
+    "bg-emerald-600 hover:bg-emerald-500 text-emerald-100",
+  success_soft:
+    "bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20",
+  info:
+    "bg-sky-600 hover:bg-sky-500 text-sky-100",
+  info_soft:
+    "bg-sky-600/10 text-sky-600 hover:bg-sky-600/20",
+  warning:
+    "bg-amber-600 hover:bg-amber-500 text-amber-100",
+  warning_soft:
+    "bg-amber-600/10 text-amber-600 hover:bg-amber-600/20",
+  destructive:
+    "bg-rose-600 hover:bg-rose-500 text-rose-100",
+  destructive_soft:
+    "bg-rose-600/10 text-rose-600 hover:bg-rose-600/20",
+
+  outline:
+    "border border-border bg-card hover:bg-card/80 dark:bg-muted text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:border-primary",
+  ghost:
+    "bg-transparent dark:hover:bg-accent text-muted-foreground hover:text-accent-foreground dark:text-muted-foreground dark:hover:text-white",
+
+  gray:
+    "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 dark:hover:text-gray-100",
+  link: "text-primary underline-offset-4 hover:underline",
+  dark: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800/50 dark:hover:bg-neutral-800",
+  light:
+    "bg-white shadow text-gray-700 hover:text-gray-700 border border-border",
+  glass:
+    "bg-white/10 backdrop-blur-sm shadow-lg border border-white/5",
+
+  // Fancy variants
+  rainbow:
+    "animate-rainbow border-0 bg-[linear-gradient(#121213,#121213),linear-gradient(#121213_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-primary-foreground dark:text-black [background-clip:padding-box,border-box,border-box] [background-origin:border-box] [border:calc(0.125rem)_solid_transparent] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#fff,#fff),linear-gradient(#fff_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
+  rainbow_outline:
+    "border border-input border-b-transparent bg-[linear-gradient(#ffffff,#ffffff),linear-gradient(#ffffff_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-accent-foreground dark:text-primary-foreground [background-clip:padding-box,border-box,border-box] [background-origin:border-box] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#0a0a0a,#0a0a0a),linear-gradient(#0a0a0a_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
+  // base 
+  raw: "",
+} as const;
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium capitalize transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-all relative cursor-pointer group user-select-none",
-  {
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium capitalize transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none  shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-all relative cursor-pointer group user-select-none",
+  { // [&_svg:not([class*='size-'])]:size-4
     variants: {
-      variant: {
-        default:
-          "bg-primary dark:bg-primary text-white hover:bg-primary/90",
-        default_light:
-          "bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/10 dark:text-primary hover:dark:bg-primary/5 hover:dark:text-primary",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-        success_light:
-          "bg-green-600/10 text-green-600 hover:bg-green-600/20 dark:bg-green-600/20 dark:text-green-600 hover:dark:bg-green-600/10 hover:dark:text-green-600",
-        warning_light:
-          "bg-yellow-600/10 text-yellow-600 hover:bg-yellow-600/20 dark:bg-yellow-600/20 dark:text-yellow-600 hover:dark:bg-yellow-600/10 hover:dark:text-yellow-600",
-        destructive_light:
-          "bg-red-600/10 text-red-600 hover:bg-red-600/20 dark:bg-red-600/5 dark:text-red-600 hover:dark:bg-red-600/10 hover:dark:text-red-600",
-        destructive:
-          "bg-red-100 hover:bg-red-200 text-red-700	dark:bg-red-700 dark:text-red-200 dark:hover:bg-red-800 dark:hover:text-red-200",
-        outline:
-          "border border-border bg-card hover:bg-card/80 dark:bg-muted text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:border-primary",
-        ghost:
-          "bg-transparent dark:hover:bg-accent text-muted-foreground hover:text-accent-foreground dark:text-muted-foreground dark:hover:text-white",
-        success:
-          "bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-700",
-        slate:
-          "bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-950 dark:hover:text-slate-100",
-        link: "text-primary underline-offset-4 hover:underline",
-        dark: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-800",
-        light:
-          "bg-white shadow text-gray-700 hover:text-gray-700 border border-border",
-        glass:
-          "bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 text-foreground shadow-sm hover:bg-white/90 dark:hover:bg-black/60",
-        rainbow:
-          "animate-rainbow border-0 bg-[linear-gradient(#121213,#121213),linear-gradient(#121213_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-primary-foreground dark:text-black [background-clip:padding-box,border-box,border-box] [background-origin:border-box] [border:calc(0.125rem)_solid_transparent] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#fff,#fff),linear-gradient(#fff_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
-        rainbow_outline:
-          "border border-input border-b-transparent bg-[linear-gradient(#ffffff,#ffffff),linear-gradient(#ffffff_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-accent-foreground dark:text-primary-foreground [background-clip:padding-box,border-box,border-box] [background-origin:border-box] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#0a0a0a,#0a0a0a),linear-gradient(#0a0a0a_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
-
-        vote: "w-full rounded-lg border border-primary text-primary bg-primary/5 hover:bg-primary/10 hover:shadow-md dark:border-primary/70 dark:text-primary",
-        voted: "w-full rounded-lg bg-gradient-to-r from-primary/90 to-primary text-white shadow-lg hover:shadow-xl",
-
-
-        gradient_blue:
-          "text-white bg-gradient-to-r from-blue-600 via-blue-700 to-blue-700 hover:bg-gradient-to-br",
-        gradient_green:
-          "text-white bg-gradient-to-r from-green-400 via-green-600 to-green-700 hover:bg-gradient-to-br",
-        gradient_cyan:
-          "text-white bg-gradient-to-r from-cyan-400 via-cyan-600 to-cyan-700 hover:bg-gradient-to-br",
-        gradient_teal:
-          "text-white bg-gradient-to-r from-teal-400 via-teal-600 to-teal-700 hover:bg-gradient-to-br",
-        gradient_lime:
-          "text-white bg-gradient-to-r from-lime-400 via-lime-600 to-lime-700 hover:bg-gradient-to-br",
-        gradient_red:
-          "text-white bg-gradient-to-r from-red-400 via-red-600 to-red-700 hover:bg-gradient-to-br",
-        gradient_pink:
-          "text-white bg-gradient-to-r from-pink-400 via-pink-600 to-pink-700 hover:bg-gradient-to-br",
-        gradient_purple:
-          "text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br",
-        gradient_emerald:
-          "text-white bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 hover:bg-gradient-to-br",
-        gradient_yellow:
-          "text-white bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:bg-gradient-to-br",
-        raw: "",
-      },
+      variant: intents,
       size: {
-        default: "h-9 px-4 py-2 [&>svg]:size-4 has-[>svg]:px-5",
+        default: "h-10 px-5 py-2 [&>svg]:size-4 has-[>svg]:px-5",
         xs: "h-6 rounded-md px-2.5 py-1.5 text-xs [&>svg]:size-3",
         sm: "h-8 rounded-md px-3 py-2 text-xs [&>svg]:size-4 has-[>svg]:pl-4",
         lg: "px-5 py-3 h-11 [&>svg]:size-6",
         xl: "px-6 py-3.5 h-14 text-base [&>svg]:size-8",
         icon: "size-10 p-3 [&>svg]:size-5",
-        icon_xs: "size-5 rounded-md [&>svg]:size-4",
+        icon_xs: "size-5 rounded-md [&>svg]:size-3",
         icon_sm: "size-8 p-2 [&>svg]:size-4",
         icon_lg: "size-12 p-3.5 [&>svg]:size-6",
         icon_xl: "size-14 p-4 [&>svg]:size-8",
@@ -123,13 +122,15 @@ const buttonVariants = cva(
         none: "",
         damped: "active:scale-99",
         scale: "hover:scale-105 active:scale-95",
+        lift: "transition-all hover:-translate-y-0.5 hover:shadow-lg",
+        press: "transition-all active:translate-y-0.5",
       },
       // Shadows are now mostly integrated into variants for better "native" feel, 
       // but these helpers remain for overrides.
       shadow: {
         none: "shadow-none",
         default: "shadow-lg shadow-primary/40",
-        default_light: "shadow-md shadow-primary/20",
+        default_soft: "shadow-md shadow-primary/20",
         destructive: "shadow-lg shadow-destructive/40",
         success: "shadow-md shadow-emerald-500/50",
         warning: "shadow-md shadow-amber-500/40",
@@ -137,6 +138,7 @@ const buttonVariants = cva(
         light: "shadow-md shadow-gray-200/50",
         glass: "shadow-lg shadow-black/5",
       },
+
     },
     defaultVariants: {
       variant: "default",
@@ -147,9 +149,9 @@ const buttonVariants = cva(
       rounded: "default",
       shadow: "none",
     },
-    compoundVariants:[
-      { variant: "default",size:"lg", shadow: "none",className: "shadow-lg shadow-primary/40" },
-      { variant: "default_light", shadow: "default_light" },
+    compoundVariants: [
+      { variant: "default", size: "lg", shadow: "none", className: "shadow-lg shadow-primary/40" },
+      { variant: "default_soft", shadow: "default_soft" },
       { variant: "destructive", shadow: "destructive" },
     ]
   }

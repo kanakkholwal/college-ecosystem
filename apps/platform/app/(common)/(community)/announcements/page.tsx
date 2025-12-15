@@ -3,13 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { AuthButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import {
-  Bell,
-  Calendar,
-  GraduationCap,
-  Info,
-  Megaphone,
-  Plus,
-  Trophy
+    Bell,
+    Calendar,
+    GraduationCap,
+    Info,
+    Megaphone,
+    Plus,
+    Trophy
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -105,7 +105,7 @@ export default async function AnnouncementsPage(props: {
                     <Icon className={cn("size-3.5", isActive ? "text-primary" : config.color)} />
                     <span className="capitalize">{changeCase(cat, "camel_to_title")}</span>
                     {isActive && (
-                      <Badge variant="default_light" className="ml-1 h-4 px-1 text-[9px] min-w-[1.25rem] justify-center bg-background/50">
+                      <Badge variant="default_soft" className="ml-1 h-4 px-1 text-[9px] min-w-[1.25rem] justify-center bg-background/50">
                         {filteredAnnouncements.length}
                       </Badge>
                     )}

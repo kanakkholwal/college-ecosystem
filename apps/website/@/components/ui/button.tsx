@@ -12,15 +12,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary dark:bg-primary text-white hover:bg-primary/90",
-        default_light:
+        default_soft:
           "bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/10 dark:text-primary hover:dark:bg-primary/5 hover:dark:text-primary",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-        success_light:
+        success_soft:
           "bg-green-600/10 text-green-600 hover:bg-green-600/20 dark:bg-green-600/20 dark:text-green-600 hover:dark:bg-green-600/10 hover:dark:text-green-600",
-        warning_light:
+        warning_soft:
           "bg-yellow-600/10 text-yellow-600 hover:bg-yellow-600/20 dark:bg-yellow-600/20 dark:text-yellow-600 hover:dark:bg-yellow-600/10 hover:dark:text-yellow-600",
-        destructive_light:
+        destructive_soft:
           "bg-red-600/10 text-red-600 hover:bg-red-600/20 dark:bg-red-600/5 dark:text-red-600 hover:dark:bg-red-600/10 hover:dark:text-red-600",
         destructive:
           "bg-red-100 hover:bg-red-200 text-red-700	dark:bg-red-700 dark:text-red-200 dark:hover:bg-red-800 dark:hover:text-red-200",
