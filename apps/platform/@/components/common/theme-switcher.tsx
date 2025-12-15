@@ -142,11 +142,11 @@ export interface BrandThemeType {
 }
 
 export const brand_themes: BrandThemeType[] = [
+  { id: "teal", label: "Teal", color: "#0d9488" },
   { id: "violet", label: "Violet", color: "#7c3aed" },
   { id: "indigo", label: "Indigo", color: "#4f46e5" },
   { id: "blue", label: "Ocean", color: "#2563eb" },
   { id: "sky", label: "Sky", color: "#0284c7" },
-  { id: "teal", label: "Teal", color: "#0d9488" },
   { id: "emerald", label: "Emerald", color: "#059669" },
   { id: "amber", label: "Amber", color: "#d97706" },
   { id: "orange", label: "Tangerine", color: "#ea580c" },

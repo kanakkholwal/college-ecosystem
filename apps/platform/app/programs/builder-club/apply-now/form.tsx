@@ -254,7 +254,7 @@ export function ApplicationForm() {
 
         {/* Submit Area */}
         <div className="pt-4">
-          <Button type="submit" disabled={isSubmitting} size="lg" className="w-full h-14 text-base font-bold shadow-lg shadow-primary/20">
+          <Button type="submit" disabled={isSubmitting} size="lg" className="w-full h-14 text-base font-bold shadow-lg shadow-primary/40">
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Transmitting...

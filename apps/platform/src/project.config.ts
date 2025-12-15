@@ -100,6 +100,7 @@ export const orgConfig = {
 // This file contains the configuration for the app and college
 export const appConfig = {
   name: "College Platform",
+  shortName: "CP",
   appDomain: "nith.eu.org",
   otherAppDomains: [
     "app.nith.eu.org",

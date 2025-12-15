@@ -224,7 +224,6 @@ export const betterAuthOptions = {
   },
   session: {
     expiresIn: 604800, // 7 days
-    updateAge: 86400, // 1 day
   },
   account: {
     encryptOAuthTokens: true, // Encrypt OAuth tokens before storing them in the database

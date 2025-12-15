@@ -63,7 +63,7 @@ export default function WhisperLandingPage() {
                 href="/whisper-room/whisper" 
                 size="lg" 
                 variant="default"
-                className="h-12 px-8 rounded-full text-base shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:scale-105"
+                className="h-12 px-8 rounded-full text-base shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105"
             >
               <Sparkles className="mr-2 size-4" /> Start Whispering
             </ButtonLink>

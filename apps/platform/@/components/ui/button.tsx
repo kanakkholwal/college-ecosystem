@@ -121,19 +121,19 @@ const buttonVariants = cva(
       },
       transition: {
         none: "",
-        damped: "active:scale-[0.98]",
+        damped: "active:scale-99",
         scale: "hover:scale-105 active:scale-95",
       },
       // Shadows are now mostly integrated into variants for better "native" feel, 
       // but these helpers remain for overrides.
       shadow: {
         none: "shadow-none",
-        default: "shadow-lg shadow-primary/25",
-        default_light: "shadow-md shadow-primary/10",
-        destructive: "shadow-lg shadow-destructive/20",
-        success: "shadow-md shadow-emerald-500/20",
-        warning: "shadow-md shadow-amber-500/20",
-        dark: "shadow-lg shadow-black/20",
+        default: "shadow-lg shadow-primary/40",
+        default_light: "shadow-md shadow-primary/20",
+        destructive: "shadow-lg shadow-destructive/40",
+        success: "shadow-md shadow-emerald-500/50",
+        warning: "shadow-md shadow-amber-500/40",
+        dark: "shadow-lg shadow-black/40",
         light: "shadow-md shadow-gray-200/50",
         glass: "shadow-lg shadow-black/5",
       },
@@ -147,6 +147,11 @@ const buttonVariants = cva(
       rounded: "default",
       shadow: "none",
     },
+    compoundVariants:[
+      { variant: "default",size:"lg", shadow: "none",className: "shadow-lg shadow-primary/40" },
+      { variant: "default_light", shadow: "default_light" },
+      { variant: "destructive", shadow: "destructive" },
+    ]
   }
 );
 interface IconProps {

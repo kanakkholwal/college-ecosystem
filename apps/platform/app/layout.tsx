@@ -62,9 +62,9 @@ export const metadata: Metadata = {
     site: "@kanakkholwal",
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    icon: "/favicon/favicon.ico",
+    shortcut: "/favicon/icon.png",
+    apple: "/favicon/apple-touch-icon.png",
   },
   // New SEO fields
   category: appConfig.seo.category,
@@ -105,6 +105,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           name="google-adsense-account"
           content={appConfig.verifications.google_adsense}
         />
+        <meta name="apple-mobile-web-app-title" content={appConfig.shortName} />
+
       </head>
       <body
         className={cn(

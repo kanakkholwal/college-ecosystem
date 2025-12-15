@@ -4,7 +4,7 @@ import { ArrowLeft, Terminal } from "lucide-react";
 import { ApplicationForm } from "./form";
 
 // Toggle this to test the "Closed" state UI
-const closed = true;
+const closed = false;
 
 export default function ApplyNowPage() {
     return (
