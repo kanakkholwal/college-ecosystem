@@ -1,0 +1,172 @@
+name: 🚀 Deployments of Microservices
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/${{ vars.SERVICE_NAME_SERVER}}
+  REMOTE_REPO_NAME: ${{ vars.REMOTE_REPO_NAME}}
+
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  # workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-servers-deploy
+  cancel-in-progress: true
+
+jobs:
+  setup-remote-repo:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+    
+    steps:
+      - name: 🔑 Set up Google Cloud Auth SDK
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: 🛠️ Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🔐 Store GHCR Token in Secret Manager (if not exists)
+        run: |
+          # Check if secret already exists
+          if gcloud secrets describe ghcr-token \
+            --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
+            echo "Secret already exists, updating version"
+            echo -n "${{ secrets.GITHUB_TOKEN }}" | gcloud secrets versions add ghcr-token \
+              --data-file=- \
+              --project=${{ secrets.GCP_PROJECT_ID }}
+          else
+            echo "Creating new secret"
+            echo -n "${{ secrets.GITHUB_TOKEN }}" | gcloud secrets create ghcr-token \
+              --data-file=- \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --replication-policy="automatic"
+            
+            # Grant access to Artifact Registry service account
+            gcloud secrets add-iam-policy-binding ghcr-token \
+              --member="serviceAccount:service-${{ secrets.GCP_PROJECT_NUMBER }}@gcp-sa-artifactregistry.iam.gserviceaccount.com" \
+              --role="roles/secretmanager.secretAccessor" \
+              --project=${{ secrets.GCP_PROJECT_ID }}
+          fi
+
+      - name: 🗂️ Create Remote Repository (if not exists)
+        run: |
+          # Check if repository already exists
+          if gcloud artifacts repositories describe ${{ env.REMOTE_REPO_NAME }} \
+            --location=${{ vars.GCP_REPO_REGION }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
+            echo "Repository already exists, updating credentials"
+            gcloud artifacts repositories update ${{ env.REMOTE_REPO_NAME }} \
+              --location=${{ vars.GCP_REPO_REGION }} \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --remote-username="${{ github.actor }}" \
+              --remote-password-secret-version="projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/ghcr-token/versions/latest"
+          else
+            echo "Creating remote repository for GHCR"
+            gcloud artifacts repositories create ${{ env.REMOTE_REPO_NAME }} \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --repository-format=docker \
+              --location=${{ vars.GCP_REPO_REGION }} \
+              --description="GHCR Remote Repository" \
+              --mode=remote-repository \
+              --remote-repo-config-desc="GitHub Container Registry proxy" \
+              --remote-docker-repo=CUSTOM \
+              --remote-custom-repository='{"uri":"https://ghcr.io"}' \
+              --remote-username="${{ github.actor }}" \
+              --remote-password-secret-version="projects/${{ secrets.GCP_PROJECT_NUMBER }}/secrets/ghcr-token/versions/latest"
+            
+            echo "✅ Remote repository created successfully"
+          fi
+  
+  dockerize-and-deploy-server:
+    needs: setup-remote-repo
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.event_name == 'workflow_dispatch'
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check changes in Server Directory
+        id: server-changed
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "server_changed=true" >> $GITHUB_OUTPUT
+            echo "dockerfile_changed=false" >> $GITHUB_OUTPUT
+          else
+            git diff --quiet HEAD^ HEAD ./apps/server || echo "server_changed=true" >> $GITHUB_OUTPUT
+            git diff --quiet HEAD^ HEAD ./apps/server/Dockerfile || echo "dockerfile_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      # Build and push to GHCR
+      - name: 🔑 Log in to GitHub Container Registry
+        if: steps.server-changed.outputs.server_changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Extract metadata for Docker
+        if: steps.server-changed.outputs.server_changed == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: 🐳 Build and Push to GHCR
+        if: steps.server-changed.outputs.server_changed == 'true' && steps.server-changed.outputs.dockerfile_changed == 'true' 
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/server
+          file: ./apps/server/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Deploy to GCP from GHCR via Remote Repository
+      - name: 🔑 Set up Google Cloud Auth SDK
+        if: steps.server-changed.outputs.server_changed == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CREDENTIALS_JSON }}
+
+      - name: 🛠️ Set up Cloud SDK
+        if: steps.server-changed.outputs.server_changed == 'true'
+        uses: 'google-github-actions/setup-gcloud@v3'
+        with:
+          version: 'latest'
+          
+      - name: 🚀 Deploy to Cloud Run
+        if: steps.server-changed.outputs.server_changed == 'true'
+        run: |
+          # Determine tag based on branch
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            TAG="latest"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          
+          GHCR_IMAGE="ghcr.io/${{ github.repository }}/${{ vars.SERVICE_NAME_SERVER}}:${TAG}"
+          AR_IMAGE="${{ vars.GCP_REPO_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ vars.REMOTE_REPO_NAME }}/${GHCR_IMAGE}"
+          
+          echo "Deploying: ${AR_IMAGE}"
+          
+          gcloud run deploy ${{ env.SERVICE_NAME_SERVER }} \
+            --image "${AR_IMAGE}" \
+            --platform managed \
+            --region ${{ vars.GCP_SERVING_REGION }} \
+            --allow-unauthenticated \
+            --project ${{ secrets.GCP_PROJECT_ID }}
