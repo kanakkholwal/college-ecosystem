@@ -164,7 +164,7 @@ jobs:
           
           echo "Deploying: ${AR_IMAGE}"
           
-          gcloud run deploy ${{ env.SERVICE_NAME_SERVER }} \
+          gcloud run deploy ${{ vars.SERVICE_NAME_SERVER }} \
             --image "${AR_IMAGE}" \
             --platform managed \
             --region ${{ vars.GCP_SERVING_REGION }} \
