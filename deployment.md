@@ -20,6 +20,31 @@ This project uses GitHub Actions for continuous deployment of its microservices.
 <!-- get project details - GCP_PROJECT_ID,GCP_PROJECT_NUMBER -->
 - In the Google Cloud Console, go to the `Dashboard` of your project to find the `Project ID` and `Project Number`. Note these down as they will be needed later.
 
+<!-- Add note for enabling required APIs -->
+### Enable required APIs
+
+Before deploying, enable the Google Cloud APIs used by the workflows.
+
+Via Cloud Console:
+
+- Open APIs & Services → Library in your project.
+- Search for and enable:
+    - Cloud Run API (run.googleapis.com)
+    - Cloud Build API (cloudbuild.googleapis.com)
+    - Artifact Registry API (artifactregistry.googleapis.com) — or Container Registry (containerregistry.googleapis.com) if you use it
+    - IAM Service Account Credentials API (iamcredentials.googleapis.com)
+    - Secret Manager API (secretmanager.googleapis.com) — if you store secrets in Secret Manager
+    - Cloud Resource Manager API (cloudresourcemanager.googleapis.com)
+
+Or enable them with gcloud (replace YOUR_PROJECT_ID):
+
+```
+gcloud config set project YOUR_PROJECT_ID
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com containerregistry.googleapis.com iamcredentials.googleapis.com secretmanager.googleapis.com cloudresourcemanager.googleapis.com
+```
+
+Note: API activation can take a minute. Ensure the project selected matches your GCP_PROJECT_ID.
+
 #### 2. Set up GitHub Secrets
 
 - Go to your GitHub repository and navigate to `Settings` -> `Secrets and variables` -> `Actions`.
