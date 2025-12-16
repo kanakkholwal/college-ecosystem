@@ -7,11 +7,11 @@ env:
 
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-  # workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #     - staging
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-servers-deploy

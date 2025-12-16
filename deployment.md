@@ -61,6 +61,12 @@ Note: API activation can take a minute. Ensure the project selected matches your
   - `GCP_REPO_REGION`: Set its value to your desired GCP region (close to your user location), e.g., `us-central1`.
   - `GCP_SERVING_REGION` : Set its value to your desired GCP region (close to your user location), e.g., `asia-southeast1`.
 
-#### 3. Trigger Deployment
+#### 3. Create Cloud Run Services
 
-Trigger deployment 
+- Go to the Cloud Run section in the Google Cloud Console.
+- Click on `Create Service`.
+- Select `Deploy one revision from an existing container image`.
+- For the container image, you can use a placeholder image like `gcr.io/cloudrun/hello`.
+- Set the service name to `college-ecosystem-server` (as set in the `SERVICE_NAME_SERVER` variable).
+- Choose the region you set in the `GCP_SERVING_REGION` variable.
+- Click on `Create` to create the service.
