@@ -45,14 +45,37 @@ const getRankColor = (rank: number) => {
   return "bg-primary/5 text-primary border-primary/20";
 };
 
-function getYear(result: ResultTypeWithId): string {
-  const s = result.semesters.length;
-  if (s <= 2) return "First Year";
-  if (s <= 4) return "Second Year";
-  if (s <= 6) return "Third Year";
-  return result.programme.includes("Dual") && s > 8 ? "Super Final Year" : "Final Year";
+// function getYear(result: ResultTypeWithId): string {
+//   const s = result.semesters.length;
+//   if (s <= 2) return "First Year";
+//   if (s <= 4) return "Second Year";
+//   if (s <= 6) return "Third Year";
+//   return result.programme.includes("Dual") && s > 8 ? "Super Final Year" : "Final Year";
+// }
+function getYear(result: ResultTypeWithId): string  {
+  switch (result.semesters.length) {
+    case 0:
+    case 1:
+      return "First Year";
+    case 2:
+    case 3:
+      return "Second Year";
+    case 4:
+    case 5:
+      return "Third Year";
+    case 6:
+    case 7:
+      return "Final Year";
+    case 8:
+      return result.programme === "B.Tech" ? "Pass Out" : "Super Final Year";
+    case 9:
+      return "Super Final Year";
+    case 10:
+      return "Pass Out";
+    default:
+      return "Unknown Year";
+  }
 }
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { rollNo } = await params;
   return {
