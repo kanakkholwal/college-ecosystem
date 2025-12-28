@@ -10,7 +10,11 @@ on:
   # push:
   #   branches:
   #     - main
-  #     - staging
+      # - staging
+  pull_request:
+    branches:
+      - main
+      # - staging
   workflow_dispatch:
 
 concurrency:
@@ -156,20 +160,14 @@ jobs:
         if: steps.server-changed.outputs.server_changed == 'true'
         run: |
           # Determine tag based on branch
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            TAG="latest"
-          else
-            TAG="${{ github.ref_name }}"
-          fi
-          
+          TAG="${{ github.ref_name == 'main' && 'latest' || github.ref_name }}"
           GHCR_IMAGE="ghcr.io/${{ github.repository }}/${{ vars.SERVICE_NAME_SERVER}}:${TAG}"
-          AR_IMAGE="${{ vars.GCP_REPO_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ vars.REMOTE_REPO_NAME }}/${GHCR_IMAGE}"
           
-          echo "Deploying: ${AR_IMAGE}"
+          echo "Deploying: ${GHCR_IMAGE}"
           
-          gcloud run deploy ${{ vars.SERVICE_NAME_SERVER }} \
-            --image "${AR_IMAGE}" \
-            --platform managed \
-            --region ${{ vars.GCP_SERVING_REGION }} \
-            --allow-unauthenticated \
-            --project ${{ secrets.GCP_PROJECT_ID }}
+                gcloud run deploy ${{ vars.SERVICE_NAME_SERVER }} \
+                  --image "${GHCR_IMAGE}" \
+                  --platform managed \
+                  --region ${{ vars.GCP_SERVING_REGION }} \
+                  --allow-unauthenticated \
+                  --project ${{ secrets.GCP_PROJECT_ID }}
