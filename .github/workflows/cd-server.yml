@@ -141,7 +141,7 @@ jobs:
         if: steps.server-changed.outputs.server_changed == 'true'
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.CREDENTIALS_JSON }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: 🛠️ Set up Cloud SDK
         if: steps.server-changed.outputs.server_changed == 'true'
