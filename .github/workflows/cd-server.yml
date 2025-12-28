@@ -7,13 +7,13 @@ env:
 
 
 on:
-  push:
-    branches:
-      - main
-      # - staging
-  pull_request:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
+  #     # - staging
+  # pull_request:
+  #   branches:
+  #     - main
       # - staging
   workflow_dispatch:
 
@@ -146,7 +146,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.CREDENTIALS_JSON }}
-           # Add these if you want to enable additional services
+          # Add these if you want to enable additional services
           create_credentials_file: true
           export_environment_variables: true
           
