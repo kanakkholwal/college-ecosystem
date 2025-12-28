@@ -131,7 +131,7 @@ jobs:
             type=sha,prefix={{branch}}-
 
       - name: 🐳 Build and Push to GHCR
-        if: steps.server-changed.outputs.server_changed == 'true' && steps.server-changed.outputs.dockerfile_changed == 'true' 
+        if: (steps.server-changed.outputs.server_changed == 'true' && steps.server-changed.outputs.dockerfile_changed == 'true' )
         uses: docker/build-push-action@v5
         with:
           context: ./apps/server
@@ -145,16 +145,10 @@ jobs:
         if: steps.server-changed.outputs.server_changed == 'true'
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          credentials_json: ${{ secrets.CREDENTIALS_JSON }}
            # Add these if you want to enable additional services
           create_credentials_file: true
           export_environment_variables: true
-
-      # - name: 🛠️ Set up Cloud SDK
-      #   if: steps.server-changed.outputs.server_changed == 'true'
-      #   uses: 'google-github-actions/setup-gcloud@v3'
-      #   with:
-      #     version: 'latest'
           
       - name: 🚀 Deploy to Cloud Run
         if: steps.server-changed.outputs.server_changed == 'true'
