@@ -1,4 +1,4 @@
-name: 🚀 Deployments of Microservices
+name: 🚀 Cd - Deployments of Microservices
 
 env:
   REGISTRY: ghcr.io
