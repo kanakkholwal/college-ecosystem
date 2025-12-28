@@ -62,6 +62,8 @@ func CustomCORS(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-		"error": "CORS policy does not allow this origin",
+		"data":    nil,
+		"message": "CORS policy does not allow this origin",
+		"error":   true,
 	})
 }
