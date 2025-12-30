@@ -73,7 +73,7 @@ export default async function AdminResultPage() {
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
               <OperationCard
-                 Icon={Trophy}
+                Icon={Trophy}
                 title="Calculate Ranks"
                 description="Re-evaluates CGPI and assigns ranks to all students across batches."
                 color="text-amber-600 bg-amber-50 dark:bg-amber-950/20"
@@ -81,7 +81,7 @@ export default async function AdminResultPage() {
                 <ActionBar
                   description="" // Hidden in this layout
                   btnProps={{
-                    variant: "outline",
+                    variant: "default_soft",
                     size: "sm",
                     className: "w-full",
                     children: "Run Rank Assignment",
@@ -91,7 +91,7 @@ export default async function AdminResultPage() {
               </OperationCard>
 
               <OperationCard
-                 Icon={GitBranch}
+                Icon={GitBranch}
                 title="Fix Branch Changes"
                 description="Updates student records based on approved branch change requests."
                 color="text-blue-600 bg-blue-50 dark:bg-blue-950/20"
@@ -99,7 +99,7 @@ export default async function AdminResultPage() {
                 <ActionBar
                   description=""
                   btnProps={{
-                    variant: "outline",
+                    variant: "default_soft",
                     size: "sm",
                     className: "w-full",
                     children: "Sync Branches",
@@ -179,12 +179,12 @@ export default async function AdminResultPage() {
               <ShieldCheck className="h-4 w-4" /> System Health
             </h3>
             {abnormalsResults.length > 0 ? (
-              <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/20 gap-1.5">
+              <Badge variant="default_soft" className="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/20 gap-1.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                 Attention Needed
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 gap-1.5">
+              <Badge variant="default_soft" className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 gap-1.5">
                 <CheckCircle2 className="h-3 w-3" />
                 Healthy
               </Badge>
