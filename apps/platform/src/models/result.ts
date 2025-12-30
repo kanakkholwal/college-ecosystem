@@ -4,6 +4,10 @@ export interface Course {
   name: string;
   code: string;
   cgpi: number;
+
+  grade: string;
+  credits: number;
+  sub_points: number;
 }
 export interface Rank {
   college: number;
@@ -16,12 +20,12 @@ export interface Semester {
   sgpi: number;
   cgpi: number;
   courses: Course[];
-  semester: number | string;
+  semester: string;
   sgpi_total: number;
   cgpi_total: number;
 }
-
-export type rawResultType = {
+export interface ResultTypeWithId {
+  _id: string;
   name: string;
   rollNo: string;
   branch: string;
@@ -31,29 +35,35 @@ export type rawResultType = {
   rank: Rank;
   createdAt?: Date;
   updatedAt?: Date;
-  gender: "male" | "female" | "not_specified";
-};
-
-export interface ResultTypeWithId extends rawResultType {
-  _id: string;
 }
 
-export interface IResultType extends Document, rawResultType {}
+export interface IResultType extends Document {
+  name: string;
+  rollNo: string;
+  branch: string;
+  batch: number;
+  programme: string;
+  semesters: Semester[];
+  rank: Rank;
+  createdAt?: Date;
+  updatedAt?: Date;
+  gender?: "male" | "female" | "not_specified";
+}
 
 const CourseSchema: Schema = new Schema({
   name: { type: String, required: true },
   code: { type: String, required: true },
   cgpi: { type: Number, required: true },
-},{ _id: false });
+});
 
 const SemesterSchema: Schema = new Schema({
   sgpi: { type: Number, required: true },
   cgpi: { type: Number, required: true },
   courses: { type: [CourseSchema], required: true },
-  semester: { type: Schema.Types.Mixed, required: true },
+  semester: { type: String, required: true },
   sgpi_total: { type: Number, required: true },
   cgpi_total: { type: Number, required: true },
-}, { _id: false });
+});
 
 const ResultSchema: Schema = new Schema(
   {
@@ -80,12 +90,7 @@ const ResultSchema: Schema = new Schema(
   }
 );
 
-// compound / text indexes
-ResultSchema.index({ "rank.college": 1, _id: -1 });
-ResultSchema.index({ branch: 1, batch: 1 });
-ResultSchema.index({ name: "text" }); // if using text search on name
-
 const ResultModel =
-  mongoose.models.Result || mongoose.model<IResultType>("Result", ResultSchema);
+  mongoose.models?.Result || mongoose.model<IResultType>("Result", ResultSchema);
 
 export default ResultModel;

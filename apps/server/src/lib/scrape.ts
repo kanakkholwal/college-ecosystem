@@ -113,11 +113,10 @@ const parseResult = (
       student.semesters[index].courses.push({
         name: tr.querySelector("td:nth-child(2)")?.innerText.trim() || "",
         code: tr.querySelector("td:nth-child(3)")?.innerText.trim() || "",
+        grade: tr.querySelector("td:nth-child(5)")?.innerText.trim() || "",
         cgpi: semester / semester_total,
-        // credit:
-        //   tr.querySelector("td:nth-child(5)")?.innerText.trim() || "0",
-        // sub_points: semester,
-        // points: semester,
+        credits: semester_total,
+        sub_points: semester,
 
       });
     }

@@ -69,7 +69,7 @@ export default function ScrapeResultPage() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [taskList, setTaskList] = useState<taskDataType[]>([]);
-  
+
   // Active Task State
   const [taskData, setTaskData] = useState<taskDataType>({
     processable: 0,
@@ -121,7 +121,7 @@ export default function ScrapeResultPage() {
       sseEndpoint.searchParams.delete("task_resume_id");
       sseEndpoint.searchParams.set("action", EVENTS.STREAM_SCRAPING);
     }
-    
+
     router.push(`?${sseEndpoint.searchParams.toString()}`);
     setStreaming(true);
 
@@ -129,16 +129,16 @@ export default function ScrapeResultPage() {
     const es = new EventSource(sseEndpoint.toString(), {
       withCredentials: true,
       fetch: (input, init) => fetch(input, {
-          ...init,
-          headers: { ...init.headers, ...authHeaders, "X-Identity-Key": authHeaders["X-Identity-Key"], "X-Authorization": authHeaders["X-Authorization"] },
-        }),
+        ...init,
+        headers: { ...init.headers, ...authHeaders, "X-Identity-Key": authHeaders["X-Identity-Key"], "X-Authorization": authHeaders["X-Authorization"] },
+      }),
     });
-    
+
     eventSourceRef.current = es;
 
     es.addEventListener("task_status", (e) => setTaskData(JSON.parse(e.data).data));
     es.addEventListener("task_list", (e) => setTaskList(JSON.parse(e.data).data));
-    
+
     es.addEventListener("task_completed", () => {
       toast.success("Scraping completed.");
       setStreaming(false);
@@ -159,7 +159,7 @@ export default function ScrapeResultPage() {
 
   useEffect(() => {
     scrapingApi.getTaskList().then(({ data }) => {
-      if(data?.data) setTaskList(data.data);
+      if (data?.data) setTaskList(data.data);
     }).catch(e => toast.error(e.message));
 
     return () => { eventSourceRef.current?.close(); setStreaming(false); };
@@ -170,7 +170,7 @@ export default function ScrapeResultPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
-      
+
       {/* 1. Top Toolbar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -189,9 +189,9 @@ export default function ScrapeResultPage() {
             </SelectContent>
           </Select>
           <Separator orientation="vertical" className="h-6" />
-          <Button 
-            size="sm" 
-            onClick={() => handleStartScraping()} 
+          <Button
+            size="sm"
+            onClick={() => handleStartScraping()}
             disabled={streaming}
             className={cn("h-8", streaming ? "opacity-50" : "bg-primary")}
           >
@@ -203,11 +203,11 @@ export default function ScrapeResultPage() {
 
       {/* 2. Live Monitor (Only visible if active or error) */}
       {(streaming || error || taskData._id) && (
-        <LiveMonitorCard 
-          task={taskData} 
-          streaming={streaming} 
-          error={error} 
-          onStop={closeConnection} 
+        <LiveMonitorCard
+          task={taskData}
+          streaming={streaming}
+          error={error}
+          onStop={closeConnection}
         />
       )}
 
@@ -219,13 +219,13 @@ export default function ScrapeResultPage() {
               <CardTitle className="text-base font-semibold">Task History</CardTitle>
               <CardDescription>Recent scraping sessions and their outcomes.</CardDescription>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="text-muted-foreground hover:text-destructive h-8"
               disabled={taskList.length === 0}
               onClick={() => {
-                if(confirm("Clear all history?")) {
+                if (confirm("Clear all history?")) {
                   scrapingApi.clearAllTasks().then(() => {
                     setTaskList([]);
                     toast.success("History cleared");
@@ -240,8 +240,8 @@ export default function ScrapeResultPage() {
         <CardContent className="p-0">
           {taskList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-               <List className="w-10 h-10 mb-3 opacity-20" />
-               <p>No scraping history found.</p>
+              <List className="w-10 h-10 mb-3 opacity-20" />
+              <p>No scraping history found.</p>
             </div>
           ) : (
             <Table>
@@ -257,10 +257,10 @@ export default function ScrapeResultPage() {
               </TableHeader>
               <TableBody>
                 {taskList.map((task) => (
-                  <HistoryRow 
-                    key={task._id} 
-                    task={task} 
-                    onAction={handleAction} 
+                  <HistoryRow
+                    key={task._id}
+                    task={task}
+                    onAction={handleAction}
                     onDelete={(id) => setTaskList(prev => prev.filter(t => t._id !== id))}
                   />
                 ))}
@@ -279,19 +279,19 @@ export default function ScrapeResultPage() {
 function LiveMonitorCard({ task, streaming, error, onStop }: any) {
   // Calculate percentage safely
   const percent = task.processable > 0 ? Math.round((task.processed / task.processable) * 100) : 0;
-  
+
   return (
-    <Card className={cn("border-l-2 rounded-l-none", error ? "border-l-red-500" : streaming ? "border-l-blue-500" : "border-l-primary")}>
+    <Card className={cn("border-l-2 rounded-l-none", error ? "border-l-red-500" : streaming ? "border-l-indigo-500" : "border-l-primary")}>
       <CardContent className="pt-6">
         <div className="flex justify-between items-start mb-6">
           <div className="space-y-1">
-             <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold tracking-tight">
-                  {error ? "Task Failed" : streaming ? "Processing Batch..." : "Task Idle"}
-                </h3>
-                {streaming && <Badge variant="secondary" className="animate-pulse text-blue-600 bg-blue-50">Live</Badge>}
-             </div>
-             <p className="text-xs font-mono text-muted-foreground">ID: {task._id || "Waiting..."}</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold tracking-tight">
+                {error ? "Task Failed" : streaming ? "Processing Batch..." : "Task Idle"}
+              </h3>
+              {streaming && <Badge variant="secondary" className="animate-pulse text-blue-600 bg-blue-50">Live</Badge>}
+            </div>
+            <p className="text-xs font-mono text-muted-foreground">ID: {task._id || "Waiting..."}</p>
           </div>
           {streaming && (
             <Button variant="destructive" size="sm" onClick={onStop}>
@@ -301,9 +301,9 @@ function LiveMonitorCard({ task, streaming, error, onStop }: any) {
         </div>
 
         {error ? (
-           <div className="bg-red-50 text-red-900 p-3 rounded-md text-sm border border-red-100 flex items-center gap-2">
-             <AlertOctagon className="w-4 h-4" /> {error}
-           </div>
+          <div className="bg-red-50 text-red-900 p-3 rounded-md text-sm border border-red-100 flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4" /> {error}
+          </div>
         ) : (
           <div className="space-y-6">
             {/* Progress Bar */}
@@ -317,17 +317,17 @@ function LiveMonitorCard({ task, streaming, error, onStop }: any) {
 
             {/* Metrics Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-               <MetricItem label="Queue" value={task.queue?.length || 0} icon={List} color="text-gray-500" />
-               <MetricItem label="Processed" value={task.processed} icon={Activity} color="text-blue-600" />
-               <MetricItem label="Successful" value={task.success} icon={CheckCircle2} color="text-green-600" />
-               <MetricItem label="Failed" value={task.failed} icon={XCircle} color="text-red-600" />
+              <MetricItem label="Queue" value={task.queue?.length || 0} icon={List} color="text-gray-500" />
+              <MetricItem label="Processed" value={task.processed} icon={Activity} color="text-blue-600" />
+              <MetricItem label="Successful" value={task.success} icon={CheckCircle2} color="text-green-600" />
+              <MetricItem label="Failed" value={task.failed} icon={XCircle} color="text-red-600" />
             </div>
-            
+
             {/* Failure Inspector */}
             {task.failed > 0 && (
               <div className="pt-2 border-t">
-                 <p className="text-xs font-medium text-red-600 mb-2">Failed Roll Numbers:</p>
-                 <FailedRollNumbers task={task} />
+                <p className="text-xs font-medium text-red-600 mb-2">Failed Roll Numbers:</p>
+                <FailedRollNumbers task={task} />
               </div>
             )}
           </div>
@@ -356,8 +356,8 @@ interface HistoryRowProps {
 }
 
 function HistoryRow({ task, onAction, onDelete }: HistoryRowProps) {
-  const duration = task.endTime 
-    ? formatDistanceToNow(new Date(task.endTime), { addSuffix: true }) 
+  const duration = task.endTime
+    ? formatDistanceToNow(new Date(task.endTime), { addSuffix: true })
     : "Incomplete";
 
   const percent = task.processable > 0 ? Math.round((task.processed / task.processable) * 100) : 0;
@@ -379,18 +379,18 @@ function HistoryRow({ task, onAction, onDelete }: HistoryRowProps) {
         <Badge variant="outline" className="capitalize">{task.list_type}</Badge>
       </TableCell>
       <TableCell>
-         <div className="flex items-center gap-2">
-           <Progress value={percent} className="w-16 h-1.5" />
-           <span className="text-xs text-muted-foreground">{percent}%</span>
-         </div>
+        <div className="flex items-center gap-2">
+          <Progress value={percent} className="w-16 h-1.5" />
+          <span className="text-xs text-muted-foreground">{percent}%</span>
+        </div>
       </TableCell>
       <TableCell className="text-green-600 font-medium text-xs">{task.success}</TableCell>
       <TableCell>
         {task.failed > 0 ? (
           <ResponsiveDialog
-             btnProps={{ variant: "ghost", size: "sm", className: "text-red-600 h-6 px-2 text-xs hover:bg-red-50",children:<span>{task.failed} (View)</span> }}            
-             title="Failed Items"
-             description={`Task ID: ${task._id}`}
+            btnProps={{ variant: "ghost", size: "sm", className: "text-red-600 h-6 px-2 text-xs hover:bg-red-50", children: <span>{task.failed} (View)</span> }}
+            title="Failed Items"
+            description={`Task ID: ${task._id}`}
           >
             <FailedRollNumbers task={task} />
           </ResponsiveDialog>
@@ -408,20 +408,20 @@ function HistoryRow({ task, onAction, onDelete }: HistoryRowProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+
             {task.processed < task.processable && (
               <DropdownMenuItem onClick={() => onAction(task._id, EVENTS.TASK_PAUSED_RESUME)}>
                 <Play className="w-4 h-4 mr-2" /> Resume Task
               </DropdownMenuItem>
             )}
-            
+
             {isComplete && task.failed > 0 && (
               <DropdownMenuItem onClick={() => onAction(task._id, EVENTS.TASK_RETRY_FAILED, task.list_type)}>
                 <RefreshCw className="w-4 h-4 mr-2" /> Retry Failed
               </DropdownMenuItem>
             )}
 
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="text-red-600 focus:text-red-600"
               onClick={() => {
                 scrapingApi.deleteTask(task._id).then(() => onDelete(task._id));
@@ -437,8 +437,8 @@ function HistoryRow({ task, onAction, onDelete }: HistoryRowProps) {
 }
 
 function FailedRollNumbers({ task }: { task: taskDataType }) {
-  if(!task.failedRollNos || task.failedRollNos.length === 0) return <p className="text-sm text-muted-foreground">No failed items recorded.</p>;
-  
+  if (!task.failedRollNos || task.failedRollNos.length === 0) return <p className="text-sm text-muted-foreground">No failed items recorded.</p>;
+
   return (
     <div className="flex gap-1.5 flex-wrap">
       {task.failedRollNos.slice(0, 20).map((item) => (

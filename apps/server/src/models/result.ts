@@ -4,6 +4,10 @@ export interface Course {
   name: string;
   code: string;
   cgpi: number;
+
+  grade: string;
+  credits: number;
+  sub_points: number;
 }
 export interface Rank {
   college: number;
