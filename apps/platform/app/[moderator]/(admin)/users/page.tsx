@@ -53,7 +53,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
         offset,
         searchField: searchField,
         searchOperator: searchOperator,
-        searchValue: searchValue,
+        searchValue: searchField === "name" ? searchValue.trim().toUpperCase() : searchValue,
         sortDirection,
         sortBy: params.sortBy || "createdAt",
       },

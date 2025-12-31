@@ -54,6 +54,10 @@ const CourseSchema: Schema = new Schema({
   name: { type: String, required: true },
   code: { type: String, required: true },
   cgpi: { type: Number, required: true },
+  // additional fields
+  grade: { type: String, trim: true },
+  credits: { type: Number, min: 0 },
+  sub_points: { type: Number, min: 0 },
 });
 
 const SemesterSchema: Schema = new Schema({

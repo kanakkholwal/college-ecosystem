@@ -114,10 +114,10 @@ const parseResult = (
         name: tr.querySelector("td:nth-child(2)")?.innerText.trim() || "",
         code: tr.querySelector("td:nth-child(3)")?.innerText.trim() || "",
         grade: tr.querySelector("td:nth-child(5)")?.innerText.trim() || "",
+        // default values if parsing fails
         cgpi: semester / semester_total,
         credits: semester_total,
         sub_points: semester,
-
       });
     }
   });

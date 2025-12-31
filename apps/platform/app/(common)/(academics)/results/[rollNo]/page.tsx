@@ -45,14 +45,8 @@ const getRankColor = (rank: number) => {
   return "bg-primary/5 text-primary border-primary/20";
 };
 
-// function getYear(result: ResultTypeWithId): string {
-//   const s = result.semesters.length;
-//   if (s <= 2) return "First Year";
-//   if (s <= 4) return "Second Year";
-//   if (s <= 6) return "Third Year";
-//   return result.programme.includes("Dual") && s > 8 ? "Super Final Year" : "Final Year";
-// }
-function getYear(result: ResultTypeWithId): string  {
+
+function getYear(result: ResultTypeWithId): string {
   switch (result.semesters.length) {
     case 0:
     case 1:
@@ -73,6 +67,9 @@ function getYear(result: ResultTypeWithId): string  {
     case 10:
       return "Pass Out";
     default:
+      if (result.programme === "Dual Degree") {
+        return result.semesters.length < 12 ? "Super Final Year" : "Pass Out";
+      }
       return "Unknown Year";
   }
 }
@@ -93,6 +90,9 @@ export default async function ResultsPage(props: Props) {
 
   const result = await getResultByRollNo(params.rollNo, update_result, is_new);
   if (!result) return notFound();
+  console.dir(result, {
+    depth: null,
+  });
 
   // --- Calculations ---
   const cgpiValues = result.semesters.map((s) => s.cgpi);
@@ -264,9 +264,9 @@ export default async function ResultsPage(props: Props) {
                     <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline transition-all group">
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="flex items-center gap-4">
-                          <div className="flex flex-col items-center justify-center size-10 rounded-lg bg-primary/5 border border-primary/10 group-hover:border-primary/30 transition-colors">
+                          <div className="flex flex-col items-center justify-center h-10 min-w-10 w-auto rounded-lg bg-primary/5 border border-primary/10 group-hover:border-primary/30 transition-colors">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase">Sem</span>
-                            <span className="text-sm font-bold text-primary">{sem.semester}</span>
+                            <span className="text-sm font-bold text-primary px-2">{sem.semester}</span>
                           </div>
                           <div className="text-left">
                             <p className="text-xs text-muted-foreground font-mono">
