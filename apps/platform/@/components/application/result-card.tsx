@@ -84,7 +84,7 @@ export function ResultCard({
             </p>
             <div className="flex items-end gap-2">
                 <span className="text-3xl font-bold tracking-tight text-foreground">
-                    {result.cgpi.toFixed(2)}
+                    {result.cgpi?.toFixed(2)}
                 </span>
                 {trend !== 0 && (
                     <div className={cn(
@@ -172,7 +172,7 @@ export function ResultCardMinimal({
 
       <div className="text-right">
          <span className="block text-lg font-bold tabular-nums text-foreground">
-            {result.cgpi.toFixed(2)}
+            {result.cgpi?.toFixed(2)}
          </span>
          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
             CGPI

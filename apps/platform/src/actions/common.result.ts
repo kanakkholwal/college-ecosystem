@@ -22,14 +22,17 @@ type getResultsReturnType = {
   totalPages: number;
   totalCount: number;
 };
-
+// helper: escape regex special chars
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 export async function getResults(
   query: string,
   currentPage: number,
   filter: {
     branch?: string;
     programme?: string;
-    batch?: number;
+    batch?: string;
     limit?: number;
     include_freshers?: boolean;
   },
@@ -69,18 +72,41 @@ export async function getResults(
     await dbConnect();
 
     const filterQuery: any = {};
+    // Tokenize and build safe regexes only when there's a non-empty query
     if (query && query.trim() !== "") {
       const q = query.trim();
-      filterQuery.$or = [
-        { rollNo: q }, 
-        { name: { $regex: q, $options: "i" } }, 
-      ];
+      // split on whitespace and remove empty tokens
+      const tokens = q.split(/\s+/).filter(Boolean);
+
+      // for each token, require that it matches at least one of the searchable fields
+      // This produces an AND of ORs: each token must match name OR rollNo
+      filterQuery.$and = tokens.map((token) => {
+        const safe = escapeRegExp(token);
+        const regex = { $regex: safe, $options: "i" };
+        return {
+          $or: [{ name: regex }, { rollNo: regex }],
+        };
+      });
     }
+
+    // apply optional filters (branch/programme/batch)
+    if (filter.branch && filter.branch !== "all") filterQuery.branch = filter.branch;
+    if (filter.programme && filter.programme !== "all") filterQuery.programme = filter.programme;
+    if (typeof filter.batch !== "undefined" && filter?.batch !== "all") filterQuery.batch = filter.batch;
+
+    // Handle Freshers explicitly: treat undefined as "false" only if you want to exclude freshers by default.
+    // Current code excluded freshers when include_freshers is falsy; be explicit:
+    if (filter.include_freshers === false) {
+      filterQuery["semesters.0"] = { $exists: true };
+    }
+
+    // optional: debug logging while testing
+    // console.debug("getResults filterQuery:", JSON.stringify(filterQuery));
 
     if (filter.branch && filter.branch !== "all") filterQuery.branch = filter.branch;
     if (filter.programme && filter.programme !== "all") filterQuery.programme = filter.programme;
     if (filter.batch && filter.batch.toString() !== "all") filterQuery.batch = filter.batch;
-    
+
     // Handle Freshers
     if (!filter.include_freshers) {
       filterQuery["semesters.0"] = { $exists: true };
@@ -123,7 +149,7 @@ export async function getResults(
 
     const [results, totalCount] = await Promise.all([
       ResultModel.aggregate(aggregationPipeline),
-      ResultModel.countDocuments(filterQuery) 
+      ResultModel.countDocuments(filterQuery)
     ]);
 
     const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));

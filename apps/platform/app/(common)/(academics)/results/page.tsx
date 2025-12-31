@@ -25,7 +25,7 @@ async function ResultDisplay({ searchParams }: {
 
   const currentPage = Number(page) || 1;
   const filter = {
-    batch: Number(batch),
+    batch: batch,
     branch: branch || "",
     programme: programme || "",
     include_freshers: freshers === "1",
@@ -33,8 +33,8 @@ async function ResultDisplay({ searchParams }: {
   const new_cache = cache === "new";
 
   const resData = await getResults(query, currentPage, filter, new_cache);
-  const { results, totalPages,totalCount } = resData;
-  console.log("Results fetched:", results.length, "Total Pages:", totalPages, "Total Count:", totalCount);
+  const { results, totalPages } = resData;
+  console.log("Results fetched:", results.length, "Total Pages:", totalPages);
   return <>
     <NoteSeparator label={`${results.length} Results found`} />
 
