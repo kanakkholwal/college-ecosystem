@@ -330,6 +330,13 @@ export async function getListOfRollNos(list_type: listType): Promise<Set<string>
             return new Set(results.map((r) => r.rollNo));
         }
 
+        case LIST_TYPE.FULL_RESET: {
+            const results = await ResultModel.find({})
+                .select("rollNo updatedAt")
+                .sort("updatedAt")
+                .allowDiskUse(true);
+            return new Set(results.map((r) => r.rollNo));
+        }
         default:
             return new Set<string>();
     }

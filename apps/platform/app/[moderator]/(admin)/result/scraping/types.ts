@@ -26,6 +26,8 @@ export const LIST_TYPE = {
   BACKLOG: "has_backlog",
   NEW_SEMESTER: "new_semester",
   DUAL_DEGREE: "dual_degree",
+  NEW_BATCH: "new_batch",
+  FULL_RESET: "full_reset",
 } as const;
 type listType = (typeof LIST_TYPE)[keyof typeof LIST_TYPE];
 
