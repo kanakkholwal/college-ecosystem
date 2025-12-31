@@ -121,12 +121,12 @@ export const updateResult = async (req: Request, res: Response) => {
     const result = data.data;
     await ResultModel.findByIdAndUpdate(resultData._id, {
       $set: {
+        ...(valid_custom_attributes ? { ...valid_custom_attributes } : {}),
         name: result.name,
         branch: result.branch,
         batch: result.batch,
         programme: result.programme,
         semesters: result.semesters,
-        ...(valid_custom_attributes ? { ...valid_custom_attributes } : {}),
       },
     });
     await resultData.save();

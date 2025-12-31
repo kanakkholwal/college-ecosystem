@@ -222,15 +222,15 @@ export async function getResultByRollNo(
       data: ResultTypeWithId | null;
       message: string;
       error: boolean;
-    }>("/api/results/:rollNo/update", {
-      method: "POST",
+    }>("/api/results/:rollNo", {
+      method: "PUT",
       params: { rollNo },
     });
     if (response.error || !response.data) return null;
     await assignRanks();
     // cache updated data if present
     try {
-      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60 * 15);
+      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -242,14 +242,14 @@ export async function getResultByRollNo(
       data: ResultTypeWithId | null;
       message: string;
       error: boolean;
-    }>("/api/results/:rollNo/add", {
+    }>("/api/results/:rollNo", {
       method: "POST",
       params: { rollNo },
     });
     if (response.error || !response.data) return null;
     await assignRanks();
     try {
-      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60 * 15);
+      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -262,7 +262,7 @@ export async function getResultByRollNo(
   }
 
   try {
-    await redis.set(cacheKey, JSON.stringify(result), "EX", 60 * 15);
+    await redis.set(cacheKey, JSON.stringify(result), "EX", 60);
   } catch (e) {
     console.log("Redis SET error:", e);
   }
