@@ -48,7 +48,8 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
   }
 
   // 2. Handle regular requests
-  console.log(`Origin: ${origin}, Identity Key: ${identityKey}, Authorization: ${authorization}`);
+  if (config.isDev)
+    console.log(`Origin: ${origin}, Identity Key: ${identityKey}, Authorization: ${authorization}`);
 
   if (!origin) {
     console.warn("Request without origin");

@@ -52,7 +52,7 @@ const fetchData = async (
  * @returns A promise that resolves to a rawResultType object.
  */
 
-const parseResult = (
+const parseResult = async (
   result: string | null,
   info: {
     rollNo: string;
@@ -62,12 +62,22 @@ const parseResult = (
     programme: string;
   }
 ): Promise<rawResultType> => {
-  if (result === null) {
+  if (!result || !result.trim()) {
     console.log("Invalid Roll No");
     return Promise.reject("Invalid Roll No");
   }
-  const document = HTMLParser.parse(result);
-  if (!document.querySelector("#page-wrap")) {
+
+  let document;
+  try {
+    document = HTMLParser.parse(result);
+  } catch (err) {
+    console.log("HTML parse error", err);
+    return Promise.reject("Invalid Roll No");
+  }
+
+  // basic structural check
+  const allTables = Array.from(document.querySelectorAll("table"));
+  if (!document.querySelector("#page-wrap") || allTables.length < 2) {
     console.log("Invalid Roll No");
     return Promise.reject("Invalid Roll No");
   }
@@ -83,74 +93,105 @@ const parseResult = (
     gender: "not_specified",
   };
 
-  student.name =
-    document
-      .querySelectorAll("table")[1]
-      .querySelector("td:nth-child(2)>p:nth-child(2)")
-      ?.innerText.trim() || "";
-  document.querySelector(".pagebreak")?.remove();
-  const subject_tables = document.querySelectorAll(
-    "table:nth-child(odd):nth-child(n + 3):not(:last-of-type)"
-  );
-  subject_tables.forEach((table, index) => {
-    if (!student.semesters[index]) {
-      student.semesters.push({
-        semester: "0",
-        sgpi: 0,
-        sgpi_total: 0,
-        cgpi: 0,
-        cgpi_total: 0,
-        courses: [],
-      });
-    }
-    for (const tr of table.querySelectorAll("tr:not([class])")) {
-      const semester = Number.parseFloat(
-        tr.querySelector("td:nth-child(6)")?.textContent || "0.00"
-      );
-      const semester_total = Number.parseFloat(
-        tr.querySelector("td:nth-child(4)")?.textContent || "1"
-      );
-      student.semesters[index].courses.push({
-        name: tr.querySelector("td:nth-child(2)")?.innerText.trim() || "",
-        code: tr.querySelector("td:nth-child(3)")?.innerText.trim() || "",
-        grade: tr.querySelector("td:nth-child(5)")?.innerText.trim() || "",
-        // default values if parsing fails
-        cgpi: semester / semester_total,
-        credits: semester_total,
-        sub_points: semester,
-      });
-    }
-  });
-  const result_tables = document.querySelectorAll(
-    "table:nth-child(even):nth-child(n + 3):not(:last-of-type)"
-  );
-  result_tables.forEach((table, index) => {
-    table.querySelectorAll("td").forEach((td, i, array) => {
-      student.semesters[index].semester = `0${index + 1}`.slice(-2);
-      student.semesters[index].sgpi = array[1].innerText
-        .trim()
-        .split("=")[1] as unknown as number;
-      student.semesters[index].sgpi_total = array[2].innerText
-        .trim()
-        .split(" ")
-        .pop() as unknown as number;
-      student.semesters[index].cgpi = array[3].innerText
-        .trim()
-        .split("=")[1] as unknown as number;
-      student.semesters[index].cgpi_total = array[4].innerText
-        .trim()
-        .split(" ")
-        .pop() as unknown as number;
+  // Safe extraction for name (guard table index and selector)
+  const secondTable = allTables[1];
+  if (secondTable) {
+    const nameEl = secondTable.querySelector("td:nth-child(2) > p:nth-child(2)");
+    student.name = nameEl?.innerText?.trim() ?? "";
+  }
+
+  // Avoid mutating original document if unnecessary
+  // document.querySelector(".pagebreak")?.remove();
+
+  // Use table-pairing: skip first two tables (assumed header), ignore last table if it's a footer
+  // This yields [subjectTable, resultTable, subjectTable, resultTable, ...]
+  const bodyTables = allTables.slice(2, allTables.length - 1 >= 2 ? allTables.length - 1 : allTables.length);
+  for (let pairIndex = 0; pairIndex < bodyTables.length; pairIndex += 2) {
+    const subjTable = bodyTables[pairIndex];
+    const resTable = bodyTables[pairIndex + 1];
+
+    const semIndex = student.semesters.length; // append in order
+    // Initialize semester slot defensively
+    student.semesters.push({
+      semester: `0${semIndex + 1}`.slice(-2),
+      sgpi: 0,
+      sgpi_total: 0,
+      cgpi: 0,
+      cgpi_total: 0,
+      courses: [],
     });
-  });
+
+    const semesterObj = student.semesters[semIndex];
+
+    // Parse courses from subjTable
+    if (subjTable) {
+      const rows = Array.from(subjTable.querySelectorAll("tr"));
+      for (const tr of rows) {
+        const tds = Array.from(tr.querySelectorAll("td"));
+        // require at least 6 tds (because original code uses nth-child up to 6)
+        if (tds.length < 6) continue;
+        const name = tds[1]?.innerText?.trim() ?? "";
+        const code = tds[2]?.innerText?.trim() ?? "";
+        const grade = tds[4]?.innerText?.trim() ?? "";
+        // safe numeric parsing
+        const subPointsText = tds[5]?.textContent ?? "0";
+        const creditsText = tds[3]?.textContent ?? "0";
+        const sub_points = Number.parseFloat(subPointsText.replace(/[^0-9.\-]+/g, "")) || 0;
+        const credits = Number.parseFloat(creditsText.replace(/[^0-9.\-]+/g, "")) || 0;
+        const cgpi = credits > 0 ? (sub_points / credits) : 0;
+
+        semesterObj.courses.push({
+          name,
+          code,
+          grade,
+          cgpi,
+          credits,
+          sub_points,
+        });
+      }
+    }
+
+    // Parse summary (sgpi, cgpi totals) from resTable — do it once, not per-td
+    if (resTable) {
+      const tds = Array.from(resTable.querySelectorAll("td"));
+      // Expecting at least 5 tds based on original indexing
+      if (tds.length >= 5) {
+        // helpers to extract numbers after '=' or the last token
+        const extractAfterEqual = (s?: string) => {
+          if (!s) return NaN;
+          const idx = s.indexOf("=");
+          return idx >= 0 ? s.slice(idx + 1).trim() : s.trim();
+        };
+        const extractLastToken = (s?: string) => {
+          if (!s) return NaN;
+          const parts = s.trim().split(/\s+/);
+          return parts.length ? parts[parts.length - 1] : "";
+        };
+
+        const sgpiRaw = extractAfterEqual(tds[1].innerText);
+        const sgpiTotalRaw = extractLastToken(tds[2].innerText);
+        const cgpiRaw = extractAfterEqual(tds[3].innerText);
+        const cgpiTotalRaw = extractLastToken(tds[4].innerText);
+
+        semesterObj.sgpi = Number.parseFloat(String(sgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.sgpi_total = Number.parseFloat(String(sgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.cgpi = Number.parseFloat(String(cgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.cgpi_total = Number.parseFloat(String(cgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+      }
+    }
+  }
+
+  // If pairing logic created fewer semesters than result tables or vice-versa, we kept stable behavior:
+  // determineBranchChange can still run (existing business logic)
   const [branch_change, department] = determineBranchChange(student);
   if (branch_change && department !== null) {
     student.branch = department;
   }
 
   console.log("Result parsed");
-  return Promise.resolve(student);
+  return student;
 };
+
 
 /**
  * Scrapes the result for a given roll number.

@@ -4,7 +4,7 @@ export interface Course {
   name: string;
   code: string;
   cgpi: number;
-
+  // additional fields
   grade: string;
   credits: number;
   sub_points: number;

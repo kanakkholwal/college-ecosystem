@@ -293,7 +293,7 @@ export async function getResultByRollNo(
     console.log("Redis SET error:", e);
   }
 
-  return result;
+  return JSON.parse(JSON.stringify(result)); // deep clone
 }
 
 

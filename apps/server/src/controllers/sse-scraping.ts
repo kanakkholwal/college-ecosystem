@@ -1,360 +1,477 @@
+import crypto from "crypto";
 import type { Request, Response } from "express";
-import mongoose from "mongoose";
-import { EVENTS, LIST_TYPE, TASK_STATUS, type listType } from "../constants/result_scraping";
+import {
+  EVENTS,
+  LIST_TYPE,
+  TASK_STATUS,
+  type listType,
+} from "../constants/result_scraping";
 import { getListOfRollNos, scrapeAndSaveResult } from "../lib/result_utils";
 import { sleep } from "../lib/utils";
 import type { taskDataType } from "../models/log-result_scraping";
 import { ResultScrapingLog } from "../models/log-result_scraping";
 import dbConnect from "../utils/dbConnect";
 
-const BATCH_SIZE = 10; // Number of roll numbers to process in each batch
+const BATCH_SIZE = 10;
+const MAX_ERRORS = 1000;
+const LOCK_TTL_MS = 60_000; // 1 minute lock TTL; heartbeat renews it
+const HEARTBEAT_INTERVAL_MS = 25_000; // renew every 25s
 
-// helper
-const sendEvent = (res: Response, event: string, data: {
-  data: taskDataType | null,
-  error?: string | null,
-}) => {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
+// ---------------- helpers ----------------
+const sendEvent = (
+  res: Response,
+  event: string,
+  payload: { data: taskDataType | null; error?: string | null }
+) => {
+  try {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  } catch {
+    /* ignore write errors — client might be gone */
+  }
 };
 
-const activeSSEConnections = new Map<string, Response>(); // Map<IP, Response>
+const activeSSEConnections = new Map<string, Response>();
+
+const normalizeIp = (req: Request): string | null => {
+  const raw = req.headers["x-forwarded-for"];
+  if (typeof raw === "string") return raw.split(",")[0].trim();
+  if (Array.isArray(raw)) return raw[0];
+  return req.socket.remoteAddress ?? null;
+};
 
 const checkAndRegisterSSE = (ip: string, res: Response): boolean => {
-  if (activeSSEConnections.has(ip)) {
-    console.log(`Rejected: IP ${ip} already has an active SSE connection.`);
-    return false;
-  }
-
+  if (activeSSEConnections.has(ip)) return false;
   activeSSEConnections.set(ip, res);
-  console.log(`Registered SSE connection for IP ${ip}`);
-
-  // Cleanup on disconnect
-  res.on('close', () => {
+  res.once("close", () => {
     activeSSEConnections.delete(ip);
-    console.log(`SSE connection closed by IP ${ip}`);
   });
-
   return true;
 };
 
-const isValidActionType = (actionType: string): actionType is (typeof EVENTS)[keyof typeof EVENTS] => {
-  return Object.values(EVENTS).includes(actionType as (typeof EVENTS)[keyof typeof EVENTS]);
-};
+const isValidActionType = (
+  actionType: string
+): actionType is (typeof EVENTS)[keyof typeof EVENTS] =>
+  Object.values(EVENTS).includes(
+    actionType as (typeof EVENTS)[keyof typeof EVENTS]
+  );
 
-const isValidListType = (listType: string): listType is listType => {
-  return Object.values(LIST_TYPE).includes(listType as listType);
-};
+const isValidListType = (lt: string): lt is listType =>
+  Object.values(LIST_TYPE).includes(lt as listType);
 
-export async function resultScrapingSSEHandler(req: Request, res: Response) {
-  const list_type = req.query.list_type as string || LIST_TYPE.BACKLOG;
+// ---------------- handler ----------------
+
+export async function resultScrapingSSEHandler(
+  req: Request,
+  res: Response
+) {
+  const list_type = (req.query.list_type as string) || LIST_TYPE.BACKLOG;
   const actionType = req.query.action as string | undefined;
   const task_resume_id = req.query.task_resume_id as string | undefined;
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
 
   if (!actionType || !isValidActionType(actionType)) {
-    return res.status(400).json({
-      data: null,
-      error: "Invalid or missing action type",
-    });
+    return res.status(400).json({ data: null, error: "Invalid action type" });
   }
 
-  try {
+  await dbConnect();
 
-    // res.setHeader("Access-Control-Allow-Origin", "*");
-    await dbConnect();
-    if (actionType === EVENTS.TASK_GET_LIST) {
-      const tasks = await ResultScrapingLog.find({}).sort({ startTime: -1 });
+  // ---------- simple non-SSE endpoints ----------
+  if (actionType === EVENTS.TASK_GET_LIST) {
+    const tasks = await ResultScrapingLog.find({}).sort({ startTime: -1 });
+    return res.status(200).json({ data: tasks, error: null });
+  }
 
-      return res.status(200).json({
-        data: JSON.parse(JSON.stringify(tasks)),
-        error: null,
-      });
-    }
-    if (actionType === EVENTS.TASK_CLEAR_ALL) {
-      await ResultScrapingLog.deleteMany({});
+  if (actionType === EVENTS.TASK_CLEAR_ALL) {
+    await ResultScrapingLog.deleteMany({});
+    return res.status(200).json({ data: [], error: null });
+  }
 
-      return res.status(200).json({
-        data: [],
-        error: null,
-      });
-    }
-    if (actionType === EVENTS.TASK_DELETE) {
-      if (!req.query.deleteTaskId) {
-        return res.status(400).send("Task ID is required");
-      }
-      await ResultScrapingLog.deleteOne({ taskId: req.query.deleteTaskId as string });
+  if (actionType === EVENTS.TASK_DELETE) {
+    if (!req.query.deleteTaskId) return res.status(400).send("Task ID required");
+    await ResultScrapingLog.deleteOne({ _id: req.query.deleteTaskId as string });
+    return res.status(200).json({ data: [], error: null });
+  }
 
-      return res.status(200).json({
-        data: [],
-        error: null,
-      });
-    }
+  // ---------- SSE registration ----------
+  const ip = normalizeIp(req);
+  if (!ip) return res.status(400).send("IP not found");
 
+  if (!checkAndRegisterSSE(ip, res)) {
+    return res.status(429).end("SSE already active from this IP");
+  }
 
-    console.log("ip", ip)
-    if (!ip) {
-      return res.status(400).send("IP address not found");
-    }
-    if (!checkAndRegisterSSE(ip as string, res)) {
-      return res.status(429).end('SSE already active from this IP');
-    }
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+  res.flushHeaders();
 
-    let taskId = `result_scraping:${list_type}:${Date.now()}`;
-    let taskData: taskDataType = {
-      processable: 0, // will be set later based on roll numbers
-      processed: 0,
-      failed: 0,
-      success: 0,
-      data: [],
-      startTime: new Date(),
-      endTime: null,
-      status: TASK_STATUS.SCRAPING,
-      successfulRollNos: [],
-      failedRollNos: [],
-      queue: [],
-      list_type,
-      taskId,
-      _id: new mongoose.Types.ObjectId().toString(), // generate a new ObjectId for the task
-    };
-    // If task_resume_id is provided, resume the task
-    let roll_list: Set<string> = new Set<string>();
+  // Worker identity for locking
+  const WORKER_ID = `${process.pid}:${crypto.randomUUID()}`;
 
-    if (actionType === EVENTS.TASK_RETRY_FAILED || actionType === EVENTS.TASK_PAUSED_RESUME) {
-      if (!task_resume_id) {
-        return res.status(400).send("Task ID is required ");
-      }
-      const task = await ResultScrapingLog.findOne({ _id: task_resume_id });
-      if (!task) {
-        return res.status(200).json({
-          data: null,
-          error: "Task not found",
-        });
-      }
-      // if (actionType === EVENTS.TASK_PAUSED_RESUME && task.processed >= task.processable) {
-      //   return res.status(200).json({
-      //     data: null,
-      //     error: "Task has already been processed",
-      //   });
-      // }
-      taskData = {
-        ...task.toObject(),
-        endTime: null,
-        status: TASK_STATUS.SCRAPING,
-      };
-      taskId = task_resume_id;
-      if (actionType === EVENTS.TASK_PAUSED_RESUME) {
-        roll_list = new Set(taskData.queue);
-        // If resuming from a paused task, we need to reset the processed count
-        taskData.processable -= taskData.queue.length; // reduce processable count by the number of roll numbers in the queue
-      }
-      else if (actionType === EVENTS.TASK_RETRY_FAILED)  // retry failed task
-      {
-        roll_list = new Set(taskData.failedRollNos);
-        taskData.processable = taskData.failedRollNos.length; // set processable count to the number of failed roll numbers
-      }
-      if (roll_list.size === 0) {
-        return res.status(200).json({
-          data: null,
-          error: actionType === EVENTS.TASK_PAUSED_RESUME ? "No roll numbers to resume from paused task." : "No failed roll numbers to retry.",
-        });
-      }
-    }
-    if (actionType === EVENTS.STREAM_SCRAPING) {
-      if (!isValidListType(list_type)) {
-        return res.status(200).json({
-          data: null,
-          error: "Invalid list type provided",
-        });
-      }
+  // This in-memory taskData is only for SSE / local reflections.
+  // Source-of-truth is DB.
+  let taskData: taskDataType = {
+    processable: 0,
+    processed: 0,
+    failed: 0,
+    success: 0,
+    data: [],
+    startTime: new Date(),
+    endTime: null,
+    status: TASK_STATUS.SCRAPING,
+    successfulRollNos: [],
+    failedRollNos: [],
+    queue: [],
+    list_type,
+    taskId: "",
+    // deliberately DO NOT set _id here (avoid passing empty _id to mongoose create)
+  } as any;
 
-      roll_list = await getListOfRollNos(list_type); // should return Set<string>
-      if (!roll_list || roll_list.size === 0) {
-        return res.status(200).json({
-          data: null,
-          error: "No roll numbers found for the selected list type.",
-        });
-      }
-      taskData.processable = roll_list.size; // set processable count based on roll numbers
-      taskData.queue = Array.from(roll_list); // convert Set to Array for queue
-      taskData.startTime = new Date(); // set start time to now
+  let mongoTaskId: string | null = null;
+  let isConnectionAlive = true;
+  let heartbeatHandle: NodeJS.Timeout | null = null;
 
-      const task = await ResultScrapingLog.create(taskData);
-      taskId = task._id.toString(); // ensure taskId is a string
-      taskData = task.toObject() as taskDataType; // convert to taskDataType
-      console.log("Starting result scraping for list type:", list_type, "actionType:", actionType, "task_resume_id:", task_resume_id);
-    }
-
-    // Set headers for SSE
-    res.set({
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
-    });
-    res.flushHeaders();
-    // Send initial task status
-    if (taskData === null) {
-      console.log(taskData, "taskData is null");
-      sendEvent(res, "error", {
-        data: taskData,
-        error: "Task data not assigned correctly",
-      });
-      return;
-    }
-
-    sendEvent(res, "task_status", {
-      data: taskData,
-      error: null,
-    });
-    // Handle client disconnection
-    let isConnectionAlive = true;
-    req.on('close', async () => {
-      if (!isConnectionAlive) return;
-      isConnectionAlive = false;
-
-      console.log('Client disconnected');
+  // Cleanup helper
+  const cleanup = async () => {
+    activeSSEConnections.delete(ip);
+    if (heartbeatHandle) clearInterval(heartbeatHandle);
+    // release lock if owned
+    if (mongoTaskId) {
       await ResultScrapingLog.updateOne(
-        { taskId },
-        { $set: { ...taskData, endTime: Date.now(), status: TASK_STATUS.CANCELLED } }
-      );
-
-      try {
-        sendEvent(res, "task_status", { data: taskData, error: null });
-        // res.write("event: task_cancelled\n");
-      } catch (e) {
-        console.error("Error sending event:", e);
-        console.log('Client already disconnected');
-      }
-      res.end();
-    });
-
-    // Process roll numbers in batches
-    const rollNoQueue = new Set<string>(taskData.queue); // use Set to avoid duplicates
-    const rollArray = Array.from(rollNoQueue);
-    for (let i = 0; i < rollArray.length; i += BATCH_SIZE) {
-      if (!isConnectionAlive) break; // Exit loop if connection closed
-      const batch = rollArray.slice(i, i + BATCH_SIZE);
-
-      const results = await Promise.allSettled(
-        batch.map((rollNo) => scrapeAndSaveResult(rollNo))
-      );
-
-      for (const [idx, result] of results.entries()) {
-        if (!isConnectionAlive) break; // Exit loop if connection closed
-
-        // previous approach
-        const rollNo = batch[idx];
-        if (result.status === "fulfilled" && result.value.success) {
-          taskData.success++;
-          taskData.successfulRollNos.push(rollNo);
-          if (actionType === EVENTS.TASK_RETRY_FAILED) {
-            taskData.failedRollNos = taskData.failedRollNos.filter(r => r !== rollNo);
-            taskData.failed--;
-          }
-        } else {
-          taskData.failed++;
-          taskData.failedRollNos.push(rollNo);
-
-          taskData.data.push({
-            roll_no: rollNo,
-            reason: result.status === "fulfilled" ? result.value.error : result.reason || "Unknown error",
-          });
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
+        {
+          $set: { lockedBy: null, lockExpiresAt: null },
         }
-        if (taskData.queue.length === 0) {
-          console.log("All roll numbers processed, breaking the loop");
-          break; // Exit the loop if all roll numbers are processed
-        }
-        taskData.processed++;
-        rollNoQueue.delete(rollNo); // Remove processed roll number from queue
-        taskData.queue = Array.from(rollNoQueue); // Update queue in taskData
-      }
-      // Update taskData in the database after each batch
-      taskData.queue = Array.from(rollNoQueue); // Update queue in taskData
+      ).catch(() => {});
+    }
+  };
+
+  // single close handler
+  req.once("close", async () => {
+    if (!isConnectionAlive) return;
+    isConnectionAlive = false;
+    taskData.status = TASK_STATUS.CANCELLED;
+    taskData.endTime = new Date();
+
+    if (mongoTaskId) {
       await ResultScrapingLog.updateOne(
-        { taskId: taskData.taskId },
+        { _id: mongoTaskId },
         {
           $set: {
-            processed: taskData.processed,
-            queue: taskData.queue,
-            failed: taskData.failed,
-            success: taskData.success,
-            successfulRollNos: taskData.successfulRollNos,
-            failedRollNos: taskData.failedRollNos,
-            status: TASK_STATUS.SCRAPING,
-            data: taskData.data,
+            status: TASK_STATUS.CANCELLED,
+            endTime: taskData.endTime,
           },
         }
-      );
+      ).catch(() => {});
+    }
 
-      sendEvent(res, "task_status", {
-        data: taskData,
-        error: null,
-      });
-      await sleep(1000);
-      req.on('close', async () => {
-        console.log('Client disconnected');
-        taskData.status = TASK_STATUS.CANCELLED;
-        taskData.endTime = new Date();
+    try {
+      res.end();
+    } catch {}
+    await cleanup();
+  });
+
+  // keep-alive comments for proxies
+  const keepAlive = setInterval(() => {
+    if (!isConnectionAlive) return clearInterval(keepAlive);
+    try {
+      res.write(":\n\n");
+    } catch {}
+  }, 15_000);
+
+  // ---------- Prepare roll list (fresh or resume/retry) ----------
+  let roll_list = new Set<string>();
+  try {
+    if (
+      actionType === EVENTS.TASK_RETRY_FAILED ||
+      actionType === EVENTS.TASK_PAUSED_RESUME
+    ) {
+      if (!task_resume_id) {
+        await cleanup();
+        return res.status(400).send("Task ID required");
+      }
+
+      const task = await ResultScrapingLog.findById(task_resume_id).lean();
+      if (!task) {
+        await cleanup();
+        return res.status(200).json({ data: null, error: "Task not found" });
+      }
+
+      // copy db doc shape into taskData for SSE (but do not include _id)
+      taskData = { ...(task as any) };
+      mongoTaskId = String((task as any)._id);
+
+      taskData.endTime = null;
+      taskData.status = TASK_STATUS.SCRAPING;
+
+      if (actionType === EVENTS.TASK_PAUSED_RESUME) {
+        roll_list = new Set(taskData.queue || []);
+        taskData.processable = (taskData.processed || 0) + roll_list.size;
+      } else {
+        roll_list = new Set(taskData.failedRollNos || []);
+        taskData.processable = roll_list.size;
+      }
+
+      if (roll_list.size === 0) {
+        await cleanup();
+        return res
+          .status(200)
+          .json({ data: null, error: "No roll numbers to process" });
+      }
+    } else if (actionType === EVENTS.STREAM_SCRAPING) {
+      if (!isValidListType(list_type)) {
+        await cleanup();
+        return res
+          .status(200)
+          .json({ data: null, error: "Invalid list type provided" });
+      }
+
+      roll_list = await getListOfRollNos(list_type);
+      if (!roll_list || roll_list.size === 0) {
+        await cleanup();
+        return res
+          .status(200)
+          .json({ data: null, error: "No roll numbers found for list type" });
+      }
+
+      taskData.processable = roll_list.size;
+      taskData.queue = Array.from(roll_list);
+      taskData.startTime = new Date();
+      // ensure a meaningful taskId is set (required by schema)
+      taskData.taskId = `result_scraping:${list_type}:${Date.now()}`;
+
+      // create DB doc — DO NOT include _id field in create payload
+      const { _id, ...toCreate } = taskData as any;
+      const created = await ResultScrapingLog.create(toCreate);
+      mongoTaskId = created._id.toString();
+      // refresh in-memory taskData from DB
+      taskData = (await ResultScrapingLog.findById(mongoTaskId).lean()) as any;
+    }
+
+    // send initial status to client
+    sendEvent(res, "task_status", { data: taskData, error: null });
+
+    // ---------- Acquire lock (single worker) ----------
+    if (!mongoTaskId) {
+      await cleanup();
+      return res
+        .status(500)
+        .json({ data: null, error: "Internal: missing task id" });
+    }
+
+    const lockAcquire = await ResultScrapingLog.findOneAndUpdate(
+      {
+        _id: mongoTaskId,
+        $or: [{ lockedBy: null }, { lockExpiresAt: { $lt: new Date() } }],
+      },
+      {
+        $set: {
+          lockedBy: WORKER_ID,
+          lockExpiresAt: new Date(Date.now() + LOCK_TTL_MS),
+          status: TASK_STATUS.SCRAPING,
+          lastHeartbeat: new Date(),
+        },
+      },
+      { new: true, useFindAndModify: false }
+    ).lean();
+
+    if (!lockAcquire) {
+      await cleanup();
+      return res
+        .status(409)
+        .json({ data: null, error: "Task is already being processed" });
+    }
+
+    // heartbeat renewer (to detect stale workers)
+    heartbeatHandle = setInterval(async () => {
+      try {
         await ResultScrapingLog.updateOne(
-          { taskId },
+          { _id: mongoTaskId, lockedBy: WORKER_ID },
           {
             $set: {
-              endTime: taskData.endTime,
-              status: TASK_STATUS.CANCELLED,
-              processable: taskData.processable,
-              processed: taskData.processed,
-              failed: taskData.failed,
-              success: taskData.success,
-              successfulRollNos: taskData.successfulRollNos,
-              failedRollNos: taskData.failedRollNos,
-              data: taskData.data,
-              queue: taskData.queue,
+              lockExpiresAt: new Date(Date.now() + LOCK_TTL_MS),
+              lastHeartbeat: new Date(),
             },
           }
         );
-        sendEvent(res, "task_status", {
-          data: taskData,
-          error: null,
-        });
-        // res.write("event: task_cancelled\n");
-        res.write("data: null\n");
-        // break;
-        res.end();
-      });
-    }
-
-    taskData.status = TASK_STATUS.COMPLETED;
-    taskData.endTime = new Date();
-
-    await ResultScrapingLog.updateOne(
-      { taskId: taskData.taskId },
-      {
-        $set: {
-          ...taskData, // spread the taskData to update all fields
-        },
+      } catch {
+        // ignore
       }
-    );
+    }, HEARTBEAT_INTERVAL_MS);
 
-    sendEvent(res, "task_status", {
-      data: taskData,
-      error: null,
-    });
-    // res.write("event: task_completed\n");
-    res.end();
+    // ---------- Processing loop ----------
+    // Use DB queue as source-of-truth: get current queue snapshot
+    const dbTask = (await ResultScrapingLog.findById(mongoTaskId).lean()) as any;
+    const queueSet = new Set<string>(dbTask?.queue ?? Array.from(roll_list));
+    const rollArray = Array.from(queueSet);
 
-  } catch (error) {
-    console.error("Error in SSE handler:", error);
-    res.status(500).send("Internal Server Error");
+    for (let i = 0; i < rollArray.length; i += BATCH_SIZE) {
+      if (!isConnectionAlive) break;
+
+      // renew lock before batch
+      await ResultScrapingLog.updateOne(
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
+        {
+          $set: { lockExpiresAt: new Date(Date.now() + LOCK_TTL_MS), lastHeartbeat: new Date() },
+        }
+      );
+
+      const batch = rollArray.slice(i, i + BATCH_SIZE);
+
+      // run in parallel within batch
+      const results = await Promise.allSettled(batch.map((r) => scrapeAndSaveResult(r)));
+
+      for (let idx = 0; idx < results.length; idx++) {
+        if (!isConnectionAlive) break;
+
+        const result = results[idx];
+        const rollNo = batch[idx];
+
+        // Idempotency check: skip if already recorded as success
+        const already = await ResultScrapingLog.exists({
+          _id: mongoTaskId,
+          successfulRollNos: rollNo,
+        });
+
+        if (already) {
+          // ensure queue does not contain it
+          await ResultScrapingLog.updateOne(
+            { _id: mongoTaskId },
+            { $pull: { queue: rollNo } }
+          ).catch(() => {});
+          continue;
+        }
+
+        const ok =
+          result.status === "fulfilled" &&
+          result.value &&
+          typeof result.value.success === "boolean" &&
+          result.value.success === true;
+
+        if (ok) {
+          // atomic success update
+          await ResultScrapingLog.updateOne(
+            { _id: mongoTaskId },
+            {
+              $inc: { processed: 1, success: 1 },
+              $pull: { queue: rollNo, failedRollNos: rollNo },
+              $push: { successfulRollNos: rollNo },
+            }
+          );
+
+          // update in-memory snapshot for SSE
+          taskData.processed = (taskData.processed || 0) + 1;
+          taskData.success = (taskData.success || 0) + 1;
+          taskData.successfulRollNos = (taskData.successfulRollNos || []).concat(rollNo);
+          taskData.failedRollNos = (taskData.failedRollNos || []).filter((r) => r !== rollNo);
+        } else {
+          const reason =
+            result.status === "fulfilled"
+              ? result.value?.error ?? "Unknown error"
+              : String(result.reason ?? "Unknown error");
+
+          const errorEntry = { roll_no: rollNo, reason };
+
+          // atomic failure update (and cap details array)
+          const pushObj: any = { failedRollNos: rollNo };
+          if ((taskData.data?.length || 0) < MAX_ERRORS) pushObj["data"] = errorEntry;
+
+          await ResultScrapingLog.updateOne(
+            { _id: mongoTaskId },
+            {
+              $inc: { processed: 1, failed: 1 },
+              $pull: { queue: rollNo },
+              $push: pushObj,
+            }
+          );
+
+          // update in-memory snapshot for SSE
+          taskData.processed = (taskData.processed || 0) + 1;
+          taskData.failed = (taskData.failed || 0) + 1;
+          taskData.failedRollNos = (taskData.failedRollNos || []).concat(rollNo);
+          if ((taskData.data?.length || 0) < MAX_ERRORS) {
+            taskData.data = (taskData.data || []).concat(errorEntry);
+          }
+        }
+      } // end inner batch loop
+
+      // refresh taskData.queue from DB (authoritative)
+      const refreshed = (await ResultScrapingLog.findById(mongoTaskId).lean()) as any;
+      taskData.queue = refreshed?.queue ?? Array.from(queueSet);
+
+      // heartbeat / progress update in DB (lightweight)
+      await ResultScrapingLog.updateOne(
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
+        { $set: { lastHeartbeat: new Date(), status: TASK_STATUS.SCRAPING } }
+      ).catch(() => {});
+
+      // send SSE update
+      sendEvent(res, "task_status", { data: taskData, error: null });
+
+      // small throttle
+      await sleep(1000);
+    } // end batches
+
+    // finalization: only the lock owner finalizes
+    if (isConnectionAlive) {
+      taskData.status = TASK_STATUS.COMPLETED;
+      taskData.endTime = new Date();
+
+      // final atomic update: mark completed and release lock
+      await ResultScrapingLog.updateOne(
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
+        {
+          $set: {
+            status: TASK_STATUS.COMPLETED,
+            endTime: taskData.endTime,
+            lockedBy: null,
+            lockExpiresAt: null,
+            lastHeartbeat: new Date(),
+          },
+        }
+      ).catch(() => {});
+
+      sendEvent(res, "task_status", { data: taskData, error: null });
+      try {
+        res.end();
+      } catch {}
+    }
+  } catch (err) {
+    console.error("SSE handler error:", err);
+    try {
+      // best-effort: mark task as failed/cancelled
+      if (mongoTaskId) {
+        await ResultScrapingLog.updateOne(
+          { _id: mongoTaskId, lockedBy: WORKER_ID },
+          {
+            $set: {
+              status: TASK_STATUS.CANCELLED,
+              endTime: new Date(),
+              lockedBy: null,
+              lockExpiresAt: null,
+            },
+          }
+        ).catch(() => {});
+      }
+    } catch {}
+    try {
+      res.status(500).send("Internal Server Error");
+    } catch {}
+  } finally {
+    // cleanup intervals / locks
+    if (heartbeatHandle) clearInterval(heartbeatHandle);
+    clearInterval(keepAlive);
+    await cleanup();
   }
 }
 
-
-export async function resultScrapingSSEHandlerV2(req: Request, res: Response) {
-  // This is a placeholder for the V2 handler
+// ---------------- placeholder V2 ----------------
+export async function resultScrapingSSEHandlerV2(
+  req: Request,
+  res: Response
+) {
   const list = await getListOfRollNos(LIST_TYPE.NEW_BATCH);
-  res.status(200).json({
-    data: Array.from(list),
-    error: null,
-  });
+  res.status(200).json({ data: Array.from(list), error: null });
 }

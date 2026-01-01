@@ -7,6 +7,7 @@ export type headerMap = {
     Referer: string;
     CSRFToken: string;
     RequestVerificationToken: string;
+    available: boolean;
 };
 
 export interface IHeaderSchema extends Document, headerMap {
@@ -18,6 +19,7 @@ const HeaderSchema = new Schema<IHeaderSchema>({
     Referer: { type: String, required: true },
     CSRFToken: { type: String, required: true },
     RequestVerificationToken: { type: String, required: true },
+    available: { type: Boolean, default: true },
 });
 
 
