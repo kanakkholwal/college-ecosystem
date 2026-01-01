@@ -33,8 +33,8 @@ async function ResultDisplay({ searchParams }: {
   const new_cache = cache === "new";
 
   const resData = await getResults(query, currentPage, filter, new_cache);
-  const { results, totalPages } = resData;
-  console.log("Results fetched:", results.length, "Total Pages:", totalPages);
+  const { results, totalPages,totalCount } = resData;
+  console.log("Results fetched:", results.length, "Total Pages:", totalPages, "Total Count:", totalCount);
   return <>
     <NoteSeparator label={`${results.length} Results found`} />
 
