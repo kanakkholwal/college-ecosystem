@@ -320,7 +320,17 @@ export async function getListOfRollNos(list_type: listType): Promise<Set<string>
             return rollNoSet;
         }
 
-
+        case LIST_TYPE.FRESHERS: {
+            // Get the latest batch and have semesters size of 0 or 1
+            const [{ maxBatch }] = await ResultModel.aggregate([
+                { $group: { _id: null, maxBatch: { $max: "$batch" } } }
+            ]);
+            const results = await ResultModel.find({
+                batch: maxBatch,
+                $expr: { $lte: [{ $size: "$semesters" }, 1] }
+            }).select("rollNo updatedAt").allowDiskUse(true);
+            return new Set(results.map((r) => r.rollNo));
+        }
 
         case LIST_TYPE.ALL: {
             const results = await ResultModel.find({})

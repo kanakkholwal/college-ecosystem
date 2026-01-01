@@ -153,7 +153,7 @@ export default function StoryDetailPage({ params }: { params: { id: string } }) 
 
                 <div className="pt-4 border-t border-border/50">
                   <p className="text-xs text-muted-foreground italic leading-tight">
-                    "This experience is verified by the placement cell admins."
+                    {`"This experience is verified by the placement cell admins."`}
                   </p>
                 </div>
               </div>

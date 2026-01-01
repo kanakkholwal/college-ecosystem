@@ -6,7 +6,8 @@ export const LIST_TYPE = {
   DUAL_DEGREE: "dual_degree",
   NEW_BATCH: "new_batch",
   FULL_RESET: "full_reset",
-}
+  FRESHERS: "freshers",
+} 
 export type listType = typeof LIST_TYPE[keyof typeof LIST_TYPE]
 
 export const EVENTS = {
