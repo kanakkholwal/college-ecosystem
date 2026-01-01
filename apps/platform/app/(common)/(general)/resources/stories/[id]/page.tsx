@@ -11,7 +11,8 @@ import {
   PiUserCircleDuotone
 } from "react-icons/pi";
 
-export default function StoryDetailPage({ params }: { params: { id: string } }) {
+export default async function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // Mock Data - Replace with DB Fetch
   const story = {
     companyName: "Google",
