@@ -294,6 +294,7 @@ export async function getInfoFromRollNo(rollNo: string, dualDegree = false) {
     rollNo.toLowerCase().substring(5, 8), // 001
   ] as const;
   const [batchCode,] = matches;
+  // TODO: validate roll no format more strictly AFTER 2030 is introduced
   if (isNaN(batchCode) || batchCode < 20) {
     return {
       batch: 0,
@@ -307,7 +308,7 @@ export async function getInfoFromRollNo(rollNo: string, dualDegree = false) {
       programme: "not_specified",
     };
   }
-  if (batchCode === latestBatchCode + 1) {
+  if (batchCode === latestBatchCode + 2) {
     // console.log("Results not yet available for the latest batch. falling back to previous batch headers");
     return {
       batch: Number.parseInt(`20${batchCode}`),
