@@ -128,14 +128,26 @@ export async function getResults(
       { $limit: resultsPerPage },
       {
         $addFields: {
+          semestersCount: { $size: "$semesters" },
           lastSemester: { $last: "$semesters" },
-          secondLastSemester: {
+        },
+      },
+      {
+        $addFields: {
+          cgpi: {
             $cond: [
-              { $gte: [{ $size: "$semesters" }, 2] },
+              { $gte: ["$semestersCount", 1] },
+              "$lastSemester.cgpi",
+              null,
+            ],
+          },
+          prevCgpi: {
+            $cond: [
+              { $gte: ["$semestersCount", 2] },
               {
                 $arrayElemAt: [
                   "$semesters",
-                  { $subtract: [{ $size: "$semesters" }, 2] },
+                  { $subtract: ["$semestersCount", 2] },
                 ],
               },
               null,
@@ -145,10 +157,10 @@ export async function getResults(
       },
       {
         $addFields: {
-          cgpi: "$lastSemester.cgpi",
-          prevCgpi: "$secondLastSemester.cgpi",
+          prevCgpi: "$prevCgpi.cgpi",
         },
       },
+
       {
         $project: {
           semesters: 0,

@@ -4,7 +4,7 @@ export interface Course {
   name: string;
   code: string;
   cgpi: number;
-
+  // additional fields
   grade: string;
   credits: number;
   sub_points: number;
@@ -48,6 +48,7 @@ export interface IResultType extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   gender?: "male" | "female" | "not_specified";
+  latestCgpi?: number;
 }
 
 const CourseSchema: Schema = new Schema({
@@ -67,9 +68,10 @@ const SemesterSchema: Schema = new Schema({
   semester: { type: String, required: true },
   sgpi_total: { type: Number, required: true },
   cgpi_total: { type: Number, required: true },
+  
 });
 
-const ResultSchema: Schema = new Schema(
+const ResultSchema = new Schema<IResultType>(
   {
     name: { type: String, required: true },
     rollNo: { type: String, required: true, unique: true },
@@ -77,6 +79,7 @@ const ResultSchema: Schema = new Schema(
     batch: { type: Number, required: true },
     programme: { type: String, required: true },
     semesters: { type: [SemesterSchema], required: true },
+    latestCgpi: { type: Number, default: 0 }, // Add this field
     gender: {
       type: String,
       enum: ["male", "female", "not_specified"],
@@ -94,6 +97,18 @@ const ResultSchema: Schema = new Schema(
   }
 );
 
+// Add indexes
+// ResultSchema.index({ latestCgpi: -1 }); // Critical for sorting
+// ResultSchema.index({ batch: 1, latestCgpi: -1 });
+// ResultSchema.index({ batch: 1, branch: 1, latestCgpi: -1 });
+
+// Pre-save hook to update latestCgpi
+ResultSchema.pre('save', function(next) {
+  if (this.semesters && this.semesters?.length > 0) {
+    this.latestCgpi = this.semesters[this.semesters.length - 1].cgpi || 0;
+  }
+  next();
+});
 const ResultModel =
   mongoose.models?.Result || mongoose.model<IResultType>("Result", ResultSchema);
 

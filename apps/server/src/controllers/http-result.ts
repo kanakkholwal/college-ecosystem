@@ -249,7 +249,7 @@ export const assignRankToResults = async (req: Request, res: Response) => {
     const start = Date.now();
     await dbConnect();
 
-    const resultsWithRanks = await ResultModel.aggregate(pipelines["assign-rank"]).allowDiskUse(true);
+    try{const resultsWithRanks = await ResultModel.aggregate(pipelines["assign-rank"]).allowDiskUse(true);
 
     const bulkUpdates = resultsWithRanks.map((r) => ({ updateOne: { filter: { _id: r._id }, update: { rank: r.rank } } }));
     if (bulkUpdates.length > 0) {
@@ -269,7 +269,145 @@ export const assignRankToResults = async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(200).json({ error: false, message: "No ranks to assign", data: { timeTaken: `${(Date.now() - start) / 1000}s` } });
+    return res.status(200).json({ error: false, message: "No ranks to assign", data: { timeTaken: `${(Date.now() - start) / 1000}s` } });}
+    catch (error) {
+      console.log("[assignRankToResults] inner error for aggregations:", error);
+          // Fetch all results with only necessary fields
+    const results = await ResultModel.find(
+      { 
+        semesters: { $exists: true, $ne: [], $type: "array" } 
+      },
+      {
+        _id: 1,
+        batch: 1,
+        branch: 1,
+        semesters: { $slice: -1 } // Only get the last semester
+      }
+    ).lean();
+
+    console.log(`Fetched ${results.length} documents`);
+
+    if (results.length === 0) {
+      return res.status(200).json({
+        error: false,
+        message: "No results to rank",
+        data: { timeTaken: `${(Date.now() - start) / 1000}s` }
+      });
+    }
+
+    // Extract CGPI and prepare data
+    const resultsWithCgpi = results
+      .map(r => ({
+        _id: r._id,
+        batch: r.batch,
+        branch: r.branch,
+        cgpi: r.semesters?.[0]?.cgpi ?? 0
+      }))
+      .filter(r => r.cgpi >= 0);
+
+    // Sort by CGPI (descending)
+    resultsWithCgpi.sort((a:any, b:any) => {
+      if (b.cgpi !== a.cgpi) return b.cgpi - a.cgpi;
+      return a._id!.toString().localeCompare(b._id!.toString());
+    });
+
+    // Assign college ranks
+    const rankMap = new Map<string, any>();
+    resultsWithCgpi.forEach((result, index) => {
+      rankMap.set(result._id!.toString(), {
+        college: index + 1,
+        batch: 0,
+        branch: 0,
+        class: 0
+      });
+    });
+
+    // Assign batch ranks
+    const byBatch = new Map<number, typeof resultsWithCgpi>();
+    resultsWithCgpi.forEach(r => {
+      if (!byBatch.has(r.batch)) {
+        byBatch.set(r.batch, []);
+      }
+      byBatch.get(r.batch)!.push(r);
+    });
+
+    byBatch.forEach((batchResults, batch) => {
+      batchResults.sort((a:any, b:any) => {
+        if (b.cgpi !== a.cgpi) return b.cgpi - a.cgpi;
+        return a._id?.toString().localeCompare(b._id.toString());
+      });
+      
+      batchResults.forEach((result, index) => {
+        const rank = rankMap.get(result._id!.toString());
+        if (rank) rank.batch = index + 1;
+      });
+    });
+
+    // Assign branch and class ranks
+    const byBranchBatch = new Map<string, typeof resultsWithCgpi>();
+    resultsWithCgpi.forEach(r => {
+      const key = `${r.batch}-${r.branch}`;
+      if (!byBranchBatch.has(key)) {
+        byBranchBatch.set(key, []);
+      }
+      byBranchBatch.get(key)!.push(r);
+    });
+
+    byBranchBatch.forEach((branchResults, key) => {
+      branchResults.sort((a:any, b:any) => {
+        if (b.cgpi !== a.cgpi) return b.cgpi - a.cgpi;
+        return a._id!.toString().localeCompare(b._id!.toString());
+      });
+      
+      branchResults.forEach((result, index) => {
+        const rank = rankMap.get(result._id!.toString());
+        if (rank) {
+          rank.branch = index + 1;
+          rank.class = index + 1;
+        }
+      });
+    });
+
+    // Prepare bulk updates
+    const bulkUpdates = Array.from(rankMap.entries()).map(([id, rank]) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { $set: { rank } }
+      }
+    }));
+
+    console.log(`Prepared ${bulkUpdates.length} updates`);
+
+    // Execute bulk write in chunks to avoid memory issues
+    const CHUNK_SIZE = 1000;
+    let totalModified = 0;
+    let totalMatched = 0;
+
+    for (let i = 0; i < bulkUpdates.length; i += CHUNK_SIZE) {
+      const chunk = bulkUpdates.slice(i, i + CHUNK_SIZE);
+      const bulkWriteResult = await ResultModel.bulkWrite(chunk, {
+        ordered: false
+      });
+      
+      totalModified += bulkWriteResult.modifiedCount ?? 0;
+      totalMatched += bulkWriteResult.matchedCount ?? 0;
+      
+      console.log(`Processed chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(bulkUpdates.length / CHUNK_SIZE)}`);
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "Ranks assigned successfully.",
+      data: {
+        timeTaken: `${(Date.now() - start) / 1000}s`,
+        lastUpdated: new Date().toISOString(),
+        modifiedCount: totalModified,
+        matchedCount: totalMatched,
+        totalDocuments: results.length
+      },
+    });
+    }
+
   } catch (error) {
     console.error("assignRankToResults error:", error);
     return res.status(500).json(safeErrorBody("An error occurred", (error as Error)?.message));

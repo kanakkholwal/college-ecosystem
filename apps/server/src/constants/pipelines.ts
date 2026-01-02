@@ -1,23 +1,27 @@
 import { PipelineStage } from "mongoose";
 
 const assignRank: PipelineStage[] = [
+    // Match valid documents
     {
-        $set: {
-            latestCgpi: {
-                $let: {
-                    vars: { lastSem: { $arrayElemAt: ["$semesters", -1] } },
-                    in: "$$lastSem.cgpi"
-                }
-            }
+        $match: {
+            semesters: { $exists: true, $ne: [], $type: "array" },
+            latestCgpi: { $gte: 0 }
         }
     },
-    { $sort: { latestCgpi: -1 } },
+    // Sort using indexed field
+    { $sort: { latestCgpi: -1, _id: 1 } },
+    
+    // College rank
     { $group: { _id: null, results: { $push: "$$ROOT" } } },
     { $unwind: { path: "$results", includeArrayIndex: "collegeRank" } },
     { $set: { "results.rank.college": { $add: ["$collegeRank", 1] } } },
+    
+    // Batch rank
     { $group: { _id: "$results.batch", results: { $push: "$results" } } },
     { $unwind: { path: "$results", includeArrayIndex: "batchRank" } },
     { $set: { "results.rank.batch": { $add: ["$batchRank", 1] } } },
+    
+    // Branch rank
     {
         $group: {
             _id: { batch: "$results.batch", branch: "$results.branch" },
@@ -26,6 +30,8 @@ const assignRank: PipelineStage[] = [
     },
     { $unwind: { path: "$results", includeArrayIndex: "branchRank" } },
     { $set: { "results.rank.branch": { $add: ["$branchRank", 1] } } },
+    
+    // Class rank
     {
         $group: {
             _id: { batch: "$results.batch", branch: "$results.branch" },
@@ -34,16 +40,62 @@ const assignRank: PipelineStage[] = [
     },
     { $unwind: { path: "$results", includeArrayIndex: "classRank" } },
     { $set: { "results.rank.class": { $add: ["$classRank", 1] } } },
+    
     { $replaceRoot: { newRoot: "$results" } },
-    { $unset: ["latestSemester", "latestCgpi"] },
     {
-        $merge: {
-            into: "results",
-            whenMatched: "merge",
-            whenNotMatched: "discard",
-        },
-    },
+        $project: {
+            _id: 1,
+            rank: 1
+        }
+    }
 ];
+
+//LEGACY: 
+
+// const assignRank: PipelineStage[] = [
+//     {
+//         $set: {
+//             latestCgpi: {
+//                 $let: {
+//                     vars: { lastSem: { $arrayElemAt: ["$semesters", -1] } },
+//                     in: "$$lastSem.cgpi"
+//                 }
+//             }
+//         }
+//     },
+//     { $sort: { latestCgpi: -1 } },
+//     { $group: { _id: null, results: { $push: "$$ROOT" } } },
+//     { $unwind: { path: "$results", includeArrayIndex: "collegeRank" } },
+//     { $set: { "results.rank.college": { $add: ["$collegeRank", 1] } } },
+//     { $group: { _id: "$results.batch", results: { $push: "$results" } } },
+//     { $unwind: { path: "$results", includeArrayIndex: "batchRank" } },
+//     { $set: { "results.rank.batch": { $add: ["$batchRank", 1] } } },
+//     {
+//         $group: {
+//             _id: { batch: "$results.batch", branch: "$results.branch" },
+//             results: { $push: "$results" },
+//         },
+//     },
+//     { $unwind: { path: "$results", includeArrayIndex: "branchRank" } },
+//     { $set: { "results.rank.branch": { $add: ["$branchRank", 1] } } },
+//     {
+//         $group: {
+//             _id: { batch: "$results.batch", branch: "$results.branch" },
+//             results: { $push: "$results" },
+//         },
+//     },
+//     { $unwind: { path: "$results", includeArrayIndex: "classRank" } },
+//     { $set: { "results.rank.class": { $add: ["$classRank", 1] } } },
+//     { $replaceRoot: { newRoot: "$results" } },
+//     { $unset: ["latestSemester", "latestCgpi"] },
+//     {
+//         $merge: {
+//             into: "results",
+//             whenMatched: "merge",
+//             whenNotMatched: "discard",
+//         },
+//     },
+// ];
 const abnormalResults: PipelineStage[] = [
     {
         $match: {

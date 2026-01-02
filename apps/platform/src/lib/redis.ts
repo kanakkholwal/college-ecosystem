@@ -11,7 +11,7 @@ if (!REDIS_URL) {
 const redis = new Redis(REDIS_URL, {
       lazyConnect: true,
       maxRetriesPerRequest: 1, // fail fast
-      enableOfflineQueue: false, // don't pile up commands
+      // enableOfflineQueue: false, // don't pile up commands
       reconnectOnError(err) {
         // reconnect on READONLY / connection resets / max clients
         const msg = err.message || "";
