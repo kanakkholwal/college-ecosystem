@@ -60,7 +60,7 @@ export default async function HomePage() {
       </script>
 
       {/* Visual hook: High contrast intro */}
-      <BackgroundBeamsWithCollision className="h-auto md:h-auto md:min-h-96 flex flex-col justify-center">
+      <BackgroundBeamsWithCollision className="h-auto md:h-auto md:min-h-96 flex flex-col justify-center overflow-hidden w-full">
         <IntroSection user={session?.user} stats={publicStats} />
       </BackgroundBeamsWithCollision>
 

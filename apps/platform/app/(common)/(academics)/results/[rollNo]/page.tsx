@@ -165,7 +165,7 @@ export default async function ResultsPage(props: Props) {
         {/* --- 1. PROFILE HEADER --- */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
           <div className="flex items-start gap-5">
-            <div className="flex items-center justify-center size-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 text-2xl font-bold text-primary shadow-sm">
+            <div className="hidden md:flex items-center justify-center size-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 text-2xl font-bold text-primary shadow-sm">
               {result.name.charAt(0)}
             </div>
 
@@ -332,7 +332,7 @@ export default async function ResultsPage(props: Props) {
         <div className="mt-12">
           <Tabs defaultValue="table" className="w-full">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold tracking-tight">
+              <h2 className="hidden sm:inline-block text-xl font-bold tracking-tight whitespace-nowrap">
                 Academic History
               </h2>
               <TabsList className="h-9">
@@ -518,16 +518,16 @@ export default async function ResultsPage(props: Props) {
                               key={course.code}
                               className="hover:bg-muted/10 border-border/40"
                             >
-                              <TableCell className="text-xs font-mono text-muted-foreground py-2">
+                              <TableCell className="text-xs font-mono text-muted-foreground py-2 whitespace-nowrap">
                                 {course.code}
                               </TableCell>
-                              <TableCell className="text-xs font-medium py-2">
+                              <TableCell className="text-xs font-medium py-2 whitespace-nowrap">
                                 {course.name.replace(/&amp;/g, "&")}
                               </TableCell>
-                              <TableCell className="text-xs text-right py-2">
+                              <TableCell className="text-xs text-right py-2 whitespace-nowrap">
                                 {course.credits ?? "-"}
                               </TableCell>
-                              <TableCell className="text-center py-2">
+                              <TableCell className="text-center py-2 whitespace-nowrap">
                                 {course.grade ? (
                                   <Badge
                                     variant="outline"
@@ -561,7 +561,7 @@ export default async function ResultsPage(props: Props) {
             {/* View 3: Graph */}
             <TabsContent
               value="graph"
-              className="p-4 border rounded-xl bg-card min-h-[400px]"
+              className="p-2 sm:p-4 border rounded-xl bg-card min-h-[400px]"
             >
               <CGPIChart semesters={result.semesters} />
             </TabsContent>

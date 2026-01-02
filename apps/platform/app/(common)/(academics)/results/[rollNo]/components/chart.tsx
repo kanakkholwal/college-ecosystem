@@ -74,9 +74,9 @@ export const CGPIChart: React.FC<CGPIChartProps> = ({ semesters }) => {
   return (
     <div>
       <CardHeader className="pb-4 border-b border-border/40">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="space-y-1">
-            <CardTitle className="text-lg font-bold tracking-tight">
+            <CardTitle className="tracking-tight">
               Performance Trend
             </CardTitle>
             <CardDescription className="text-xs font-medium">
@@ -87,7 +87,7 @@ export const CGPIChart: React.FC<CGPIChartProps> = ({ semesters }) => {
           {/* Trend Badge */}
           {chartData.length > 1 && (
             <div className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold",
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold whitespace-nowrap",
               trend >= 0 
                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
                 : "bg-rose-500/10 text-rose-600 border-rose-500/20"
