@@ -31,12 +31,30 @@ jobs:
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
+          
       - name: 🔍 Check changes in Server Directory
         id: server-changed
+        shell: bash
         run: |
-          git diff --quiet HEAD^ HEAD ./apps/server || echo "server_changed=true" >> $GITHUB_OUTPUT
-          git diff --quiet HEAD^ HEAD ./apps/server/Dockerfile || echo "dockerfile_changed=true" >> $GITHUB_OUTPUT
+            echo "server_changed=false" >> "$GITHUB_OUTPUT"
+            echo "dockerfile_changed=false" >> "$GITHUB_OUTPUT"
+        
+            BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+        
+            if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- ./apps/server; then
+              echo "No server changes"
+            else
+              echo "server_changed=true" >> "$GITHUB_OUTPUT"
+            fi
+        
+            if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- ./apps/server/Dockerfile; then
+              echo "No Dockerfile changes"
+            else
+              echo "dockerfile_changed=true" >> "$GITHUB_OUTPUT"
+            fi
 
       - name: 🔑 Set up Google Cloud Auth SDK
         if: steps.server-changed.outputs.server_changed == 'true'
