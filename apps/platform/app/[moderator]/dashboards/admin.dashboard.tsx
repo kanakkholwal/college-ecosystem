@@ -1,43 +1,47 @@
 import { NumberTicker } from "@/components/animation/number-ticker";
 import {
-    ChartBar,
-    RoundedPieChart
+  ChartBar,
+  RoundedPieChart
 } from "@/components/application/charts";
 import { StatsCard } from "@/components/application/stats-card";
+import { HeaderBar } from "@/components/common/header-bar";
 import { GenericAreaChart } from "@/components/extended/chart.area";
 import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
-    Briefcase,
-    CircleDashed,
-    Eye,
-    Network,
-    Transgender,
-    TrendingDown,
-    TrendingUp
+  Briefcase,
+  CircleDashed,
+  Eye,
+  Network,
+  Transgender,
+  TrendingDown,
+  TrendingUp
 } from "lucide-react";
+import { PiChartBarDuotone } from "react-icons/pi";
 import { TbUsersGroup } from "react-icons/tb";
 import {
-    getActiveSessions,
-    getPlatformDBStats,
-    getUsersByDepartment,
-    getUsersByGender,
-    getUsersByRole,
-    SessionCountAndGrowthResult,
-    sessions_CountAndGrowth,
-    UserCountAndGrowthResult,
-    users_CountAndGrowth,
+  getActiveSessions,
+  getPlatformDBStats,
+  getUsersByDepartment,
+  getUsersByGender,
+  getUsersByRole,
+  SessionCountAndGrowthResult,
+  sessions_CountAndGrowth,
+  UserCountAndGrowthResult,
+  users_CountAndGrowth,
 } from "~/actions/dashboard.admin";
 import { ROLES } from "~/constants";
 import {
-    DEPARTMENTS_LIST,
-    getDepartmentCode,
-    getDepartmentName
+  DEPARTMENTS_LIST,
+  getDepartmentCode,
+  getDepartmentName
 } from "~/constants/core.departments";
+import { flushAllRedisKeys } from "~/lib/redis";
 import { extractVisitorCount } from "~/lib/third-party/github";
 import { TimeInterval } from "~/utils/process";
 import { changeCase } from "~/utils/string";
+import { FlushCacheButton } from "./client";
 
 interface AdminDashboardProps {
   role: string;
@@ -71,6 +75,20 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
 
   return (
     <div className="space-y-6 my-5">
+      {/* Header */}
+      <HeaderBar
+        Icon={PiChartBarDuotone}
+        titleNode={
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Admin Dashboard
+            </h1>
+
+          </div>
+        }
+        descriptionNode="Comprehensive overview of platform usage, user statistics, and system health."
+        actionNode={<FlushCacheButton flushFn={flushAllRedisKeys} />}
+      />
       <div className="flex justify-between gap-2 w-full flex-col @4xl:flex-row divide-y @4xl:divide-x divide-border">
         <div className="w-full grid grid-cols-1 @lg:grid-cols-2 @4xl:grid-cols-12 gap-4 pr-1.5 @4xl:pr-0">
           {/* Total Users Card */}

@@ -32,38 +32,53 @@ export async function getResults(
   filter: {
     branch?: string;
     programme?: string;
-    batch?: string;
+    batch?: string; // comes as string from query params
     limit?: number;
     include_freshers?: boolean;
   },
   new_cache?: boolean
 ): Promise<getResultsReturnType> {
   try {
-    const resultsPerPage = filter?.limit || 32;
+    const resultsPerPage = Math.max(1, filter?.limit || 32);
     const page = Math.max(1, Number(currentPage) || 1);
 
-    // deterministic cache key
+    // ---- normalize batch ONCE ----
+    let normalizedBatch: number | null = null;
+    if (
+      filter.batch &&
+      filter.batch !== "all"
+    ) {
+      const parsed = Number.parseInt(filter.batch.trim(), 10);
+      if (!Number.isNaN(parsed)) {
+        normalizedBatch = parsed;
+      }
+    }
+
+    // ---- deterministic cache key (normalized) ----
     const keyParts = [
       `q=${encodeURIComponent(query || "")}`,
       `p=${page}`,
       `l=${resultsPerPage}`,
       `b=${filter?.branch ?? "all"}`,
       `pr=${filter?.programme ?? "all"}`,
-      `bt=${filter?.batch ?? "all"}`,
+      `bt=${normalizedBatch ?? "all"}`,
       `f=${filter?.include_freshers ? "1" : "0"}`,
     ];
     const cacheKey = `results:${keyParts.join("|")}`;
 
     if (!new_cache) {
       try {
-        const cached = await redis.get(cacheKey);
-        if (cached) return JSON.parse(cached) as getResultsReturnType;
+        const cached = await redis?.get(cacheKey);
+        if (cached) {
+          console.log("Cache hit for key:", cacheKey);
+          return JSON.parse(cached) as getResultsReturnType;
+        }
       } catch (e) {
         console.log("Redis GET error:", e);
       }
     } else {
       try {
-        await redis.del(cacheKey);
+        await redis?.del(cacheKey);
       } catch (e) {
         console.log("Redis DEL error:", e);
       }
@@ -72,14 +87,11 @@ export async function getResults(
     await dbConnect();
 
     const filterQuery: any = {};
-    // Tokenize and build safe regexes only when there's a non-empty query
-    if (query && query.trim() !== "") {
-      const q = query.trim();
-      // split on whitespace and remove empty tokens
-      const tokens = q.split(/\s+/).filter(Boolean);
 
-      // for each token, require that it matches at least one of the searchable fields
-      // This produces an AND of ORs: each token must match name OR rollNo
+    // ---- Text search ----
+    if (query && query.trim() !== "") {
+      const tokens = query.trim().split(/\s+/).filter(Boolean);
+
       filterQuery.$and = tokens.map((token) => {
         const safe = escapeRegExp(token);
         const regex = { $regex: safe, $options: "i" };
@@ -89,27 +101,22 @@ export async function getResults(
       });
     }
 
-    // apply optional filters (branch/programme/batch)
-    if (filter.branch && filter.branch !== "all") filterQuery.branch = filter.branch;
-    if (filter.programme && filter.programme !== "all") filterQuery.programme = filter.programme;
-    if (typeof filter.batch !== "undefined" && filter?.batch !== "all") filterQuery.batch = filter.batch;
-
-    // Handle Freshers explicitly: treat undefined as "false" only if you want to exclude freshers by default.
-    // Current code excluded freshers when include_freshers is falsy; be explicit:
+    // ---- Freshers handling (single source of truth) ----
     if (filter.include_freshers === false) {
       filterQuery["semesters.0"] = { $exists: true };
     }
 
-    // optional: debug logging while testing
-    // console.debug("getResults filterQuery:", JSON.stringify(filterQuery));
+    // ---- Structured filters ----
+    if (filter.branch && filter.branch !== "all") {
+      filterQuery.branch = filter.branch;
+    }
 
-    if (filter.branch && filter.branch !== "all") filterQuery.branch = filter.branch;
-    if (filter.programme && filter.programme !== "all") filterQuery.programme = filter.programme;
-    if (filter.batch && filter.batch.toString() !== "all") filterQuery.batch = filter.batch;
+    if (filter.programme && filter.programme !== "all") {
+      filterQuery.programme = filter.programme;
+    }
 
-    // Handle Freshers
-    if (!filter.include_freshers) {
-      filterQuery["semesters.0"] = { $exists: true };
+    if (normalizedBatch !== null) {
+      filterQuery.batch = normalizedBatch; // correct type: number
     }
 
     const skip = (page - 1) * resultsPerPage;
@@ -125,7 +132,12 @@ export async function getResults(
           secondLastSemester: {
             $cond: [
               { $gte: [{ $size: "$semesters" }, 2] },
-              { $arrayElemAt: ["$semesters", { $subtract: [{ $size: "$semesters" }, 2] }] },
+              {
+                $arrayElemAt: [
+                  "$semesters",
+                  { $subtract: [{ $size: "$semesters" }, 2] },
+                ],
+              },
               null,
             ],
           },
@@ -146,17 +158,21 @@ export async function getResults(
       },
     ];
 
-
     const [results, totalCount] = await Promise.all([
       ResultModel.aggregate(aggregationPipeline),
-      ResultModel.countDocuments(filterQuery)
+      ResultModel.countDocuments(filterQuery),
     ]);
 
     const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));
     const response = { results, totalPages, totalCount };
-    // cache the whole response
+
     try {
-      await redis.set(cacheKey, JSON.stringify(response), "EX", 60 * 60 * 24); // 1 day
+      await redis?.set(
+        cacheKey,
+        JSON.stringify(response),
+        "EX",
+        60 * 60 * 24
+      );
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -167,6 +183,7 @@ export async function getResults(
     throw new Error("Failed to fetch results");
   }
 }
+
 type CachedLabels = {
   branches: string[];
   batches: string[];
@@ -176,13 +193,13 @@ export const getCachedLabels = cache(async (new_cache?: boolean): Promise<Cached
   const cacheKey = "cached_labels_v1";
   if (!new_cache) {
     try {
-      const cached = await redis.get(cacheKey);
+      const cached = await redis?.get(cacheKey);
       if (cached) return JSON.parse(cached);
     } catch (e) {
       console.log("Redis GET error:", e);
     }
   } else {
-    try { await redis.del(cacheKey); } catch (e) { console.log("Redis DEL error:", e); }
+    try { await redis?.del(cacheKey); } catch (e) { console.log("Redis DEL error:", e); }
   }
 
   try {
@@ -196,7 +213,7 @@ export const getCachedLabels = cache(async (new_cache?: boolean): Promise<Cached
 
     const labels = { branches, batches, programmes };
     try {
-      await redis.set(cacheKey, JSON.stringify(labels), "EX", 60 * 60 * 24 * 30 * 6); // 6 months
+      await redis?.set(cacheKey, JSON.stringify(labels), "EX", 60 * 60 * 24 * 30 * 6); // 6 months
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -221,7 +238,7 @@ export async function getResultByRollNo(
   try {
     if (!is_new && !update) {
       try {
-        const cached = await redis.get(cacheKey);
+        const cached = await redis?.get(cacheKey);
         if (cached) {
           console.log("Cache hit for key:", cacheKey);
           return JSON.parse(cached) as ResultTypeWithId;
@@ -231,7 +248,7 @@ export async function getResultByRollNo(
       }
     } else {
       try {
-        await redis.del(cacheKey);
+        await redis?.del(cacheKey);
       } catch (e) {
         console.log("Redis DEL error:", e);
       }
@@ -256,7 +273,7 @@ export async function getResultByRollNo(
     await assignRanks();
     // cache updated data if present
     try {
-      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60);
+      await redis?.set(cacheKey, JSON.stringify(response.data), "EX", 60);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -275,7 +292,7 @@ export async function getResultByRollNo(
     if (response.error || !response.data) return null;
     await assignRanks();
     try {
-      await redis.set(cacheKey, JSON.stringify(response.data), "EX", 60);
+      await redis?.set(cacheKey, JSON.stringify(response.data), "EX", 60);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -288,7 +305,7 @@ export async function getResultByRollNo(
   }
 
   try {
-    await redis.set(cacheKey, JSON.stringify(result), "EX", 60);
+    await redis?.set(cacheKey, JSON.stringify(result), "EX", 60);
   } catch (e) {
     console.log("Redis SET error:", e);
   }
