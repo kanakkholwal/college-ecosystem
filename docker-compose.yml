@@ -1,0 +1,138 @@
+services:
+  platform:
+    build:
+      context: ./apps/platform
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+    # TODO: Add proper environment variables
+      - NODE_ENV=production
+      - GOOGLE_ID=${GOOGLE_ID}
+      - GOOGLE_SECRET=${GOOGLE_SECRET}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+      - BASE_MAIL_SERVER_URL=http://mail-server:3001
+      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+      - BASE_URL=${BASE_URL}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+      - SERVER_IDENTITY=${SERVER_IDENTITY}
+      - BASE_SERVER_URL=http://server:8080
+      - NEXT_PUBLIC_BASE_SERVER_URL=${NEXT_PUBLIC_BASE_SERVER_URL}
+      - NEXT_PUBLIC_BASE_MAIL_SERVER_URL=${NEXT_PUBLIC_BASE_MAIL_SERVER_URL}
+      - NEXT_PUBLIC_SERVER_IDENTITY=${NEXT_PUBLIC_SERVER_IDENTITY}
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    depends_on:
+      - redis
+      - mongodb
+      - postgres
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - ecosystem-network
+
+  mail-server:
+    build:
+      context: ./apps/mail-server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - SERVER_IDENTITY=${MAIL_SERVER_IDENTITY}
+      - SMTP_HOST=${SMTP_HOST}
+      - MAIL_EMAIL=${MAIL_EMAIL}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - ecosystem-network
+
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/college-ecosystem
+      - REDIS_URL=redis://redis:6379
+      - SERVER_IDENTITY=${SERVER_IDENTITY}
+    depends_on:
+      - redis
+      - mongodb
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - ecosystem-network
+
+  website:
+    build:
+      context: ./apps/website
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - ecosystem-network
+
+  redis:
+    image: redis:alpine
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - ecosystem-network
+
+  mongodb:
+    image: mongo:alpine
+    volumes:
+      - mongodb_data:/data/db
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - ecosystem-network
+
+  postgres:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - ecosystem-network
+
+networks:
+  ecosystem-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  postgres_data:
+
