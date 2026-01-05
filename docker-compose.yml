@@ -103,7 +103,7 @@ services:
       - ecosystem-network
 
   mongodb:
-    image: mongo:alpine
+    image: mongo
     volumes:
       - mongodb_data:/data/db
     deploy:
