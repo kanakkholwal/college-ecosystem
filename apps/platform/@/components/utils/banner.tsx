@@ -1,7 +1,7 @@
 "use client";
 import { BorderBeam } from "@/components/animation/border-beam";
 import { Button } from "@/components/ui/button";
-import useStorage from "@/hooks/useLocalStorage";
+import useStorage from "@/hooks/use-storage";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";

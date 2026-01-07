@@ -44,7 +44,7 @@
     --input: hsl(220 13% 91%);
     --input: oklch(.922 0 0);
 
-    --ring: var(--primary,hsl(262.1 83.3% 57.8%));
+    --ring: var(--primary, hsl(262.1 83.3% 57.8%));
     --radius: 0.75rem;
 
     --sidebar: oklch(0.985 0 0);
@@ -70,7 +70,7 @@
     --border-secondary: hsla(0, 0%, 100%, 0.08);
     --button-shadow: 0px -1px 0px 0px hsla(0, 0%, 100%, 0.04), 0px 0px 0px 1px hsla(0, 0%, 100%, 0.12), 0px 0px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 4px 2px 0px rgba(0, 0, 0, 0.04), 0px 6px 3px 0px rgba(0, 0, 0, 0.04);
 
-   /* Charts: Adjusted for harmony with the violet theme */
+    /* Charts: Adjusted for harmony with the violet theme */
     --chart-1: hsl(262 80% 50%);
     --chart-2: hsl(199 89% 48%);
     --chart-3: hsl(340 75% 55%);
@@ -149,7 +149,7 @@
     --ring: var(--primary, hsl(250deg 100% 80%));
 
     /* dark:chart colors */
-   /* Charts: Bright Pastels for dark mode */
+    /* Charts: Bright Pastels for dark mode */
     --chart-1: hsl(263 70% 65%);
     --chart-2: hsl(199 80% 60%);
     --chart-3: hsl(340 80% 65%);
@@ -257,8 +257,20 @@
     --animate-spin-reverse: spin-slow 20s linear infinite reverse;
     --animate-canopy-horizontal: canopy-x var(--duration) infinite linear;
     --animate-canopy-vertical: canopy-y var(--duration) infinite linear;
+    --animate-bounce-slow: bounce 3s infinite;
+    --animate-wiggle: bounce 3s infinite;
 
+    @keyframes wiggle {
 
+        0%,
+        100% {
+            transform: rotate(-3deg)
+        }
+
+        50%: {
+            transform: rotate(3deg)
+        }
+    }
 
     @keyframes canopy-x {
         from {
@@ -489,7 +501,8 @@
     }
 
     *:autofill,
-    *:-webkit-autofill,*:-internal-autofill-selected {
+    *:-webkit-autofill,
+    *:-internal-autofill-selected {
         font: inherit;
         font-size: inherit;
         font-family: inherit;
@@ -501,27 +514,29 @@
     }
 
 }
+
 .text-colorful {
-  -webkit-text-fill-color: transparent;
-  background: linear-gradient(288deg, var(--color-primary), var(--color-pink-600));
-  -webkit-background-clip: text;
-  background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background: linear-gradient(288deg, var(--color-primary), var(--color-pink-600));
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 
 @layer utilities {
-  .text-metallic {
-    color: transparent;
-    background: linear-gradient(180deg,
-        var(--color-foreground) 0%,
-        var(--color-slate-400) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    /* Optional: Add a subtle drop shadow to make it pop */
-    filter: drop-shadow(0px 2px 10px var(--color-slate-900) * 0.2);
-  }
+    .text-metallic {
+        color: transparent;
+        background: linear-gradient(180deg,
+                var(--color-foreground) 0%,
+                var(--color-slate-400) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        /* Optional: Add a subtle drop shadow to make it pop */
+        filter: drop-shadow(0px 2px 10px var(--color-slate-900) * 0.2);
+    }
 
 
 }
+
 body {
     font-weight: 400;
     font-size: 16px;
@@ -680,4 +695,3 @@ body {
         @apply bg-background text-foreground selection:bg-primary/75 selection:text-white selection:rounded-2xl;
     }
 }
-

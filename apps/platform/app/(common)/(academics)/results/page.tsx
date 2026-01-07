@@ -91,6 +91,7 @@ and track academic performance"
         >
           <SearchBox new_cache={searchParams?.cache === "new"} />
         </Suspense>
+      </BaseHeroSection>
         <script type="application/ld+json" id="search-results-json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -101,7 +102,6 @@ and track academic performance"
             publisher: orgConfig.jsonLds.EducationalOrganization,
           })}
         </script>
-      </BaseHeroSection>
 
       <ErrorBoundaryWithSuspense
         fallback={

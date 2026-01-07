@@ -2,7 +2,7 @@
 
 import { brand_themes, BrandThemeType } from "@/components/common/theme-switcher";
 import { Separator } from "@/components/ui/separator";
-import useStorage from "@/hooks/useLocalStorage";
+import useStorage from "@/hooks/use-storage";
 import { cn } from "@/lib/utils";
 import { Check, Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";

@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Check, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { Icon } from "../icons";
 
 // --- Types ---
 type FilterOption = {
@@ -110,7 +110,7 @@ export default function BaseSearchBox({
                         "size-9 rounded-full text-muted-foreground hover:bg-muted transition-colors",
                         activeFilterCount > 0 && "text-primary bg-primary/10 hover:bg-primary/20"
                       ),
-                      children: <SlidersHorizontal className="size-4" />,
+                      children: <Icon name="sliders-horizontal" className="size-4" />,
                     }}
                   >
                     <FilterContent
@@ -131,7 +131,7 @@ export default function BaseSearchBox({
                   )}
                   onClick={() => setShowExpandedFilters(!showExpandedFilters)}
                 >
-                  <SlidersHorizontal className="size-4" />
+                  <Icon name="sliders-horizontal" className="size-4" />
                 </Button>
               )}
             </div>
@@ -158,7 +158,7 @@ export default function BaseSearchBox({
               }}
               disabled={disabled}
             >
-              <Search className="size-4" />
+              <Icon name="search" className="size-4" />
             </Button>
           </div>
         </div>
@@ -223,7 +223,7 @@ export default function BaseSearchBox({
 function FilterButtonFallback() {
   return (
     <Button variant="ghost" size="icon" className="size-9 rounded-full" disabled>
-      <SlidersHorizontal className="size-4 opacity-50" />
+      <Icon name="sliders-horizontal" className="size-4 opacity-50" />
     </Button>
   );
 }
@@ -257,7 +257,7 @@ function FilterContent({
                   size="xs"
                   onClick={() => onSelect(group.key, "all")} // Assuming 'all' clears it
                 >
-                  <RotateCcw className="mr-1.5 size-3" />
+                  <Icon name="rotate-ccw" className="mr-1.5 size-3" />
                   Reset
                 </Button>
               )}
@@ -273,7 +273,7 @@ function FilterContent({
                     variant={isSelected ? "default_soft":"outline"}
                   >
                     {item.label}
-                    {isSelected && <Check className="ml-1 size-3" />}
+                    {isSelected && <Icon name="check:bold" className="ml-1 size-3" />}
                   </Button>
                 );
               })}

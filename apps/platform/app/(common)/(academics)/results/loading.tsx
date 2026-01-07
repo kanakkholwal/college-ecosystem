@@ -7,14 +7,9 @@ export default function LoadingResultPage() {
   return (
     <>
       <BaseHeroSection
-        title={
-          <>
-            {orgConfig.shortName} <span className="text-primary">Result</span>{" "}
-            Portal
-          </>
-        }
-        description="Search for results by entering your roll number or name."
-      >
+        title={`${orgConfig.shortName} Semester Results Portal`}
+        description="Access official exam results for National Institute of Technology Hamirpur. Check grades,
+and track academic performance" >
         <Skeleton className="h-12 w-full " />
       </BaseHeroSection>
 

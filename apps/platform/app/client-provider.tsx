@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 // provider.tsx
 "use client";
+import GithubStarDialog from "@/components/common/dialog.star";
 import { Toaster } from "@/components/ui/sonner";
 import { all_themes } from "@/constants/theme";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
         <div className={cn("min-h-screen w-full h-full")}>
           <NuqsAdapter>{children}</NuqsAdapter>
         </div>
+        <GithubStarDialog/>
       </NextThemesProvider>
       <HotToaster
         position="top-center"

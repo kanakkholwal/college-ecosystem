@@ -10,7 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import useStorage from "@/hooks/useLocalStorage";
+import useStorage from "@/hooks/use-storage";
 // import confetti from "canvas-confetti";
 import { useEffect, useState } from "react";
 import { AnimatedGradientText } from "./animated-shiny-text";

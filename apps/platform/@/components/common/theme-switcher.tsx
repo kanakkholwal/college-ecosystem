@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import useStorage from "@/hooks/useLocalStorage";
+import useStorage from "@/hooks/use-storage";
 import { cn } from "@/lib/utils";
 import { sendGAEvent } from "@next/third-parties/google";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,6 +22,7 @@ import React from "react";
 
 
 
+import { Icon, IconComponent } from "@/components/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,24 +30,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type themeType } from "@/constants/theme";
-import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 const themes_modes = [
   {
     id: "system",
-    Icon: Monitor,
+    Icon: IconComponent["monitor"],
     label: "System",
   },
   {
     id: "light",
-    Icon: Sun,
+    Icon: IconComponent["sun"],
     label: "Light",
   },
   {
     id: "dark",
-    Icon: Moon,
+    Icon: IconComponent["moon"],
     label: "Dark",
   },
 ] as const;
@@ -75,7 +75,7 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon_sm" className={cn("rounded-full", className)} disabled>
-        <Sun className="size-4 opacity-50" />
+        <Icon name="sun" className="size-4 opacity-50" />
       </Button>
     );
   }
@@ -85,8 +85,8 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon_sm" className={cn("relative rounded-full text-muted-foreground hover:text-foreground transition-colors", className)}>
-            <Sun className="size-4 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute size-4 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
+            <Icon name="sun" className="size-4 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
+            <Icon name="moon" className="absolute size-4 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
         </DropdownMenuTrigger>
@@ -121,7 +121,7 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 
                   {/* Content */}
                   <div className="relative z-10 flex items-center gap-2.5">
-                    <t.Icon className="size-3.5" />
+                    <t.Icon className={cn("size-3.5",isActive && "text-primary")}/>
                     <span>{t.label}</span>
                   </div>
                 </DropdownMenuItem>
