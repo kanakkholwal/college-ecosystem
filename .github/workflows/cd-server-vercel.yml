@@ -28,10 +28,6 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run tests (optional)
-        run: bun test
-        continue-on-error: true  # Remove this if you want tests to block deployment
-
       - name: Install Vercel CLI
         run: bun install --global vercel@latest
 
