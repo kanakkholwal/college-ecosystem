@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
     "opennext:build": "opennextjs-cloudflare build",
     "opennext:deploy": "opennextjs-cloudflare deploy -- --keep-vars"
