@@ -2,6 +2,8 @@
 node_modules
 logs
 .git
+.vercel
+vercel.json
 
 # Build output
 dist

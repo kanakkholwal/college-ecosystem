@@ -1,20 +1,21 @@
 name: Deploy to Vercel
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/server/**'  # Only trigger if changes in this directory
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'apps/server/**'  # Only trigger if changes in this directory
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'apps/platform/**'  # Only trigger if changes in this directory
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'apps/platform/**'  # Only trigger if changes in this directory
+  workflow_dispatch: 
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_CE_SERVER }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PLATFORM_PROJECT_ID }}
 
 jobs:
   deploy:
@@ -23,7 +24,7 @@ jobs:
     # Set default working directory for all steps
     defaults:
       run:
-        working-directory: apps/server
+        working-directory: apps/platform
     
     steps:
       - name: Checkout code
@@ -48,12 +49,12 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
-          VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PLATFORM_PROJECT_ID }}
 
       - name: Deploy to Vercel (Preview)
         if: github.event_name == 'pull_request'
         run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
-          VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PLATFORM_PROJECT_ID }}
