@@ -41,6 +41,16 @@ jobs:
       - name: Run tests (optional)
         run: bun test
         continue-on-error: true  # Remove this if you want tests to block deployment
+      
+      - name: Verify vercel.json exists
+        run: |
+          if [ -f vercel.json ]; then
+            echo "✓ vercel.json found"
+            cat vercel.json
+          else
+                echo "✗ vercel.json not found!"
+                exit 1
+              fi
 
       - name: Install Vercel CLI
         run: bun install --global vercel@latest
