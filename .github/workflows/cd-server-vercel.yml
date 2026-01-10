@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'apps/server/**'  # Only trigger if changes in this directory
+  workflow_dispatch: 
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
