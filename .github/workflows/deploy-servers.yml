@@ -6,12 +6,12 @@ env:
 # on: workflow_dispatch
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches:
+  #     - main
   #     - staging
       
   workflow_dispatch:
