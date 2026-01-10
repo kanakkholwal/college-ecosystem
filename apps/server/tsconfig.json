@@ -8,8 +8,16 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-"resolveJsonModule": true
+    "resolveJsonModule": true,
+    "sourceMap": true // disable for Docker deployment for lighter image
   },
-  "include": ["src/**/*","package.json","tsconfig.json"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
