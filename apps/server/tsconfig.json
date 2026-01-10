@@ -3,7 +3,7 @@
     "target": "es2020",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -12,8 +12,9 @@
     "sourceMap": true // disable for Docker deployment for lighter image
   },
   "include": [
-    "src/**/*",
-    "tsconfig.json"
+    "./src/**/*",
+    "tsconfig.json",
+    "package.json"
   ],
   "exclude": [
     "node_modules",
