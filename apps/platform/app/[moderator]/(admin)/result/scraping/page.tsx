@@ -15,8 +15,8 @@ import {
   Trash2,
   XCircle
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 // UI Components
@@ -58,12 +58,18 @@ import { EVENTS, LIST_TYPE, TASK_STATUS, taskDataType } from "./types";
 import { scrapingApi } from "./utils";
 
 const BASE_SERVER_URL = process.env.NEXT_PUBLIC_BASE_SERVER_URL;
-const sseEndpoint = new URL(`${BASE_SERVER_URL}/api/results/scrape-sse`);
+// We reconstruct the URL inside the function to ensure freshness
+const SSE_BASE_URL = `${BASE_SERVER_URL}/api/results/scrape-sse`;
+
+const CONNECTION_TIMEOUT_MS = 45000; // 45s silence = dead connection (server timeout is 300s, so this is aggressive)
 
 export default function ScrapeResultPage() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // To read task_resume_id if needed
   const eventSourceRef = useRef<EventSource | null>(null);
   const mountedRef = useRef(true);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
 
   // State
   const [listType, setListType] = useState<(typeof LIST_TYPE)[keyof typeof LIST_TYPE]>(LIST_TYPE.BACKLOG);
@@ -89,82 +95,117 @@ export default function ScrapeResultPage() {
     _id: "",
   });
 
-  const handleAction = (id: string, type: string, listType?: string) => {
-    handleStartScraping({
-      listType: listType as (typeof LIST_TYPE)[keyof typeof LIST_TYPE],
-      actionType: type,
-      task_resume_id: id,
-    });
-  };
+  // --- Connection Management Logic ---
 
-  const closeConnection = () => {
+  const closeConnection = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (eventSourceRef.current) {
       try { eventSourceRef.current.close(); } catch {}
       eventSourceRef.current = null;
     }
     setStreaming(false);
-  };
+    reconnectAttemptsRef.current = 0;
+  }, []);
 
-  // KEEP the SSE connection mechanism EXACTLY as you provided (unchanged)
-  const handleStartScraping = (payload?: { listType: any; actionType: string; task_resume_id: string }) => {
-    // Prevent concurrent streams
-    if (streaming) {
-      toast.error("A scraping task is already running.");
-      return;
-    }
+  const resetTimeout = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      console.warn("SSE Timeout: No data received. Reconnecting...");
+      // trigger reconnect logic here if needed, or let the browser/EventSource handle it naturally if connection drops.
+      // However, polyfill EventSource might not handle silence well.
+      // We explicitly close and restart to be safe.
+      closeConnection();
+      
+      // If we were streaming, try to resume/restart
+      if (streaming && reconnectAttemptsRef.current < 5) {
+         reconnectAttemptsRef.current++;
+         toast("Connection timed out. Reconnecting...", { icon: "🔄" });
+         // We need to re-invoke startScraping with the *current* params. 
+         // Since we don't have them easily accessible as arguments here without refactoring, 
+         // we rely on the task ID in state if it exists.
+         if (taskData._id && taskData.status !== TASK_STATUS.COMPLETED) {
+            handleStartScraping({
+                listType: taskData.list_type, 
+                actionType: EVENTS.TASK_PAUSED_RESUME, // Resume existing
+                task_resume_id: taskData._id 
+            });
+         } else {
+             // Fallback to initial start if no ID yet
+             handleStartScraping();
+         }
+      } else if (streaming) {
+          setError("Connection lost. Maximum retries exceeded.");
+          toast.error("Connection lost.");
+      }
+    }, CONNECTION_TIMEOUT_MS);
+  }, [closeConnection, streaming, taskData._id, taskData.status, taskData.list_type]); // Dependencies needed for resume logic
 
+  // --- Main Action Handler ---
+
+  const handleStartScraping = useCallback((payload?: { listType: any; actionType: string; task_resume_id?: string }) => {
+    // Note: Removed "if (streaming) return" check to allow Reconnection logic to call this even if state thinks it's streaming
+    
+    // Close existing
     if (eventSourceRef.current) {
       try { eventSourceRef.current.close(); } catch {}
       eventSourceRef.current = null;
     }
     setError(null);
 
-    // URL Param Logic (mutating the shared sseEndpoint as in your original)
+    // Build URL Params locally to avoid shared state mutation issues
+    const url = new URL(SSE_BASE_URL);
+    
     if (payload) {
       setListType(payload.listType);
-      sseEndpoint.searchParams.set("list_type", payload.listType);
-      sseEndpoint.searchParams.set("action", payload.actionType);
-      if (payload.task_resume_id) sseEndpoint.searchParams.set("task_resume_id", payload.task_resume_id);
+      url.searchParams.set("list_type", payload.listType);
+      url.searchParams.set("action", payload.actionType);
+      if (payload.task_resume_id) url.searchParams.set("task_resume_id", payload.task_resume_id);
     } else {
-      sseEndpoint.searchParams.set("list_type", listType);
-      sseEndpoint.searchParams.delete("task_resume_id");
-      sseEndpoint.searchParams.set("action", EVENTS.STREAM_SCRAPING);
+      url.searchParams.set("list_type", listType);
+      url.searchParams.set("action", EVENTS.STREAM_SCRAPING);
     }
 
-    // update URL for visibility/bookmark
-    router.push(`?${sseEndpoint.searchParams.toString()}`);
+    // Update Browser URL
+    router.push(`?${url.searchParams.toString()}`);
     setStreaming(true);
+    
+    // Start Watchdog
+    resetTimeout();
 
-    // SSE Setup (EXACT snippet preserved)
-    const es = new EventSource(sseEndpoint.toString(), {
+    // Init SSE
+    const es = new EventSource(url.toString(), {
       withCredentials: true,
       fetch: (input, init) => fetch(input, {
         ...init,
-        headers: { ...init.headers, ...authHeaders, "X-Identity-Key": authHeaders["X-Identity-Key"], "X-Authorization": authHeaders["X-Authorization"] },
+        headers: { 
+            ...init.headers, 
+            ...authHeaders, 
+            "X-Identity-Key": authHeaders["X-Identity-Key"], 
+            "X-Authorization": authHeaders["X-Authorization"] 
+        },
       }),
     });
 
     eventSourceRef.current = es;
 
-    // ---- listeners (fixed parsing, guards, no memory leaks) ----
+    // --- Listeners ---
 
     const onTaskStatus = (e: MessageEvent) => {
       if (!mountedRef.current) return;
+      resetTimeout(); // Beat the watchdog
+
       try {
         const parsed = JSON.parse(e.data);
-        const payload = parsed?.data ?? null;
-        if (!payload) return;
+        const payloadData = parsed?.data ?? null;
+        if (!payloadData) return;
 
-        // merge safely: use server as authoritative for fields present
-        setTaskData((prev) => ({ ...prev, ...payload }));
+        setTaskData((prev) => ({ ...prev, ...payloadData }));
 
-        // detect completion/cancel based on task_status payload
-        if (payload.status === TASK_STATUS.COMPLETED || payload.status === TASK_STATUS.CANCELLED) {
-          if (payload.status === TASK_STATUS.COMPLETED) toast.success("Scraping completed.");
-          if (payload.status === TASK_STATUS.CANCELLED) toast("Scraping cancelled.");
-          setStreaming(false);
-          try { es.close(); } catch {}
-          eventSourceRef.current = null;
+        // Completion Check
+        if (payloadData.status === TASK_STATUS.COMPLETED || payloadData.status === TASK_STATUS.CANCELLED) {
+          if (payloadData.status === TASK_STATUS.COMPLETED) toast.success("Scraping completed.");
+          if (payloadData.status === TASK_STATUS.CANCELLED) toast("Scraping cancelled.");
+          closeConnection(); // Stop streaming, clear timeouts
         }
       } catch (err) {
         console.error("Failed to parse task_status event", err);
@@ -173,10 +214,11 @@ export default function ScrapeResultPage() {
 
     const onTaskList = (e: MessageEvent) => {
       if (!mountedRef.current) return;
+      resetTimeout(); // Beat the watchdog
       try {
         const parsed = JSON.parse(e.data);
-        const payload = parsed?.data ?? null;
-        if (Array.isArray(payload)) setTaskList(payload);
+        const payloadData = parsed?.data ?? null;
+        if (Array.isArray(payloadData)) setTaskList(payloadData);
       } catch (err) {
         console.error("Failed to parse task_list event", err);
       }
@@ -184,37 +226,39 @@ export default function ScrapeResultPage() {
 
     const onError = (ev: Event | MessageEvent) => {
       if (!mountedRef.current) return;
-      let errMsg = "Connection Error";
+      // Don't kill immediately on error, might be temporary network blip.
+      // But if it's a fatal error sent by server as JSON, handle it.
+      
+      let errMsg = "";
       try {
         if ((ev as MessageEvent).data) {
           const parsed = JSON.parse((ev as MessageEvent).data as string);
           if (parsed?.error) errMsg = parsed.error;
           else if (parsed?.data?.error) errMsg = parsed.data.error;
-        } else {
-          const readyState = (es as any)?.readyState;
-          if (readyState === 0) errMsg = "Connecting...";
-          else if (readyState === 2) errMsg = "Connection closed by server";
         }
-      } catch {
-        // ignore parse problems
-      }
+      } catch { }
 
-      setError(errMsg);
-      toast.error(errMsg);
-      setStreaming(false);
-      try { es.close(); } catch {}
-      eventSourceRef.current = null;
+      if (errMsg) {
+          // Fatal server error
+          setError(errMsg);
+          toast.error(errMsg);
+          closeConnection();
+      } else {
+          // Network/Connection error. 
+          // EventSource usually tries to reconnect automatically. 
+          // We let it try until our watchdog kills it.
+          console.warn("SSE Connection issue...", ev);
+      }
     };
 
-    // attach listeners
     es.addEventListener("task_status", onTaskStatus as EventListener);
     es.addEventListener("task_list", onTaskList as EventListener);
-    // preserve listening for server-sent 'error' events but handle native errors too
     es.addEventListener("error", onError as EventListener);
     es.onerror = onError as any;
 
-    // no cleanup return here (original pattern): rely on explicit closeConnection and effect cleanup
-  };
+  }, [listType, router, resetTimeout, closeConnection]); // Added dependencies
+
+  // --- Initial Load & Cleanup ---
 
   useEffect(() => {
     mountedRef.current = true;
@@ -225,16 +269,20 @@ export default function ScrapeResultPage() {
 
     return () => {
       mountedRef.current = false;
-      try { eventSourceRef.current?.close(); } catch {}
-      eventSourceRef.current = null;
-      setStreaming(false);
+      closeConnection();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [closeConnection]);
 
-  // --- Render ---
+  // Wrapper for manual actions to match original signature
+  const handleAction = (id: string, type: string, listType?: string) => {
+    handleStartScraping({
+      listType: listType as (typeof LIST_TYPE)[keyof typeof LIST_TYPE],
+      actionType: type,
+      task_resume_id: id,
+    });
+  };
 
-  const showLive = streaming || error; // don't use stale task._id to keep card visible forever
+  const showLive = streaming || error;
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -328,7 +376,7 @@ export default function ScrapeResultPage() {
                   <HistoryRow
                     key={task._id}
                     task={task}
-                    onAction={(id, type, lt) => handleAction(id, type, lt)}
+                    onAction={handleAction}
                     onDelete={(id) => setTaskList(prev => prev.filter(t => t._id !== id))}
                   />
                 ))}
@@ -342,7 +390,7 @@ export default function ScrapeResultPage() {
   );
 }
 
-// --- Sub-Components ---
+// --- Sub-Components (Unchanged visual logic) ---
 
 function LiveMonitorCard({ task, streaming, error, onStop }: any) {
   const percent = task.processable > 0 ? Math.min(100, Math.round((task.processed / task.processable) * 100)) : 0;
@@ -413,6 +461,7 @@ function MetricItem({ label, value, icon: Icon, color }: any) {
     </div>
   );
 }
+
 interface HistoryRowProps {
   task: taskDataType;
   onAction: (id: string, type: string, listType?: string) => void;

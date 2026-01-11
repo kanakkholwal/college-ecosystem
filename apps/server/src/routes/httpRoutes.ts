@@ -26,7 +26,7 @@ import {
   importFreshers,
   updateResult,
 } from "../controllers/http-result";
-import { resultScrapingSSEHandler, resultScrapingSSEHandlerV2 } from "../controllers/sse-scraping";
+import { resultScrapingSSEHandler } from "../controllers/sse-scraping";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -79,7 +79,6 @@ router.post("/results/bulk/update", bulkUpdateResults);
 router.post("/results/bulk/delete", bulkDeleteResults);
 // Endpoint to get result by rollNo scraped from the website
 router.get("/results/scrape-sse", resultScrapingSSEHandler as unknown as RequestHandler);
-router.get("/results/test", resultScrapingSSEHandlerV2 as unknown as RequestHandler);
 
 router.post("/results/:rollNo/scrape", getResultByRollNoFromSite);
 // Endpoint to [get,add,update] result by rollNo from the database
