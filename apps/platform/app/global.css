@@ -3,22 +3,25 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-@custom-variant glass_dark (&:where([data-theme="glass_dark"], [data-theme="glass_dark"] *));
+@custom-variant dark (&:where([data-theme="dark"], .dark, .dark *, [data-theme="dark"] *));
 
 :root,
-[data-theme="light"],
-[data-theme="glass_soft"] {
+[data-theme="light"] {
     --background: hsl(0deg 0% 96.08%);
     --foreground: hsl(0deg 0% 9.8%);
+
     --card: hsl(0, 0%, 100%);
     --card-foreground: hsl(0deg 0% 9.8%);
+
     --popover: hsl(0 0% 100%);
     --popover-foreground: hsl(0deg 0% 9.8%);
+
     --primary: hsl(175, 84%, 32%);
     --primary-foreground: hsl(0deg 0% 92.16%);
-    --secondary: hsl(86, 100%, 32%);
-    --secondary-foreground: hsl(0deg 0% 92.16%);
+
+    --secondary: hsla(240 4.8% 95.9%);
+    --secondary-foreground: hsla(240 5.9% 10%);
+
     --tertiary: #20adee;
     --tertiary-foreground: hsl(0deg 0% 92.16%);
 
@@ -39,6 +42,12 @@
     --warning-foreground: oklch(0.145 0 0);
     --info: oklch(0.6 0.118 184.704);
     --info-foreground: oklch(0.985 0 0); */
+    /* design kit vars */
+    --primary-blue: hsla(201, 100%, 95%);
+    --primary-purple: hsla(215, 49%, 93%);
+    --primary-light: hsla(210, 33%, 98%);
+    --primary-green: hsla(201, 100%, 95%);
+    --primary-red: hsla(201, 100%, 95%);
 
     --border: hsl(220 13% 91%);
     --input: hsl(220 13% 91%);
@@ -109,17 +118,21 @@
 }
 
 .dark,
-[data-theme="dark"],
-[data-theme="glass_dark"] {
+[data-theme="dark"] {
     --background: hsl(0deg 0% 7.06%);
     --foreground: hsl(0deg 0% 92.16%);
+
     --card: hsl(0deg 0% 9.8%);
+
     --card-foreground: hsl(0deg 0% 92.16%);
     --popover: hsl(0deg 0% 9.8%);
     --popover-foreground: hsl(0deg 0% 92.16%);
 
     --primary: hsl(175, 84%, 32%);
     --primary-foreground: hsl(0deg 0% 92.16%);
+
+    --secondary: hsla(240 3.7% 15.9%);
+    --secondary-foreground: hsla(0 0% 98%);
 
     --warning: hsl(37deg, 87%, 41%);
     --muted: hsl(0deg 0.01% 12.16%);
@@ -140,9 +153,10 @@
     --warning-foreground: oklch(0.145 0 0);
     --info: oklch(0.696 0.17 184.704);
     --info-foreground: oklch(0.985 0 0); */
-
-
-
+    /* design kit vars */
+    --primary-light: hsla(0, 0%, 100%, 0.05);
+    --primary-purple: hsla(215, 49%, 93%, 1);
+    --primary-blue: hsla(201, 100%, 95%, 1);
     --border: hsl(0, 0%, 14%);
     /* --input: hsl(0, 0%, 14%); */
     --input: oklch(1 0 0/15%);
@@ -215,6 +229,13 @@
     --color-secondary-foreground: var(--secondary-foreground);
     --color-tertiary: var(--tertiary);
     --color-tertiary-foreground: var(--tertiary-foreground);
+
+
+    --color-primary-blue: var(--primary-blue);
+    --color-primary-purple: var(--primary-purple);
+    --color-primary-light: var(--primary-light);
+    --color-primary-green: var(--primary-green);
+    --color-primary-red: var(--primary-red);
 
     --color-muted: var(--muted);
     --color-muted-foreground: var(--muted-foreground);
