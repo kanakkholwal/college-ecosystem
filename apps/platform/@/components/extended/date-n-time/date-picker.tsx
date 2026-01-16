@@ -15,9 +15,12 @@ import {
 } from "@/components/ui/popover";
 import type { Matcher } from "react-day-picker";
 
-const DatePickerFormSchema = z.date({
-  required_error: "A date and time is required.",
-});
+const DatePickerFormSchema = z.preprocess(
+  (arg) => (arg instanceof Date ? arg : undefined),
+  z.date().refine((date) => !isNaN(date.getTime()), {
+    message: "A date and time is required.",
+  })
+);
 type DatePickerType = z.infer<typeof DatePickerFormSchema>;
 
 interface DateTimePickerTypeProps {

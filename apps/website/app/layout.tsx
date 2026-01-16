@@ -5,6 +5,12 @@ import { Provider } from "./client-provider";
 import "./globals.css";
 
 import { Open_Sans } from "next/font/google";
+// app/layout.tsx
+import './globals.css';
+import { Inter } from 'next/font/google';
+import { AccessibilityBar } from './layouts/accessibility-bar';
+import { Header } from './layouts/header';
+import { Footer } from './layouts/footer';
 
 const font = Open_Sans({
   weight: ["400", "500", "600", "700", "800"],
@@ -43,21 +49,23 @@ export const metadata: Metadata = {
   manifest: "./manifest.json",
 };
 
+
+const inter = Inter({ subsets: ['latin'] });
+
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <head >
-        <meta name="google-adsense-account" content="ca-pub-6988693445063744"/>
-      </head>
-      <body
-        className={`${font.className} min-h-screen selection:bg-primary/10 selection:text-primary dark:bg-gray-900`}
-      >
-        <Provider>{children}</Provider>
-        <GoogleAnalytics gaId="G-SC4TQQ5PCW" />
+    <html lang="en" dir="ltr">
+      <body className={`${inter.className} bg-white text-gray-800`}>
+        <AccessibilityBar />
+        <Header />
+        <main className="min-h-screen">
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   );

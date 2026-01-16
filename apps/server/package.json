@@ -9,6 +9,7 @@
         "dev": "tsx watch src/index.ts",
         "lint": "eslint src/** ",
         "lint:fix": "eslint src/**  --fix",
+        "add_freshers": "tsx src/scripts/add_freshers.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [
@@ -23,18 +24,22 @@
         "axios": "^1.7.9",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
-        "express": "^4.21.2",
+        "exceljs": "^4.4.0",
+        "express": "^4.22.1",
+        "express-rate-limit": "^7.5.0",
         "ioredis": "5.4.2",
         "mongoose": "^8.9.7",
+        "multer": "^2.0.1",
         "node-html-parser": "^7.0.1",
         "read-excel-file": "^5.8.6",
         "socket.io": "^4.8.1",
-        "zod": "^3.24.1",
-        "express-rate-limit": "^7.5.0"
+        "xlsx": "^0.18.5",
+        "zod": "^3.24.1"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
         "@types/express": "^5.0.0",
+        "@types/multer": "^1.4.13",
         "@types/node": "^22.13.1",
         "@types/socket.io": "^3.0.2",
         "@types/ws": "^8.5.14",
@@ -45,5 +50,6 @@
         "tsx": "^4.19.2",
         "typescript": "^5.7.3",
         "typescript-eslint": "^8.23.0"
-    }
+    },
+    "packageManager": "bun@1.3.0"
 }

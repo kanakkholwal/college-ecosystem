@@ -1,7 +1,7 @@
 "use client";
 // create a useShare hook with navigator.share() as a fallback
 // https://web.dev/web-share/
-// https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share
+// https://developer.mozilla.org/en-IN/docs/Web/API/Navigator/share
 // https://caniuse.com/web-share
 // https://caniuse.com/web-share-api
 // https://caniuse.com/web-share-target
@@ -12,6 +12,8 @@ import { IoLogoReddit, IoMailOutline } from "react-icons/io5";
 import { LuFacebook } from "react-icons/lu";
 import { TbBrandTelegram } from "react-icons/tb";
 
+import { useMemo } from "react";
+import toast from "react-hot-toast";
 import { FaPinterestP, FaXTwitter } from "react-icons/fa6";
 
 type Social = {
@@ -26,20 +28,30 @@ export const useShare = (data: {
   url?: string;
   image?: string;
 }) => {
+  
+
   const share = async () => {
     if (navigator.share) {
       try {
-        await navigator.share(data);
+        await navigator.share({
+          title: data.title,
+          text: data.text,
+          url: data.url,
+        });
       } catch (error) {
+        toast.error("Failed to share content");
         console.error(error);
       }
     } else {
+      toast.error("Web Share API not supported in your browser");
       console.error("Web Share API not supported in your browser");
     }
   };
+  const isNativeShareSupported = !!navigator.share;
 
   return {
     share,
+    isNativeShareSupported,
     socials: [
       {
         name: "facebook",
@@ -78,7 +90,7 @@ export const useShare = (data: {
       },
       {
         name: "email",
-        url: `mailto:?subject=${data.title}&body=${data.text}`,
+        url: `mailto:?subject=${data.title}&body=${data.text}: ${data.url}`,
         icon: IoMailOutline,
       },
     ] as Social[],

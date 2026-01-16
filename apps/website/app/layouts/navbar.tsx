@@ -6,7 +6,7 @@ export default function Navbar() {
   return (
     <nav
       id="navbar"
-      className="fixed inset-x-0 z-20 w-full border-b border-gray-100 bg-white/80 backdrop-blur dark:border-gray-700/30 dark:bg-gray-900/80"
+      className="fixed inset-x-0 z-20 w-full border-b border-gray-100 bg-white/80 backdrop-blur-sm dark:border-gray-700/30 dark:bg-gray-900/80"
     >
       <div className="mx-auto px-4 sm:px-12 xl:max-w-6xl xl:px-0">
         <div className="relative z-20 flex w-full justify-between md:px-0 py-4">
@@ -18,7 +18,7 @@ export default function Navbar() {
             NITH PORTAL
           </Link>
 
-          <Button variant="default_light" className="rounded-full" asChild>
+          <Button variant="default_soft" className="rounded-full" asChild>
             <Link
               href="https://app.nith.eu.org?utm_source=nith.eu.org"
               target="_blank"

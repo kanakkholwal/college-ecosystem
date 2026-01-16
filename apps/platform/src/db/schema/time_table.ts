@@ -7,8 +7,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { DEPARTMENT_CODES } from "src/constants/departments";
-import { users } from "./auth-schema";
+import { DEPARTMENT_CODES } from "~/constants/core.departments";
 
 export const departmentCodeEnum = pgEnum(
   "department_code_enum",

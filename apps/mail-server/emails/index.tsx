@@ -1,26 +1,53 @@
-import { ResetPasswordEmail } from "./reset-password";
-import { WelcomeVerifyEmail } from "./welcome-verify";
+
+import type { EmailPayload } from "@/types/schema";
+import { emailPayloadSchema } from "@/types/schema";
+import { emailTemplates } from "./templates";
 import EmailWrapper from "./wrapper";
 
-const email_templates = new Map([
-  ["reset-password", ResetPasswordEmail],
-  ["welcome_verify", WelcomeVerifyEmail],
-]);
+// map emailTemplates to their keys a Map for easier access
+// and to avoid using a plain object which would require type assertions
 
+const email_templates = new Map<string, React.FC<{ payload: EmailPayload }>>(
+  Object.entries(emailTemplates).map(([key, component]) => [key, component])
+);
+/**
+ * The function `getEmailTemplate` retrieves and renders an email template component based on a
+ * specified key and payload.
+ * @param  - The code you provided is a function that retrieves an email template component based on a
+ * given template key and renders it within an EmailWrapper component along with a payload. Here's a
+ * breakdown of the parameters and functionality:
+ * @returns The `getEmailTemplate` function returns a React element that wraps the specified email
+ * template component with an `EmailWrapper` component, passing the provided payload to the email
+ * template component. If the template key is found in the `email_templates` map, the function returns
+ * the wrapped email template component. Otherwise, it returns `null`.
+ */
 export function getEmailTemplate({
   template_key,
   payload,
 }: {
   template_key: string;
-  payload: Record<string, string | number | string[] | number[]>;
+  payload: EmailPayload;
 }): React.ReactElement | null {
-  if (email_templates.has(template_key)) {
-    const EmailComponent = email_templates.get(template_key);
-    return (
-      <EmailWrapper>
-        <EmailComponent payload={payload} />
-      </EmailWrapper>
-    );
+  const EmailComponent = email_templates.get(template_key);
+  // Check if the template key exists in the email_templates map
+
+  if (!EmailComponent) {
+    console.error(`Template key "${template_key}" does not exist.`);
+    return null;
   }
-  return null;
+
+  const res = emailPayloadSchema.safeParse(payload);
+  if (!res.success) {
+    console.error(res.error.message);
+    return null;
+  }
+  // Validate the payload
+  const validatedPayload = res.data;
+
+  return (
+    <EmailWrapper>
+      <EmailComponent payload={validatedPayload} />
+    </EmailWrapper>
+  );
+
 }

@@ -1,3 +1,9 @@
+
+
+
+export const twUtility = {
+  horizontalScroll:"snap-x snap-mandatory overflow-x-auto scrollbar-0 scrollbar-thumb-muted/0 scrollbar-track-transparent no-scrollbar"
+}
 // this is used to generate all tailwind classes
 // if you want to use your own colors, you can override the classes here
 

@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { type NextRequest, NextResponse } from "next/server";
-import { getHostelByUser } from "~/actions/hostel";
+import { getHostelByUser } from "~/actions/hostel.core";
 import { OutPassModel, type OutPassType } from "~/models/hostel_n_outpass";
 
 export async function GET(request: NextRequest) {

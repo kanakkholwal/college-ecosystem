@@ -21,8 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
-import React from "react";
-import { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 export type ResponsiveDialogProps = {
   children: React.ReactNode;
@@ -32,6 +31,8 @@ export type ResponsiveDialogProps = {
   defaultOpen?: boolean;
   onOpenChange?(open: boolean): void;
   className?: string;
+  showCloseButton?: boolean;
+  hideHeader?: boolean;
 };
 
 const ResponsiveDialog = React.memo(
@@ -43,29 +44,31 @@ const ResponsiveDialog = React.memo(
     className,
     defaultOpen,
     onOpenChange,
+    showCloseButton = true,
+    hideHeader = false,
   }: ResponsiveDialogProps) => {
     const [open, setOpen] = useState(defaultOpen || false);
     const isDesktop = useMediaQuery("(min-width: 768px)");
+    const handleOpenChange = (value: boolean) => {
+      setOpen(value);
+      onOpenChange?.(value);
+    }
 
     const dialog = useMemo(() => {
       if (isDesktop) {
         return (
-          <Dialog
-            open={open}
-            onOpenChange={(value) => {
-              setOpen(value);
-              onOpenChange?.(value);
-            }}
-          >
+          <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button {...btnProps} />
             </DialogTrigger>
             <DialogContent
               className={cn("sm:max-w-[425px] @container/dialog", className)}
             >
-              <DialogHeader>
-                <DialogTitle>{title}</DialogTitle>
-                <DialogDescription>{description}</DialogDescription>
+              <DialogHeader className={cn(hideHeader ? "hidden" : "text-left")}>
+                <DialogTitle className="text-pretty">{title}</DialogTitle>
+                <DialogDescription className="text-pretty">
+                  {description}
+                </DialogDescription>
               </DialogHeader>
               {children}
             </DialogContent>
@@ -74,29 +77,29 @@ const ResponsiveDialog = React.memo(
       }
 
       return (
-        <Drawer
-          open={open}
-          onOpenChange={(value) => {
-            setOpen(value);
-            onOpenChange?.(value);
-          }}
-        >
+        <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerTrigger asChild>
             <Button {...btnProps} />
           </DrawerTrigger>
           <DrawerContent>
-            <DrawerHeader className="text-left">
-              <DrawerTitle>{title}</DrawerTitle>
-              <DrawerDescription>{description}</DrawerDescription>
+            <DrawerHeader className={cn(hideHeader ? "hidden" : "text-left")}>
+              <DrawerTitle className="text-pretty">{title}</DrawerTitle>
+              <DrawerDescription className="text-pretty">
+                {description}
+              </DrawerDescription>
             </DrawerHeader>
-            <div className={cn("px-4 w-full @container/dialog", className)}>
+            <div className={cn("px-4 w-full @container/dialog space-y-3", className, showCloseButton ? " " : "pb-4")}>
               {children}
             </div>
-            <DrawerFooter className="pt-2">
-              <DrawerClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
+            {showCloseButton && (
+              <DrawerFooter className="pt-2 justify-end">
+                <DrawerClose asChild>
+                  <Button size="sm" variant="outline">
+                    Cancel
+                  </Button>
+                </DrawerClose>
+              </DrawerFooter>
+            )}
           </DrawerContent>
         </Drawer>
       );
@@ -124,3 +127,64 @@ const ResponsiveDialog = React.memo(
 );
 
 export { ResponsiveDialog };
+
+export interface ControlledResponsiveDialogProps {
+  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  className?: string;
+  hideClose?: boolean;
+}
+
+export function ControlledResponsiveDialog({
+  children,
+  open,
+  onOpenChange,
+  title,
+  description,
+  className,
+  hideClose = false,
+}: ControlledResponsiveDialogProps) {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className={cn("sm:max-w-[425px]", className)}>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            {description && (
+              <DialogDescription>{description}</DialogDescription>
+            )}
+          </DialogHeader>
+          {children}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+          <DrawerTitle>{title}</DrawerTitle>
+          {description && (
+            <DrawerDescription>{description}</DrawerDescription>
+          )}
+        </DrawerHeader>
+        <div className={cn("px-4", className)}>
+          {children}
+        </div>
+        {!hideClose && (
+          <DrawerFooter className="pt-2">
+            <DrawerClose asChild>
+              <Button variant="outline">Close</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        )}
+      </DrawerContent>
+    </Drawer>
+  );
+}

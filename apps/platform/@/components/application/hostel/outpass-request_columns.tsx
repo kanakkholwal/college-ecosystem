@@ -78,12 +78,12 @@ export const columns: ColumnDef<OutPassType>[] = [
       return (
         <div className="text-left font-medium">
           {new Date(row.original.expectedInTime).toLocaleDateString(
-            "en-US",
+            "en-IN",
             timeOptions
           )}
           {row.original.actualInTime &&
             new Date(row.original.actualInTime).toLocaleDateString(
-              "en-US",
+              "en-IN",
               timeOptions
             )}
         </div>
@@ -102,12 +102,12 @@ export const columns: ColumnDef<OutPassType>[] = [
       return (
         <div className="text-left font-medium">
           {new Date(row.original.expectedOutTime).toLocaleDateString(
-            "en-US",
+            "en-IN",
             timeOptions
           )}
           {row.original?.actualInTime &&
             new Date(row.original?.actualOutTime || "").toLocaleDateString(
-              "en-US",
+              "en-IN",
               timeOptions
             )}
         </div>
@@ -128,12 +128,12 @@ export const columns: ColumnDef<OutPassType>[] = [
           <Badge
             variant={
               row.getValue("status") === "pending"
-                ? "warning_light"
+                ? "warning_soft"
                 : row.getValue("status") === "approved"
-                  ? "success_light"
+                  ? "success_soft"
                   : row.getValue("status") === "rejected"
-                    ? "destructive_light"
-                    : "default_light"
+                    ? "destructive_soft"
+                    : "default_soft"
             }
           >
             {row.getValue("status")}
@@ -168,7 +168,7 @@ export const columns: ColumnDef<OutPassType>[] = [
       return (
         <div className="text-left font-medium">
           {new Date(row.original.validTill).toLocaleDateString(
-            "en-US",
+            "en-IN",
             timeOptions
           )}
         </div>
@@ -185,7 +185,7 @@ export const columns: ColumnDef<OutPassType>[] = [
     ),
     cell: ({ row }) => {
       const formatted = new Date(row.getValue("createdAt")).toLocaleDateString(
-        "en-US",
+        "en-IN",
         timeOptions
       );
       return (

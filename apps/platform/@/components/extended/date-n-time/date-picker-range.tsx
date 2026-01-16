@@ -16,12 +16,18 @@ import {
 import type { DateRange } from "react-day-picker";
 
 const DatePickerWithRangeSchema = z.object({
-  from: z.date({
-    required_error: "A start date is required.",
-  }),
-  to: z.date({
-    required_error: "An end date is required.",
-  }),
+  from: z.preprocess(
+    (arg) => (arg instanceof Date ? arg : undefined),
+    z.date().refine((date) => !!date, {
+      message: "A start date is required.",
+    })
+  ),
+  to: z.preprocess(
+    (arg) => (arg instanceof Date ? arg : undefined),
+    z.date().refine((date) => !!date, {
+      message: "An end date is required.",
+    })
+  ),
 });
 
 type DatePickerWithRangeType = z.infer<typeof DatePickerWithRangeSchema>;

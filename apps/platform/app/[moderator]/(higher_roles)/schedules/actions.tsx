@@ -1,16 +1,20 @@
 "use server";
-import { getDepartmentCode } from "src/constants/departments";
-import { getSession } from "src/lib/auth-server";
 import dbConnect from "src/lib/dbConnect";
 import { getStudentInfo } from "src/lib/student/actions";
 import Timetable, { type TimeTableWithID } from "src/models/time-table";
 import type { studentInfoType } from "src/types/student";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
+import { getDepartmentCode } from "~/constants/core.departments";
 
 export async function getInfo(): Promise<{
   studentInfo: studentInfoType | null;
   timetables: TimeTableWithID[];
 }> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (!session) {
     return Promise.reject("Unauthorized");
   }

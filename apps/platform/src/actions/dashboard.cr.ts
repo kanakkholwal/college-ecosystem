@@ -1,42 +1,48 @@
 "use server";
-import { getSession } from "src/lib/auth-server";
+import { headers } from "next/headers";
 import dbConnect from "src/lib/dbConnect";
 import { getStudentInfo } from "src/lib/student/actions";
 import Timetable, { type TimeTableWithID } from "src/models/time-table";
 import type { studentInfoType } from "src/types/student";
+import { auth } from "~/auth";
 
 export async function getInfo(): Promise<{
   studentInfo: studentInfoType;
   timetables: TimeTableWithID[];
+  stats: {
+    totalSchedules: number;
+    lastUpdated: Date | null;
+  };
 }> {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
 
   if (!session?.user.other_roles.includes("cr")) {
-    throw new Error("You are not authorized to perform this action");
+    throw new Error("Unauthorized");
   }
 
   await dbConnect();
   const studentInfo = await getStudentInfo(session?.user.username);
 
+  // Fetch timetables created by this CR or for their specific batch
   const timetables = await Timetable.find({
     department_code: studentInfo.departmentCode,
     year: studentInfo.currentYear,
-    semester: studentInfo.currentSemester,
-  }).lean();
+    // You might want to filter by semester too
+  })
+  .sort({ updatedAt: -1 }) // Get latest first
+  .lean<TimeTableWithID[]>();
 
-  return Promise.resolve({
+  const stats = {
+    totalSchedules: timetables.length,
+    lastUpdated: timetables.length > 0 ? timetables[0].updatedAt : null,
+  };
+
+  return {
     studentInfo,
     timetables: JSON.parse(JSON.stringify(timetables)),
-  });
-}
-
-export async function getCrInfo() {
-  const session = await getSession();
-
-  if (!session?.user.other_roles.includes("cr")) {
-    throw new Error("You are not authorized to perform this action");
-  }
-
-  await dbConnect();
-  const studentInfo = await getStudentInfo(session?.user.username);
+    stats: JSON.parse(JSON.stringify(stats)),
+  };
 }

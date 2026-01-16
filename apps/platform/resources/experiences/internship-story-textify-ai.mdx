@@ -1,0 +1,80 @@
+---
+title: "My Remote Internship at Textify.ai"
+slug: "internship-story-textify-ai"
+category: "career"
+summary: "Insights from my SDE internship at Textify.ai, a fully remote experience focused on Cloud, Next.js, and AI integration."
+tags: ["internship", "remote", "aws", "frontend"]
+date: "2025-06-28"
+author:
+  name: "Kanak Kholwal"
+  url: "https://kanakkholwal.eu.org"
+  image: "https://github.com/kanakkholwal.png"
+  handle: "@kanakkholwal"
+  handleUrl: "https://x.com/kanakkholwal"
+---
+
+In Dec 2022, I started my **3-month SDE internship** at Textify.ai although it ended up being 1.5 years. This was my first fully remote role, and I learned a lot about working independently while still being part of a team.
+
+### How I Got the Internship
+I was just another tech enthusiast sophomore student who thought I can build enterprise software just after building my first react app. Also, a college senior of mine suggested I should start applying for internships now after seeing my work,
+Not boasting but I had a decent GitHub profile with some projects at that time. One of them was a real world project I built in 24 hours (initial version) alone check it out [here](https://app.nith.eu.org).
+It was a project inspired by a senior's project and I just wanted to build something like that.
+
+So, I started applying on various site like [Internshala](https://internshala.com), [LinkedIn](https://linkedin.com), and [AngelList](https://wellfound.com). 
+I applied to [Textify.ai](https://textify.ai) after seeing their job post on [AngelList](https://wellfound.com). After resume shortlisting and a live coding technical interviews, I got the offer.
+
+### What I Worked On
+In the beginning, I was assigned a React project as Textify was a new startup with no existing codebase.
+It was idea execution phase where the primary focus was on building a set of AI tools based on AI use-cases it was that time when ChatGPT was launched and AI was the buzzword. 
+I was one of the first few engineers, and I had the opportunity to shape the product from the ground up but as the application grew Every app cases was hard-code there So,
+I came up with a solution to make it dynamic and configurable. I built a **no-code interface** that allowed users to create custom AI tools without needing code changes just by 
+drag and drop and adding variables for the AI tool. This was a game-changer for the product, allowing non-technical users to create their own AI tools.
+
+We also shifted to Nextjs for the frontend, which improved performance and SEO. While everything was going well, **Authentication** was a challenge at that time as our primary goal was to build feature and not stuck up in authentication.
+I implemented **AWS Cognito** for user authentication, which provided a secure and scalable solution. This was my first experience with AWS services, and I learned a lot about managing user identities and permissions.
+But as the product evolved, we ended up with couples our backend with AWS and duplicated users data in multiple places. So, without delaying essential features, we had to find a way to streamline our architecture.
+So, I proposed a solution to use **Next Auth** for authentication, which allowed us to decouple the frontend and backend authentication logic. This made it easier to manage user sessions and provided a more flexible solution for our growing needs.
+which also allowed us to integrate with various identity providers like Google, GitHub, and email/password authentication and _share session across multiple sub-domains applications_
+about which I wrote a  [blog post here](https://medium.com/@kanakkholwal/how-to-implement-authentication-across-all-subdomains-using-next-auth-in-next-js-2ad8393c268d).
+
+While application was growing, existing free tier of AWS was not enough for us to scale up and without investing setting up proper pipeline for CI/CD, we were facing issues with deployments.
+So, I set up a **CI/CD pipeline** using **GitHub Actions and Azure Web Apps**, which automated our deployment process and allowed us to deploy changes quickly and reliably. This was my first experience with CI/CD, and it taught me the importance of automation in software development.
+Which later on we moved to **GCP** for hosting our application and used **Cloud Run** and **Docker** for deploying our Next.js application, which provided a serverless solution that scaled automatically based on traffic.
+
+These experiences taught me a lot about building scalable applications, managing user authentication, and deploying applications in the cloud.
+
+### ⚙️ Key Technologies Used
+- **Frontend**: Next.js, React, Tailwind CSS, Redux, Zustand, TypeScript, SWR
+- **Authentication**: AWS Cognito, Next Auth
+- **Deployment**: Docker, Azure Web Apps, GCP Cloud Run and GCP Cloud Build & Google Artifact Registry
+- **CI/CD**: GitHub Actions
+
+### Challenges I Faced
+- **Remote Work**: Adapting to a fully remote environment was challenging initially. I had to learn how to manage my time effectively and communicate clearly with my team.
+- **System Design**: Designing scalable systems from scratch was a new experience. I had to think about architecture, performance, and user experience.
+- **Debugging**: Debugging large-scale applications with multiple services was complex. I learned to use tools like Redis for caching and performance optimization.
+- **Collaboration**: Working with a distributed team required clear communication and collaboration tools. We used Slack, GitHub, and Zoom for daily stand-ups and code reviews.
+
+### Key Takeaways
+- **Independence**: Remote internships teach you to be self-reliant and proactive in seeking help.
+- **Learning Curve**: You will face challenges, but they are opportunities to learn and grow
+- **Networking**: Building relationships with colleagues is crucial, even in a remote setting.
+- **Real-world Experience**: Working on a live product gives you insights into the full software development lifecycle, from ideation to deployment.
+- **System Design**: You will gain hands-on experience in designing scalable systems and understanding cloud architecture.
+
+
+### What I Gained
+- **Hands-on experience** with Next.js, AWS, and cloud deployments
+- **Understanding of system design** and architecture
+- **Skills in building scalable applications** and managing user authentication
+- **Experience with CI/CD pipelines** and automated deployments
+- **Collaboration in a remote team** environment
+- **Real-world system design**
+- Exposure to full product lifecycle
+- Confidence in debugging large-scale apps
+
+### Conclusion
+My internship at Textify.ai was a transformative experience that taught me valuable skills in software development,
+cloud computing, and remote work. I had the opportunity to work on cutting-edge technologies and contribute to a product that is making a difference in the AI space.
+
+

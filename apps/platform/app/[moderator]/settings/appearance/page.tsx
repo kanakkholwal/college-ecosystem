@@ -1,119 +1,236 @@
 "use client";
 
-import { DarkTheme, LightTheme, SystemTheme } from "@/components/common/theme";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { brand_themes, BrandThemeType } from "@/components/common/theme-switcher";
+import { Separator } from "@/components/ui/separator";
+import useStorage from "@/hooks/use-storage";
 import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
+import { Check, Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-type ThemeType = "light" | "dark" | "system";
 
-interface ThemeOption {
-  value: ThemeType;
-  label: string;
-  icon: React.ComponentType;
-}
 
-const themes: ThemeOption[] = [
-  { value: "light", label: "Light", icon: LightTheme },
-  { value: "dark", label: "Dark", icon: DarkTheme },
-  { value: "system", label: "System", icon: SystemTheme },
-];
-
-export default function ThemeToggle() {
+export default function AppearanceForm() {
   const [mounted, setMounted] = React.useState(false);
-  const { theme, setTheme } = useTheme();
-  const [systemTheme, setSystemTheme] = React.useState<"dark" | "light">(
-    "light"
-  );
+  React.useEffect(() => setMounted(true), []);
 
-  React.useEffect(() => {
-    setMounted(true);
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    setSystemTheme(media.matches ? "dark" : "light");
-
-    const listener = (e: MediaQueryListEvent) => {
-      setSystemTheme(e.matches ? "dark" : "light");
-    };
-
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, []);
-
-  if (!mounted) return null;
+  if (!mounted) return <div className="h-96 w-full animate-pulse rounded-xl bg-muted/20" />;
 
   return (
-    <div className="bg-tertiary relative flex w-full scroll-m-4 flex-col rounded-lg border">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-3 pt-3">
-        <div className="font-medium text-base">Theme</div>
+    <div className="space-y-10 max-w-4xl">
+      <div className="space-y-1">
+        <h3 className="text-xl font-semibold tracking-tight">Appearance</h3>
+        <p className="text-sm text-muted-foreground">
+          Customize how the application looks and feels on your device.
+        </p>
       </div>
-      <p className="font-normal text-sm text-muted-foreground mt-0.5 px-3 lg:max-w-2xl">
-        Choose your interface color theme
-      </p>
-      <div className="bg-quaternary my-3 h-px w-full" />
-      <div className="p-8 pt-4">
-        <form>
-          <RadioGroup
-            defaultValue={theme}
-            onValueChange={(value: ThemeType) => setTheme(value)}
-            className="grid gap-3 max-sm:space-y-3 sm:grid-cols-3"
-          >
-            {themes.map((themeOption) => {
-              const Icon = themeOption.icon;
-              const isSelected = theme === themeOption.value;
-              const isSystem = themeOption.value === "system";
-              const currentSystemTheme = isSystem
-                ? systemTheme
-                : themeOption.value;
-
-              return (
-                <div
-                  key={themeOption.value}
-                  className={cn(
-                    "flex items-end justify-center rounded-md border px-1.5 pt-3 transition",
-                    currentSystemTheme,
-                    {
-                      "border-blue-500 ring-2 ring-blue-800/60": isSelected,
-                      "bg-gray-50": themeOption.value === "light",
-                      "bg-secondary": themeOption.value !== "light",
-                    }
-                  )}
-                >
-                  <RadioGroupItem
-                    value={themeOption.value}
-                    id={themeOption.value}
-                    className="sr-only"
-                  />
-                  <label
-                    htmlFor={themeOption.value}
-                    className="relative cursor-pointer"
-                  >
-                    <span className="block h-full w-full overflow-hidden">
-                      <span className="block rounded-t-sm border border-b-0 shadow-xl shadow-black/20 icon-border">
-                        <Icon />
-                      </span>
-                    </span>
-                    <span className="absolute inset-x-0 bottom-2 flex justify-center sm:-bottom-1">
-                      <span className="relative">
-                        <span className="relative inline-flex h-[30px] transform-gpu touch-none select-none items-center justify-center gap-2 rounded-md border-none border-transparent bg-button px-3 text-[13px] font-semibold leading-none text-primary shadow-button after:absolute after:-inset-[1px] after:block after:rounded-md after:bg-gradient-to-t after:from-black/5 after:opacity-50 after:transition-opacity hover:after:opacity-100 focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50 dark:after:from-black/[0.15] dark:focus-visible:ring-blue-600">
-                          {themeOption.label}
-                        </span>
-                        {isSelected && (
-                          <motion.span
-                            className="absolute inset-x-1.5 -bottom-3 h-0.5 rounded-full bg-blue-500 max-sm:hidden"
-                            layoutId="activeTheme"
-                          />
-                        )}
-                      </span>
-                    </span>
-                  </label>
-                </div>
-              );
-            })}
-          </RadioGroup>
-        </form>
-      </div>
+      
+      <Separator className="my-6" />
+      
+      <ThemeModeSelector />
+      
+      <Separator className="my-8" />
+      
+      <BrandThemeSelector />
     </div>
   );
 }
+
+
+const ThemeModeSelector = () => {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h4 className="text-sm font-medium text-foreground">Interface Theme</h4>
+        <p className="text-xs text-muted-foreground">
+          Select your preferred background mode.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {/* Light Mode Card */}
+        <ThemeCard
+          label="Light"
+          active={theme === "light"}
+          onClick={() => setTheme("light")}
+          icon={<Sun className="size-4" />}
+        >
+          <div className="relative h-full w-full bg-[#f4f4f5] p-2.5">
+            <div className="flex h-full gap-2">
+              {/* Sidebar Wireframe */}
+              <div className="w-1/4 h-full rounded-l-md bg-white border border-gray-200/50 shadow-sm flex flex-col gap-1.5 p-1.5">
+                 <div className="h-1.5 w-1/2 rounded-full bg-gray-200" />
+                 <div className="h-1.5 w-full rounded-full bg-gray-100 mt-2" />
+                 <div className="h-1.5 w-3/4 rounded-full bg-gray-100" />
+                 <div className="h-1.5 w-full rounded-full bg-gray-100" />
+              </div>
+              {/* Content Wireframe */}
+              <div className="flex-1 h-full rounded-r-md bg-white border border-gray-200/50 shadow-sm p-2 flex flex-col gap-2">
+                 <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full bg-gray-200" />
+                    <div className="h-1.5 w-20 rounded-full bg-gray-200" />
+                 </div>
+                 <div className="h-16 w-full rounded-md bg-gray-50 border border-dashed border-gray-200" />
+              </div>
+            </div>
+          </div>
+        </ThemeCard>
+
+        {/* Dark Mode Card */}
+        <ThemeCard
+          label="Dark"
+          active={theme === "dark"}
+          onClick={() => setTheme("dark")}
+          icon={<Moon className="size-4" />}
+        >
+          <div className="relative h-full w-full bg-slate-950 p-2.5">
+            <div className="flex h-full gap-2">
+              {/* Sidebar Wireframe */}
+              <div className="w-1/4 h-full rounded-l-md bg-slate-900 border border-slate-800 shadow-sm flex flex-col gap-1.5 p-1.5">
+                 <div className="h-1.5 w-1/2 rounded-full bg-slate-700" />
+                 <div className="h-1.5 w-full rounded-full bg-slate-800 mt-2" />
+                 <div className="h-1.5 w-3/4 rounded-full bg-slate-800" />
+                 <div className="h-1.5 w-full rounded-full bg-slate-800" />
+              </div>
+              {/* Content Wireframe */}
+              <div className="flex-1 h-full rounded-r-md bg-slate-900 border border-slate-800 shadow-sm p-2 flex flex-col gap-2">
+                 <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full bg-slate-800" />
+                    <div className="h-1.5 w-20 rounded-full bg-slate-800" />
+                 </div>
+                 <div className="h-16 w-full rounded-md bg-slate-950 border border-dashed border-slate-800" />
+              </div>
+            </div>
+          </div>
+        </ThemeCard>
+
+        {/* System Mode Card */}
+        <ThemeCard
+          label="System"
+          active={theme === "system"}
+          onClick={() => setTheme("system")}
+          icon={<Laptop className="size-4" />}
+        >
+          <div className="flex h-full w-full items-center justify-center bg-muted/30">
+             <div className="relative">
+                 <div className="absolute -inset-4 rounded-full bg-primary/10 blur-xl" />
+                 <Laptop className="relative h-12 w-12 text-muted-foreground/40" strokeWidth={1} />
+             </div>
+          </div>
+        </ThemeCard>
+      </div>
+    </div>
+  );
+};
+
+function ThemeCard({
+  children,
+  label,
+  active,
+  onClick,
+  icon
+}: {
+  children: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col gap-2 text-left focus:outline-none",
+      )}
+    >
+      <div
+        className={cn(
+          "relative aspect-[16/10] w-full overflow-hidden rounded-xl border-2 transition-all duration-300",
+          active 
+            ? "border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background" 
+            : "border-muted hover:border-foreground/20"
+        )}
+      >
+        {children}
+        
+        {/* Checkmark Badge */}
+        {active && (
+            <div className="absolute right-2 top-2 z-10 rounded-full bg-primary p-1 text-primary-foreground shadow-sm animate-in zoom-in-50 duration-200">
+                <Check className="h-3 w-3" strokeWidth={3} />
+            </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 px-1">
+          {icon && <span className={cn("text-muted-foreground", active && "text-primary")}>{icon}</span>}
+          <span className={cn("text-sm font-medium", active ? "text-foreground" : "text-muted-foreground")}>
+            {label}
+          </span>
+      </div>
+    </button>
+  );
+}
+
+
+const BrandThemeSelector = () => {
+  const [currentTheme, setCurrentTheme] = useStorage<BrandThemeType>(
+    "theme-brand",
+    brand_themes[0]
+  );
+
+  React.useEffect(() => {
+    // Safety check to ensure we match by ID or default to first
+    const selected = brand_themes.find((t) => t.id === currentTheme.id || t.color === currentTheme.color) || brand_themes[0];
+    
+    if (selected) {
+      const root = document.documentElement;
+      root.style.setProperty("--primary", selected.color);
+      root.style.setProperty("--ring", selected.color);
+    }
+  }, [currentTheme]);
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h4 className="text-sm font-medium text-foreground">Accent Color</h4>
+        <p className="text-xs text-muted-foreground">
+          Choose the primary color for buttons, links, and highlights.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+        {brand_themes.map((brandTheme) => {
+          const isActive = currentTheme.id === brandTheme.id;
+          
+          return (
+            <button
+              key={brandTheme.id}
+              onClick={() => setCurrentTheme(brandTheme)}
+              className={cn(
+                "group relative flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all hover:bg-muted/50 focus:outline-none",
+                isActive 
+                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs" 
+                    : "border-border hover:border-foreground/20"
+              )}
+            >
+              <div 
+                className={cn(
+                    "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform group-hover:scale-105",
+                    isActive && "scale-105"
+                )}
+                style={{ backgroundColor: brandTheme.color }}
+              >
+                  {isActive && <Check className="size-3 text-white stroke-[3]" />}
+              </div>
+              
+              <div className="flex-1 truncate text-xs font-medium text-foreground">
+                {brandTheme.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

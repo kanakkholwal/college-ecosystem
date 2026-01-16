@@ -1,28 +1,16 @@
+import { FlickeringGrid } from "@/components/animation/flikering-grid";
+import AdUnit from "@/components/common/adsense";
 import Navbar from "@/components/common/app-navbar";
 import { AppSidebar } from "@/components/common/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import Page403 from "@/components/utils/403";
 import type { Metadata, ResolvingMetadata } from "next";
-import { notFound, redirect } from "next/navigation";
-import { ROLES } from "~/constants";
-import type { Session } from "~/lib/auth";
-import { getSession } from "~/lib/auth-server";
+import { notFound } from "next/navigation";
+import type { Session } from "~/auth";
+import { getSession } from "~/auth/server";
+import { ALLOWED_ROLES } from "~/constants";
 import { changeCase } from "~/utils/string";
 
-const ALLOWED_ROLES = [
-  ROLES.ADMIN,
-  ROLES.FACULTY,
-  ROLES.CR,
-  ROLES.FACULTY,
-  ROLES.CHIEF_WARDEN,
-  ROLES.WARDEN,
-  ROLES.ASSISTANT_WARDEN,
-  ROLES.MMCA,
-  ROLES.HOD,
-  ROLES.GUARD,
-  ROLES.LIBRARIAN,
-  ROLES.STUDENT,
-];
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -39,7 +27,7 @@ export async function generateMetadata(
   const { moderator } = await params;
 
   return {
-    title: `${changeCase(moderator, "title")} Dashboard | ${process.env.NEXT_PUBLIC_WEBSITE_NAME}`,
+    title: `${changeCase(moderator, "title")} Dashboard`,
     description: `Dashboard for ${moderator}`,
   };
 }
@@ -49,29 +37,33 @@ export default async function DashboardLayout({
   params,
 }: DashboardLayoutProps) {
   const { moderator } = await params;
-
-  const session = (await getSession()) as Session;
-
-  const response = checkAuthorization(moderator, session);
-
-  if (response.redirect) {
-    console.log("Redirecting to:", response.redirect.destination);
-    return redirect(response.redirect.destination);
-  }
-  if (response.notFound) {
-    console.log("Returning notFound");
+  if (
+    !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number])
+    // && moderator !== "dashboard"
+  ) {
     return notFound();
   }
-  if (!response.authorized) {
-    console.log("Returning Page403");
-    return <Page403 />;
-  }
+
+  const session = await getSession() as Session;
 
   return (
-    <SidebarProvider className="selection:bg-primary/10 selection:text-primary">
-      <AppSidebar user={session.user} moderator={moderator}/>
+    <SidebarProvider>
+      <AppSidebar user={session.user} moderator={moderator} />
       <SidebarInset className="flex flex-col flex-1 w-full relative z-0">
-        <Navbar user={session.user} />
+        <Navbar
+          user={session.user}
+          impersonatedBy={session.session.impersonatedBy}
+        />
+        <div className="absolute top-0 left-0 z-0 w-full min-h-80 [mask-image:linear-gradient(to_top,transparent_25%,black_95%)]">
+          <FlickeringGrid
+            className="absolute top-0 left-0 size-full"
+            squareSize={4}
+            gridGap={6}
+            color="#6B7280"
+            maxOpacity={0.2}
+            flickerChance={0.05}
+          />
+        </div>
         {/* <div
           aria-hidden="true"
           className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20 -z-[1]"
@@ -80,71 +72,17 @@ export default async function DashboardLayout({
           <div className="blur-[106px] h-32 bg-gradient-to-r from-cyan-400 to-sky-300 dark:to-indigo-600" />
         </div> */}
 
-        <main className="content p-4 md:p-6 z-2 @container space-y-10 min-h-screen h-full">
+        <main className="content p-4 px-2 md:p-6 z-2 @container space-y-10 min-h-screen h-full">
           {children}
         </main>
-        {/* <div
-          aria-hidden="true"
-          className="absolute bottom-0 right-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20 -z-[1]"
-        >
-          <div className="blur-[106px] h-32 bg-gradient-to-r from-cyan-400 to-sky-300 dark:to-indigo-600" />
-          <div className="blur-[106px] h-56 bg-gradient-to-br from-primary to-purple-400 dark:from-blue-700" />
-        </div> */}
+        <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
         {process.env.NODE_ENV !== "production" && (
-          <div className="fixed bottom-0 right-0 p-2 text-xs text-gray-500 dark:text-slate-400">
-            v0.0.1({process.env.NODE_ENV})
+          <div className="fixed bottom-0 right-auto left-auto mx-auto p-2 text-xs text-muted-foreground">
+            <span className="font-semibold">Environment:</span>{" "}
+            {process.env.NODE_ENV}
           </div>
         )}
       </SidebarInset>
     </SidebarProvider>
   );
-}
-
-function checkAuthorization(
-  moderator: (typeof ALLOWED_ROLES)[number],
-  session: Awaited<ReturnType<typeof getSession>>
-) {
-  // 1. No session, redirect to sign-in
-  if (!session) {
-    return {
-      redirect: { destination: "/sign-in" },
-      authorized: false,
-      notFound: false,
-    };
-  }
-
-  // 2. Invalid role
-  if (!ALLOWED_ROLES.includes(moderator)) {
-    console.log("Invalid moderator role:", moderator);
-    // const destination = session.user.other_roles.includes("student")
-    //   ? "/"
-    //   : session.user.other_roles[0] || "/";
-    const destination =
-      session.user.other_roles?.length > 0 ? session.user.other_roles[0] : "/";
-    return {
-      redirect: { destination },
-      authorized: false,
-      notFound: false,
-    };
-  }
-
-  // 4. Authorized check
-  if (
-    session.user.other_roles
-      .map((role) => role.toLowerCase())
-      .includes(moderator.toLowerCase()) ||
-    session.user.role.toLowerCase() === moderator.toLowerCase()
-  ) {
-    return {
-      notFound: false,
-      authorized: true,
-      redirect: null,
-    };
-  }
-
-  return {
-    notFound: true,
-    authorized: false,
-    redirect: null,
-  };
 }

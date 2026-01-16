@@ -1,22 +1,12 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
-import { CATEGORY_TYPES, SUB_CATEGORY_TYPES } from "src/constants/community";
 import * as z from "zod";
+import {
+  CATEGORY_TYPES,
+  SUB_CATEGORY_TYPES,
+  RawCommunityPostType
+} from "~/constants/common.community";
 
-export const rawCommunityPostSchema = z.object({
-  title: z.string().min(5, "Title must be atleast 5 characters long."),
-  content: z.string().min(10, "Content must be atleast 10 characters long."), // markdown
-  category: z.enum(CATEGORY_TYPES),
-  subCategory: z
-    .enum(
-      SUB_CATEGORY_TYPES as unknown as [
-        (typeof SUB_CATEGORY_TYPES)[number],
-        ...(typeof SUB_CATEGORY_TYPES)[number][],
-      ]
-    )
-    .optional()
-    .nullable(),
-});
-export type RawCommunityPostType = z.infer<typeof rawCommunityPostSchema>;
+
 
 export type CommunityPostTypeWithId = RawCommunityPostType & {
   _id: string;
@@ -37,6 +27,7 @@ interface ICommunityPost extends Document {
   content: string;
   category: (typeof CATEGORY_TYPES)[number];
   subCategory?: (typeof SUB_CATEGORY_TYPES)[number];
+  content_json: RawCommunityPostType["content_json"];
   author: {
     id: string;
     name: string;
@@ -55,6 +46,7 @@ const communityPostSchema = new Schema<ICommunityPost>(
     content: { type: String, required: true },
     category: { type: String, enum: CATEGORY_TYPES, required: true },
     views: { type: Number, required: true },
+    content_json: { type: Object },
     likes: [String],
     savedBy: [String],
     author: {
@@ -90,7 +82,11 @@ interface ICommunityComment extends Document {
 const communityCommentSchema = new Schema<ICommunityComment>(
   {
     content: { type: String, required: true },
-    author: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    author: {
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      username: { type: String, required: true },
+    },
     postId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CommunityPost",

@@ -1,22 +1,25 @@
+import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import ConditionalRender from "@/components/utils/conditional-render";
-import ErrorBanner from "@/components/utils/error";
+// import { BannerPanel } from "@/components/utils/banner";
+// import ConditionalRender from "@/components/utils/conditional-render";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
-import { RocketIcon } from "@radix-ui/react-icons";
-import Link from "next/link";
+// import { RocketIcon } from "@radix-ui/react-icons";
+import React from "react";
 import AdminDashboard from "./admin.dashboard";
 import ChiefWardenDashboard from "./chief_warden.dashboard";
 import CRDashboard from "./cr.dashboard";
 import GuardDashboard from "./guard.dashboard";
 import StudentDashboard from "./student.dashboard";
 import WardenDashboard from "./warden.dashboard";
-// import type { JSX } from "react";
 
-// type DashboardTemplateType = Promise<JSX.Element> | JSX.Element;
+type DashboardComponentProps = {
+  role: string;
+  searchParams: Record<string, string | undefined>;
+};
+type DashboardTemplateType = Promise<React.ReactNode> | React.FC<DashboardComponentProps>;
 
-const dashboard_templates = new Map([
+const dashboard_templates = new Map<string, DashboardTemplateType>([
   ["admin", AdminDashboard],
   ["cr", CRDashboard],
   ["guard", GuardDashboard],
@@ -26,47 +29,41 @@ const dashboard_templates = new Map([
   ["chief_warden", ChiefWardenDashboard],
 ]);
 
-export function DashboardTemplate({ user_role }: { user_role: string }) {
+interface DashboardTemplateProps {
+  user_role: string;
+  searchParams: Record<string, string | undefined>;
+}
+
+export function DashboardTemplate({ user_role, searchParams }: DashboardTemplateProps) {
   if (dashboard_templates.has(user_role)) {
-    const DashboardComponent = dashboard_templates.get(user_role);
+    const DashboardComponent = dashboard_templates.get(user_role) as React.FC<DashboardComponentProps>;
     if (DashboardComponent) {
       return (
         <>
-          <ConditionalRender condition={user_role === "student"}>
-            <section id="main-section">
-              <Alert className="mt-4">
-                <RocketIcon className="h-4 w-4" />
-                <AlertTitle>
-                  Suggest a feature for the platform here.(what do you want to
-                  see here?)
-                </AlertTitle>
-                <AlertDescription>
-                  <p>
-                    We are changing the way you interact with the platform and
-                    adding new features.
-                  </p>
-                  <Link
-                    href="https://forms.gle/v8Angn9VCbt9oVko7"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline mx-1"
-                  >
-                    Suggest a feature here
-                  </Link>{" "}
-                </AlertDescription>
-              </Alert>
-            </section>
-          </ConditionalRender>
+          {/* <ConditionalRender condition={user_role === "student"}>
+            <BannerPanel
+               Icon={<RocketIcon className="size-4 text-muted-foreground" />}
+              isClosable={true}
+              className="rounded-xl bg-card"
+              title="Suggest a Feature"
+              description=" We are changing the way you interact with the platform and adding new features."
+              redirectUrl="https://forms.gle/v8Angn9VCbt9oVko7"
+              btnProps={{
+                children: "Suggest a feature here",
+                variant: "default_soft",
+              }}
+            />
+          </ConditionalRender> */}
+          <AdUnit adSlot="display-horizontal" key={"dashboard-page-ad-" + user_role} />
           <ErrorBoundaryWithSuspense
-            fallback={<ErrorBanner />}
             loadingFallback={
               <SkeletonCardArea
                 className="mx-auto"
-                skeletonClassName="bg-gray-200"
+                skeletonClassName="bg-muted"
               />
             }
           >
-            <DashboardComponent />
+            <DashboardComponent role={user_role} searchParams={searchParams} />
           </ErrorBoundaryWithSuspense>
         </>
       );

@@ -1,26 +1,26 @@
 # Stage 1: Build
-FROM node:24-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 # Set working directory
-WORKDIR /node-server
+WORKDIR /ce-server
 
 # Install dependencies first for caching
-COPY package*.json ./
-RUN npm install && npm cache clean --force
+COPY package.json ./
+RUN bun install
 # Copy source files and build TypeScript
 COPY . .
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Production
-FROM node:24-alpine
+FROM oven/bun:1-alpine
 
 # Set working directory
-WORKDIR /node-server
+WORKDIR /ce-server
 
 # Copy only necessary files for production
-COPY package*.json ./
-COPY --from=builder /node-server/node_modules ./node_modules
-COPY --from=builder /node-server/dist ./dist
+COPY package.json ./
+COPY --from=builder /ce-server/node_modules ./node_modules
+COPY --from=builder /ce-server/dist ./dist
 
 # Set environment to production
 ENV NODE_ENV=production
@@ -42,7 +42,7 @@ USER appuser
 #   CMD curl --fail http://localhost:8080 || exit 1
 
 # Command to run the application
-CMD ["npm", "run", "start"]
+CMD ["bun", "run", "start"]
 
 # Build command
 #  docker build --tag college-ecosystem-server:latest .

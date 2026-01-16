@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
-const DateTimePicker24hFormSchema = z.date({
-  required_error: "A date and time is required.",
-});
+const DateTimePicker24hFormSchema = z
+  .date()
+  .refine((value) => value !== null && value !== undefined, {
+    message: "A date and time is required.",
+  });
 type DateTimePicker24hType = z.infer<typeof DateTimePicker24hFormSchema>;
 
 interface DateTimePicker24hTypeProps {

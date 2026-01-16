@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Check, LoaderCircle, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { approveRejectOutPass } from "~/actions/hostel_outpass";
+import { approveRejectOutPass } from "~/actions/hostel.outpass";
 
 interface OutpassActionFooterProps {
   className?: string;
@@ -52,7 +52,7 @@ export function OutpassActionFooter({
     <div className={cn("flex space-x-2 mt-2", className)}>
       <Button
         size="sm"
-        variant="default_light"
+        variant="default_soft"
         onClick={handleApprove}
         disabled={isApproving || isRejecting}
       >
@@ -61,7 +61,7 @@ export function OutpassActionFooter({
       </Button>
       <Button
         size="sm"
-        variant="destructive_light"
+        variant="destructive_soft"
         onClick={handleReject}
         disabled={isApproving || isRejecting}
       >

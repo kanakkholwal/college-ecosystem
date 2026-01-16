@@ -1,13 +1,26 @@
+import { HostelCard, HostelGridSkeleton } from "@/components/application/hostel/hostel-card";
 import EmptyArea from "@/components/common/empty-area";
-import { RouterCard } from "@/components/common/router-card";
+import { HeaderBar } from "@/components/common/header-bar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { Heading } from "@/components/ui/typography";
 import ConditionalRender from "@/components/utils/conditional-render";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
-import { LuBuilding } from "react-icons/lu";
-import { getHostels } from "~/actions/hostel";
-
-import { getSession } from "~/lib/auth-server";
+import {
+  AlertCircle,
+  Building2,
+  Plus
+} from "lucide-react";
+import { MdRoom } from "react-icons/md";
+import { getHostels } from "~/actions/hostel.core";
+import { getSession } from "~/auth/server";
 import { CreateHostelForm, ImportFromSiteButton } from "./client";
 
 export default async function ChiefWardenPage({
@@ -19,85 +32,112 @@ export default async function ChiefWardenPage({
 }) {
   const { moderator } = await params;
   const response = await getHostels();
-  console.log(response);
   const { success, data: hostels } = response;
+
   const session = await getSession();
 
   return (
-    <div className="space-y-5 my-2">
-      <div className="flex justify-between w-full">
-        <div className="w-1/2">
-          <Heading level={3}>Hostels</Heading>
-        </div>
-        <div className="w-1/2 flex gap-2 justify-end">
-          <ResponsiveDialog
-            title="Add Hostel"
-            description="Add a new hostel to the system"
-            btnProps={{
-              variant: "default_light",
-              size: "sm",
-              children: "Add Hostel",
-            }}
-          >
-            <CreateHostelForm />
-          </ResponsiveDialog>
-          {hostels.length === 0 && <ImportFromSiteButton />}
-        </div>
-      </div>
+    <div className="space-y-8 my-6 w-full max-w-[1600px] mx-auto px-4 sm:px-6">
+      <HeaderBar
+        Icon={MdRoom}
+        titleNode={
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Hostel Directory</h1>
+            <Badge variant="secondary" className="rounded-full px-2.5 bg-muted text-muted-foreground border-border">
+              {hostels?.length || 0} Properties
+            </Badge>
+          </div>
+        }
+        descriptionNode="Manage campus housing, wardens, and room configurations across the ecosystem."
+        actionNode={
+          <div className="flex items-center gap-2">
+            {hostels?.length === 0 && <ImportFromSiteButton />}
+            <ResponsiveDialog
+              title="Add New Hostel"
+              description="Configure a new hostel block in the system."
+              btnProps={{
+                variant: "default",
+                size: "sm",
+                className: "gap-2 shadow-sm",
+                children: (
+                  <>
+                    <Plus className="h-4 w-4" /> Add Hostel
+                  </>
+                ),
+              }}
+            >
+              <CreateHostelForm />
+            </ResponsiveDialog>
+          </div>
+        }
+      />
 
       <ErrorBoundaryWithSuspense
         fallback={
           <EmptyArea
-            icons={[LuBuilding]}
-            title="Error"
-            description="Failed to load hostels"
+            icons={[AlertCircle]}
+            title="System Error"
+            description="Failed to load hostel data. Please check your network or permissions."
+            className="border-destructive/50 bg-destructive/5 text-destructive"
           />
         }
-        loadingFallback={
-          <EmptyArea
-            icons={[LuBuilding]}
-            title="Loading..."
-            description="Loading hostels..."
-          />
-        }
+        loadingFallback={<HostelGridSkeleton />}
       >
-        <ConditionalRender condition={hostels.length > 0}>
-          <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4 gap-4">
-            {hostels.map((hostel) => {
+        <ConditionalRender condition={!!hostels && hostels.length > 0}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {hostels?.map((hostel: any) => {
+              // --- Access Control Logic ---
               const allowedEmails = hostel.administrators
-                .map((elem) => elem.email)
+                .map((elem: any) => elem.email)
                 .concat([hostel.warden.email]);
+
+              const userEmail = session?.user?.email;
+              const userOtherEmails = session?.user?.other_emails || [];
+              const isAdmin = session?.user.role === "admin";
+
               const isUserAllowed =
-                (session?.user?.email &&
-                  allowedEmails.includes(session.user.email)) ||
-                allowedEmails.findIndex((email) =>
-                  session?.user?.other_emails?.find(
-                    (elem: string) => elem === email
-                  )
-                ) ||
-                session?.user.role === "admin";
+                isAdmin ||
+                (userEmail && allowedEmails.includes(userEmail)) ||
+                allowedEmails.some((email: string) => userOtherEmails.includes(email));
 
               return (
-                <RouterCard
+                <HostelCard
                   key={hostel.slug}
-                  title={hostel.name}
-                  description={hostel.slug}
-                  href={`/${moderator}/hostels/${hostel.slug}`}
-                  Icon={LuBuilding}
+                  hostel={hostel}
+                  href={`/${moderator}/h/${hostel.slug}`}
                   disabled={!isUserAllowed}
                 />
               );
             })}
           </div>
         </ConditionalRender>
-        <ConditionalRender condition={hostels.length === 0}>
-          <EmptyArea
-            icons={[LuBuilding]}
-            title="No Hostel Found"
-            description="There are no hostels in the system. Click the button above to add a new hostel"
-          />
+
+        <ConditionalRender condition={!hostels || hostels.length === 0}>
+
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Building2 />
+              </EmptyMedia>
+              <EmptyTitle>No Hostels Configured</EmptyTitle>
+              <EmptyDescription>
+                Your campus housing ecosystem is empty. Start by adding your first hostel block.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <ResponsiveDialog
+                title="Add New Hostel"
+                description="Configure a new hostel block."
+                btnProps={{ children: "Create First Hostel" }}
+              >
+                <CreateHostelForm />
+              </ResponsiveDialog>
+            </EmptyContent>
+          </Empty>
         </ConditionalRender>
       </ErrorBoundaryWithSuspense>
     </div>
   );
 }
+
+

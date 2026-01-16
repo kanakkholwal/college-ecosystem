@@ -1,16 +1,42 @@
+
+/* loading.css */
+@keyframes enter-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-loader-smooth {
+  animation: enter-bar 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in-up {
+  animation: fade-up 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes fade-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 @keyframes loader {
-    0% {
-      left: -100%;
-    }
-    50% {
-      left: 100%;
-    }
-    100% {
-      left: 100%;
-    }
+  0% {
+    left: -100%;
   }
-  
-  .animate-loader {
-    animation: loader 1s ease-in-out infinite;
-    width: 100%;
+
+  50% {
+    left: 100%;
   }
+
+  100% {
+    left: 100%;
+  }
+}
+
+.animate-loader {
+  animation: loader 1s ease-in-out infinite;
+  width: 100%;
+}

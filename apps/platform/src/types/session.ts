@@ -1,3 +1,1 @@
-import type { Session } from "src/lib/auth-client";
-
-export type sessionUserType = Session;
+export type { Session } from "~/auth/client";

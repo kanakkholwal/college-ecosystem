@@ -4,6 +4,10 @@ const courseSchema = z.object({
   name: z.string(),
   code: z.string(),
   cgpi: z.number(),
+
+  grade: z.string(),
+  credits: z.number(),
+  sub_points: z.number(),
 });
 
 const semesterSchema = z.object({
@@ -30,3 +34,4 @@ const rawResultSchema = z.object({
 export type rawResultType = z.infer<typeof rawResultSchema>;
 
 export { courseSchema, rawResultSchema, semesterSchema };
+

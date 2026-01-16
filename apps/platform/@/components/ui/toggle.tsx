@@ -11,14 +11,17 @@ const toggleVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card hover:bg-card/80",
+        default: "bg-input/30 hover:bg-card/75 text-muted-foreground ",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "bg-transparent hover:bg-accent hover:text-accent-foreground",
+        outline:
+          "border border-border bg-card hover:bg-card/80 dark:bg-muted text-foreground hover:border-primary",
+        ghost:
+          "bg-slate-100/20 hover:bg-slate-100/80 text-muted-foreground hover:text-accent-foreground dark:bg-accent dark:text-muted-foreground dark:hover:bg-accent/80 dark:hover:text-white",
       },
       size: {
         default: "h-10 px-3 min-w-10",
-        sm: "h-9 px-2.5 min-w-9",
+        sm: "h-8 px-2.5 min-w-9 text-xs",
         lg: "h-11 px-5 min-w-11",
       },
     },

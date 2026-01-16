@@ -14,44 +14,33 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import type { Session } from "~/lib/auth-client";
+import type { Session } from "~/auth/client";
 
-import { sidebar_links } from "@/constants/links";
+import { ApplicationSvgLogo } from "@/components/logo";
+import { getSideNavLinks } from "@/constants/links";
+import { useCookieWithUtils } from "@/hooks/use-cookie";
 import Link from "next/link";
-import { appConfig } from "~/project.config";
-import { ThemeSwitcher } from "../theme-switcher";
+import { useMemo } from "react";
+import { appConfig, orgConfig } from "~/project.config";
 
-const getSideNavLinks = (role: string) => {
-  return sidebar_links
-    .filter(
-      (link) =>
-        link.allowed_roles.includes(role) || link.allowed_roles.includes("*")
-    )
-    .map((link) => ({
-      title: link.title,
-      icon: link.icon,
-      href: `/${role}${link.path}`,
-      preserveParams: link?.preserveParams,
-      items: link?.items
-        ?.filter(
-          (link) =>
-            link.allowed_roles.includes(role) ||
-            link.allowed_roles.includes("*")
-        )
-        ?.map((item) => ({
-          title: item.title,
-          href: `/${role}${link.path}${item.path}`,
-        })),
-    }));
-};
+
 
 interface SidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: Session["user"];
   moderator: string;
+  prefixPath?: string; // Optional prefix path for links
 }
 
-export function AppSidebar({ user, moderator, ...props }: SidebarProps) {
-  const links = getSideNavLinks(moderator);
+
+export function AppSidebar({
+  user,
+  moderator,
+  prefixPath,
+  ...props
+}: SidebarProps) {
+  const { value } = useCookieWithUtils('hostel:slug');
+
+  const links = useMemo(() => getSideNavLinks(moderator, prefixPath, value), [moderator, prefixPath, value]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border" {...props}>
@@ -59,23 +48,19 @@ export function AppSidebar({ user, moderator, ...props }: SidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
+              size="lg"
+              asChild
             >
-              <Link href={`/${moderator}`}>
-
-                {/* <div>
-                <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-                </div> */}
-                <div className="flex items-center justify-center rounded-lg text-3xl font-bold text-center relative bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent hover:from-sky-500 hover:to-primary whitespace-nowrap">
-                  N
-                </div>
+              <Link href={`/${prefixPath ? prefixPath : moderator}`}>
+                <ApplicationSvgLogo className="!size-8" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate text-base font-semibold">
+                  <span className="truncate font-semibold">
                     {appConfig.name}
                   </span>
-                  {/* <span className="truncate text-xs">{activeRole.role}</span> */}
+                  <span className="truncate text-xs">
+                    {orgConfig.mailSuffix}
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -84,14 +69,14 @@ export function AppSidebar({ user, moderator, ...props }: SidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={links} />
+
       </SidebarContent>
+
       <SidebarFooter>
-        <div className="flex justify-center gap-2 items-center px-3 overflow-hidden">
-          <ThemeSwitcher />
-        </div>
         <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
 }
+

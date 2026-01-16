@@ -1,9 +1,8 @@
 import mongoose, { type ConnectOptions, type Mongoose } from "mongoose";
-import dotenv from "dotenv";
+import { config } from "../config";
 
-dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = config.MONGODB_URI;
 
 declare const global: {
   mongoose: { conn: Mongoose | null; promise: Promise<Mongoose> | null };
@@ -25,6 +24,7 @@ if (!cached) {
 }
 const defaultDb =
   process.env.NODE_ENV === "production" ? "production" : "testing";
+// const defaultDb = "production"
 
 async function dbConnect(dbName: string = defaultDb): Promise<Mongoose> {
   if (cached.conn) {

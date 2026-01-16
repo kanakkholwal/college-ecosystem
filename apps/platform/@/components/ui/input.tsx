@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 
 const inputVariants = cva(
-  "flex h-10 w-full rounded-md bg-card px-3 py-2 text-sm font-medium file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:border-input disabled:bg-input invalid:ring-red-500 border-input",
+  "flex h-10 w-full rounded-md bg-input/60 dark:bg-input/30  border-input px-3 py-2 text-sm font-medium file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:bg-input/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:border-input disabled:bg-input invalid:ring-red-500",
   {
     variants: {
       variant: {
@@ -16,6 +16,9 @@ const inputVariants = cva(
         border: "border-2 focus:border-primary/70 border-solid",
         glass:
           "bg-white/75 dark:bg-white/5 backdrop-blur-lg border border-slate-500/10 dark:border-border/70 focus:border-primary/70",
+        underlined_transparent:
+          "border-0 !rounded-b-none border-b border-b-transparent shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40 !bg-transparent focus-visible:bg-transparent focus:bg-transparent focus:border-primary focus-visible:border-primary h-auto",
+
       },
       rounded: {
         default: "rounded-md",
@@ -23,6 +26,12 @@ const inputVariants = cva(
         lg: "rounded-3xl",
         full: "rounded-full",
         none: "rounded-none",
+      },
+      "custom-size": {
+        sm: "h-8 text-xs",
+        md: "h-10 text-sm",
+        lg: "h-12 text-base",
+        xl: "h-14 text-lg",
       },
     },
     defaultVariants: {
@@ -35,14 +44,21 @@ export interface InputProps
   // HTMLInputElement,
   //   React.ComponentProps<"input">,
   extends React.InputHTMLAttributes<HTMLInputElement>,
-    VariantProps<typeof inputVariants> {}
+  VariantProps<typeof inputVariants> { }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant, type, rounded, ...props }, ref) => {
     return (
       <input
         type={type}
-        className={cn(inputVariants({ variant, className, rounded }))}
+        className={cn(
+          inputVariants({
+            variant,
+            className,
+            rounded,
+            "custom-size": props["custom-size"],
+          })
+        )}
         ref={ref}
         {...props}
       />
@@ -52,3 +68,4 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export { Input };
+

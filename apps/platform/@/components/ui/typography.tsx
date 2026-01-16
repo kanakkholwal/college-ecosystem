@@ -38,7 +38,7 @@ export const Heading: React.FC<HeadingProps> = ({
 
 // paragraphs
 const paragraphVariants = cva(
-  "leading-7 [&:not(:first-child)]:mt-6 text-muted-foreground",
+  "leading-7 [&:not(:first-child)]:mt-6 text-base text-muted-foreground",
   {
     variants: {},
     defaultVariants: {},

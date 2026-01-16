@@ -1,11 +1,17 @@
 # Dependency directories
 node_modules/
-
+.turbo
 # Build output
 dist/
 
 # Environment variables
 .env
+.env.prod
+.env.dev
+.env.local
+.env.production
+.env.development
+.env.test
 
 # Logs
 logs
@@ -21,3 +27,5 @@ yarn-error.log*
 # OS generated files
 .DS_Store
 Thumbs.db
+.vercel
+.env*.local

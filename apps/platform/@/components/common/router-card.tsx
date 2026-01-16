@@ -1,22 +1,23 @@
-import ParamsPreserverLink from "@/components/utils/link-preserve-params";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Lock } from "lucide-react";
+import Link from "next/link";
 
-export type RouterCardLink = {
+type RouterCardLink = {
   href: string;
   title: string;
   description: string;
   external?: boolean;
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
   disabled?: boolean;
-  preserveParams?: boolean;
 };
 
-export interface RouterCardProps extends RouterCardLink {
+interface RouterCardProps extends RouterCardLink {
   style?: React.CSSProperties;
+  className?: string; // Added for external layout control
 }
 
-export function RouterCard({
+function RouterCard({
   href,
   title,
   description,
@@ -24,41 +25,77 @@ export function RouterCard({
   Icon,
   style,
   disabled,
-  preserveParams,
+  className,
 }: RouterCardProps) {
   return (
-    <ParamsPreserverLink
-      href={href}
-      preserveParams={preserveParams}
-      className={cn(
-        "@max-lg:col-span-full bg-card block border p-4 rounded-lg shadow-md text-fd-card-foreground transition-colors",
-        "group flex flex-col justify-between gap-2 animate-in popup transition-colors backdrop-blur-2xl shadow-sm",
-        disabled ? "pointer-events-none cursor-not-allowed" : ""
-      )}
-      target={external ? "_blank" : "_self"}
-      rel={external ? "noopener noreferrer" : undefined}
+    <Link
+      href={disabled ? "#" : href}
+      target={external && !disabled ? "_blank" : "_self"}
+      rel={external && !disabled ? "noopener noreferrer" : undefined}
       style={style}
+      className={cn(
+        // Base Layout
+        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/50 bg-card p-6 transition-all duration-300",
+        // Hover State (Stripe-like lift and glow)
+        !disabled && "hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 hover:shadow-primary/5",
+        // Disabled State
+        disabled && "opacity-60 cursor-not-allowed bg-muted/20 grayscale",
+        className
+      )}
     >
-      <div className="flex w-full flex-row gap-2 items-center justify-center">
-        <div className="flex justify-center items-center size-10 rounded-full bg-muted font-bold text-lg shrink-0">
-          <Icon className="size-5 text-primary inline-block" />
+      {/* Header: Icon + Action Arrow */}
+      <div className="flex w-full items-start justify-between">
+        <div className={cn(
+            "flex size-10 items-center justify-center rounded-lg border border-border/50 bg-muted/50 transition-colors",
+            !disabled && "group-hover:bg-primary/10 group-hover:border-primary/20"
+        )}>
+          <Icon className={cn(
+              "size-5 text-muted-foreground transition-colors",
+              !disabled && "group-hover:text-primary"
+          )} />
         </div>
-        <div className="flex-auto">
-          <h5 className="not-prose mb-1 text-sm font-medium">{title}</h5>
+
+        {/* Action Icon (Dynamic) */}
+        <div className="text-muted-foreground/50 transition-transform duration-300 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
           {disabled ? (
-            <p className="text-xs text-muted-foreground prose-no-margin">
-              (Maintenance)
-            </p>
-          ) : null}
+            <Lock className="size-5" />
+          ) : external ? (
+            <ArrowUpRight className="size-5" />
+          ) : (
+            <ArrowRight className="size-5" />
+          )}
         </div>
       </div>
-      <p className="max-w-[30ch] text-xs text-muted-foreground prose-no-margin">
-        {description}
-      </p>
-      <p className="text-xs whitespace-nowrap font-semibold text-primary/80 transition-all group-hover:text-primary group-hover:translate-x-1 motion-reduce:transform-none  [&_svg]:size-4 [&_svg]:ml-1 [&_svg]:inline-block">
-        Go to {title}
-        {external ? <ArrowUpRight /> : <ArrowRight />}
-      </p>
-    </ParamsPreserverLink>
+
+      {/* Content Body */}
+      <div className="mt-4 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold tracking-tight text-foreground">
+            {title}
+          </h3>
+          {disabled && (
+            <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium tracking-wide uppercase">
+              Soon
+            </Badge>
+          )}
+        </div>
+        
+        <p className="text-sm text-muted-foreground leading-relaxed text-balance">
+          {description}
+        </p>
+      </div>
+
+      {/* Decorative Bottom Light (Only visible on hover) */}
+      {!disabled && (
+        <>
+           <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+           <span className="absolute inset-x-0 bottom-0 h-[2px] blur-sm bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        </>
+      )}
+    </Link>
   );
 }
+
+RouterCard.displayName = "RouterCard";
+
+export { RouterCard, type RouterCardLink, type RouterCardProps };

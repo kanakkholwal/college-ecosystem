@@ -1,3 +1,5 @@
+import z from "zod";
+
 export interface Department {
   name: string;
   code: string;
@@ -135,13 +137,24 @@ export const getDepartmentByRollNo = (rollNo: string) => {
   }
 };
 
-export function isValidRollNumber(rollNo: string): boolean {
-  const rollNoPattern = /^\d{2}[a-z]{3}\d{3}$/i;
+export const rollNoSchema = z
+  .string()
+  .regex(/^\d{2}[a-z]{3}\d{3}$/i)
+  .refine(
+    (rollNo) => {
+      const numericPart = Number.parseInt(rollNo.slice(-3));
+      return numericPart >= 1 && numericPart <= 999;
+    },
+    {
+      message: "Invalid roll number",
+    }
+  );
 
-  if (!rollNoPattern.test(rollNo)) {
+export function isValidRollNumber(rollNo: string): boolean {
+  try {
+    const response = rollNoSchema.safeParse(rollNo);
+    return response.success;
+  } catch {
     return false;
   }
-
-  const numericPart = Number.parseInt(rollNo.slice(-3));
-  return numericPart >= 1 && numericPart <= 999;
 }

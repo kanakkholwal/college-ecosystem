@@ -1,5 +1,7 @@
+import { InferSelectModel } from "drizzle-orm";
 import { boolean, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { DEPARTMENTS } from "src/constants/departments";
+import { nanoid } from "nanoid";
+import { DEPARTMENTS } from "~/constants/core.departments";
 
 export const departmentNameEnum = pgEnum("department_name_enum", [
   "Staff",
@@ -33,6 +35,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   username: text("username").notNull().unique(),
+  displayUsername: text("displayUsername").notNull().default("not_specified"),
   emailVerified: boolean("emailVerified").notNull(),
   image: text("image"),
   createdAt: timestamp("createdAt").notNull(),
@@ -50,6 +53,8 @@ export const users = pgTable("users", {
   department: departmentNameEnum("department").notNull(),
 });
 
+export type UserType = InferSelectModel<typeof users>;
+
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expiresAt").notNull(),
@@ -61,6 +66,7 @@ export const sessions = pgTable("sessions", {
   userId: text("userId")
     .notNull()
     .references(() => users.id),
+  impersonatedBy: text("impersonatedBy"),
 });
 
 export const accounts = pgTable("accounts", {
@@ -88,4 +94,17 @@ export const verifications = pgTable("verifications", {
   expiresAt: timestamp("expiresAt").notNull(),
   createdAt: timestamp("createdAt"),
   updatedAt: timestamp("updatedAt"),
+});
+
+export const emailVerifications = pgTable("email_verifications", {
+  id: text("id").primaryKey().default(nanoid(21)),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id),
+  email: text("email").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  verified: boolean("verified").notNull().default(false),
+  token: text("token").notNull().unique(),
+  // The token is a unique identifier for the email verification process
+  createdAt: timestamp("createdAt").notNull(),
 });

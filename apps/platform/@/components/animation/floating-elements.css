@@ -1,0 +1,155 @@
+.float{
+    animation: float-animation var(--duration, 10s) ease-in-out infinite;
+
+    animation-delay: var(--delay, 0s);
+    animation-play-state: running;
+    will-change: transform;
+    transform-origin: center center
+}
+.float:hover{
+    animation-play-state: paused
+}
+
+@-webkit-keyframes float-animation {
+
+    0%,
+    100% {
+        -webkit-transform: translate(0, 0)rotate(0deg);
+        transform: translate(0, 0)rotate(0deg)
+    }
+
+    25% {
+        -webkit-transform: translate(10px, -15px)rotate(2deg);
+        transform: translate(10px, -15px)rotate(2deg)
+    }
+
+    50% {
+        -webkit-transform: translate(-5px, 10px)rotate(-1deg);
+        transform: translate(-5px, 10px)rotate(-1deg)
+    }
+
+    75% {
+        -webkit-transform: translate(-12px, -7px)rotate(1deg);
+        transform: translate(-12px, -7px)rotate(1deg)
+    }
+}
+
+@-moz-keyframes float-animation {
+
+    0%,
+    100% {
+        -moz-transform: translate(0, 0)rotate(0deg);
+        transform: translate(0, 0)rotate(0deg)
+    }
+
+    25% {
+        -moz-transform: translate(10px, -15px)rotate(2deg);
+        transform: translate(10px, -15px)rotate(2deg)
+    }
+
+    50% {
+        -moz-transform: translate(-5px, 10px)rotate(-1deg);
+        transform: translate(-5px, 10px)rotate(-1deg)
+    }
+
+    75% {
+        -moz-transform: translate(-12px, -7px)rotate(1deg);
+        transform: translate(-12px, -7px)rotate(1deg)
+    }
+}
+
+@-o-keyframes float-animation {
+
+    0%,
+    100% {
+        -o-transform: translate(0, 0)rotate(0deg);
+        transform: translate(0, 0)rotate(0deg)
+    }
+
+    25% {
+        -o-transform: translate(10px, -15px)rotate(2deg);
+        transform: translate(10px, -15px)rotate(2deg)
+    }
+
+    50% {
+        -o-transform: translate(-5px, 10px)rotate(-1deg);
+        transform: translate(-5px, 10px)rotate(-1deg)
+    }
+
+    75% {
+        -o-transform: translate(-12px, -7px)rotate(1deg);
+        transform: translate(-12px, -7px)rotate(1deg)
+    }
+}
+
+@keyframes float-animation {
+
+    0%,
+    100% {
+        -webkit-transform: translate(0, 0)rotate(0deg);
+        -moz-transform: translate(0, 0)rotate(0deg);
+        -o-transform: translate(0, 0)rotate(0deg);
+        transform: translate(0, 0)rotate(0deg)
+    }
+
+    25% {
+        -webkit-transform: translate(10px, -15px)rotate(2deg);
+        -moz-transform: translate(10px, -15px)rotate(2deg);
+        -o-transform: translate(10px, -15px)rotate(2deg);
+        transform: translate(10px, -15px)rotate(2deg)
+    }
+
+    50% {
+        -webkit-transform: translate(-5px, 10px)rotate(-1deg);
+        -moz-transform: translate(-5px, 10px)rotate(-1deg);
+        -o-transform: translate(-5px, 10px)rotate(-1deg);
+        transform: translate(-5px, 10px)rotate(-1deg)
+    }
+
+    75% {
+        -webkit-transform: translate(-12px, -7px)rotate(1deg);
+        -moz-transform: translate(-12px, -7px)rotate(1deg);
+        -o-transform: translate(-12px, -7px)rotate(1deg);
+        transform: translate(-12px, -7px)rotate(1deg)
+    }
+}
+
+.float-1{
+    --z-index: 1
+}
+
+.float-2{
+    --z-index: 2
+}
+
+.float-3{
+    --z-index: 3
+}
+
+.float-4{
+    --z-index: 4
+}
+
+.float-5{
+    --z-index: 5
+}
+
+.float-6{
+    --z-index: 6
+}
+
+.float-7{
+    --z-index: 7
+}
+
+.float-8{
+    --z-index: 8
+}
+
+.float-9{
+    --z-index: 9
+}
+
+.float-10{
+    --z-index: 10
+}

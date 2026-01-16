@@ -1,22 +1,22 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  MultiSelector,
-  MultiSelectorContent,
-  MultiSelectorInput,
-  MultiSelectorItem,
-  MultiSelectorList,
-  MultiSelectorTrigger,
+    MultiSelector,
+    MultiSelectorContent,
+    MultiSelectorInput,
+    MultiSelectorItem,
+    MultiSelectorList,
+    MultiSelectorTrigger,
 } from "@/components/ui/multi-select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +24,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import type z from "zod";
-import { createHostel, importHostelsFromSite } from "~/actions/hostel";
+import { createHostel, importHostelsFromSite } from "~/actions/hostel.core";
 import { IN_CHARGES_EMAILS } from "~/constants/hostel_n_outpass";
 
 import { createHostelSchema } from "~/constants/hostel_n_outpass";
@@ -245,7 +245,7 @@ export function ImportFromSiteButton() {
 
   return (
     <Button
-      variant="success_light"
+      variant="success_soft"
       size="sm"
       onClick={() => {
         setLoading(true);

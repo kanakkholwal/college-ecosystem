@@ -1,11 +1,5 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import type { Metadata } from "next";
-import { createRoom } from "~/actions/room";
+import { createRoom } from "~/actions/common.room";
 import CreateRoomForm from "./form";
 
 export const metadata: Metadata = {
@@ -13,16 +7,6 @@ export const metadata: Metadata = {
   description: "Add a new room to the database",
 };
 
-export default async function CoursesPage() {
-  return (
-    <>
-      <Card className="m-4 mt-10">
-        <CardHeader>
-          <CardTitle>New Room</CardTitle>
-          <CardDescription>Add a new room</CardDescription>
-        </CardHeader>
-        <CreateRoomForm onSubmit={createRoom} />
-      </Card>
-    </>
-  );
+export default function CoursesPage() {
+  return <CreateRoomForm onSubmit={createRoom} />
 }

@@ -14,7 +14,7 @@ var allowedOrigins = []string{
 
 func CustomCORS(c *fiber.Ctx) error {
 	origin := c.Get("Origin")
-	identityKey := c.Get("X-IDENTITY-KEY")
+	identityKey := c.Get("X-Authorization")
 	serverIdentity := os.Getenv("SERVER_IDENTITY")
 
 	if serverIdentity == "" {
@@ -48,7 +48,7 @@ func CustomCORS(c *fiber.Ctx) error {
 	if allowed {
 		c.Set("Access-Control-Allow-Origin", origin)
 		c.Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-		c.Set("Access-Control-Allow-Headers", "Content-Type,X-IDENTITY-KEY")
+		c.Set("Access-Control-Allow-Headers", "Content-Type,X-Authorization")
 		c.Set("Access-Control-Allow-Credentials", "true")
 
 		if c.Method() == fiber.MethodOptions {
@@ -62,6 +62,8 @@ func CustomCORS(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-		"error": "CORS policy does not allow this origin",
+		"data":    nil,
+		"message": "CORS policy does not allow this origin",
+		"error":   true,
 	})
 }

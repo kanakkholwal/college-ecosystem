@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 export type EmptyAreaProps = {
   icons?: LucideIcon[] | React.FC<React.SVGProps<SVGSVGElement>>[];
   title: string;
   description: string | React.ReactNode;
-  actionProps?: React.ComponentProps<typeof Button>;
+  actionProps?: React.ComponentProps<typeof Button> & {
+    href?: string;
+  }
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export default function EmptyArea({
@@ -21,9 +24,9 @@ export default function EmptyArea({
   return (
     <div
       className={cn(
-        "bg-card border-primary/10 hover:border-primary/20 hover:shadow text-center",
-        "border border-dashed rounded-xl p-14 w-full max-w-[620px]",
-        "group hover:bg-secondary/10 transition duration-500 hover:duration-200 mx-auto",
+        "bg-card border-border hover:border-primary shadow-md text-center",
+        "border rounded-xl p-14 w-full max-w-[620px]",
+        "group hover:bg-primary/5 transition duration-500 hover:duration-200 mx-auto",
         className
       )}
       {...props}
@@ -48,7 +51,7 @@ export default function EmptyArea({
             </div>
           </>
         ) : (
-          <div className="bg-background size-12 grid place-items-center rounded-xl shadow-lg ring-1 ring-border group-hover:-translate-y-0.5 transition duration-500 group-hover:duration-200">
+          <div className="bg-card size-12 grid place-items-center rounded-xl shadow-lg ring-1 ring-border group-hover:-translate-y-0.5 transition duration-500 group-hover:duration-200">
             {icons[0] ? (
               React.createElement(icons[0], {
                 className: "w-6 h-6 text-muted-foreground",
@@ -74,19 +77,20 @@ export default function EmptyArea({
         )}
       </div>
       <h2 className="text-foreground font-medium mt-6">{title}</h2>
-      <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
+      <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line mb-5">
         {description}
       </div>
       {actionProps && (
-        <Button
-          variant="outline"
-          {...actionProps}
-          className={cn(
-            "mt-4",
-            "shadow-sm active:shadow-none",
-            actionProps.className
-          )}
-        />
+        actionProps.href ?
+          <Button asChild {...actionProps} className={cn("shadow-sm active:shadow-none", actionProps.className)}>
+           <Link href={actionProps.href}>
+             {actionProps.children}
+           </Link>
+          </Button> :
+          <Button
+            {...actionProps}
+            className={cn("shadow-sm active:shadow-none", actionProps.className)}
+          />
       )}
     </div>
   );

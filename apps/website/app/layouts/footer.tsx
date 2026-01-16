@@ -1,88 +1,67 @@
-import { Instagram } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { FiLinkedin } from "react-icons/fi";
-import { LuGithub } from "react-icons/lu";
-import { RiTwitterXFill } from "react-icons/ri";
+import {
+    Facebook,
+    Instagram,
+    Linkedin,
+    Twitter
+} from 'lucide-react';
 
-const NEXT_PUBLIC_WEBSITE_NAME = "NITH PORTAL";
-
-export default function Footer() {
+export function Footer() {
   return (
-    <footer className="relative z-10 pb-17 lg:pb-22 xl:pb-27 mt-10">
-      <div className="max-w-[1170px] mx-auto px-4 sm:px-8 xl:px-0 relative pt-17">
-        <div className="w-full h-[1px] footer-divider-gradient absolute top-0 left-0" />
-        <div className="flex flex-wrap justify-between mb-10">
+    <footer className="bg-primary text-white py-12">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <Link
-              className="mb-8 inline-block  text-3xl font-extrabold sm:text-3xl xl:text-heading-3"
-              href="/"
-            >
-              {NEXT_PUBLIC_WEBSITE_NAME}
-            </Link>
-            <p className="mb-12 xl:w-4/5 font-medium text-slate-600">
-              Created by{" "}
-              <Link
-                href="https://kanakkholwal.eu.org?utm_source=nith.eu.org"
-                className="text-slate-900 dark:text-slate-200 font-semibold"
-              >
-                Kanak
-              </Link>
-            </p>
-            <p className="font-medium mt-6 text-slate-600 flex items-center gap-4">
-              © {new Date().getFullYear()}{" "}
-              <Link
-                href="/"
-                className="text-slate-900 dark:text-slate-200 font-semibold"
-              >
-                {NEXT_PUBLIC_WEBSITE_NAME}
-              </Link>{" "}
-              .
-              <Image
-                height={20}
-                width={80}
-                src="https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge"
-                alt="Vistor counter"
-                className="inline-block"
-              />
-            </p>
+            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+            <ul className="space-y-2">
+              <li><a href="#" className="hover:text-gray-300">About NITH</a></li>
+              <li><a href="#" className="hover:text-gray-300">Academics</a></li>
+              <li><a href="#" className="hover:text-gray-300">Admissions</a></li>
+              <li><a href="#" className="hover:text-gray-300">Research</a></li>
+              <li><a href="#" className="hover:text-gray-300">Campus Life</a></li>
+            </ul>
           </div>
+          
           <div>
-            <div className="flex items-center gap-5">
-              <Link
-                href="https://x.com/kanakkholwal?utm_source=nith.eu.org"
-                className={
-                  "text-slate-500 hover:text-primary hover:-translate-y-1 ease-in duration-300 flex justify-center items-center h-8 icon"
-                }
-              >
-                <RiTwitterXFill className="w-5 h-5" />
-              </Link>
-              <Link
-                href="https://linkedin.com/in/kanak-kholwal?utm_source=nith.eu.org"
-                className={
-                  "text-slate-500 hover:text-primary hover:-translate-y-1 ease-in duration-300 flex justify-center items-center h-8 icon"
-                }
-              >
-                <FiLinkedin className="w-5 h-5" />
-              </Link>
-              <Link
-                href="https://github.com/kanakkholwal?utm_source=nith.eu.org"
-                className={
-                  "text-slate-500 hover:text-primary hover:-translate-y-1  ease-in duration-300 flex justify-center items-center h-16 icon"
-                }
-              >
-                <LuGithub className="w-5 h-5" />
-              </Link>
-              <Link
-                href="https://instagram.com/kanakkholwal?utm_source=nith.eu.org"
-                className={
-                  "text-slate-500 hover:text-primary hover:-translate-y-1  ease-in duration-300 flex justify-center items-center h-16 icon"
-                }
-              >
-                <Instagram className="w-5 h-5" />
-              </Link>
+            <h3 className="text-lg font-bold mb-4">Important Links</h3>
+            <ul className="space-y-2">
+              <li><a href="#" className="hover:text-gray-300">MHRD</a></li>
+              <li><a href="#" className="hover:text-gray-300">NIRF</a></li>
+              <li><a href="#" className="hover:text-gray-300">NPTEL</a></li>
+              <li><a href="#" className="hover:text-gray-300">SWAYAM</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-bold mb-4">Contact Us</h3>
+            <address className="not-italic">
+              <p>National Institute of Technology Hamirpur</p>
+              <p>Hamirpur - 177005, Himachal Pradesh, India</p>
+              <p className="mt-2">Phone: +91-1972-254001</p>
+              <p>Email: registrar@nith.ac.in</p>
+            </address>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-bold mb-4">Connect With Us</h3>
+            <div className="flex space-x-4">
+              <a href="#" className="hover:text-gray-300">
+                <Facebook size={24} />
+              </a>
+              <a href="#" className="hover:text-gray-300">
+                <Twitter size={24} />
+              </a>
+              <a href="#" className="hover:text-gray-300">
+                <Linkedin size={24} />
+              </a>
+              <a href="#" className="hover:text-gray-300">
+                <Instagram size={24} />
+              </a>
             </div>
           </div>
+        </div>
+        
+        <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+          <p>© {new Date().getFullYear()} National Institute of Technology Hamirpur. All Rights Reserved.</p>
         </div>
       </div>
     </footer>

@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
+// import * as XLSX from "xlsx";
 import dbConnect from "~/lib/dbConnect";
 import { AllotmentSlotModel } from "~/models/allotment";
 import { HostelModel, HostelStudentModel } from "~/models/hostel_n_outpass";
@@ -61,30 +61,38 @@ export async function GET(request: Request) {
     }
 
     // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    // const workbook = XLSX.utils.book_new();
+    // const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-    // Add the worksheet to the workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Slot Allotments");
+    // // Add the worksheet to the workbook
+    // XLSX.utils.book_append_sheet(workbook, worksheet, "Slot Allotments");
 
     // Get hostel name for the filename
     const hostel = await HostelModel.findById(hostelId);
     const hostelName = hostel ? hostel.name.replace(/\s+/g, "_") : "hostel";
 
     // Write workbook to buffer
-    const excelBuffer = XLSX.write(workbook, {
-      type: "buffer",
-      bookType: "xlsx",
-    });
+    // const excelBuffer = XLSX.write(workbook, {
+    //   type: "buffer",
+    //   bookType: "xlsx",
+    // });
 
     // Return the file as a download
-    return new NextResponse(excelBuffer, {
-      headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="${hostelName}_slot_allotments.xlsx"`,
+    return NextResponse.json(
+      {
+        message: "Excel file generated successfully",
+        data: allSlots,
+        // excelBuffer, // Uncomment this line if you want to return the buffer directly
       },
-    });
+      { status: 200 }
+    );
+    // return new NextResponse(excelBuffer, {
+    //   headers: {
+    //     "Content-Type":
+    //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    //     "Content-Disposition": `attachment; filename="${hostelName}_slot_allotments.xlsx"`,
+    //   },
+    // });
   } catch (error) {
     console.error("Error generating Excel file:", error);
     return NextResponse.json(

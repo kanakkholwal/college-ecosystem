@@ -1,101 +1,81 @@
 "use client";
-import type React from "react";
-import { Suspense, useEffect, useState } from "react";
-import ErrorBanner from "@/components/utils/error";
 
+import ErrorBanner from "@/components/utils/error";
+import React, { Component, ErrorInfo, ReactNode, Suspense } from "react";
+
+// Shared interfaces
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  callback?: (error: Error) => void;
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+// Class-based Error Boundary
+export class GracefullyDegradingErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        this.props.fallback ?? (
+          <ErrorBanner
+            title="Something went wrong"
+            description="An error occurred while rendering this component. Please try again later."
+          />
+        )
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ErrorBoundary (Wrapper around the class-based version)
 export const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
   children,
   fallback,
-  callback,
+  onError,
 }) => {
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const errorHandler = (ev: ErrorEvent) => {
-      setError(ev.error);
-    };
-
-    window.addEventListener("error", errorHandler);
-
-    return () => {
-      window.removeEventListener("error", errorHandler);
-    };
-  }, []);
-
-  useEffect(() => {
-    const unhandledRejectionHandler = (ev: PromiseRejectionEvent) => {
-      setError(ev.reason);
-    };
-
-    window.addEventListener("unhandledrejection", unhandledRejectionHandler);
-
-    return () => {
-      window.removeEventListener(
-        "unhandledrejection",
-        unhandledRejectionHandler
-      );
-    };
-  }, []);
-
-  if (error) {
-    console.error(error);
-    callback?.(error);
-    return fallback ? fallback : <ErrorBanner />;
-  }
-
-  return <>{children}</>;
+  return (
+    <GracefullyDegradingErrorBoundary fallback={fallback} onError={onError}>
+      {children}
+    </GracefullyDegradingErrorBoundary>
+  );
 };
 
-interface ErrorBoundaryWithSuspenseProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  loadingFallback: React.ReactNode;
-  callback?: (error: Error) => void;
+// ErrorBoundary with Suspense support
+interface ErrorBoundaryWithSuspenseProps extends ErrorBoundaryProps {
+  loadingFallback: ReactNode;
 }
 
 export const ErrorBoundaryWithSuspense: React.FC<
   ErrorBoundaryWithSuspenseProps
-> = ({ children, fallback, loadingFallback, callback }) => {
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const errorHandler = (ev: ErrorEvent) => {
-      setError(ev.error);
-    };
-
-    window.addEventListener("error", errorHandler);
-
-    return () => {
-      window.removeEventListener("error", errorHandler);
-    };
-  }, []);
-
-  useEffect(() => {
-    const unhandledRejectionHandler = (ev: PromiseRejectionEvent) => {
-      setError(ev.reason);
-    };
-
-    window.addEventListener("unhandledrejection", unhandledRejectionHandler);
-
-    return () => {
-      window.removeEventListener(
-        "unhandledrejection",
-        unhandledRejectionHandler
-      );
-    };
-  }, []);
-
-  if (error) {
-    console.error(error);
-    callback?.(error);
-    return fallback ? fallback : <ErrorBanner />;
-  }
-
-  return <Suspense fallback={loadingFallback}>{children}</Suspense>;
+> = ({ children, fallback, onError, loadingFallback }) => {
+  return (
+    <Suspense fallback={loadingFallback}>
+      <GracefullyDegradingErrorBoundary fallback={fallback} onError={onError}>
+        {children}
+      </GracefullyDegradingErrorBoundary>
+    </Suspense>
+  );
 };

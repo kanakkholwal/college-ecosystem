@@ -1,3 +1,4 @@
+import { appConfig } from "@/project.config";
 import {
   Body,
   Column,
@@ -9,12 +10,9 @@ import {
   Row,
   Section,
   Tailwind,
-  Text,
+  Text
 } from "@react-email/components";
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "";
+import { twConfig } from "./tw-config";
 
 export default function EmailWrapper({
   children,
@@ -24,91 +22,64 @@ export default function EmailWrapper({
   return (
     <Html>
       <Head />
-      <Tailwind
-        config={{
-          theme: {
-            extend: {
-              colors: {
-                brand: "#007291",
-              },
-            },
-          },
-        }}
-      >
-        <Body className="bg-white my-auto mx-auto font-sans px-2">
-          <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
-            <Section className="px-[32px] py-[40px]">
-              <Row>
-                <Column className="w-[80%]">
-                  <Img
-                    alt="React Email logo"
-                    height="42"
-                    src="https://react.email/static/logo-without-background.png"
-                  />
-                </Column>
-                <Column align="right">
-                  <Row align="right">
-                    <Column>
-                      <Link href="https://x.com/kanakkholwal">
-                        <Img
-                          alt="X"
-                          className="mx-[4px]"
-                          height="36"
-                          src="https://react.email/static/x-logo.png"
-                          width="36"
-                        />
-                      </Link>
-                    </Column>
-                    <Column>
-                      <Link href="https://instagram.com/kanakkholwal">
-                        <Img
-                          alt="Instagram"
-                          className="mx-[4px]"
-                          height="36"
-                          src={`${baseUrl}/static/github-logo.png`}
-                          width="36"
-                        />
-                      </Link>
-                    </Column>
-                    <Column>
-                      <Link href="https://github.com/kanakkholwal">
-                        <Img
-                          alt="Github"
-                          className="mx-[4px]"
-                          height="36"
-                          src="https://react.email/static/github-logo.png"
-                          width="36"
-                        />
-                      </Link>
-                    </Column>
-                  </Row>
-                </Column>
-              </Row>
+      <Tailwind config={twConfig}>
+        <Body className="bg-gray-50 font-sans text-gray-900 px-4 py-6">
+          <Container className="bg-white border border-gray-200 rounded-xl max-w-[480px] mx-auto p-6 shadow-sm">
+            {/* Header */}
+            <Section className="mt-[32px] text-center">
+              <Column align="center" className="w-full my-[12px]">
+                <Img
+                  src={appConfig.logo}
+                  alt={appConfig.name}
+                  height="32"
+                  className="mx-auto text-[12px] font-semibold text-gray-700"
+                />
+              </Column>
             </Section>
-            <Container className="px-[32px] py-[40px]">{children}</Container>
 
-            <Section className="text-center">
-              <table className="w-full">
-                <tr className="w-full">
-                  <td align="center">
-                    <Img
-                      alt="React Email logo"
-                      height="42"
-                      src="https://react.email/static/logo-without-background.png"
-                    />
-                  </td>
-                </tr>
-                <tr className="w-full">
-                  <td align="center">
-                    <Text className="my-[8px] text-[16px] font-semibold leading-[24px] text-gray-900">
-                      College Platform
-                    </Text>
-                    <Text className="mb-0 mt-[4px] text-[16px] leading-[24px] text-gray-500">
-                      Think different
-                    </Text>
-                  </td>
-                </tr>
-              </table>
+            {/* Main Content */}
+            <Section className="mb-6">{children}</Section>
+
+            {/* Footer */}
+            <Section className="text-center border-t border-gray-200 pt-4">
+              <Row align="center">
+                <Link href={appConfig.url}>
+                  <Img
+                    src={appConfig.logo}
+                    alt={appConfig.name}
+                    height="32"
+                    className="mx-auto text-[12px] font-semibold text-gray-700"
+                  />
+                </Link>
+              </Row>
+              <Row align="center" className="my-[20px]">
+                {[
+                  { href: appConfig.socials.twitter, src: "https://cdn-icons-png.flaticon.com/512/5968/5968830.png", alt: "X" },
+                  { href: appConfig.socials.linkedin, src: "https://cdn-icons-png.flaticon.com/512/3536/3536505.png", alt: "LinkedIn" },
+                  { href: appConfig.socials.instagram, src: "https://cdn-icons-png.flaticon.com/512/15713/15713420.png", alt: "Instagram" },
+                  { href: appConfig.socials.github, src: "https://cdn-icons-png.flaticon.com/512/1051/1051377.png", alt: "GitHub" },
+                ].map((icon, i) => (
+                  <Column key={i} align="center" className="max-w-[80px]">
+                    <Link href={icon.href} target="_blank">
+                      <Img
+                        src={icon.src}
+                        alt={icon.alt}
+                        width="20"
+                        height="20"
+                        className="mx-[2px]"
+                      />
+                    </Link>
+                  </Column>
+                ))}
+              </Row>
+              <Column align="right" className="mt-[12px]">
+                <Text className="text-[12px] font-medium text-gray-700">
+                  {appConfig.name}
+                </Text>
+                <Text className="text-[8px] text-gray-500">
+                  {appConfig.tagline}
+                </Text>
+              </Column>
             </Section>
           </Container>
         </Body>

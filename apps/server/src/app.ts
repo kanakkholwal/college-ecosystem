@@ -1,78 +1,80 @@
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
-// import rateLimit from "express-rate-limit";
+import packageJson from "../package.json";
+import { config } from "./config";
 import httpRoutes from "./routes/httpRoutes";
+import { checkCors } from "./utils/cors";
 
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 100, // limit each IP to 100 requests per windowMs
-// });
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(limiter);
 
 // Default route
 app.get("/", (req, res) => {
-  res.json({
-    message: "Welcome to the server!",
-    status: "healthy",
+  res.status(200).json({
+    version: packageJson.version,
+    message: "Welcome to the College Ecosystem API",
+    server: "College Ecosystem API",
+    data: null,
   });
 });
-const CORS_ORIGINS = ["https://nith.eu.org", "https://app.nith.eu.org"];
-// const isOriginAllowed = (origin: string): boolean => {
-//   return CORS_ORIGINS.includes(origin);
-// };
 
-const SERVER_IDENTITY = process.env.SERVER_IDENTITY;
+const SERVER_IDENTITY = config.SERVER_IDENTITY;
 if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
+
 
 // Middleware to handle custom CORS logic
 app.use((req: Request, res: Response, next: NextFunction): void => {
-  const origin = req.header("Origin") || "";
-  const identityKey = req.header("X-IDENTITY-KEY") || "";
+  const origin = req.header("Origin") || req.header("Referrer") || "";
+  const identityKey = req.header("X-Identity-Key") || "";
+  const authorization = req.header("X-Authorization") || "";
 
-  // Server-to-server calls with X-IDENTITY-KEY
-  if (!origin) {
-    if (identityKey === SERVER_IDENTITY) {
-      next();
-      return;
+  // 1. Handle preflight requests first
+  if (req.method === "OPTIONS") {
+    const origin = req.headers.origin;
+    if (origin && checkCors(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type,X-Identity-Key,X-Authorization"
+      );
+      res.setHeader("Access-Control-Allow-Credentials", "true");
     }
-    res
-      .status(403)
-      .json({ error: true, data: "Missing or invalid SERVER_IDENTITY" });
+    res.status(204).end(); // Respond to preflight
     return;
   }
 
-  // CORS logic for browser requests
-  if (
-    (process.env.NODE_ENV === "production" &&
-      CORS_ORIGINS.some((o) => origin.endsWith(o))) ||
-    (process.env.NODE_ENV !== "production" &&
-      origin.startsWith("http://localhost:"))
-  ) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type,X-IDENTITY-KEY");
-    res.header("Access-Control-Allow-Credentials", "true");
-    if (req.method === "OPTIONS") {
-      res.sendStatus(200); // Preflight request
-      return;
+  // 2. Handle regular requests
+  if (config.isDev)
+    console.log(`Origin: ${origin}, Identity Key: ${identityKey}, Authorization: ${authorization}`);
+
+  if (!origin) {
+    console.warn("Request without origin");
+    if (authorization === SERVER_IDENTITY) {
+      next();
+    } else {
+      res.status(403).json({ error: "Missing or invalid authorization", data: null });
     }
-    next();
-    return; // Explicitly end processing here
-  }
-  if (identityKey === SERVER_IDENTITY) {
-    next();
-    return; // Explicitly end processing here
+    return;
   }
 
-  // Block invalid CORS origins
-  res.status(403).json({ error: "CORS policy does not allow this origin" });
+  if (authorization === SERVER_IDENTITY) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type,X-Identity-Key,X-Authorization"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    next();
+  } else {
+    console.warn(`CORS request from disallowed origin: ${origin}`);
+    res.status(403).json({ error: "CORS policy: Invalid credentials", data: null });
+  }
 });
-
 // Routes
 app.use("/api", httpRoutes);
 
@@ -94,4 +96,12 @@ app.use(
   }
 );
 
+// Catch-all route for undefined routes
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Not Found",
+    error: "The requested resource could not be found.",
+    data: null,
+  });
+});
 export default app;

@@ -61,6 +61,18 @@ export const createHostelStudentSchema = z.object({
   bannedReason: z.string().nullable(),
 });
 
+export const updateHostelAbleStudentSchema = z.object({
+  name: z.string().optional(),
+  userId: z.string().optional(),
+  gender: z.enum(["male", "female"]).optional(),
+  hostelId: z.string().optional(),
+  roomNumber: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  banned: z.boolean().optional(),
+  bannedTill: z.date().nullable().optional(),
+  bannedReason: z.string().nullable().optional(),
+});
+
 export const CHIEF_WARDEN_MAIL = `cw@${orgConfig.domain}`;
 
 export const IN_CHARGES_EMAILS = [
@@ -69,12 +81,6 @@ export const IN_CHARGES_EMAILS = [
     slug: "*",
     email: CHIEF_WARDEN_MAIL,
     role: "chief_warden",
-  },
-  {
-    gender: "male",
-    slug: "himgiri-boys-hostel",
-    email: "wardenhimgiri@nith.ac.in",
-    role: "warden",
   },
   {
     gender: "male",

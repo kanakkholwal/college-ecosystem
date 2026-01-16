@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 
 export const RadioStyle = {
   label: cn(
-    "text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 has-[:checked]:ring-primary/50 has-[:checked]:text-primary has-[:checked]:bg-primary/10 ",
-    "grow cursor-pointer font-medium leading-6 transition-colors duration-200",
+    "text-foreground bg-input/20 hover:bg-primary/5 has-[:checked]:ring-primary/50 has-[:checked]:text-primary has-[:checked]:bg-primary/10 ",
+    "grow cursor-pointer font-medium text-muted-foreground text-sm transition-colors duration-200",
     "flex justify-between items-center gap-6 rounded-lg p-4 ring-1 ring-transparent"
   ),
   input: cn(
-    "box-content h-1.5 w-1.5 appearance-none rounded-full border-[5px] border-white bg-white dark:border-slate-400 bg-clip-padding outline-none ring-1 ring-primary/50 checked:border-primary checked:ring-primary"
+    "box-content size-1.5 aspect-square appearance-none rounded-full border-[5px] border-white bg-white dark:border-slate-400 bg-clip-padding outline-none ring-1 ring-primary/50 checked:border-primary checked:ring-primary"
   ),
 };
 const RadioGroup = React.forwardRef<

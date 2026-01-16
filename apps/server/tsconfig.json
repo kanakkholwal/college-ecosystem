@@ -3,15 +3,21 @@
     "target": "es2020",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "~/*": ["./src/*"]
-    },
+    "resolveJsonModule": true,
+    "sourceMap": true // disable for Docker deployment for lighter image
   },
-  "include": ["src/**/*","package.json","tsconfig.json"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "./src/**/*",
+    "tsconfig.json",
+    "package.json"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

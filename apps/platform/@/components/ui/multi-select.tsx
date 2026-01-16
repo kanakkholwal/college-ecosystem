@@ -233,7 +233,7 @@ const MultiSelectorTrigger = forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex flex-wrap gap-1 rounded-lg bg-card p-1 py-2 ring-1 ring-muted ml-2",
+        "flex flex-wrap gap-1 rounded-lg bg-input/30 focus-within:bg-input/20 p-1 py-2 ring-1 ring-muted ml-2",
         {
           "ring-1 focus-within:ring-ring": activeIndex === -1,
         },
@@ -245,12 +245,12 @@ const MultiSelectorTrigger = forwardRef<
         <Badge
           key={item}
           className={cn(
-            "rounded-xl px-1.5 py-1",
             activeIndex === index && "ring-2 ring-muted-foreground "
           )}
-          variant={"outline"}
+          variant="outline"
+          size="sm"
         >
-          <span className="text-[10px]">{item}</span>
+          <span className="text-[10px] font-normal">{item}</span>
           <button
             aria-label={`Remove ${item} option`}
             aria-roledescription="button to remove option"
@@ -296,7 +296,7 @@ const MultiSelectorInput = forwardRef<
       onFocus={() => setOpen(true)}
       onClick={() => setActiveIndex(-1)}
       className={cn(
-        "ml-2 flex-1 bg-transparent outline-none placeholder:text-sm placeholder:text-muted-foreground",
+        "ml-2 flex-1 bg-transparent outline-none placeholder:text-xs placeholder:text-muted-foreground",
         className,
         activeIndex !== -1 && "caret-transparent"
       )}

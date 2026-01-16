@@ -1,265 +1,352 @@
+import crypto from "crypto";
 import type { Request, Response } from "express";
-import { scrapeResult } from "../lib/scrape";
+import {
+  EVENTS,
+  LIST_TYPE,
+  TASK_STATUS,
+  type listType,
+} from "../constants/result_scraping";
+import { getListOfRollNos, scrapeAndSaveResult } from "../lib/result_utils";
+import { sleep } from "../lib/utils";
+import type { IResultScrapingLog, taskDataType } from "../models/log-result_scraping";
 import { ResultScrapingLog } from "../models/log-result_scraping";
-import ResultModel from "../models/result";
 import dbConnect from "../utils/dbConnect";
 
-const LIST_TYPE = {
-  ALL: "all",
-  BACKLOG: "has_backlog",
-  NEW_SEMESTER: "new_semester",
-  DUAL_DEGREE: "dual_degree",
-}
+// Lower batch size ensures we send updates more frequently to keep connection alive
+const BATCH_SIZE = 5; 
+const MAX_ERRORS = 1000;
+// Tighter lock window so users can retry faster if the server crashes hard
+const LOCK_TTL_MS = 30_000; 
+const HEARTBEAT_INTERVAL_MS = 10_000; 
 
-type listType = typeof LIST_TYPE[keyof typeof LIST_TYPE];
-const TASK_STATUS = {
-  QUEUED: "queued",
-  SCRAPING: "scraping",
-  COMPLETED: "completed",
-  FAILED: "failed",
-  CANCELLED: "cancelled",
-  PAUSED: "paused",
-} as const;
-type taskDataType = {
-  processable: number;
-  processed: number;
-  failed: number;
-  success: number;
-  skipped: number;
-  data: {
-    roll_no: string;
-    status: (typeof TASK_STATUS)[keyof typeof TASK_STATUS];
-  }[];
-  startTime: number;
-  endTime: number | null;
-  status: (typeof TASK_STATUS)[keyof typeof TASK_STATUS];
-  successfulRollNos: string[];
-  failedRollNos: string[];
-  skippedRollNos: string[];
-  list_type: listType;
-  taskId: string;
+// ---------------- helpers ----------------
+const sendEvent = (
+  res: Response,
+  event: string,
+  payload: { data: taskDataType | null; error?: string | null }
+) => {
+  try {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    // Force flush if methods exist (Node/Express specific)
+    if ((res as any).flush) (res as any).flush();
+  } catch {
+    // client disconnected
+  }
 };
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-// helper
-const sendEvent = (res: Response, event: string, data: {
-  data: taskDataType | null,
-  error?: string | null,
-}) => {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
+const sendKeepAlive = (res: Response) => {
+  try {
+    res.write(": keep-alive\n\n");
+    if ((res as any).flush) (res as any).flush();
+  } catch {}
 };
 
-const BATCH_SIZE = 10; // Number of roll numbers to process in each batch
+const activeSSEConnections = new Map<string, Response>();
 
+const normalizeIp = (req: Request): string | null => {
+  const raw = req.headers["x-forwarded-for"];
+  if (typeof raw === "string") return raw.split(",")[0].trim();
+  if (Array.isArray(raw)) return raw[0];
+  return req.socket.remoteAddress ?? null;
+};
+
+// ---------------- handler ----------------
 
 export async function resultScrapingSSEHandler(req: Request, res: Response) {
-  const list_type = req.query.list_type as string || LIST_TYPE.BACKLOG;
+  const list_type = (req.query.list_type as string) || LIST_TYPE.BACKLOG;
+  const actionType = req.query.action as string | undefined;
   const task_resume_id = req.query.task_resume_id as string | undefined;
 
-  if (Object.values(LIST_TYPE).indexOf(list_type) === -1) {
-    return res.status(400).send("Invalid list type");
+  await dbConnect();
+
+  // --- Quick Actions (No SSE) ---
+  if (actionType === EVENTS.TASK_GET_LIST) {
+    const tasks = await ResultScrapingLog.find({}).sort({ startTime: -1 }).limit(20);
+    return res.status(200).json({ data: tasks, error: null });
+  }
+  if (actionType === EVENTS.TASK_CLEAR_ALL) {
+    await ResultScrapingLog.deleteMany({});
+    return res.status(200).json({ data: [], error: null });
+  }
+  if (actionType === EVENTS.TASK_DELETE) {
+    if (!req.query.deleteTaskId) return res.status(400).send("Task ID required");
+    await ResultScrapingLog.deleteOne({ _id: req.query.deleteTaskId });
+    return res.status(200).json({ data: [], error: null });
   }
 
-  res.set({
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
-  });
-  res.flushHeaders();
-  try {
+  // --- SSE Setup ---
+  // Validate headers
+  if (!actionType || !Object.values(EVENTS).includes(actionType as any)) {
+    return res.status(400).json({ data: null, error: "Invalid action type" });
+  }
 
-    // res.setHeader("Access-Control-Allow-Origin", "*");
-    await dbConnect();
-    const roll_list = await getListOfRollNos(list_type); // should return Set<string>
-    if (!roll_list || roll_list.size === 0) {
-      sendEvent(res, "error", {
-        data: null,
-        error: "No roll numbers found for the selected list type.",
-      });
+  const ip = normalizeIp(req);
+  if (!ip) return res.status(400).send("IP identification failed");
+
+  // Prevent duplicate tabs
+  if (activeSSEConnections.has(ip)) {
+    // Optional: Kill the old connection to let new one take over? 
+    // For now, strict blocking:
+    return res.status(429).json({ error: "Connection limit reached. Close other tabs." });
+  }
+  activeSSEConnections.set(ip, res);
+
+  // Headers for streaming
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no", // Disable Nginx buffering
+  });
+  
+  res.write("\n"); // Initial byte to establish stream
+
+  const WORKER_ID = `${process.pid}:${crypto.randomUUID()}`;
+  let mongoTaskId: string | null = null;
+  let isConnectionAlive = true;
+  let heartbeatHandle: NodeJS.Timeout | null = null;
+
+  // Cleanup Function
+  const cleanup = async () => {
+    isConnectionAlive = false;
+    activeSSEConnections.delete(ip);
+    if (heartbeatHandle) clearInterval(heartbeatHandle);
+    
+    // Release lock if we own it
+    if (mongoTaskId) {
+      await ResultScrapingLog.updateOne(
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
+        { 
+          $set: { 
+            lockedBy: null, 
+            lockExpiresAt: null,
+            // If we closed unexpectedly, mark as cancelled so client knows to resume
+            status: TASK_STATUS.CANCELLED 
+          } 
+        }
+      ).catch(console.error);
+    }
+  };
+
+  req.on("close", cleanup);
+  
+  // High-frequency keep-alive (every 10s)
+  const keepAliveLoop = setInterval(() => {
+    if (!isConnectionAlive) {
+        clearInterval(keepAliveLoop);
+        return;
+    }
+    sendKeepAlive(res);
+  }, 10000);
+
+
+  try {
+    let taskData: taskDataType | null = null;
+    let roll_queue: string[] = [];
+
+    // --- 1. Initialization (Create or Load Task) ---
+    
+    if (actionType === EVENTS.TASK_PAUSED_RESUME || actionType === EVENTS.TASK_RETRY_FAILED) {
+      if (!task_resume_id) throw new Error("Task ID missing for resume");
+      
+      const existing = await ResultScrapingLog.findById<IResultScrapingLog>(task_resume_id).lean();
+      if (!existing) throw new Error("Task not found");
+
+      mongoTaskId = String(existing._id);
+      
+      // Reset state for processing
+      taskData = { ...existing } as any;
+      taskData!.status = TASK_STATUS.SCRAPING;
+      taskData!.endTime = null;
+
+      // Determine queue based on action
+      if (actionType === EVENTS.TASK_PAUSED_RESUME) {
+        roll_queue = taskData!.queue || [];
+      } else {
+        // Retry Failed: Move failed items back to queue
+        roll_queue = taskData!.failedRollNos || [];
+        taskData!.failedRollNos = []; // Clear failed list since we are retrying them
+        
+        // Update DB to reflect this reset immediately
+        await ResultScrapingLog.updateOne(
+            { _id: mongoTaskId },
+            { $set: { failedRollNos: [], queue: roll_queue } }
+        );
+      }
+
+    } else if (actionType === EVENTS.STREAM_SCRAPING) {
+      // New Task
+      const rolls = await getListOfRollNos(list_type as listType);
+      roll_queue = Array.from(rolls);
+      
+      if (roll_queue.length === 0) throw new Error("No roll numbers found");
+
+      const newTask = {
+        list_type,
+        taskId: `scrape:${list_type}:${Date.now()}`,
+        status: TASK_STATUS.SCRAPING,
+        startTime: new Date(),
+        processable: roll_queue.length,
+        processed: 0,
+        success: 0,
+        failed: 0,
+        queue: roll_queue,
+        successfulRollNos: [],
+        failedRollNos: [],
+        data: []
+      };
+
+      const created = await ResultScrapingLog.create(newTask);
+      mongoTaskId = created._id.toString();
+      taskData = newTask as any;
+      taskData!._id = mongoTaskId!;
+    }
+
+    if (!mongoTaskId || !taskData) throw new Error("Initialization failed");
+
+    // Send initial state
+    sendEvent(res, "task_status", { data: taskData, error: null });
+
+    // --- 2. Locking ---
+    
+    const acquiredLock = await ResultScrapingLog.findOneAndUpdate(
+      {
+        _id: mongoTaskId,
+        $or: [
+            { lockedBy: null },
+            { lockedBy: WORKER_ID }, // We already own it (rare re-entry)
+            { lockExpiresAt: { $lt: new Date() } } // Stale lock
+        ]
+      },
+      {
+        $set: {
+          lockedBy: WORKER_ID,
+          lockExpiresAt: new Date(Date.now() + LOCK_TTL_MS),
+          status: TASK_STATUS.SCRAPING,
+          lastHeartbeat: new Date()
+        }
+      },
+      { new: true }
+    );
+
+    if (!acquiredLock) {
+      sendEvent(res, "error", { data: null, error: "Task is locked by another worker. Please wait." });
       res.end();
       return;
     }
 
-    let taskId: string;
-    let taskData: taskDataType;
+    // Start DB Heartbeat
+    heartbeatHandle = setInterval(async () => {
+      if (!mongoTaskId) return;
+      await ResultScrapingLog.updateOne(
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
+        { 
+            $set: { 
+                lockExpiresAt: new Date(Date.now() + LOCK_TTL_MS),
+                lastHeartbeat: new Date()
+            } 
+        }
+      ).catch(() => {}); // Suppress errors if task deleted
+    }, HEARTBEAT_INTERVAL_MS);
 
-    if (task_resume_id) {
-      const task = await ResultScrapingLog.findOne({ taskId: task_resume_id });
-      if (!task) {
-        sendEvent(res, "error", {
-          data: null,
-          error: "Task not found.",
-        });
-        res.end();
-        return;
+
+    // --- 3. Processing Loop ---
+
+    // Fetch fresh queue from DB in case of concurrent mods (though we have lock)
+    const currentDoc = await ResultScrapingLog.findById<IResultScrapingLog>(mongoTaskId).select('queue').lean();
+    if (currentDoc?.queue) roll_queue = currentDoc.queue;
+
+    let processedCount = 0;
+
+    for (let i = 0; i < roll_queue.length; i += BATCH_SIZE) {
+      if (!isConnectionAlive) break;
+
+      const batch = roll_queue.slice(i, i + BATCH_SIZE);
+      
+      // Process batch in parallel
+      const results = await Promise.allSettled(batch.map(roll => scrapeAndSaveResult(roll)));
+
+      // Process results one by one
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        const rollNo = batch[j];
+        const isSuccess = result.status === "fulfilled" && result.value?.success;
+        const errReason = result.status === "rejected" ? String(result.reason) : (result.value?.error || "Unknown error");
+
+        if (isSuccess) {
+          await ResultScrapingLog.updateOne(
+            { _id: mongoTaskId },
+            { 
+              $inc: { processed: 1, success: 1 },
+              $pull: { queue: rollNo },
+              $addToSet: { successfulRollNos: rollNo }
+            }
+          );
+          taskData.success++;
+        } else {
+          await ResultScrapingLog.updateOne(
+            { _id: mongoTaskId },
+            { 
+              $inc: { processed: 1, failed: 1 },
+              $pull: { queue: rollNo },
+              $addToSet: { failedRollNos: rollNo },
+              $push: { 
+                 data: { 
+                    $each: [{ roll_no: rollNo, reason: errReason }], 
+                    $slice: -MAX_ERRORS // Keep array size manageable
+                 } 
+              }
+            }
+          );
+          taskData.failed++;
+        }
+        
+        taskData.processed++;
+        
+        // **CRITICAL**: Send a tiny "tick" to the client after EVERY item
+        // This prevents 30s timeouts if a single item takes 10s
+        sendKeepAlive(res);
       }
 
-      taskId = task_resume_id;
-      task.status = TASK_STATUS.SCRAPING;
-      await task.save();
+      // Update in-memory queue reference for UI
+      taskData.queue = roll_queue.slice(i + BATCH_SIZE);
 
-      taskData = {
-        ...task.toObject(),
-        endTime: null,
-        status: TASK_STATUS.SCRAPING,
-      };
-    } else {
-      taskId = `result_scraping:${list_type}:${roll_list.size}:${Date.now()}`;
-      taskData = {
-        processable: roll_list.size,
-        processed: 0,
-        failed: 0,
-        success: 0,
-        skipped: 0,
-        data: [],
-        startTime: Date.now(),
-        endTime: null,
-        status: TASK_STATUS.QUEUED,
-        successfulRollNos: [],
-        failedRollNos: [],
-        skippedRollNos: [],
-        list_type,
-        taskId,
-      };
-      await ResultScrapingLog.create(taskData);
+      // Send Full State Update after batch
+      sendEvent(res, "task_status", { data: taskData, error: null });
+      
+      // Tiny breathing room for event loop
+      await sleep(500);
     }
 
-    sendEvent(res, "task_status", {
-      data: taskData,
-      error: null,
-    });
-
-    const rollArray = Array.from(roll_list);
-    for (let i = 0; i < rollArray.length; i += BATCH_SIZE) {
-      const batch = rollArray.slice(i, i + BATCH_SIZE);
-
-      const results = await Promise.allSettled(
-        batch.map((rollNo) => scrapeAndSaveResult(rollNo))
-      );
-
-      results.forEach((result, idx) => {
-        const rollNo = batch[idx];
-        if (result.status === "fulfilled" && result.value.success) {
-          taskData.success++;
-          taskData.successfulRollNos.push(rollNo);
-        } else {
-          taskData.failed++;
-          taskData.failedRollNos.push(rollNo);
-        }
-        taskData.processed++;
-      });
-
+    // --- 4. Completion ---
+    
+    if (isConnectionAlive) {
       await ResultScrapingLog.updateOne(
-        { taskId },
+        { _id: mongoTaskId, lockedBy: WORKER_ID },
         {
           $set: {
-            processed: taskData.processed,
-            failed: taskData.failed,
-            success: taskData.success,
-            successfulRollNos: taskData.successfulRollNos,
-            failedRollNos: taskData.failedRollNos,
-            status: TASK_STATUS.SCRAPING,
-          },
+            status: TASK_STATUS.COMPLETED,
+            endTime: new Date(),
+            lockedBy: null,
+            lockExpiresAt: null,
+            queue: [] // Ensure empty
+          }
         }
       );
-
-      sendEvent(res, "task_status", {
-        data: taskData,
-        error: null,
-      });
-      await sleep(2000);
-      req.on('close', async () => {
-        console.log('Client disconnected');
-        taskData.status = TASK_STATUS.CANCELLED;
-        taskData.endTime = Date.now();
-        await ResultScrapingLog.updateOne(
-          { taskId },
-          {
-            $set: {
-              endTime: taskData.endTime,
-              status: TASK_STATUS.CANCELLED,
-            },
-          }
-        );
-        res.end();
-      });
+      
+      taskData.status = TASK_STATUS.COMPLETED;
+      taskData.queue = [];
+      sendEvent(res, "task_status", { data: taskData, error: null });
+      res.end();
     }
 
-    taskData.status = TASK_STATUS.COMPLETED;
-    taskData.endTime = Date.now();
-
-    await ResultScrapingLog.updateOne(
-      { taskId },
-      {
-        $set: {
-          endTime: taskData.endTime,
-          status: TASK_STATUS.COMPLETED,
-        },
-      }
-    );
-
-    sendEvent(res, "task_status", {
-      data: taskData,
-      error: null,
-    });
-    res.write("event: task_completed\n");
+  } catch (error: any) {
+    console.error("Scraping Error:", error);
+    sendEvent(res, "error", { data: null, error: error.message || "Internal Server Error" });
     res.end();
-
-  } catch (error) {
-    console.error("Error in SSE handler:", error);
-    res.status(500).send("Internal Server Error");
-  }
-}
-async function getListOfRollNos(list_type: listType): Promise<Set<string>> {
-  let query = {};
-  switch (list_type) {
-    case LIST_TYPE.BACKLOG:
-      query = { "semesters.courses.cgpi": 0 };
-      break;
-    case LIST_TYPE.NEW_SEMESTER:
-      // has less than 8 semesters
-      query = { $expr: { $gt: [{ $size: "$semesters" }, 8] } };
-      break;
-    case LIST_TYPE.DUAL_DEGREE:
-      // has less than 8 semesters
-      query = { programme: "Dual Degree" };
-      break;
-    case LIST_TYPE.ALL:
-      query = {};
-      break;
-    default:
-      return new Set<string>();
-  }
-  await dbConnect();
-  const results = (await ResultModel.find(query)
-    .select("rollNo updatedAt")
-    .sort("updatedAt")) as { rollNo: string; updatedAt: Date }[];
-  return new Set(results.map((result) => result.rollNo));
-}
-
-async function scrapeAndSaveResult(rollNo: string) {
-  try {
-    const result = await scrapeResult(rollNo);
-    await sleep(500);
-    //  check if scraping was failed
-    if (result.error || result.data === null) {
-      return { rollNo, success: false };
-    }
-    // check if result already exists
-    const existingResult = await ResultModel.findOne({ rollNo });
-    if (existingResult) {
-      existingResult.semesters = result.data.semesters;
-      await existingResult.save();
-      return { rollNo, success: true };
-    }
-    // create new result if not exists
-    await ResultModel.create(result.data);
-    return { rollNo, success: true };
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error(e.message);
-    }
-    return { rollNo, success: false };
+  } finally {
+    clearInterval(keepAliveLoop);
+    await cleanup();
   }
 }

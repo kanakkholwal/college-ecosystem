@@ -1,244 +1,144 @@
 "use client";
 
-import { CircleSlash } from "lucide-react";
-import { Label, Pie, PieChart } from "recharts";
-
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import { ChartBar } from "lucide-react";
-import type { ViewBox } from "recharts/types/util/types";
-import {
-  deleteAttendanceRecord,
-  updateAttendanceRecord,
-} from "~/actions/record.personal";
+import { AlertCircle, CheckCircle, ChevronRight, TrendingUp } from "lucide-react";
+import { deleteAttendanceRecord, updateAttendanceRecord } from "~/actions/student.record_personal";
 import type { PersonalAttendanceWithRecords } from "~/db/schema/attendance_record";
-import UpdateAttendanceRecord from "./update-record";
+import { UpdateAttendanceRecord } from "./update-record";
 
 const ATTENDANCE_CRITERIA = 75;
 
-const chartConfig: ChartConfig = {
-  attended: {
-    label: "Attended",
-    color: "hsl(var(--chart-success))",
-  },
-  absent: {
-    label: "Absent",
-    color: "hsl(var(--chart-danger))",
-  },
-};
-
 interface AttendanceRecordProps {
-  record: PersonalAttendanceWithRecords;
-  style?: React.CSSProperties;
-  className?: string;
+    record: PersonalAttendanceWithRecords;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 export default function AttendanceRecord({
-  record,
-  className,
-  style,
+    record,
+    className,
+    style,
 }: AttendanceRecordProps) {
-  const totalClasses = record.records.length;
-  const presentClasses = record.records.filter((a) => a.isPresent).length;
-  const absentClasses = totalClasses - presentClasses;
+    const totalClasses = record.records.length;
+    const presentClasses = record.records.filter((a) => a.isPresent).length;
+    const percentage = totalClasses > 0 ? (presentClasses / totalClasses) * 100 : 0;
 
-  const chartData = [
-    {
-      name: "Attended",
-      value: presentClasses,
-      fill: chartConfig.attended.color,
-    },
-    { name: "Absent", value: absentClasses, fill: chartConfig.absent.color },
-  ];
+    // Reuse your existing status logic
+    const status = getAttendanceStatus(record);
+    const isSafe = percentage >= ATTENDANCE_CRITERIA;
+    const isWarning = percentage < ATTENDANCE_CRITERIA && percentage > 60;
 
-  const attendancePercentage =
-    totalClasses > 0
-      ? calculateAttendancePercentage(record).toFixed(2)
-      : "0.00";
-  const attendanceStatus = getAttendanceStatus(record);
-
-  return (
-    <div
-      className={cn(
-        "flex flex-wrap p-4 gap-4 rounded-lg bg-card border hover:border/30 transition-shadow shadow-sm relative",
-        className
-      )}
-      style={style}
-    >
-      {/* Header */}
-      <div className="grid justify-between items-start mr-auto">
-        <div>
-          <h4 className="text-sm font-semibold">
-            {record.subjectName.replaceAll("&amp;", "&")}
-          </h4>
-          <p className="text-xs text-muted-foreground">{record.subjectCode}</p>
-        </div>
-
-        {/* Status */}
-        <div className="text-sm">
-          <p className="font-medium">
-            Attendance: {presentClasses}/{totalClasses} ({attendancePercentage}
-            %)
-          </p>
-          <p className="text-sm text-muted-foreground">{attendanceStatus}</p>
-          <UpdateAttendanceRecord
-            updateAttendanceRecord={updateAttendanceRecord.bind(
-              null,
-              record.id
+    return (
+        <div
+            className={cn(
+                "group relative flex flex-col justify-between rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/50",
+                className
             )}
-            deleteAttendanceRecord={deleteAttendanceRecord.bind(
-              null,
-              record.id
-            )}
-          >
-            <ResponsiveDialog
-              title={`Attendance Analytics for ${record.subjectName}`}
-              description="View detailed analytics for your attendance record."
-              btnProps={{
-                variant: "default_light",
-                size: "icon_sm",
-                children: <ChartBar />,
-              }}
-            >
-              <div className="grid grid-cols-1 @xs/dialog:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-md shadow">
-                  <h5 className="text-sm font-medium">Total Classes</h5>
-                  <p className="text-xl font-semibold">{totalClasses}</p>
+            style={style}
+        >
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="inline-flex items-center justify-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                            {record.subjectCode}
+                        </span>
+                    </div>
+                    <h4 className="font-semibold leading-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                        {record.subjectName.replaceAll("&amp;", "&")}
+                    </h4>
                 </div>
-                <div className="p-4 border rounded-md shadow">
-                  <h5 className="text-sm font-medium">Classes Attended</h5>
-                  <p className="text-xl font-semibold">{presentClasses}</p>
+
+                {/* Arrow Icon indicating clickable */}
+
+            </div>
+
+            {/* Stats & Progress */}
+            <div className="space-y-4">
+                <div className="flex items-end justify-between">
+                    <span className={cn(
+                        "text-3xl font-bold tracking-tighter",
+                        isSafe ? "text-emerald-600" : isWarning ? "text-amber-500" : "text-red-600"
+                    )}>
+                        {percentage.toFixed(1)}%
+                    </span>
+                    <div className="text-right text-xs text-muted-foreground font-medium">
+                        {presentClasses}/{totalClasses} classes
+                    </div>
                 </div>
-                <div className="p-4 border rounded-md shadow">
-                  <h5 className="text-sm font-medium">Classes Missed</h5>
-                  <p className="text-xl font-semibold">{absentClasses}</p>
+
+                <div className="h-2 w-full bg-secondary/50 rounded-full overflow-hidden">
+                    <div
+                        className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            isSafe ? "bg-emerald-500" : isWarning ? "bg-amber-500" : "bg-red-500"
+                        )}
+                        style={{ width: `${percentage}%` }}
+                    />
                 </div>
-                <div className="p-4 border rounded-md shadow">
-                  <h5 className="text-sm font-medium whitespace-nowrap">
-                    Attendance
-                  </h5>
-                  <p
-                    className={cn(
-                      "text-xl font-semibold",
-                      Number(attendancePercentage) < 75
-                        ? Number(attendancePercentage) < 50
-                          ? "text-red-500"
-                          : "text-yellow-500"
-                        : "text-green-500"
+
+                <div className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium",
+                    status.type === "good" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" :
+                        status.type === "bad" ? "bg-red-500/10 text-red-700 dark:text-red-400" :
+                            "bg-muted text-muted-foreground"
+                )}>
+                    {status.type === "good" ? <TrendingUp className="size-3.5" /> :
+                        status.type === "bad" ? <AlertCircle className="size-3.5" /> :
+                            <CheckCircle className="size-3.5" />}
+                    {status.message}
+                </div>
+            </div>
+            <div className="w-full">
+                <UpdateAttendanceRecord
+
+                    updateAttendanceRecord={updateAttendanceRecord.bind(
+                        null,
+                        record.id
                     )}
-                  >
-                    {attendancePercentage}%
-                  </p>
-                </div>
-              </div>
-            </ResponsiveDialog>
-          </UpdateAttendanceRecord>
+                    deleteAttendanceRecord={deleteAttendanceRecord.bind(
+                        null,
+                        record.id
+                    )}
+                >
+                    <ButtonLink href={`attendance-personal/${record.id}`} size="sm" variant="ghost" className="ml-auto">
+                        Logs 
+                        <ChevronRight className="size-5" />
+                    </ButtonLink>
+                </UpdateAttendanceRecord>
+            </div>
         </div>
-      </div>
-
-      {/* Action */}
-      <div className="flex justify-center flex-1">
-        {totalClasses > 0 && (
-          <ChartContainer config={chartConfig} className="w-32 h-32 mx-auto">
-            <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={50}
-                outerRadius={60}
-                strokeWidth={5}
-              >
-                <Label
-                  position="center"
-                  content={({ viewBox }) =>
-                    viewBox && renderPieLabel(viewBox, totalClasses)
-                  }
-                />
-              </Pie>
-            </PieChart>
-          </ChartContainer>
-        )}
-        {/* Empty State */}
-        {totalClasses === 0 && (
-          <div className="flex flex-col items-center text-center flex-1 my-auto">
-            <CircleSlash className="w-8 h-8  mb-2" />
-            <p className="text-sm font-medium">No attendance records found</p>
-            <p className="text-xs text-muted-foreground">
-              Add your first record to start tracking.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
 }
 
-function calculateAttendancePercentage(
-  record: PersonalAttendanceWithRecords
-): number {
-  const totalClasses = record.records.length;
-  if (totalClasses === 0) return 0;
+// Keep your helper function `getAttendanceStatus` here...
+function getAttendanceStatus(record: PersonalAttendanceWithRecords) {
+    // ... logic from previous response
+    const totalClasses = record.records.length;
+    const attendedClasses = record.records.filter((a) => a.isPresent).length;
 
-  const attendedClasses = record.records.filter((a) => a.isPresent).length;
-  return (attendedClasses / totalClasses) * 100;
-}
+    if (totalClasses === 0) {
+        return { type: "neutral", message: "No classes recorded yet." };
+    }
 
-function getAttendanceStatus(record: PersonalAttendanceWithRecords): string {
-  const totalClasses = record.records.length;
-  const attendedClasses = record.records.filter((a) => a.isPresent).length;
+    const currentMargin = Math.floor((attendedClasses - 0.75 * totalClasses) / 0.75);
 
-  if (totalClasses === 0) {
-    return "Start attending classes to get status.";
-  }
-
-  const requiredClasses = Math.ceil(totalClasses * (ATTENDANCE_CRITERIA / 100));
-  const shortfall = requiredClasses - attendedClasses;
-
-  if (shortfall <= 0) {
-    return "On track! Maintain your current attendance.";
-  }
-
-  const neededClasses = Math.ceil(shortfall / (1 - ATTENDANCE_CRITERIA / 100));
-  return `Attend the next ${neededClasses} classes to get back on track.`;
-}
-
-function renderPieLabel(
-  viewBox: ViewBox,
-  totalClasses: number
-): React.ReactNode {
-  const { cx, cy } = viewBox as { cx: number; cy: number };
-  if (!cx || !cy) return null;
-  return (
-    <>
-      <text
-        x={cx}
-        y={cy}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="text-lg font-semibold text-primary-foreground"
-      >
-        {totalClasses}
-      </text>
-      <text
-        x={cx}
-        y={cy + 20}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="text-xs text-muted-foreground"
-      >
-        Total Classes
-      </text>
-    </>
-  );
+    if (currentMargin > 0) {
+        return {
+            type: "good",
+            message: `You can skip ${currentMargin} class${currentMargin > 1 ? 'es' : ''} safely.`
+        };
+    } else if (currentMargin === 0) {
+        return {
+            type: "warning",
+            message: "On the edge. Don't miss next class."
+        };
+    } else {
+        const needed = Math.ceil((0.75 * totalClasses - attendedClasses) / 0.25);
+        return {
+            type: "bad",
+            message: `Attend next ${needed} class${needed > 1 ? 'es' : ''} to recover.`
+        };
+    }
 }

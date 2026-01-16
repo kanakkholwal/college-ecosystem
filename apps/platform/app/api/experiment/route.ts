@@ -1,19 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
-import dbConnect from "~/lib/dbConnect";
-import Result from "~/models/result";
 
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
-    const results = await Result.find({
-      batch: "2024",
-    }).limit(250);
-
     return NextResponse.json(
       {
         result: "success",
         message: "Ranks assigned successfully.",
-        data: results,
+        data: [],
       },
       {
         status: 200,

@@ -1,12 +1,26 @@
 "use client";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ButtonLink } from "@/components/utils/link";
+import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import type { authClient } from "~/lib/auth-client";
+import { Copy, MoreHorizontal, ShieldAlert, ShieldCheck, User } from "lucide-react";
+import toast from "react-hot-toast";
+import type { authClient } from "~/auth/client";
 
+// Re-defining for scope, assuming imported from your auth client
 export type UserType = Awaited<
   ReturnType<typeof authClient.admin.listUsers>
 >["data"]["users"][number];
@@ -14,15 +28,12 @@ export type UserType = Awaited<
 export const columns: ColumnDef<UserType>[] = [
   {
     id: "select",
-    accessorKey: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
+        className="translate-y-[2px]"
       />
     ),
     cell: ({ row }) => (
@@ -30,127 +41,129 @@ export const columns: ColumnDef<UserType>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
+        className="translate-y-[2px]"
       />
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    id: "name",
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title="User" />
     ),
     cell: ({ row }) => {
+      const name = row.original.name;
+      const email = row.original.email;
+      
       return (
-        <div className="text-left font-medium">{row.getValue("name")}</div>
+        <div className="flex items-center gap-3 py-1">
+            <Avatar className="h-9 w-9 border border-border">
+                <AvatarImage src={row.original.image || `https://api.dicebear.com/7.x/initials/svg?seed=${name}`} />
+                <AvatarFallback className="font-medium text-xs">
+                    {name?.slice(0,2).toUpperCase() || "U"}
+                </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-[140px]">
+                <span className="text-sm font-semibold text-foreground truncate">{name || "Unnamed User"}</span>
+                <span className="text-xs text-muted-foreground truncate font-normal">{email}</span>
+            </div>
+        </div>
       );
     },
-
-    enableSorting: true,
-    enableHiding: true,
   },
   {
-    id: "email",
-    accessorKey: "email",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Email" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left font-medium">{row.getValue("email")}</div>
-      );
-    },
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    id: "emailVerified",
     accessorKey: "emailVerified",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Verified" />
+      <DataTableColumnHeader column={column} title="Verification" />
     ),
     cell: ({ row }) => {
+      const isVerified = row.getValue("emailVerified");
       return (
-        <div className="text-left font-medium">
-          <Badge
-            variant={
-              row.getValue("emailVerified")
-                ? "success_light"
-                : "destructive_light"
-            }
-          >
-            {row.getValue("emailVerified") ? "Yes" : "No"}
-          </Badge>
+        <Badge 
+            variant={isVerified ? "outline" : "default"} 
+            className={cn(
+                "gap-1.5 font-normal",
+                isVerified 
+                  ? "border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900" 
+                  : "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/20"
+            )}
+        >
+            {isVerified ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
+            {isVerified ? "Verified" : "Unverified"}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "role", // Assuming 'role' or 'other_roles' is where permissions live
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Role" />
+    ),
+    cell: ({ row }) => {
+      // Logic to determine primary role display
+      const roles = (row.original as any).other_roles || [];
+      const primaryRole = (row.original as any).role || roles[0] || "user";
+
+      return (
+        <div className="flex items-center gap-1">
+           <Badge variant="default" className="capitalize font-mono text-[10px] px-1.5">
+              {primaryRole}
+           </Badge>
+           {roles.length > 0 && (
+              <span className="text-[10px] text-muted-foreground">+{roles.length}</span>
+           )}
         </div>
       );
     },
-    enableSorting: true,
-    enableHiding: true,
   },
   {
-    id: "gender",
-    accessorKey: "gender",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Gender" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left font-medium">{row.getValue("gender")}</div>
-      );
-    },
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
-    id: "other_roles",
-    accessorKey: "other_roles",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Roles" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left font-medium">
-          {(row.original as UserType)?.other_roles?.join(", ")}
-        </div>
-      );
-    },
-    enableSorting: false,
-    enableHiding: true,
-    enableGrouping: true,
-  },
-  {
-    id: "createdAt",
     accessorKey: "createdAt",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created At" />
+      <DataTableColumnHeader column={column} title="Joined" />
     ),
     cell: ({ row }) => {
-      const formatted = new Date(row.getValue("createdAt")).toLocaleDateString(
-        "en-US",
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }
+      return (
+        <div className="text-xs text-muted-foreground whitespace-nowrap">
+            {new Date(row.getValue("createdAt")).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            })}
+        </div>
       );
-      return <div className="text-left font-medium">{formatted}</div>;
     },
-    enableSorting: true,
-    enableHiding: true,
   },
   {
     id: "actions",
-    accessorKey: "actions",
-    header: "Actions",
-    enableSorting: false,
-    enableHiding: true,
     cell: ({ row }) => {
+      const user = row.original;
       return (
-        <div className="text-left font-medium">
-          <Button variant="link" asChild>
-            <Link href={`/admin/users/${row.original.id}`}>View user</Link>
-          </Button>
+        <div className="flex justify-end">
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => {
+                    navigator.clipboard.writeText(user.id);
+                    toast.success("ID copied");
+                }}>
+                    <Copy className="mr-2 h-3.5 w-3.5" />
+                    Copy ID
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <ButtonLink href={`/admin/users/${user.id}`} variant="ghost" size="sm" className="w-full justify-start px-2 h-8 font-normal">
+                       <User className="mr-2 h-3.5 w-3.5" /> View Profile
+                    </ButtonLink>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       );
     },

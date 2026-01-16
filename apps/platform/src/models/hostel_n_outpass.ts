@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import mongoose, { type CallbackError, type Document, Schema } from "mongoose";
-import type { OUTPASS_STATUS, REASONS } from "~/constants/outpass";
+import mongoose, { type Document, Schema } from "mongoose";
+import type { OUTPASS_STATUS, REASONS } from "~/constants/hostel.outpass";
 import { db } from "~/db/connect";
 import { users } from "~/db/schema/auth-schema";
 import ResultModel from "./result";
@@ -72,6 +72,7 @@ export interface rawHostelStudentType {
   gender: "male" | "female";
   position: string;
   hostelId: string | null;
+  hostelSlug: string | null;
   roomNumber: string;
   phoneNumber?: string | null;
   banned: boolean;
@@ -98,11 +99,16 @@ const HostelStudentSchema = new Schema<IHostelStudentType>(
     rollNumber: { type: String, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    gender: { type: String, required: true, enum: ["male", "female"] },
+    gender: {
+      type: String,
+      required: true,
+      enum: ["male", "female", "not_specified"],
+    },
     position: { type: String, default: "none" },
     cgpi: { type: Number, default: 0 },
     userId: { type: String, default: null },
     hostelId: { type: Schema.Types.ObjectId, ref: "Hostel", default: null },
+    hostelSlug: { type: String, default: null },
     roomNumber: { type: String, required: true, default: "UNKNOWN" },
     phoneNumber: { type: String, default: null },
     banned: { type: Boolean, default: false },
@@ -228,42 +234,42 @@ async function updateCorrespondingUserId(student: IHostelStudentType) {
 }
 
 // Pre hook for insertMany
-HostelStudentSchema.pre("insertMany", async (next, docs) => {
-  try {
-    for await (const student of docs) {
-      // Fetch userId from PostgreSQL based on student's email
-      await updateCorrespondingUserId(student as unknown as IHostelStudentType);
-    }
-    next();
-  } catch (error) {
-    next(error as CallbackError);
-  }
-});
+// HostelStudentSchema.pre("insertMany", async (next, docs) => {
+//   try {
+//     for await (const student of docs) {
+//       // Fetch userId from PostgreSQL based on student's email
+//       await updateCorrespondingUserId(student as unknown as IHostelStudentType);
+//     }
+//     next();
+//   } catch (error) {
+//     next(error as CallbackError);
+//   }
+// });
 
 // Pre hook for insertOne (save)
-HostelStudentSchema.pre("save", async function (next) {
-  const student = this as unknown as IHostelStudentType;
+// HostelStudentSchema.pre("save", async function (next) {
+//   const student = this as unknown as IHostelStudentType;
 
-  try {
-    // Fetch userId from PostgreSQL based on student's email
-    await updateCorrespondingUserId(student);
-    next();
-  } catch (error) {
-    next(error as CallbackError);
-  }
-});
-HostelStudentSchema.pre("save", async (next) => {
-  const student = this as unknown as IHostelStudentType;
+//   try {
+//     // Fetch userId from PostgreSQL based on student's email
+//     await updateCorrespondingUserId(student);
+//     next();
+//   } catch (error) {
+//     next(error as CallbackError);
+//   }
+// });
+// HostelStudentSchema.pre("save", async (next) => {
+//   const student = this as unknown as IHostelStudentType;
 
-  try {
-    // Fetch userId from PostgreSQL based on student's email
-    await updateCorrespondingUserId(student);
+//   try {
+//     // Fetch userId from PostgreSQL based on student's email
+//     await updateCorrespondingUserId(student);
 
-    next();
-  } catch (error) {
-    next(error as CallbackError);
-  }
-});
+//     next();
+//   } catch (error) {
+//     next(error as CallbackError);
+//   }
+// });
 
 // 🔴 Post-save hook: Auto-update ResultModel gender if missing
 HostelStudentSchema.post("save", async (doc) => {

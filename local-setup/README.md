@@ -29,5 +29,5 @@ node ./local-setup/setup.js
 - Get Your `BETTER_AUTH_SECRET` from [better-auth]("https://www.better-auth.com/docs/installation")
 - Get Your `UPSTASH_REDIS_REST_URL` from [upstash]("https://upstash.com/")
 - Get Your `GOOGLE_ID` from [gcp]("https://console.cloud.google.com/")
-- Get Your `FIREBASE_DATABASE_URL` from [firebase]("https://firebase.google.com/")
+- Get Your `SUPABASE_DATABASE_URL` from [supabase]("https://supabase.com/")
 - Get Your `MAIL_EMAIL` from [brevo]("https://www.brevo.com/")

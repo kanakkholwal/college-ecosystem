@@ -2,9 +2,13 @@
 node_modules
 /.pnp
 .pnp.js
-
+# Serwist
+public/sw*
+public/swe-worker*
 # next.js
 /.next/
+.open-next
+.wrangler
 /out/
 .turbo
 

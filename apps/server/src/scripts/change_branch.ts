@@ -1,4 +1,4 @@
-import { determineBranchChange } from "../lib/scrape";
+import { determineBranchChange } from "../lib/result_utils";
 import ResultModel from "../models/result";
 import dbConnect from "../utils/dbConnect";
 

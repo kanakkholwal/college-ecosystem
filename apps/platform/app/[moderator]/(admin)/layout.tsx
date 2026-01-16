@@ -1,10 +1,13 @@
 import Page403 from "@/components/utils/403";
-import { getSession } from "~/lib/auth-server";
+import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
+import { ALLOWED_ROLES } from "~/constants";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   params: Promise<{
-    moderator: "admin" | "moderator";
+    moderator: typeof ALLOWED_ROLES[number];
   }>;
 }
 
@@ -12,9 +15,14 @@ export default async function DashboardLayout({
   children,
   params,
 }: DashboardLayoutProps) {
-  const session = await getSession();
   const { moderator } = await params;
-
+  if (moderator !== "admin") {
+    return notFound();
+  }
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   if (
     session &&
     moderator === "admin" &&

@@ -7,7 +7,7 @@ import ResultModel, {
 
 import type { studentInfoType } from "src/types/student";
 
-import { getDepartmentCode } from "src/constants/departments";
+import { getDepartmentCode } from "~/constants/core.departments";
 
 export async function getStudentInfo(rollNo: string): Promise<studentInfoType> {
   await dbConnect();

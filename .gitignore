@@ -10,6 +10,7 @@ node_modules
 
 .vscode
 .venv
+.agent
 # pnpm-lock.yaml
 # Local env files
 .env
@@ -34,8 +35,8 @@ apps/**/.next
 
 
 # lock files
-package-lock.json
-apps/**/package-lock.json
+# package-lock.json
+# apps/**/package-lock.json
 yarn.lock
 apps/**/yarn.lock
 

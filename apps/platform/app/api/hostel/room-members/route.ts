@@ -2,6 +2,24 @@ import { NextResponse } from "next/server";
 import dbConnect from "~/lib/dbConnect";
 import { HostelRoomModel, RoomMemberModel } from "~/models/allotment";
 
+
+type RoomResponse = {
+  roomNumber: string;
+  capacity: number;
+  occupied_seats: number;
+  isLocked: boolean;
+  hostel: string;
+  hostStudent: {
+    name: string;
+    rollNumber: string;
+    email: string;
+  };
+  members: Array<{
+    name: string;
+    rollNumber: string;
+    email: string;
+  }>
+}
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -30,7 +48,7 @@ export async function GET(request: Request) {
       "name rollNumber email"
     );
 
-    const data = {
+    const data: RoomResponse = {
       roomNumber: room.roomNumber,
       capacity: room.capacity,
       occupied_seats: room.occupied_seats,

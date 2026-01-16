@@ -4,6 +4,10 @@ export interface Course {
   name: string;
   code: string;
   cgpi: number;
+  // additional fields
+  grade: string;
+  credits: number;
+  sub_points: number;
 }
 export interface Rank {
   college: number;
@@ -16,12 +20,12 @@ export interface Semester {
   sgpi: number;
   cgpi: number;
   courses: Course[];
-  semester: number | string;
+  semester: string;
   sgpi_total: number;
   cgpi_total: number;
 }
-
-export type rawResultType = {
+export interface ResultTypeWithId {
+  _id: string;
   name: string;
   rollNo: string;
   branch: string;
@@ -31,31 +35,43 @@ export type rawResultType = {
   rank: Rank;
   createdAt?: Date;
   updatedAt?: Date;
-  gender: "male" | "female" | "not_specified";
-};
-
-export interface ResultTypeWithId extends rawResultType {
-  _id: string;
 }
 
-export interface IResultType extends Document, rawResultType {}
+export interface IResultType extends Document {
+  name: string;
+  rollNo: string;
+  branch: string;
+  batch: number;
+  programme: string;
+  semesters: Semester[];
+  rank: Rank;
+  createdAt?: Date;
+  updatedAt?: Date;
+  gender?: "male" | "female" | "not_specified";
+  latestCgpi?: number;
+}
 
 const CourseSchema: Schema = new Schema({
   name: { type: String, required: true },
   code: { type: String, required: true },
   cgpi: { type: Number, required: true },
+  // additional fields
+  grade: { type: String, trim: true },
+  credits: { type: Number, min: 0 },
+  sub_points: { type: Number, min: 0 },
 });
 
 const SemesterSchema: Schema = new Schema({
   sgpi: { type: Number, required: true },
   cgpi: { type: Number, required: true },
   courses: { type: [CourseSchema], required: true },
-  semester: { type: Schema.Types.Mixed, required: true },
+  semester: { type: String, required: true },
   sgpi_total: { type: Number, required: true },
   cgpi_total: { type: Number, required: true },
+  
 });
 
-const ResultSchema: Schema = new Schema(
+const ResultSchema = new Schema<IResultType>(
   {
     name: { type: String, required: true },
     rollNo: { type: String, required: true, unique: true },
@@ -63,9 +79,10 @@ const ResultSchema: Schema = new Schema(
     batch: { type: Number, required: true },
     programme: { type: String, required: true },
     semesters: { type: [SemesterSchema], required: true },
+    latestCgpi: { type: Number, default: 0 }, // Add this field
     gender: {
       type: String,
-      enums: ["male", "female", "not_specified"],
+      enum: ["male", "female", "not_specified"],
       default: "not_specified",
     },
     rank: {
@@ -80,7 +97,19 @@ const ResultSchema: Schema = new Schema(
   }
 );
 
+// Add indexes
+// ResultSchema.index({ latestCgpi: -1 }); // Critical for sorting
+// ResultSchema.index({ batch: 1, latestCgpi: -1 });
+// ResultSchema.index({ batch: 1, branch: 1, latestCgpi: -1 });
+
+// Pre-save hook to update latestCgpi
+ResultSchema.pre('save', function(next) {
+  if (this.semesters && this.semesters?.length > 0) {
+    this.latestCgpi = this.semesters[this.semesters.length - 1].cgpi || 0;
+  }
+  next();
+});
 const ResultModel =
-  mongoose.models.Result || mongoose.model<IResultType>("Result", ResultSchema);
+  mongoose.models?.Result || mongoose.model<IResultType>("Result", ResultSchema);
 
 export default ResultModel;

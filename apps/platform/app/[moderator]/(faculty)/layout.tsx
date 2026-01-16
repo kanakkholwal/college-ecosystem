@@ -1,18 +1,15 @@
 import Page403 from "@/components/utils/403";
-import { getSession } from "src/lib/auth-server";
-import { ROLES } from "~/constants";
+import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
+import { ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
 
-const ALLOWED_ROLES = [
-  ROLES.FACULTY,
-  ROLES.HOD,
-  ROLES.ASSISTANT_WARDEN,
-  ROLES.WARDEN,
-];
+const ONLY_ALLOWED_ROLES = [ROLES_ENUMS.FACULTY, ROLES_ENUMS.HOD];
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   params: Promise<{
-    moderator: (typeof ALLOWED_ROLES)[number];
+    moderator: typeof ALLOWED_ROLES[number];
   }>;
 }
 
@@ -20,8 +17,18 @@ export default async function DashboardLayout({
   children,
   params,
 }: DashboardLayoutProps) {
-  const session = await getSession();
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
   const { moderator } = await params;
+  if (
+    !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number]) ||
+    !ONLY_ALLOWED_ROLES.includes(moderator as (typeof ONLY_ALLOWED_ROLES)[number])
+  ) {
+    return notFound();
+  }
+
 
   if (
     !(
@@ -29,7 +36,7 @@ export default async function DashboardLayout({
         ALLOWED_ROLES.includes(role as (typeof ALLOWED_ROLES)[number])
       ) &&
         ALLOWED_ROLES.includes(moderator)) ||
-      session?.user?.role === ROLES.ADMIN
+      session?.user?.role === ROLES_ENUMS.ADMIN
     )
   ) {
     return <Page403 />;

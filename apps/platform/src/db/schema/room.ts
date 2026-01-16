@@ -1,6 +1,5 @@
 import {
   integer,
-  jsonb,
   pgTable,
   text,
   timestamp,
@@ -8,11 +7,12 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { users } from "./auth-schema";
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 // Sub-schema for Usage History
 export const roomUsageHistory = pgTable("room_usage_history", {
   id: uuid("id").defaultRandom().primaryKey(),
-  roomId: uuid("room_id").references(() => rooms.id),
+  roomId: uuid("room_id").references(() => rooms.id, { onDelete: "cascade" }),
   userId: text("userId")
     .notNull()
     .references(() => users.id),
@@ -37,3 +37,9 @@ export const rooms = pgTable("rooms", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
+
+// Define types for rooms and usage history
+export type RoomSelect = InferSelectModel<typeof rooms>;
+export type RoomInsert = InferInsertModel<typeof rooms>;
+export type UsageHistoryInsert = InferInsertModel<typeof roomUsageHistory>;
+export type UsageHistorySelect = InferSelectModel<typeof roomUsageHistory>;

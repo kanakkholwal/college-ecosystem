@@ -1,12 +1,12 @@
 "use client";
-import {
-  AnimatePresence,
-  type Transition,
-  type Variant,
-  motion,
-  type MotionProps,
-} from "motion/react";
 import { cn } from "@/lib/utils";
+import {
+    AnimatePresence,
+    motion,
+    type MotionProps,
+    type Transition,
+    type Variant,
+} from "framer-motion";
 
 type TransitionPanelProps = {
   children: React.ReactNode[];

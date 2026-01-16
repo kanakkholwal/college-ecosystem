@@ -1,44 +1,18 @@
 import axios from "axios";
 import HTMLParser from "node-html-parser";
-import { getDepartmentCoursePrefix } from "../constants/departments";
+import type { headerMap } from "../models/header";
 import type { rawResultType } from "../types/result";
+import { determineBranchChange, determineDepartment, determineProgramme, getResultHeaders } from "./result_utils";
 
-const PROGRAMME_KEYS = {
-  "Dual Degree": ["dcs", "dec"],
-  "B.Tech": ["bce", "bme", "bms", "bma", "bph", "bee", "bec", "bcs", "bch"],
-  "B.Arch": ["bar"],
-  "M.Tech": ["mce", "mme", "mms", "mma", "mph", "mee", "mec", "mcs", "mch"],
-};
-const CACHE = new Map<string, string>();
 
-const RESPONSE = {
-  ERROR: {
-    INVALID_ROLL_NO: "Invalid Roll No",
-    BATCH_NOT_SUPPORTED: "Batch not supported",
-    NO_SIMILAR_BRANCH: "No Similar branch",
-    NO_PROGRAMME: "No Programme",
-    NO_BRANCH: "No Branch",
-    NO_URL: "No URL",
-    NO_HEADERS: "No Headers",
-    OTHER: "Something went wrong",
-  },
-  SUCCESS: {
-    RESULT_FETCHED: "Result fetched successfully!",
-  },
-  OTHER: {
-    WELCOME: "Welcome to the server!",
-    HEALTHY: "Healthy",
-    SOMETHING_WRONG: "Something went wrong!",
-    OTHER: "Other",
-  },
-};
 
-// function parseResponse(res_type:keyof typeof RESPONSE,response_code:keyof typeof RESPONSE[keyof typeof RESPONSE]){
-//     return {
-//         type:RESPONSE[res_type] ? res_type : "OTHER",
-//         message:RESPONSE[res_type][response_code] ? RESPONSE[res_type][response_code] : RESPONSE.OTHER.OTHER
-//     }
-// }
+/**
+ * Fetches the result data from the NITH results page for a given roll number.
+ * @param url - The URL to fetch the result from.
+ * @param RollNo - The roll number of the student.
+ * @param headers - The headers required for the request.
+ * @returns A promise that resolves to a tuple containing the result data and a message.
+ */
 
 const fetchData = async (
   url: string,
@@ -52,7 +26,7 @@ const fetchData = async (
       headers: {
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Language": "en-IN,en;q=0.9",
         "Cache-Control": "max-age=0",
         "Content-Type": "application/x-www-form-urlencoded",
         "Upgrade-Insecure-Requests": "1",
@@ -71,8 +45,14 @@ const fetchData = async (
     return Promise.resolve([null, (error as Error).toString()]);
   }
 };
+/**
+ * Parses the HTML result string fetched from the NITH results page.
+ * @param result - The HTML result string fetched from the NITH results page.
+ * @param info - Additional information about the student.
+ * @returns A promise that resolves to a rawResultType object.
+ */
 
-const parseResult = (
+const parseResult = async (
   result: string | null,
   info: {
     rollNo: string;
@@ -82,12 +62,22 @@ const parseResult = (
     programme: string;
   }
 ): Promise<rawResultType> => {
-  if (result === null) {
+  if (!result || !result.trim()) {
     console.log("Invalid Roll No");
     return Promise.reject("Invalid Roll No");
   }
-  const document = HTMLParser.parse(result);
-  if (!document.querySelector("#page-wrap")) {
+
+  let document;
+  try {
+    document = HTMLParser.parse(result);
+  } catch (err) {
+    console.log("HTML parse error", err);
+    return Promise.reject("Invalid Roll No");
+  }
+
+  // basic structural check
+  const allTables = Array.from(document.querySelectorAll("table"));
+  if (!document.querySelector("#page-wrap") || allTables.length < 2) {
     console.log("Invalid Roll No");
     return Promise.reject("Invalid Roll No");
   }
@@ -103,79 +93,121 @@ const parseResult = (
     gender: "not_specified",
   };
 
-  student.name =
-    document
-      .querySelectorAll("table")[1]
-      .querySelector("td:nth-child(2)>p:nth-child(2)")
-      ?.innerText.trim() || "";
-  document.querySelector(".pagebreak")?.remove();
-  const subject_tables = document.querySelectorAll(
-    "table:nth-child(odd):nth-child(n + 3):not(:last-of-type)"
-  );
-  subject_tables.forEach((table, index) => {
-    if (!student.semesters[index]) {
-      student.semesters.push({
-        semester: "0",
-        sgpi: 0,
-        sgpi_total: 0,
-        cgpi: 0,
-        cgpi_total: 0,
-        courses: [],
-      });
-    }
-    for (const tr of table.querySelectorAll("tr:not([class])")) {
-      const semester = Number.parseFloat(
-        tr.querySelector("td:nth-child(6)")?.textContent || "0.00"
-      );
-      const semester_total = Number.parseFloat(
-        tr.querySelector("td:nth-child(4)")?.textContent || "1"
-      );
-      student.semesters[index].courses.push({
-        name: tr.querySelector("td:nth-child(2)")?.innerText.trim() || "",
-        code: tr.querySelector("td:nth-child(3)")?.innerText.trim() || "",
-        cgpi: semester / semester_total,
-      });
-    }
-  });
-  const result_tables = document.querySelectorAll(
-    "table:nth-child(even):nth-child(n + 3):not(:last-of-type)"
-  );
-  result_tables.forEach((table, index) => {
-    table.querySelectorAll("td").forEach((td, i, array) => {
-      student.semesters[index].semester = `0${index + 1}`.slice(-2);
-      student.semesters[index].sgpi = array[1].innerText
-        .trim()
-        .split("=")[1] as unknown as number;
-      student.semesters[index].sgpi_total = array[2].innerText
-        .trim()
-        .split(" ")
-        .pop() as unknown as number;
-      student.semesters[index].cgpi = array[3].innerText
-        .trim()
-        .split("=")[1] as unknown as number;
-      student.semesters[index].cgpi_total = array[4].innerText
-        .trim()
-        .split(" ")
-        .pop() as unknown as number;
+  // Safe extraction for name (guard table index and selector)
+  const secondTable = allTables[1];
+  if (secondTable) {
+    const nameEl = secondTable.querySelector("td:nth-child(2) > p:nth-child(2)");
+    student.name = nameEl?.innerText?.trim() ?? "";
+  }
+
+  // Avoid mutating original document if unnecessary
+  // document.querySelector(".pagebreak")?.remove();
+
+  // Use table-pairing: skip first two tables (assumed header), ignore last table if it's a footer
+  // This yields [subjectTable, resultTable, subjectTable, resultTable, ...]
+  const bodyTables = allTables.slice(2, allTables.length - 1 >= 2 ? allTables.length - 1 : allTables.length);
+  for (let pairIndex = 0; pairIndex < bodyTables.length; pairIndex += 2) {
+    const subjTable = bodyTables[pairIndex];
+    const resTable = bodyTables[pairIndex + 1];
+
+    const semIndex = student.semesters.length; // append in order
+    // Initialize semester slot defensively
+    student.semesters.push({
+      semester: `0${semIndex + 1}`.slice(-2),
+      sgpi: 0,
+      sgpi_total: 0,
+      cgpi: 0,
+      cgpi_total: 0,
+      courses: [],
     });
-  });
+
+    const semesterObj = student.semesters[semIndex];
+
+    // Parse courses from subjTable
+    if (subjTable) {
+      const rows = Array.from(subjTable.querySelectorAll("tr"));
+      for (const tr of rows) {
+        const tds = Array.from(tr.querySelectorAll("td"));
+        // require at least 6 tds (because original code uses nth-child up to 6)
+        if (tds.length < 6) continue;
+        const name = tds[1]?.innerText?.trim() ?? "";
+        const code = tds[2]?.innerText?.trim() ?? "";
+        const grade = tds[4]?.innerText?.trim() ?? "";
+        // safe numeric parsing
+        const subPointsText = tds[5]?.textContent ?? "0";
+        const creditsText = tds[3]?.textContent ?? "0";
+        const sub_points = Number.parseFloat(subPointsText.replace(/[^0-9.\-]+/g, "")) || 0;
+        const credits = Number.parseFloat(creditsText.replace(/[^0-9.\-]+/g, "")) || 0;
+        const cgpi = credits > 0 ? (sub_points / credits) : 0;
+
+        semesterObj.courses.push({
+          name,
+          code,
+          grade,
+          cgpi,
+          credits,
+          sub_points,
+        });
+      }
+    }
+
+    // Parse summary (sgpi, cgpi totals) from resTable — do it once, not per-td
+    if (resTable) {
+      const tds = Array.from(resTable.querySelectorAll("td"));
+      // Expecting at least 5 tds based on original indexing
+      if (tds.length >= 5) {
+        // helpers to extract numbers after '=' or the last token
+        const extractAfterEqual = (s?: string) => {
+          if (!s) return NaN;
+          const idx = s.indexOf("=");
+          return idx >= 0 ? s.slice(idx + 1).trim() : s.trim();
+        };
+        const extractLastToken = (s?: string) => {
+          if (!s) return NaN;
+          const parts = s.trim().split(/\s+/);
+          return parts.length ? parts[parts.length - 1] : "";
+        };
+
+        const sgpiRaw = extractAfterEqual(tds[1].innerText);
+        const sgpiTotalRaw = extractLastToken(tds[2].innerText);
+        const cgpiRaw = extractAfterEqual(tds[3].innerText);
+        const cgpiTotalRaw = extractLastToken(tds[4].innerText);
+
+        semesterObj.sgpi = Number.parseFloat(String(sgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.sgpi_total = Number.parseFloat(String(sgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.cgpi = Number.parseFloat(String(cgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.cgpi_total = Number.parseFloat(String(cgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+      }
+    }
+  }
+
+  // If pairing logic created fewer semesters than result tables or vice-versa, we kept stable behavior:
+  // determineBranchChange can still run (existing business logic)
   const [branch_change, department] = determineBranchChange(student);
   if (branch_change && department !== null) {
     student.branch = department;
   }
 
   console.log("Result parsed");
-  return Promise.resolve(student);
+  return student;
 };
 
+
+/**
+ * Scrapes the result for a given roll number.
+ * @param rollNo - The roll number of the student.
+ * @param dualDegree - Whether to also fetch the dual degree results.
+ * @returns A promise that resolves to an object containing the result data or an error message.
+ * */
 export async function scrapeResult(rollNo: string): Promise<{
   message: string;
   data: rawResultType | null;
   error?: string | null;
 }> {
-  const data = await getInfoFromRollNo(rollNo, false);
 
+  const data = await getInfoFromRollNo(rollNo, false);
   console.log("Roll No: %s", rollNo);
+
   try {
     console.log("evaluating");
     const [result, msg] = await fetchData(data.url, rollNo, data.headers);
@@ -193,27 +225,41 @@ export async function scrapeResult(rollNo: string): Promise<{
     });
     console.log("parsed");
     // if student is dual degree then we need to fetch the other result
-    if (student.programme === "Dual Degree") {
-      const data = await getInfoFromRollNo(rollNo, true);
-      const [result, msg] = await fetchData(data.url, rollNo, data.headers);
-      if (result === null) {
-        return Promise.resolve({
-          message: msg,
-          data: null,
-          error: "Invalid Roll No",
-        });
+    if (data.programme === "Dual Degree") {
+      // console.log("Dual Degree result requested, but not implemented yet.");
+      const isEligibleForDualDegree = student.semesters.length > 6;
+      if (isEligibleForDualDegree) {
+        const dualDegreeData = await getInfoFromRollNo(rollNo, true);
+        console.log("evaluating dual degree result", dualDegreeData.url);
+        const [dualResult, dualMsg] = await fetchData(dualDegreeData.url, rollNo, dualDegreeData.headers);
+        if (dualResult) {
+          const studentDual = await parseResult(dualResult, {
+            rollNo,
+            ...dualDegreeData,
+          });
+          console.log("parsed dual degree result");
+          // if the dual degree result has only one semester, it means the student is in the first semester of the dual degree
+
+          for (const semester of studentDual.semesters) {
+            student.semesters.push({
+              ...semester,
+              semester: `${semester.semester}-DD`, // Append 'D' to indicate dual degree semester
+            })
+          }
+          console.log(student.semesters.length + " total semesters found in dual degree result");
+
+        } else {
+          console.log({
+            message: dualMsg,
+            data: null,
+            error: "Result not available for dual degree",
+          });
+          // If dual degree result is not available, we still return the student data with a message
+        }
+
       }
-      const student_dual = await parseResult(result, {
-        rollNo,
-        ...data,
-      });
-      student.semesters = student.semesters.concat(
-        student_dual.semesters.map((semester) => ({
-          ...semester,
-          semester: `${semester.semester} (masters)`,
-        }))
-      );
     }
+
 
     return Promise.resolve({
       message: "Result fetched successfully!",
@@ -221,78 +267,24 @@ export async function scrapeResult(rollNo: string): Promise<{
       error: null,
     });
   } catch (err) {
+    console.error("Error in scrapeResult:", err);
+    // If there is an error, return a rejected promise with the error message
     return Promise.resolve({
-      message: "Something went wrong",
+      message: err instanceof Error ? err.message : "Something went wrong",
       data: null,
       error: err?.toString(),
     });
   }
 }
 
-const headerMap = new Map<
-  string | number,
-  {
-    url: string;
-    Referer: string;
-    CSRFToken: string;
-    RequestVerificationToken: string;
-  }
->([
-  [
-    20,
-    {
-      url: "http://results.nith.ac.in/scheme20/studentresult/result.asp",
-      Referer: "http://results.nith.ac.in/scheme20/studentresult/index.asp",
-      CSRFToken: "{782F96DF-5115-4492-8CB2-06104ECFF0CA}",
-      RequestVerificationToken: "094D0BF7-EE18-E102-8CBF-23C329B32E1C",
-    },
-  ],
-  [
-    21,
-    {
-      url: "http://results.nith.ac.in/scheme21/studentresult/result.asp",
-      Referer: "http://results.nith.ac.in/scheme21/studentresult/index.asp",
-      CSRFToken: "{D5D50B24-2DDE-4C35-9F41-10426C59EEA7}",
-      RequestVerificationToken: "7BA3D112-507E-5379-EE25-9539F0DE9076",
-    },
-  ],
-  [
-    22,
-    {
-      url: "http://results.nith.ac.in/scheme22/studentresult/result.asp",
-      Referer: "http://results.nith.ac.in/scheme22/studentresult/index.asp",
-      CSRFToken: "{AF6DB03B-F6EC-475E-B331-6C9DE3846923}",
-      RequestVerificationToken: "DA92D62F-BF6E-B268-4E04-F419F5EA6233",
-    },
-  ],
-  [
-    23,
-    {
-      url: "http://results.nith.ac.in/scheme23/studentresult/result.asp",
-      Referer: "http://results.nith.ac.in/scheme23/studentresult/index.asp",
-      CSRFToken: "{F1E16363-FEDA-48AF-88E9-8A186425C213}",
-      RequestVerificationToken: "4FFEE8F3-14C9-27C4-B370-598406BF99C1",
-    },
-  ],
-  [
-    24,
-    {
-      url: "http://results.nith.ac.in/scheme24/studentresult/result.asp",
-      Referer: "http://results.nith.ac.in/scheme24/studentresult/index.asp",
-      CSRFToken: "{0696D16E-58AD-472B-890E-6537BE62A5EA}",
-      RequestVerificationToken: "F797B72F-DC73-D06D-6B19-012ED5EBA98B",
-    },
-  ],
-  [
-    "21_dual",
-    {
-      url: "http://results.nith.ac.in/dualdegree21/studentresult/result.asp",
-      Referer: "http://results.nith.ac.in/dualdegree21/studentresult/index.asp",
-      CSRFToken: "{BC8FDC16-3133-429F-8FD7-CAC7026512F1}",
-      RequestVerificationToken: "13FD6203-F8C9-FBC3-877F-3D7480CF2325",
-    },
-  ],
-]);
+const latestBatchCode = 24; // for 2024 batch
+
+/**
+ * Gets the information headers for the roll number.
+ * @param rollNo - The roll number of the student.
+ * @param isDualDegree - Whether the student is in a dual degree programme.
+ * @returns A promise that resolves to an object containing the batch, branch, URL, and headers.
+ * */
 
 export async function getInfoFromRollNo(rollNo: string, dualDegree = false) {
   // split the roll no into 3 parts starting two characters then 3 characters and then 3 characters
@@ -301,154 +293,59 @@ export async function getInfoFromRollNo(rollNo: string, dualDegree = false) {
     rollNo.toLowerCase().substring(2, 5), // dec,bec,bar
     rollNo.toLowerCase().substring(5, 8), // 001
   ] as const;
-  const [batchCode, programmeCode] = matches;
-  const isDualDegree =
-    PROGRAMME_KEYS["Dual Degree"].includes(programmeCode) && dualDegree;
-  const isMasters = PROGRAMME_KEYS["M.Tech"].includes(programmeCode);
-  const batchCodeKey = isDualDegree ? `${batchCode}_dual` : batchCode;
-  const programmeScheme = isDualDegree
-    ? "dualdegree"
-    : isMasters
-      ? "mtech"
-      : "scheme";
-
-  //  check if we have header for the batch
-  if (!headerMap.has(batchCodeKey)) {
-    if (batchCode >= 20) {
-      // New batches
-      if (CACHE.has(batchCodeKey + programmeCode)) {
-        const data = CACHE.get(batchCodeKey + programmeCode);
-        headerMap.set(batchCodeKey, JSON.parse(data || ""));
-      } else if (!headerMap.has(batchCode)) {
-        headerMap.set(batchCodeKey, {
-          url: `http://results.nith.ac.in/${programmeScheme}${batchCode}/studentresult/result.asp`,
-          Referer: `http://results.nith.ac.in/${programmeScheme}${batchCode}/studentresult/index.asp`,
-          CSRFToken: `{${Math.random().toString(36).substring(2, 36)}}`,
-          RequestVerificationToken: `${Math.random().toString(36).substring(2, 36)}`,
-        });
-
-        const header = headerMap.get(batchCodeKey);
-        if (!header) {
-          return Promise.reject({
-            type: "ERROR",
-            message: RESPONSE.ERROR.NO_HEADERS,
-          });
-        }
-        const response = await axios.get(header.url);
-        const document = HTMLParser.parse(response.data.toString());
-        header.CSRFToken =
-          document
-            .querySelector('input[name="CSRFToken"]')
-            ?.getAttribute("value") || "";
-        header.RequestVerificationToken =
-          document
-            .querySelector('input[name="RequestVerificationToken"]')
-            ?.getAttribute("value") || "";
-        headerMap.set(batchCodeKey, header);
-        CACHE.set(batchCodeKey + programmeCode, JSON.stringify(header));
-      }
-    }
+  const [batchCode,] = matches;
+  // TODO: validate roll no format more strictly AFTER 2030 is introduced
+  if (isNaN(batchCode) || batchCode < 20) {
+    return {
+      batch: 0,
+      branch: "not_specified",
+      url: "",
+      headers: {
+        Referer: "",
+        CSRFToken: "",
+        RequestVerificationToken: "",
+      },
+      programme: "not_specified",
+    };
   }
-  const header = headerMap.get(batchCode);
-  if (!header) {
-    return Promise.reject({
-      type: "ERROR",
-      message: RESPONSE.ERROR.NO_HEADERS,
-    });
+  if (batchCode === latestBatchCode + 2) {
+    // console.log("Results not yet available for the latest batch. falling back to previous batch headers");
+    return {
+      batch: Number.parseInt(`20${batchCode}`),
+      branch: determineDepartment(rollNo),
+      url: "<url>",
+      headers: {
+        Referer: "<Referer>",
+        CSRFToken: "<CSRFToken>",
+        RequestVerificationToken: "<RequestVerificationToken>",
+      },
+      programme: determineProgramme(rollNo),
+    };
   }
-
+  const headersResponse = await getResultHeaders(rollNo, !dualDegree);
+  if (headersResponse.error) {
+    return {
+      batch: 0,
+      branch: "not_specified",
+      url: "",
+      headers: {
+        Referer: "",
+        CSRFToken: "",
+        RequestVerificationToken: "",
+      },
+      programme: "not_specified",
+    };
+  }
+  const headers = headersResponse.headers as headerMap;
   return {
     batch: Number.parseInt(`20${batchCode}`),
     branch: determineDepartment(rollNo),
-    url: header.url,
+    url: headers.url,
     headers: {
-      Referer: header.Referer,
-      CSRFToken: header.CSRFToken,
-      RequestVerificationToken: header.RequestVerificationToken,
+      Referer: headers.Referer,
+      CSRFToken: headers.CSRFToken,
+      RequestVerificationToken: headers.RequestVerificationToken,
     },
     programme: determineProgramme(rollNo),
   };
-}
-export function determineDepartment(RollNo: string) {
-  const lowerRollNo = RollNo.toLowerCase();
-  switch (true) {
-    case lowerRollNo.includes("bar"):
-      return "Architecture";
-    case lowerRollNo.includes("bce"):
-      return "Civil Engineering";
-    case lowerRollNo.includes("bme"):
-      return "Mechanical Engineering";
-    case lowerRollNo.includes("bms"):
-      return "Materials Science and Engineering";
-    case lowerRollNo.includes("bma"):
-      return "Mathematics and Computing";
-    case lowerRollNo.includes("bph"):
-      return "Engineering Physics";
-    case lowerRollNo.includes("bee"):
-      return "Electrical Engineering";
-    case lowerRollNo.includes("bec") || lowerRollNo.includes("dec"):
-      return "Electronics and Communication Engineering";
-    case lowerRollNo.includes("bcs") || lowerRollNo.includes("dcs"):
-      return "Computer Science and Engineering";
-    case lowerRollNo.includes("bch"):
-      return "Chemical Engineering";
-    // case (lowerRollNo.includes("bhs")):
-    //     return "Humanities and Social Sciences"
-    default:
-      throw Error("No Similar branch");
-  }
-}
-export function determineProgramme(rollNo: string) {
-  const programmeCode = rollNo.toLowerCase().substring(2, 5);
-  let programme = Object.keys(PROGRAMME_KEYS)[0];
-
-  for (const [key, value] of Object.entries(PROGRAMME_KEYS)) {
-    if (value.includes(programmeCode)) {
-      programme = key;
-    }
-  }
-
-  return programme;
-}
-
-export function determineBranchChange(
-  result: rawResultType
-): [boolean, string | null] {
-  if (result.semesters.length <= 2) {
-    return [false, null];
-  }
-
-  const semesters = result.semesters.slice(2);
-  const course_codes = semesters.flatMap((semester) =>
-    semester.courses.map((course) => course.code)
-  );
-  // get the unique course codes
-  const unique_course_codes = [...new Set(course_codes)];
-  //  get the unique courses with prefix
-  const unique_courses_prefix = unique_course_codes.map(
-    (course_code: string) => course_code.toUpperCase().split("-")[0]
-  );
-  // count the number of courses with the same prefix using hashmap
-  const course_count = unique_courses_prefix.reduce(
-    (acc, course) => {
-      acc[course] = (acc[course] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-  //  get the highest count of the courses
-  const max_courses = Math.max(...Object.values(course_count));
-  // get the course prefix with the highest count
-  const course_prefix = Object.keys(course_count).find(
-    (course) => course_count[course] === max_courses
-  );
-  const department = getDepartmentCoursePrefix(course_prefix || "");
-  if (
-    !(department.trim() === "") &&
-    department !== "other" &&
-    department !== result.branch
-  ) {
-    return [true, department];
-  }
-  return [false, null];
 }

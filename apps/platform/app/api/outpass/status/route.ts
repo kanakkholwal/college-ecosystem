@@ -1,13 +1,14 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { getSession } from "~/lib/auth-server";
-import { isValidRollNumber } from "~/constants/departments";
 import { Types } from "mongoose";
-import { ROLES } from "~/constants";
-import dbConnect from "~/lib/dbConnect";
+import { type NextRequest, NextResponse } from "next/server";
 import {
-  getOutPassHistoryByRollNo,
-  getOutPassById,
-} from "~/actions/hostel_outpass";
+    getOutPassById,
+    getOutPassHistoryByRollNo,
+} from "~/actions/hostel.outpass";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
+import { ROLES_ENUMS } from "~/constants";
+import { isValidRollNumber } from "~/constants/core.departments";
+import dbConnect from "~/lib/dbConnect";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +22,16 @@ export async function GET(request: NextRequest) {
     if (!isValidRollNo && !isValidMongoId) {
       return new NextResponse("Invalid identifier provided", { status: 400 });
     }
-    const session = await getSession();
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
     if (!session) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
     if (
-      session.user.role !== ROLES.ADMIN ||
-      !session.user.other_roles.includes(ROLES.GUARD)
+      session.user.role !== ROLES_ENUMS.ADMIN ||
+      !session.user.other_roles.includes(ROLES_ENUMS.GUARD)
     ) {
       return new NextResponse("You are not authorized to access this feature", {
         status: 403,

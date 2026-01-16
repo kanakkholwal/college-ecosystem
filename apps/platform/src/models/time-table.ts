@@ -1,70 +1,27 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
-import { DEPARTMENTS_LIST } from "src/constants/departments";
+import mongoose, { Document, Schema } from "mongoose";
+import { DEPARTMENTS_LIST } from "~/constants/core.departments";
 
-import * as z from "zod";
+import type {
+  RawEvent,
+  RawTimeSlot,
+  RawTimetableType,
+} from "~/constants/common.time-table";
 
-export const rawTimetableSchema = z.object({
-  department_code: z
-    .string()
-    .refine((val) => DEPARTMENTS_LIST.map((dept) => dept.code).includes(val), {
-      message: "Invalid department code",
-    }),
-  sectionName: z.string(),
-  year: z.number().int().min(1, "Year should be greater than 0"),
-  semester: z.number().int().min(1, "Semester should be greater than 0"),
-  schedule: z.array(
-    z.object({
-      day: z.number().int().min(0).max(6),
-      timeSlots: z.array(
-        z.object({
-          startTime: z.number().int().min(0).max(9),
-          endTime: z.number().int().min(0).max(10),
-          events: z.array(
-            z.object({
-              title: z.string(),
-              description: z.string().optional(),
-            })
-          ),
-        })
-      ),
-    })
-  ),
-});
+export type EventTypeWithID = RawEvent;
 
-export type RawTimetableType = z.infer<typeof rawTimetableSchema>;
+export interface IEvent extends Document, Omit<RawEvent, "_id"> { }
 
-export interface RawEvent {
-  title: string;
-  description?: string;
-}
-export type EventTypeWithID = RawEvent & { _id: string };
-export interface IEvent extends Document, RawEvent {}
+export type TimeSlotWithID = RawTimeSlot & { _id: string };
 
-export interface rawTimeSlot {
-  startTime: number;
-  endTime: number;
-  events: RawEvent[];
-}
-export type TimeSlotWithID = rawTimeSlot & { _id: string };
-export interface ITimeSlot extends Document, rawTimeSlot {}
-
-export interface rawDaySchedule {
+export interface RawDaySchedule {
   day: number;
-  timeSlots: rawTimeSlot[];
+  timeSlots: RawTimeSlot[];
 }
-export type DayScheduleWithID = rawDaySchedule & { _id: string };
-export interface IDaySchedule extends Document, rawDaySchedule {}
+export type DayScheduleWithID = RawDaySchedule & { _id: string };
+export interface IDaySchedule extends Document, RawDaySchedule { }
 
-export type RawTimetable = {
-  department_code: string;
-  sectionName: string;
-  year: number;
-  semester: number;
-  schedule: rawDaySchedule[];
-};
-
-export interface PublicTimetable extends RawTimetable {
-  author: Types.ObjectId;
+export interface PublicTimetable extends RawTimetableType {
+  author: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -78,12 +35,10 @@ export interface TimeTableWithID {
   author: string;
   createdAt: Date;
   updatedAt: Date;
+  status: "draft" | "published" | "archived";
 }
 
-export interface ITimetable extends Document, PublicTimetable {
-  bookmarks: Types.ObjectId[];
-  views: number;
-}
+export interface ITimetable extends Document, PublicTimetable { }
 
 const timetableSchema = new Schema<ITimetable>(
   {
@@ -107,13 +62,20 @@ const timetableSchema = new Schema<ITimetable>(
               {
                 title: { type: String, required: true },
                 description: { type: String },
+                heldBy: { type: String },
+                _id: { type: String }, // Unique identifier for the event
               },
             ],
           },
         ],
       },
     ],
-    author: { type: Schema.Types.ObjectId, ref: "User" },
+    author: { type: String, required: true }, // Assuming you have a User model
+    status: {
+      type: String,
+      enum: ["draft", "published", "archived"],
+      default: "draft"
+    }
   },
   {
     timestamps: true,

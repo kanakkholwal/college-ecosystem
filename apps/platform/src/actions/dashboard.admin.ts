@@ -1,98 +1,470 @@
 "use server";
 import type { InferSelectModel } from "drizzle-orm";
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { headers } from "next/headers";
+import { auth } from "~/auth";
 import { db } from "~/db/connect";
 import { accounts, sessions, users } from "~/db/schema/auth-schema";
+import dbConnect from "~/lib/dbConnect";
+import CommunityPostModel from "~/models/community";
+import { EventModel } from "~/models/events";
+import PollModel from "~/models/poll";
+import ResultModel from "~/models/result";
+import { calculateGrowthPercentage, calculateTrend, DateRange, generateGraphData, getDateRanges, getPeriodLabel, GraphDataPoint, PeriodSummary, TimeInterval } from "~/utils/process";
+import { updateHostelStudent } from "./hostel.core";
 
-export async function users_CountAndGrowth(timeInterval: string): Promise<{
-  count: number;
-  total: number;
+export interface UserCountAndGrowthResult {
+  currentPeriodCount: number;
+  totalUsers: number;
   growth: number;
   growthPercent: number;
   trend: -1 | 1 | 0;
-}> {
-  let startTime: Date;
-  let endTime: Date | null = null; // Used for the current partial interval
-  let prevStartTime: Date;
-  let prevEndTime: Date;
+  periodStart: Date;
+  periodEnd: Date;
+  previousPeriodCount: number;
+  graphData: GraphDataPoint[];
+  summary: {
+    currentPeriod: PeriodSummary;
+    previousPeriod: PeriodSummary;
+  };
+}
 
-  // Determine the start and previous intervals based on the time interval
-  switch (timeInterval) {
-    case "last_hour": {
-      startTime = new Date(Date.now() - 60 * 60 * 1000);
-      prevStartTime = new Date(startTime.getTime() - 60 * 60 * 1000);
-      prevEndTime = startTime;
-      break;
+
+
+
+
+/**
+ * Calculate user count and growth metrics for a given time interval
+ * @param timeInterval - The time period to analyze
+ * @returns User count, growth metrics, trend information, and graph-ready data
+ * @throws {Error} If an invalid time interval is provided or database query fails
+ */
+export async function users_CountAndGrowth(
+  timeInterval: TimeInterval
+): Promise<UserCountAndGrowthResult> {
+  try {
+    const now = new Date();
+
+    // Get current and previous period date ranges
+    const { current, previous } = getDateRanges(timeInterval, now);
+
+    // Execute all queries in parallel for better performance
+    const [totalUsersResult, currentPeriodResult, previousPeriodResult, timeSeriesData] =
+      await Promise.all([
+        // Total user count (all time)
+        db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .execute(),
+
+        // Current period count
+        db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, current.start),
+              lte(users.createdAt, current.end)
+            )
+          )
+          .execute(),
+
+        // Previous period count
+        db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(users)
+          .where(
+            and(
+              gte(users.createdAt, previous.start),
+              lte(users.createdAt, previous.end)
+            )
+          )
+          .execute(),
+
+        // Time series data for graph
+        fetchTimeSeriesData(timeInterval, current, previous),
+      ]);
+
+    const totalUsers = totalUsersResult[0]?.count ?? 0;
+    const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
+    const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
+
+    // Calculate growth metrics
+    const growth = currentPeriodCount - previousPeriodCount;
+    const growthPercent = calculateGrowthPercentage(
+      currentPeriodCount,
+      previousPeriodCount
+    );
+    const trend = calculateTrend(growth);
+
+    // Generate graph data
+    const graphData = generateGraphData(timeSeriesData, timeInterval);
+
+    return {
+      currentPeriodCount,
+      totalUsers,
+      growth,
+      growthPercent,
+      trend,
+      periodStart: current.start,
+      periodEnd: current.end,
+      previousPeriodCount,
+      graphData,
+      summary: {
+        currentPeriod: {
+          start: current.start,
+          end: current.end,
+          count: currentPeriodCount,
+          label: getPeriodLabel(timeInterval, 'current'),
+        },
+        previousPeriod: {
+          start: previous.start,
+          end: previous.end,
+          count: previousPeriodCount,
+          label: getPeriodLabel(timeInterval, 'previous'),
+        },
+      },
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to calculate user count and growth: ${error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+
+/**
+ * Fetch time series data for graphing
+ */
+async function fetchTimeSeriesData(
+  timeInterval: TimeInterval,
+  current: DateRange,
+  previous: DateRange
+) {
+  const truncateExpression = getTruncateExpression(timeInterval);
+
+  // Fetch data for both current and previous periods
+  const [currentData, previousData] = await Promise.all([
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(users)
+      .where(
+        and(
+          gte(users.createdAt, current.start),
+          lte(users.createdAt, current.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(users)
+      .where(
+        and(
+          gte(users.createdAt, previous.start),
+          lte(users.createdAt, previous.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+  ]);
+
+  /**
+   * Get the appropriate SQL date truncation expression based on interval
+   * This works for PostgreSQL - adjust for other databases
+   */
+  function getTruncateExpression(timeInterval: TimeInterval) {
+    switch (timeInterval) {
+      case "last_hour":
+        // Truncate to minute
+        return sql`DATE_TRUNC('minute', ${users.createdAt})`;
+      case "last_24_hours":
+        // Truncate to hour
+        return sql`DATE_TRUNC('hour', ${users.createdAt})`;
+      case "last_week":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${users.createdAt})`;
+      case "last_month":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${users.createdAt})`;
+      case "last_year":
+        // Truncate to month
+        return sql`DATE_TRUNC('month', ${users.createdAt})`;
+      default:
+        return sql`DATE_TRUNC('day', ${users.createdAt})`;
     }
-    case "last_24_hours": {
-      startTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      prevStartTime = new Date(startTime.getTime() - 24 * 60 * 60 * 1000);
-      prevEndTime = startTime;
-      break;
-    }
-    case "last_week": {
-      const today = new Date();
-      const startOfWeek = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() - today.getDay()
-      );
-      startTime = startOfWeek;
-      endTime = today; // Current week up to now
-      prevStartTime = new Date(startTime.getTime() - 7 * 24 * 60 * 60 * 1000);
-      prevEndTime = startTime;
-      break;
-    }
-    case "last_month": {
-      const today = new Date();
-      startTime = new Date(today.getFullYear(), today.getMonth(), 1); // Start of this month
-      endTime = today; // Current month up to now
-      prevStartTime = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Start of last month
-      prevEndTime = new Date(today.getFullYear(), today.getMonth(), 0); // Last day of last month
-      break;
-    }
-    case "last_year": {
-      const today = new Date();
-      startTime = new Date(today.getFullYear(), 0, 1); // Start of this year
-      endTime = today; // Current year up to now
-      prevStartTime = new Date(today.getFullYear() - 1, 0, 1); // Start of last year
-      prevEndTime = new Date(today.getFullYear() - 1, 11, 31); // Last day of last year
-      break;
-    }
-    default:
-      throw new Error("Invalid time interval provided");
   }
 
-  // Fetch the total user count
-  const totalUsers = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(users)
-    .execute();
-  const total = totalUsers[0]?.count ?? 0;
+  return { currentData, previousData };
+}
 
-  // Fetch the count of users in the previous interval
-  const periodCountQuery = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(users)
-    .where(
-      sql`"createdAt" >= ${prevStartTime} AND "createdAt" <= ${prevEndTime}`
-    );
-  const periodCount = periodCountQuery[0]?.count || 0;
 
-  // Calculate growth and growth percentage
-  const growth = total - periodCount;
-  const growthPercent =
-    periodCount === 0
-      ? 100
-      : (growth / (periodCount === 0 ? 1 : periodCount)) * 100;
 
-  return {
-    count: total,
-    total,
-    growth,
-    growthPercent,
-    trend: growth > 0 ? 1 : growth < 0 ? -1 : 0,
+export interface SessionCountAndGrowthResult {
+  currentPeriodCount: number;
+  totalSessions: number;
+  activeSessions: number;
+  growth: number;
+  growthPercent: number;
+  trend: -1 | 1 | 0;
+  periodStart: Date;
+  periodEnd: Date;
+  previousPeriodCount: number;
+  graphData: GraphDataPoint[];
+  summary: {
+    currentPeriod: PeriodSummary;
+    previousPeriod: PeriodSummary;
   };
+  uniqueUsers: number;
+  avgSessionsPerUser: number;
+}
+
+/**
+ * Calculate session count and growth metrics for a given time interval
+ * @param timeInterval - The time period to analyze
+ * @returns Session count, growth metrics, trend information, and graph-ready data
+ * @throws {Error} If an invalid time interval is provided or database query fails
+ */
+export async function sessions_CountAndGrowth(
+  timeInterval: TimeInterval
+): Promise<SessionCountAndGrowthResult> {
+  try {
+    const now = new Date();
+
+    // Get current and previous period date ranges
+    const { current, previous } = getDateRanges(timeInterval, now);
+
+    // Execute all queries in parallel for better performance
+    const [
+      totalSessionsResult,
+      activeSessionsResult,
+      currentPeriodResult,
+      previousPeriodResult,
+      uniqueUsersCurrentResult,
+      timeSeriesData
+    ] = await Promise.all([
+      // Total session count (all time)
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .execute(),
+
+      // Active sessions (not expired)
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .where(gte(sessions.expiresAt, now))
+        .execute(),
+
+      // Current period count
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .where(
+          and(
+            gte(sessions.createdAt, current.start),
+            lte(sessions.createdAt, current.end)
+          )
+        )
+        .execute(),
+
+      // Previous period count
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(sessions)
+        .where(
+          and(
+            gte(sessions.createdAt, previous.start),
+            lte(sessions.createdAt, previous.end)
+          )
+        )
+        .execute(),
+
+      // Unique users in current period
+      db
+        .select({ count: sql<number>`COUNT(DISTINCT ${sessions.userId})` })
+        .from(sessions)
+        .where(
+          and(
+            gte(sessions.createdAt, current.start),
+            lte(sessions.createdAt, current.end)
+          )
+        )
+        .execute(),
+
+      // Time series data for graph
+      fetchSessionTimeSeriesData(timeInterval, current, previous),
+    ]);
+
+    const totalSessions = totalSessionsResult[0]?.count ?? 0;
+    const activeSessions = activeSessionsResult[0]?.count ?? 0;
+    const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
+    const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
+    const uniqueUsers = uniqueUsersCurrentResult[0]?.count ?? 0;
+    const avgSessionsPerUser = uniqueUsers > 0 ? currentPeriodCount / uniqueUsers : 0;
+
+    // Calculate growth metrics
+    const growth = currentPeriodCount - previousPeriodCount;
+    const growthPercent = calculateGrowthPercentage(
+      currentPeriodCount,
+      previousPeriodCount
+    );
+    const trend = calculateTrend(growth);
+
+    // Generate graph data
+    const graphData = generateGraphData(timeSeriesData, timeInterval);
+
+    return {
+      currentPeriodCount,
+      totalSessions,
+      activeSessions,
+      growth,
+      growthPercent,
+      trend,
+      periodStart: current.start,
+      periodEnd: current.end,
+      previousPeriodCount,
+      graphData,
+      summary: {
+        currentPeriod: {
+          start: current.start,
+          end: current.end,
+          count: currentPeriodCount,
+          label: getPeriodLabel(timeInterval, 'current'),
+        },
+        previousPeriod: {
+          start: previous.start,
+          end: previous.end,
+          count: previousPeriodCount,
+          label: getPeriodLabel(timeInterval, 'previous'),
+        },
+      },
+      uniqueUsers,
+      avgSessionsPerUser: Number(avgSessionsPerUser.toFixed(2)),
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to calculate session count and growth: ${error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+/**
+ * Fetch time series data for session graphing
+ */
+async function fetchSessionTimeSeriesData(
+  timeInterval: TimeInterval,
+  current: DateRange,
+  previous: DateRange
+) {
+  const truncateExpression = getTruncateExpression(timeInterval);
+
+  // Fetch data for both current and previous periods
+  const [currentData, previousData] = await Promise.all([
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(sessions)
+      .where(
+        and(
+          gte(sessions.createdAt, current.start),
+          lte(sessions.createdAt, current.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+
+    db
+      .select({
+        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+      .from(sessions)
+      .where(
+        and(
+          gte(sessions.createdAt, previous.start),
+          lte(sessions.createdAt, previous.end)
+        )
+      )
+      .groupBy(sql`${truncateExpression}`)
+      .orderBy(sql`${truncateExpression}`)
+      .execute(),
+  ]);
+
+  /**
+   * Get the appropriate SQL date truncation expression based on interval
+   * This works for PostgreSQL - adjust for other databases
+   */
+  function getTruncateExpression(timeInterval: TimeInterval) {
+    switch (timeInterval) {
+      case "last_hour":
+        // Truncate to minute
+        return sql`DATE_TRUNC('minute', ${sessions.createdAt})`;
+      case "last_24_hours":
+        // Truncate to hour
+        return sql`DATE_TRUNC('hour', ${sessions.createdAt})`;
+      case "last_week":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
+      case "last_month":
+        // Truncate to day
+        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
+      case "last_year":
+        // Truncate to month
+        return sql`DATE_TRUNC('month', ${sessions.createdAt})`;
+      default:
+        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
+    }
+  }
+  return { currentData, previousData };
+}
+interface PlatformDBStats {
+  results: number;
+  polls: number;
+  communityPosts: number;
+  events: number;
+}
+export async function getPlatformDBStats(): Promise<PlatformDBStats> {
+  try {
+    await dbConnect();
+    const promises = [
+      ResultModel.countDocuments(),
+      PollModel.countDocuments(),
+      CommunityPostModel.countDocuments(),
+      EventModel.countDocuments(),
+    ];
+    const [resultsCount, pollsCount, communityPostsCount, eventsCount] =
+      await Promise.all(promises);
+
+    return {
+      results: resultsCount,
+      polls: pollsCount,
+      communityPosts: communityPostsCount,
+      events: eventsCount,
+    };
+  } catch (error) {
+    console.error("Error extracting visitor count:", error);
+    return {
+      results: 0,
+      polls: 0,
+      communityPosts: 0,
+      events: 0,
+    };
+  }
 }
 
 export async function flushCache() {
@@ -138,10 +510,44 @@ export async function updateUser(
 ): Promise<User | null> {
   try {
     await db.update(users).set(data).where(eq(users.id, userId)).execute();
-    return getUser(userId);
+    const user = await getUser(userId);
+    if (data.hostelId && user) {
+      console.log("Hostel updating for user:", user.email);
+      await updateHostelStudent(user.email, {
+        hostelId: data.hostelId,
+      });
+      console.log("Hostel updated for user:", user.email);
+    }
+    return user;
   } catch (error) {
     console.error(error);
     return null;
+  }
+}
+
+export async function changeUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<boolean> {
+  try {
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
+    if (
+      !session ||
+      session.user.id !== userId ||
+      session.user.role !== "admin"
+    ) {
+      throw new Error("Unauthorized: You can only change your own password.");
+    }
+    const ctx = await auth.$context;
+    const hash = await ctx.password.hash(newPassword);
+    await ctx.internalAdapter.updatePassword(userId, hash);
+    return Promise.resolve(true);
+  } catch (error) {
+    console.error("Error changing user password:", error);
+    return false;
   }
 }
 
@@ -159,15 +565,64 @@ export async function getTotalUsers(): Promise<number> {
 export async function getUsersByRole(): Promise<
   { role: string; count: number }[]
 > {
-  const result = await db
+  // const result = await db
+  //   .select({
+  //     role: users.role,
+  //     count: sql<number>`COUNT(*)`,
+  //   })
+  //   .from(users)
+  //   .groupBy(users.role)
+  //   .execute();
+  // return result;
+  // const result = await db
+  //   .select({
+  //     role: sql<string>`role_value`,
+  //     count: sql<number>`COUNT(*)`,
+  //   })
+  //   .from(
+  //     // Create a derived table that combines main role and other_roles
+  //     db
+  //       .select({
+  //         role_value: users.role,
+  //       })
+  //       .from(users)
+  //       .unionAll(
+  //         db
+  //           .select({
+  //             role_value: sql<string>`unnest(${users.other_roles})::text`,
+  //           })
+  //           .from(users)
+  //           .where(sql`array_length(${users.other_roles}, 1) > 0`)
+  //       )
+  //       .as("all_roles")
+  //   )
+  //   .groupBy(sql`role_value`)
+  //   .execute();
+
+  // return result;
+  const allUsers = await db
     .select({
       role: users.role,
-      count: sql<number>`COUNT(*)`,
+      other_roles: users.other_roles,
     })
     .from(users)
-    .groupBy(users.role)
     .execute();
-  return result;
+
+  const roleCounts: Record<string, number> = {};
+  // Iterate through all users to count roles
+  for (const user of allUsers) {
+    // Count main role
+    if (user.role !== "user")
+      roleCounts[user.role] = (roleCounts[user.role] || 0) + 1;
+
+    // Count each role in other_roles (converting enum to string)
+    user.other_roles.forEach((otherRole) => {
+      const roleString = String(otherRole); // Convert enum to string
+      roleCounts[roleString] = (roleCounts[roleString] || 0) + 1;
+    });
+  }
+
+  return Object.entries(roleCounts).map(([role, count]) => ({ role, count }));
 }
 
 export async function getUsersByDepartment(): Promise<
@@ -184,9 +639,7 @@ export async function getUsersByDepartment(): Promise<
   return result;
 }
 
-export async function getUsersByGender(): Promise<
-  { gender: string; count: number }[]
-> {
+export async function getUsersByGender(): Promise<Record<string, number>> {
   const result = await db
     .select({
       gender: users.gender,
@@ -195,7 +648,13 @@ export async function getUsersByGender(): Promise<
     .from(users)
     .groupBy(users.gender)
     .execute();
-  return result;
+  return result.reduce(
+    (acc, curr) => {
+      acc[curr.gender] = Number.parseInt(curr.count as unknown as string, 10);
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 }
 
 /**

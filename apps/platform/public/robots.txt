@@ -1,1 +1,10 @@
-Allow: /api/og/*
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /student/
+Disallow: /faculty/
+Disallow: /staff/
+
+Allow: /
+
+Sitemap: https://nith.eu.org/sitemap.xml
