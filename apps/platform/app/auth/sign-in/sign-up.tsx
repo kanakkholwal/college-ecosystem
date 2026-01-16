@@ -182,7 +182,7 @@ export default function SignUpForm() {
         {isLoading ? (
           <Loader2 className="animate-spin" />
         ) : (
-          <Icon name="google-fc" />
+          <Icon name="google:colored" />
         )}
         Google
       </Button>

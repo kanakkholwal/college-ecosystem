@@ -162,7 +162,7 @@ export default function SignInForm() {
         {isLoading ? (
           <Loader2 className="animate-spin" />
         ) : (
-          <Icon name="google-fc" />
+          <Icon name="google:colored" />
         )}
         Google
       </Button>
