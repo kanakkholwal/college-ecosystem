@@ -3,6 +3,7 @@
 import ShareButton from "@/components/common/share-button";
 import { AuthActionButton } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
+import { Comments, CommentsProps } from "@fuma-comment/react";
 import {
   Bookmark,
   Heart,
@@ -26,11 +27,9 @@ export default function PostFooterOptimistic({ post, user, className }: FooterPr
   return (
     <div className={cn("mt-4 pt-4 border-t border-border/40", className)}>
       <div className="flex items-center justify-between">
-        
-        {/* --- Left: Interaction Group --- */}
+
         <OptimisticFooterActionBar post={post} user={user} />
 
-        {/* --- Right: Share Action --- */}
         <ShareButton
           data={{
             title: post.title,
@@ -45,11 +44,19 @@ export default function PostFooterOptimistic({ post, user, className }: FooterPr
           <span className="text-xs font-medium hidden sm:inline">Share</span>
         </ShareButton>
       </div>
+
     </div>
   );
 }
 
-export function OptimisticFooterActionBar({ post, user }: FooterProps) {
+
+
+interface OptimisticFooterActionBarProps {
+  post: CommunityPostTypeWithId;
+  user?: Session["user"];
+}
+
+export function OptimisticFooterActionBar({ post, user }: OptimisticFooterActionBarProps) {
   const [isPending, startTransition] = useTransition();
 
   const [optimisticPost, setOptimisticPost] = useOptimistic(
@@ -102,7 +109,7 @@ export function OptimisticFooterActionBar({ post, user }: FooterProps) {
 
   return (
     <div className="flex items-center gap-1">
-      
+
       {/* LIKE BUTTON */}
       <AuthActionButton
         variant="ghost"
@@ -118,8 +125,8 @@ export function OptimisticFooterActionBar({ post, user }: FooterProps) {
           isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
         )}
       >
-        <Heart 
-            className={cn("size-4 transition-transform group-hover:scale-110", isLiked && "fill-current scale-110")} 
+        <Heart
+          className={cn("size-4 transition-transform group-hover:scale-110", isLiked && "fill-current scale-110")}
         />
         <span className="text-xs font-semibold tabular-nums">
           {formatNumber(optimisticPost.likes.length)}
@@ -141,8 +148,8 @@ export function OptimisticFooterActionBar({ post, user }: FooterProps) {
           isSaved ? "text-emerald-500" : "text-muted-foreground hover:text-emerald-500"
         )}
       >
-        <Bookmark 
-            className={cn("size-4 transition-transform group-hover:scale-110", isSaved && "fill-current scale-110")} 
+        <Bookmark
+          className={cn("size-4 transition-transform group-hover:scale-110", isSaved && "fill-current scale-110")}
         />
         <span className={cn("text-xs font-semibold tabular-nums", !isSaved && "hidden sm:inline")}>
           {isSaved ? "Saved" : "Save"}

@@ -3,6 +3,11 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
+@import "@fuma-comment/react/preset.css";
+/* path of the package relative to the CSS file */
+@source '../node_modules/@fuma-comment/react/dist/**/*.js';
+
+
 @custom-variant dark (&:where([data-theme="dark"], .dark, .dark *, [data-theme="dark"] *));
 
 :root,

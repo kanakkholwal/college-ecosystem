@@ -5,19 +5,21 @@ export {
   userGenderEnum,
   userRolesEnum,
   users,
-  verifications,
+  verifications
 } from "./schema/auth-schema";
 
 export {
   personalAttendance,
-  personalAttendanceRecords,
+  personalAttendanceRecords
 } from "./schema/attendance_record";
 
 export {
   booksAndReferences,
   chapters,
   courses,
-  previousPapers,
+  previousPapers
 } from "./schema/course";
 // export { global_events } from "./schema/events";
 export { rooms, roomUsageHistory } from "./schema/room";
+
+export { comments, rates, roles } from "./schema/comments";
