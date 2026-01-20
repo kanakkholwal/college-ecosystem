@@ -9,18 +9,20 @@ import { auth } from "~/auth";
 import { CATEGORY_IMAGES } from "~/constants/common.community";
 import PostFooter from "./post-footer";
 
+import { CommentSection } from "@/components/application/comments";
 import AdUnit from "@/components/common/adsense";
 import ShareButton from "@/components/common/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ButtonLink } from "@/components/utils/link";
 import {
-    ArrowLeft,
-    Calendar,
-    Edit3,
-    Eye,
-    MessageSquare,
-    Share2
+  ArrowLeft,
+  Calendar,
+  Edit3,
+  Eye,
+  MessageSquare,
+  MessageSquareText,
+  Share2
 } from "lucide-react";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
@@ -105,7 +107,7 @@ export default async function CommunityPost(props: Props) {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 space-y-5">
 
 
 
@@ -184,6 +186,29 @@ export default async function CommunityPost(props: Props) {
             </div>
           </div>
         </div>
+        <section className="mt-16 max-w-4xl mx-auto space-y-6" id="comments">
+
+          <div className="flex flex-col gap-1 pb-4 border-b border-border/40 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                <MessageSquareText className="w-5 h-5" />
+              </div>
+              <h3 className="text-2xl font-bold tracking-tight text-foreground">
+                Join the Discussion
+              </h3>
+            </div>
+            <p className="text-muted-foreground text-base ml-[3.25rem]">
+              Share your thoughts on <span className="text-foreground font-medium">"{post.title}"</span>
+            </p>
+          </div>
+
+          <CommentSection
+            page={`community.posts.${post._id}`}
+            sessionId={session?.session.id}
+            className="w-full border-none p-4 md:p-6 bg-card"
+          />
+
+        </section>
 
         <div className="mt-8 max-w-4xl mx-auto space-y-8">
           <AdUnit adSlot="display-horizontal" key="community-post-ad" />

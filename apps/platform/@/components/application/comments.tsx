@@ -1,28 +1,40 @@
-// "use client";
-// import { Comments } from "@fuma-comment/react";
-// import { usePathname, useRouter } from "next/navigation";
-// import { Session } from "~/lib/auth";
+import { AuthActionButton } from "@/components/utils/link";
+import { cn } from "@/lib/utils";
+import { Comments, CommentsProps } from "@fuma-comment/react";
+import { PiSignInBold } from "react-icons/pi";
+import { Session } from "~/auth";
 
-// export function CommentsWithAuth({page,session}: {page: string, session: Session | null}) {
-//   const router = useRouter();
-//   const pathname = usePathname();
-//   return (
-//     <Comments
-//       // comments are grouped by page
-//       page={page}
-//       auth={{
-//         type: "ssr",
-//         session: {
-//           id: session?.user?.id || "",
-//           permissions: {
-//             delete: !!session?.user?.role && session.user.role === "admin",
-//           },
-//         },
-//         signIn: () => {
-//           // Redirect to sign-in page
-//           router.push("/sign-in");
-//         },
-//       }}
-//     />
-//   );
-// }
+interface CommentSectionProps extends Omit<CommentsProps, "auth"> {
+    sessionId?: Session["session"]["id"];
+    className?: string;
+}
+export function CommentSection({ page, sessionId, className, ...props }: CommentSectionProps) {
+
+    return (<Comments
+        id="comments"
+        {...props}
+        className={cn("w-full mx-auto", className)}
+        page={page}
+        auth={{
+            type: "ssr",
+            session: sessionId ? {
+                id: sessionId,
+            } : null,
+            // function to sign in
+            signIn: <AuthActionButton
+                variant="default_soft"
+                size="xs"
+                authorized={false}
+                dialog={{
+                    title: "Join the conversation",
+                    description: "Sign in to like posts, comments, etc.",
+                }}
+            >
+                Sign In
+                <PiSignInBold />
+            </AuthActionButton>,
+        }}
+
+    />
+    );
+}
