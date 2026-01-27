@@ -2,19 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
-import { CircleCheckBig, Dot, MousePointerClick } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-
+import { Check, Loader2 } from "lucide-react";
+import { useState } from "react";
 import type { PollType } from "src/models/poll";
 import type { Session } from "~/auth/client";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { usePollVoting } from "./use-poll-voting";
 
 interface PollingProps {
   poll: PollType;
@@ -22,194 +15,109 @@ interface PollingProps {
   updateVotes: (voteData: PollType["votes"]) => Promise<PollType>;
 }
 
-
 export default function Polling({ poll, user, updateVotes }: PollingProps) {
-  const [voteData, setVoteData] = useState<PollType["votes"]>(poll.votes);
+  const { voteData, handleVote } = usePollVoting({ poll, user, updateVotes });
+  const [loadingOption, setLoadingOption] = useState<string | null>(null);
 
-  const handleVote = async (option: string) => {
-    if (!voteData) return;
-
-    let updatedVotes = [...voteData];
-    const existingVoteIndex = updatedVotes.findIndex(
-      (vote) => vote.userId === user.id && vote.option === option
-    );
-
-    if (existingVoteIndex > -1) {
-      // User already voted on this option
-      if (!poll.multipleChoice) {
-        updatedVotes.splice(existingVoteIndex, 1);
-      }
-    } else {
-      if (!poll.multipleChoice) {
-        updatedVotes = updatedVotes.filter((vote) => vote.userId !== user.id);
-      }
-      updatedVotes.push({ option, userId: user.id });
-    }
-
-    const { error } = await supabase
-      .from("polls")
-      .update({ votes: updatedVotes })
-      .eq("id", poll._id);
-
-    if (error) {
-      toast.error("Failed to submit vote");
-      return;
-    }
-
-    setVoteData(updatedVotes);
+  const onVoteClick = async (option: string) => {
+    setLoadingOption(option);
+    await handleVote(option);
+    setLoadingOption(null);
   };
 
-  const handleSync = useCallback(async () => {
-    try {
-      await updateVotes(voteData);
-    } catch (error) {
-      console.error("Error updating poll:", error);
-    }
-  }, [updateVotes, voteData]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`polls-${poll._id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "polls",
-          filter: `id=eq.${poll._id}`,
-        },
-        (payload) => {
-          const newData = payload.new as PollType;
-          setVoteData(newData?.votes || []);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      handleSync();
-      supabase.removeChannel(channel);
-    };
-  }, [handleSync, poll._id]);
-
-  useEffect(() => {
-    if (poll.votes.length !== voteData.length) {
-      handleSync();
-    }
-  }, [handleSync, poll.votes.length, voteData.length]);
+  const totalVotes = voteData.length || 0;
 
   return (
-    <div className="space-y-4">
-      {poll.options.map((option, index) => {
-        const totalVotes = voteData.length || 1;
+    <div className="grid gap-3">
+      {poll.options.map((option) => {
         const count = voteData.filter((v) => v.option === option).length;
-        const percent = (count / totalVotes) * 100;
-
+        const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
         const hasVoted = voteData.some(
           (v) => v.userId === user.id && v.option === option
         );
-        const { disabled, message, btnText } = notAllowed(
-          voteData,
-          poll.multipleChoice,
-          user,
-          option
-        );
+        const isVotingForThis = loadingOption === option;
+
         return (
-          <motion.div
-            key={`${option}-${index}`}
+          <div
+            key={option}
             className={cn(
-              "relative overflow-hidden rounded-xl border border-fc-border bg-fc-card",
-              hasVoted && "border border-primary",
+              "relative overflow-hidden rounded-xl border transition-all duration-200",
+              hasVoted
+                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                : "bg-card hover:border-primary/50 hover:bg-muted/30"
             )}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            {/* Progress Bar */}
+            {/* Progress Bar Background */}
             <motion.div
-              className={`absolute inset-y-0 left-0 bg-primary/20`}
+              className={cn(
+                "absolute inset-y-0 left-0 z-0",
+                hasVoted ? "bg-primary/10" : "bg-muted/50"
+              )}
               initial={{ width: 0 }}
               animate={{ width: `${percent}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: "circOut" }}
             />
 
-            <div className="relative z-5 p-4 flex cursor-pointer flex-row items-start justify-between rounded-md shadow-none transition-all">
-
-              <div data-slot="card-header" className="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6 flex-1 p-0">
-                <div data-slot="card-title" className="font-semibold flex items-center gap-2 text-sm">
+            <div className="relative z-10 flex items-center justify-between p-3 sm:px-4">
+              {/* Left: Option Text & Indicator */}
+              <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
+                <div
+                  className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+                    hasVoted
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-muted-foreground/30"
+                  )}
+                >
+                  {hasVoted && <Check className="h-3 w-3" />}
+                </div>
+                <span
+                  className={cn(
+                    "font-medium text-sm sm:text-base truncate transition-colors",
+                    hasVoted ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
                   {option}
-                  <span className="font-normal text-muted-foreground text-xs">
-                    {/* (the first option) */}
-                  </span>
-                </div>
-                <div data-slot="card-description" className="text-muted-foreground text-sm">
-                  {/* {btnText} */}
-                </div>
-                <div className="flex gap-1 text-xs text-muted-foreground font-medium">
-                  <span>
-                    {percent.toFixed(1)}%
-                  </span>
-                  <Dot className="inline-block -mx-1 size-4" />
-                  <span className="font-semibold text-primary">{count} votes</span>
-                </div>
+                </span>
               </div>
-              {/* Vote Button */}
-              <Button
-                size="sm"
-                shadow={disabled ? "none" : hasVoted ? "none" : "default"}
-                variant={hasVoted ? "glass" : "outline"}
-                title={message}
-                onClick={() => handleVote(option)}
-              >
-                {hasVoted ? (
-                  <CircleCheckBig className="shrink-0" />
-                ) : (
-                  <MousePointerClick className="shrink-0" />
+
+              {/* Right: Stats & Action */}
+              <div className="flex items-center gap-4 shrink-0">
+                <div className="flex flex-col items-end">
+                  <span className="font-bold text-sm text-foreground">
+                    {percent.toFixed(0)}%
+                  </span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
+                    {count} {count === 1 ? "vote" : "votes"}
+                  </span>
+                </div>
+
+                {!hasVoted && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => onVoteClick(option)}
+                    disabled={!!loadingOption}
+                    className="h-8 px-3 text-xs font-semibold shadow-sm transition-all hover:bg-primary hover:text-primary-foreground"
+                  >
+                    {isVotingForThis ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Vote"
+                    )}
+                  </Button>
                 )}
-                <span>{hasVoted ? "You Backed This" : "Back This"}</span>
-              </Button>
+              </div>
             </div>
-          </motion.div>
+          </div>
         );
       })}
+
+      <div className="flex justify-end px-1 mt-1">
+        <p className="text-xs text-muted-foreground font-medium">
+          Total votes: <span className="text-foreground">{totalVotes}</span>
+        </p>
+      </div>
     </div>
   );
-}
-
-
-// utils
-function notAllowed(
-  voteData: PollType["votes"],
-  multipleChoice: boolean,
-  user: Session["user"],
-  option: string
-) {
-  switch (true) {
-    case !multipleChoice:
-      return {
-        disabled: voteData?.some((vote) => vote.userId === user.id),
-        message: "You can only vote once",
-        btnText: voteData?.some((vote) => vote.userId === user.id)
-          ? "Voted"
-          : "Vote",
-      };
-    case multipleChoice &&
-      voteData?.some(
-        (vote) => vote.userId === user.id && vote.option === option
-      ):
-      return {
-        disabled: true,
-        message: "You have already voted",
-        btnText: "Voted",
-      };
-    default:
-      return {
-        disabled: false,
-        message: "",
-        btnText: "Vote",
-      };
-  }
-}
-
-function parseVotes(votes: PollType["votes"], option: string) {
-  const count = votes?.filter((vote) => vote.option === option).length || 0;
-  const percent = votes && votes.length > 0 ? (count / votes.length) * 100 : 0;
-  return { option, count, percent };
 }

@@ -1,29 +1,32 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea"; // Assuming you have a Textarea component
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { CgPoll } from "react-icons/cg";
-import z from "zod";
+import * as z from "zod";
 import { createPoll } from "~/actions/common.poll";
 
 import { DateTimePicker } from "@/components/extended/date-n-time";
-import { Loader2 } from "lucide-react";
+import { Icon } from "@/components/icons";
 import { nanoid } from "nanoid";
+import { useState } from "react";
 
 export const formSchema = z.object({
   question: z.string().min(3, "A question is required."),
@@ -41,227 +44,245 @@ export const formSchema = z.object({
     .min(2, "At least two options are required."),
   multipleChoice: z.boolean().default(false),
   votes: z.array(z.string()).default([]),
-  closesAt: z.string()
-    .datetime({
-      message: "Invalid date and time format.",
-    })
+  closesAt: z
+    .string()
+    .datetime({ message: "Invalid date and time format." })
     .default(() => new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()),
 });
 
 export default function CreatePoll() {
+  const [open, setOpen] = useState(true);
+
+
   return (
     <ResponsiveDialog
-      title="Create New Poll"
-      description="Create a new poll here. Click save when you're done."
+      onOpenChange={setOpen}
+      title={<>
+        <CgPoll className="size-4 inline-block mr-2 text-primary" />
+        Create Poll
+      </>}
+      description="Engage with the community by asking a question."
       btnProps={{
-        variant: "ghost",
-        children: "Create New Poll",
+        variant: "default_soft",
+        icon: "poll",
+        children: "Create Poll",
         size: "sm",
       }}
+      className="sm:max-w-2xl"
     >
-      <PollForm />
+      <PollForm onSuccess={() => setOpen(false)} />
     </ResponsiveDialog>
   );
 }
 
-type PollFormData = z.infer<typeof formSchema>;
-
-function PollForm({ className }: { className?: string }) {
+function PollForm({
+  className,
+  onSuccess,
+}: {
+  className?: string;
+  onSuccess?: () => void;
+}) {
   const router = useRouter();
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       question: "",
       description: "",
       options: [
-        {
-          id: nanoid(),
-          value: "",
-        },
-        {
-          id: nanoid(),
-          value: "",
-        },
+        { id: nanoid(), value: "" },
+        { id: nanoid(), value: "" },
       ],
       multipleChoice: false,
       closesAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
       votes: [],
     },
   });
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "options",
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Form submitted with values:", values);
-
-    toast
-      .promise(
-        createPoll({
-          ...values,
-          options: values.options.map((option) => option.value),
-          closesAt: new Date(values.closesAt),
-        }),
-        {
-          loading: "Creating poll...",
-          success: "Poll created successfully",
-          error: "Failed to create poll",
-        }
-      )
-      .finally(() => {
-        form.reset();
-        router.refresh();
-      });
+    toast.promise(
+      createPoll({
+        ...values,
+        options: values.options.map((option) => option.value),
+        closesAt: new Date(values.closesAt),
+      }),
+      {
+        loading: "Publishing poll...",
+        success: () => {
+          form.reset();
+          onSuccess?.(); // Close dialog on success
+          router.refresh();
+          return "Poll created successfully!";
+        },
+        error: "Failed to create poll. Please try again.",
+      }
+    );
   }
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn("grid items-start gap-4", className)}
+        className={cn("flex flex-col gap-6", className)}
       >
-        <FormField
-          control={form.control}
-          name="question"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Question</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Who is most popular person?"
-                  disabled={form.formState.isSubmitting}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Who will be the winner?"
-                  disabled={form.formState.isSubmitting}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="options"
-          render={() => (
-            <FormItem>
-              <div className="flex items-center space-x-2 justify-between">
-                <FormLabel className="mb-0">Options</FormLabel>
-                <Button
-                  size="xs"
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    append({
-                      id: String(Date.now()),
-                      value: "",
-                    })
-                  }
-                >
-                  Add Option
-                </Button>
-              </div>
-              <FormDescription>Add the options for the poll</FormDescription>
-              {fields.map((field, index) => (
-                <FormField
-                  key={field.id}
-                  control={form.control}
-                  name={`options.${index}`}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row space-x-3 space-y-0">
-                      <FormLabel className="bg-card text-muted-foreground aspect-square rounded-lg size-8 inline-flex justify-center items-center mb-0">
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="question"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Question</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="What would you like to ask?"
+                    disabled={form.formState.isSubmitting}
+                    className="font-medium"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Add some context to your question..."
+                    className="resize-none h-20"
+                    disabled={form.formState.isSubmitting}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Options Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <FormLabel>Poll Options</FormLabel>
+            <span className="text-xs text-muted-foreground">
+              Min. 2 options required
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {fields.map((field, index) => (
+              <FormField
+                key={field.id}
+                control={form.control}
+                name={`options.${index}.value`}
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-medium text-muted-foreground shrink-0">
                         {index + 1}
-                      </FormLabel>
+                      </div>
                       <FormControl>
                         <Input
-                          placeholder={`Enter Option ${index + 1}`}
-                          id={`options.${index}.id`}
-                          {...form.register(`options.${index}.value`)}
-                          custom-size="sm"
+                          placeholder={`Option ${index + 1}`}
+                          {...field}
                           disabled={form.formState.isSubmitting}
+                          className="flex-1"
                         />
                       </FormControl>
                       <Button
                         type="button"
-                        size="icon_sm"
-                        variant="destructive_soft"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive shrink-0"
                         disabled={fields.length <= 2}
                         onClick={() => remove(index)}
-                      >
-                        -
-                      </Button>
-                    </FormItem>
-                  )}
-                />
-              ))}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="closesAt"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Closes At</FormLabel>
-
-              <DateTimePicker
-                value={field.value ?? ""}
-                onChange={field.onChange}
-                disabled={form.formState.isSubmitting}
+                        icon="X"
+                      />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
+            ))}
+          </div>
 
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="multipleChoice"
-          render={({ field }) => (
-            <FormItem className="flex items-center space-x-2 justify-between">
-              <FormLabel className="mb-0">Multiple Choice</FormLabel>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full mt-2 border-dashed border-2"
+            onClick={() => append({ id: nanoid(), value: "" })}
+            icon="plus"
+            disabled={fields.length >= 10} // Optional limit
+          >
+            Add Option
+          </Button>
+        </div>
+
+        <div className="grid gap-4 @xl/dialog:grid-cols-2 pt-2">
+          <FormField
+            control={form.control}
+            name="closesAt"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Ends At</FormLabel>
+                <DateTimePicker
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={(date) => field.onChange(date?.toString())}
+                  disabled={form.formState.isSubmitting}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          width="xs"
-          variant="dark"
-          size="sm"
-          className="ml-2"
-          disabled={form.formState.isSubmitting}
-        >
-          {form.formState.isSubmitting ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <CgPoll />
-          )}
-          {form.formState.isSubmitting ? "Creating Poll..." : "Create new Poll"}
-        </Button>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="multipleChoice"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-card">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Multiple Choice</FormLabel>
+                  <FormDescription className="text-xs">
+                    Allow selecting multiple answers
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={form.formState.isSubmitting}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex justify-end pt-4 border-t mt-2">
+          <Button
+            type="submit"
+            disabled={(form.formState.isSubmitting || form.formState.isLoading)}
+            className="w-full sm:w-auto"
+          >
+            {(form.formState.isSubmitting || form.formState.isLoading) ? (
+              <>
+                <Icon name="loader-circle" className="animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Poll"
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

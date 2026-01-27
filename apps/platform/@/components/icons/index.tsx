@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+import { CgPoll } from "react-icons/cg";
 import { FaEdge, FaFirefoxBrowser, FaSafari } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import {
@@ -101,7 +103,6 @@ import {
 	PiUsersDuotone,
 	PiWarningCircleDuotone,
 	PiWaveTriangleDuotone,
-	PiXDuotone,
 	PiXLogoDuotone, // For New Twitter (X)
 	PiYoutubeLogoDuotone
 } from "react-icons/pi";
@@ -135,7 +136,7 @@ export const IconComponent = {
 	pin: PiPushPinDuotone,
 	"pin-off": PiPushPinSlashDuotone,
 	"trend-up": PiTrendUpDuotone,
-	X: PiXDuotone,
+	X: X,
 	"align-left": PiTextAlignLeftDuotone,
 	toc: PiListDuotone,
 	"chart-bar-big": PiChartBarDuotone,
@@ -168,6 +169,7 @@ export const IconComponent = {
 	"folder": PiFolderDuotone,
 	"chart-pie": PiChartPieDuotone,
 	"house": PiHouseDuotone,
+	poll: CgPoll,
 	// --- Devices & Browsers ---
 	safari: FaSafari, // No Phosphor equivalent
 	chrome: PiGoogleChromeLogoDuotone,
@@ -184,7 +186,7 @@ export const IconComponent = {
 
 	// --- Actions ---
 	copy: PiCopyDuotone,
-	 "copy-check": PiClipboardTextDuotone,
+	"copy-check": PiClipboardTextDuotone,
 	rocket: PiRocketLaunchDuotone,
 	plus_circle: PiPlusCircleDuotone,
 	"clipboard": PiClipboardTextDuotone, // Closer metaphor for "copied text"
@@ -235,22 +237,22 @@ export const IconComponent = {
 } as const;
 
 export type IconComponentType = {
-  [key: string]: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+	[key: string]: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 export type IconType = keyof typeof IconComponent;
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
-  name: IconType;
-  className?: string;
+	name: IconType;
+	className?: string;
 }
 
 export function Icon({
-  name,
-  className,
+	name,
+	className,
 }: IconProps): React.ReactElement | null {
-  const Icon = IconComponent[name];
-  if (!Icon) {
-    return null;
-  }
-  return <Icon className={className} />;
+	const Icon = IconComponent[name];
+	if (!Icon) {
+		return null;
+	}
+	return <Icon className={className} />;
 }

@@ -1,20 +1,27 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Info, MessageSquareText } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Info,
+  MessageSquareText
+} from "lucide-react";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPollById, updateVotes } from "src//actions/common.poll";
 import { auth } from "~/auth";
-import { PollRender } from "../components/poll-component";
+import { PollOptions } from "../components/poll-component";
 import Polling from "./polling";
 
 import { CommentSection } from "@/components/application/comments";
 import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
-import { AuthButtonLink } from "@/components/utils/link";
+import ShareButton from "@/components/common/share-button";
+import { AuthButtonLink, ButtonLink } from "@/components/utils/link";
 import type { Metadata } from "next";
 import { appConfig } from "~/project.config";
+import { getBaseURL } from "~/utils/env";
+import DeletePoll from "../components/delete-poll";
 import { ClosingBadge } from "../components/poll-timer";
 
 export async function generateMetadata({
@@ -46,7 +53,7 @@ interface Props {
   }>;
 }
 
-export default async function Dashboard({ params }: Props) {
+export default async function PollPage({ params }: Props) {
   const headersList = await headers();
   const session = await auth.api.getSession({
     headers: headersList,
@@ -56,97 +63,146 @@ export default async function Dashboard({ params }: Props) {
   if (!poll) {
     return notFound();
   }
-  // console.log(poll);
 
   const closesAlready = new Date(poll.closesAt) < new Date();
 
   return (
-    <div className="max-w-6xl @container mx-auto w-full grid justify-start items-start gap-4 grid-cols-1 px-2 lg:px-4 pr-4">
-      <div className="md:sticky md:top-4 mt-4 z-50 w-full mx-1.5 lg:mx-auto flex justify-between items-center gap-2 bg-card px-2 lg:px-4 py-1 lg:py-2 rounded-lg border">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/polls">
-            <ArrowLeft />
-            Back to Polls
-          </Link>
-        </Button>
+    <div className="max-w-6xl mx-auto w-full px-4 py-8">
+
+      <div className="mb-8 flex items-center justify-between">
+        <ButtonLink
+          href="/polls"
+          icon="arrow-left"
+          variant="glass"
+          size="sm"
+        >
+          Back to all polls
+        </ButtonLink>
+        <div className="flex items-center gap-2">
+          <DeletePoll pollId={poll._id} className="relative right-auto top-auto" />
+          <ShareButton
+            data={{
+              title: "Share poll",
+              text: "Check out this poll!",
+              url: `${getBaseURL()}/polls/${poll._id}`,
+            }}
+            variant="ghost"
+            size="sm"
+            icon="share"
+          >
+            Share
+          </ShareButton>
+        </div>
       </div>
-      <div className="w-full grid grid-cols-1 @4xl:grid-cols-12 gap-4">
 
-        <main className="@4xl:col-span-8 w-full flex flex-col justify-start whitespace-nowrap gap-2 bg-card border rounded-lg p-4 lg:px-6">
-          <div>
-            <h3 className="text-lg font-semibold">{poll.question}</h3>
-            <p className="text-sm text-muted-foreground">{poll.description}</p>
-          </div>
-          <div className="gap-3 flex flex-wrap items-center">
-            <span className="rounded-md bg-muted text-muted-foreground px-2 py-1 text-xs inline-flex items-center">
-              <Info className="mr-1 inline-block size-3" />
-              {poll.multipleChoice ? "Multiple choice" : "Single choice"}
-            </span>
-            <span className="rounded-md bg-muted text-muted-foreground px-2 py-1 text-xs inline-flex items-center">
-              <Clock className="mr-1 inline-block size-3" />
-              <ClosingBadge poll={poll} />
-            </span>
-            {closesAlready && (
-              <Badge variant="destructive_soft">Poll closed</Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+
+        <main className="lg:col-span-8 space-y-8">
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              {closesAlready ? (
+                <Badge variant="destructive_soft">Closed</Badge>
+              ) : (
+                <Badge variant="success_soft">Active Poll</Badge>
+              )}
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                <ClosingBadge poll={poll} />
+              </span>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
+              {poll.question}
+            </h1>
+
+            {poll.description && (
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                {poll.description}
+              </p>
             )}
-          </div>
-          {closesAlready ? (
-            <PollRender poll={poll} />
-          ) : session?.user ? (
-            <Polling
-              poll={poll}
-              user={session.user}
-              updateVotes={updateVotes.bind(null, poll._id)}
-            />
-          ) : (
-            <EmptyArea
-              title="You need to be logged in to vote on this poll"
-              description="Please login to cast your vote."
-              actionProps={{
-                asChild: true,
-                variant: "raw",
-                children: (
-                  <AuthButtonLink
-                    href={"/polls/" + poll._id}
-                    authorized={!!session?.user}
-                    variant="rainbow"
-                    size="sm"
-                  >
-                    Login
-                  </AuthButtonLink>
-                ),
-              }}
-            />
-          )}
-        </main>
-        <aside className="@4xl:col-span-4 w-full mx-auto space-y-6" id="comments">
 
-
-          <CommentSection
-            page={`community.polls.${poll._id}`}
-            sessionId={session?.session.id}
-            className="w-full border-none p-3 bg-card"
-            title={<div className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center size-8 rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
-                  <MessageSquareText className="size-4" />
-                </div>
-                <h3 className="text-base font-semibold tracking-tight text-foreground">
-                  Join the Discussion
-                </h3>
+            <div className="flex items-center gap-6 pt-2 text-sm text-muted-foreground border-t border-border/50 pt-4">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                <span>{poll.multipleChoice ? "Multiple Choice" : "Single Choice"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>Created {new Date(poll.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
-            }
-          />
+          </div>
 
+          <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
+            {closesAlready ? (
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 text-muted-foreground pb-4 border-b border-border/50">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="font-medium">Final Results</span>
+                </div>
+                <PollOptions poll={poll} user={session?.user} />
+              </div>
+            ) : session?.user ? (
+              <Polling
+                poll={poll}
+                user={session.user}
+                updateVotes={updateVotes.bind(null, poll._id)}
+              />
+            ) : (
+              <EmptyArea
+                title="Sign in to Vote"
+                description="Join the community to cast your vote and see real-time results."
+                actionProps={{
+                  asChild: true,
+                  variant: "default",
+                  size: "lg",
+                  className: "mt-4 shadow-lg shadow-primary/20",
+                  children: (
+                    <AuthButtonLink
+                      href={"/polls/" + poll._id}
+                      authorized={!!session?.user}
+                      variant="rainbow"
+                    >
+                      Login to Vote
+                    </AuthButtonLink>
+                  ),
+                }}
+              />
+            )}
+          </div>
+
+          {/* Ad Unit */}
+          <div className="py-4">
+            <AdUnit adSlot="display-horizontal" key={`polls-page-ad-${poll._id}`} />
+          </div>
+
+        </main>
+
+        <aside className="lg:col-span-4 space-y-6">
+          <div className="bg-card/30 rounded-2xl p-1 border border-border/50 sticky top-4">
+            <CommentSection
+              page={`community.polls.${poll._id}`}
+              sessionId={session?.session.id}
+              className="w-full border-none p-4"
+              title={
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/40">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                    <MessageSquareText className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground">
+                      Discussion
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Share your thoughts</p>
+                  </div>
+                </div>
+              }
+            />
+          </div>
         </aside>
+
       </div>
-
-      <AdUnit
-        adSlot="display-horizontal"
-        key={`polls-page-ad-${poll._id}`}
-      />
-
     </div>
   );
 }

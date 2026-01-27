@@ -10,8 +10,6 @@ import { getSession } from "~/auth/server";
 import { ALLOWED_ROLES } from "~/constants";
 import { changeCase } from "~/utils/string";
 
-
-
 interface DashboardLayoutProps {
   children: React.ReactNode;
   params: Promise<{
@@ -23,7 +21,6 @@ export async function generateMetadata(
   { params }: DashboardLayoutProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  // read route params
   const { moderator } = await params;
 
   return {
@@ -37,51 +34,56 @@ export default async function DashboardLayout({
   params,
 }: DashboardLayoutProps) {
   const { moderator } = await params;
-  if (
-    !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number])
-    // && moderator !== "dashboard"
-  ) {
+
+  if (!ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number])) {
     return notFound();
   }
 
-  const session = await getSession() as Session;
+  const session = (await getSession()) as Session;
 
   return (
     <SidebarProvider>
       <AppSidebar user={session.user} moderator={moderator} />
-      <SidebarInset className="flex flex-col flex-1 w-full relative z-0">
+      <SidebarInset className="flex flex-col flex-1 w-full rounded-t-2xl">
         <Navbar
           user={session.user}
           impersonatedBy={session.session.impersonatedBy}
         />
-        <div className="absolute top-0 left-0 z-0 w-full min-h-80 [mask-image:linear-gradient(to_top,transparent_25%,black_95%)]">
-          <FlickeringGrid
-            className="absolute top-0 left-0 size-full"
-            squareSize={4}
-            gridGap={6}
-            color="#6B7280"
-            maxOpacity={0.2}
-            flickerChance={0.05}
-          />
-        </div>
-        {/* <div
-          aria-hidden="true"
-          className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20 -z-[1]"
-        >
-          <div className="blur-[106px] h-56 bg-gradient-to-br from-primary to-purple-400 dark:from-blue-700" />
-          <div className="blur-[106px] h-32 bg-gradient-to-r from-cyan-400 to-sky-300 dark:to-indigo-600" />
-        </div> */}
 
-        <main className="content p-4 px-2 md:p-6 z-2 @container space-y-10 min-h-screen h-full">
-          {children}
-        </main>
-        <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
-        {process.env.NODE_ENV !== "production" && (
-          <div className="fixed bottom-0 right-auto left-auto mx-auto p-2 text-xs text-muted-foreground">
-            <span className="font-semibold">Environment:</span>{" "}
-            {process.env.NODE_ENV}
+        <div className="relative flex-1 flex flex-col">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
+            <FlickeringGrid
+              className="absolute top-0 left-0 size-full opacity-40"
+              squareSize={4}
+              gridGap={6}
+              color="#6B7280"
+              maxOpacity={0.3}
+              flickerChance={0.05}
+            />
           </div>
-        )}
+
+          <main className="relative flex-1 px-4 py-6 md:px-6 md:py-8 lg:px-8 @container">
+            <div className="mx-auto max-w-7xl space-y-8">
+              {children}
+            </div>
+          </main>
+
+          <footer className="relative border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+            <div className="px-4 py-6">
+              <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
+            </div>
+          </footer>
+
+          {process.env.NODE_ENV !== "production" && (
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+              <div className="inline-flex items-center gap-2 rounded-full border bg-background/95 backdrop-blur px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+                <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>Development Mode</span>
+              </div>
+            </div>
+          )}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

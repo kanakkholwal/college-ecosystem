@@ -1,89 +1,11 @@
 "use client";
-
-import { cn } from "@/lib/utils";
-import { Home } from "lucide-react";
-import { ButtonLink, PreviousPageLink } from "../utils/link";
-
-/**
- * Premium 404 Illustration
- * Kept the original path data but wrapped in a cleaner SVG structure
- * and added drop-shadows via CSS classes for depth.
- */
-export const NotFoundSvg = ({ className, ...props }: React.ComponentProps<"svg">) => {
-  return (
-    <div className={cn("relative z-10", className)}>
-      {/* Background Glow Effect */}
-      <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full opacity-50 -z-10 transform scale-75" />
-      
-      <svg
-        viewBox="0 0 480 360"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-label="404 Illustration"
-        className="w-full h-auto drop-shadow-xl"
-        {...props}
-      >
-        <title>404 Error Illustration</title>
-        <defs>
-          <linearGradient
-            id="BG"
-            x1="19.496%"
-            x2="77.479%"
-            y1="71.822%"
-            y2="16.69%"
-          >
-            <stop offset="0%" stopColor="#078DEE" />
-            <stop offset="100%" stopColor="#078DEE" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient
-            id="paint0_linear_1_119"
-            x1="78.3"
-            x2="78.3"
-            y1="187.77"
-            y2="305.935"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop stopColor="#68CDF9" />
-            <stop offset={1} stopColor="#0351AB" />
-          </linearGradient>
-        </defs>
-        <path
-          fill="url(#BG)"
-          fillRule="nonzero"
-          d="M0 198.78c0 41.458 14.945 79.236 39.539 107.786 28.214 32.765 69.128 53.365 114.734 53.434a148.44 148.44 0 0056.495-11.036c9.051-3.699 19.182-3.274 27.948 1.107a75.779 75.779 0 0033.957 8.01c5.023 0 9.942-.494 14.7-1.433 13.58-2.67 25.94-8.99 36.09-17.94 6.378-5.627 14.547-8.456 22.897-8.446h.142c27.589 0 53.215-8.732 74.492-23.696 19.021-13.36 34.554-31.696 44.904-53.224C474.92 234.58 480 213.388 480 190.958c0-76.93-59.774-139.305-133.498-139.305-7.516 0-14.88.663-22.063 1.899C305.418 21.42 271.355 0 232.499 0a103.651 103.651 0 00-45.88 10.661c-13.24 6.487-25.011 15.705-34.64 26.939-32.698.544-62.931 11.69-87.676 30.291C25.351 97.155 0 144.882 0 198.781z"
-          opacity="0.1"
-        />
-        <image
-          href="/assets/illustrations/characters/character_6.png"
-          height={300}
-          x={205}
-          y={30}
-        />
-        <path
-          fill="#FFAB00"
-          d="M111.1 141.2c58.7-1 58.6-88.3 0-89.2-58.6 1-58.6 88.3 0 89.2z"
-          opacity="0.12"
-        />
-        <path
-          fill="#FFD666"
-          d="M111.1 120c30.8-.5 30.8-46.3 0-46.8-30.8.5-30.8 46.3 0 46.8z"
-        />
-        <path
-          fill="#012972"
-          d="M244.9 182.5c82.3 1.4 82.2 123.8 0 125.2-82.3-1.5-82.3-123.8 0-125.2zm0 23.1c-51.8.9-51.8 77.9 0 78.8 51.8-.9 51.7-77.9 0-78.8z"
-        />
-        <path
-          fill="url(#paint0_linear_1_119)"
-          d="M175 265.6c1-8.7-12.1-4.8-17-5.6v-66.6c0-4.5-1.5-5.6-5.6-5.6-5.3.3-13.8-1.4-17.1 4l-55 68.3c-2.7 3.3-1.8 8.8-2 12.8 0 4.1 1.5 5.6 5.6 5.6h54.7v21.7c-.9 7.9 9.1 5.2 13.7 5.6 4.1 0 5.6-1.5 5.6-5.6v-21.7c13.8-1.1 18.1 4.5 17.1-12.9zm-72.5-5.6l36-44.4V260h-36zm309.1 5.6c1-8.7-12.2-4.8-17.1-5.6v-66.6c0-4.5-1.5-5.6-5.6-5.6-5.3.3-13.7-1.4-17.1 4l-55 68.3c-2.7 3.3-1.9 8.8-2 12.8 0 4.1 1.5 5.6 5.6 5.6h54.7v21.7c-.9 7.9 9.1 5.2 13.7 5.6 4.1 0 5.6-1.5 5.6-5.6v-21.7c14.1-1.1 18.2 4.5 17.2-12.9zm-72.4-5.6l36-44.4V260h-36z"
-        />
-        <path
-          fill="#078DEE"
-          d="M425.6 118.2c0-5-4.6-9-9.6-8.2-2-3.7-6-6-10.2-5.9 4.3-21.4-30-21.4-25.7 0-8.7-.8-15.1 9.4-10.4 16.8 2.1 3.5 5.9 5.6 10 5.5h38.7v-.1c4.1-.4 7.2-3.9 7.2-8.1zM104.3 200c.1-4.2-4.1-7.8-8.2-7-1.7-3.2-5.1-5.1-8.8-5 3.8-18.4-25.8-18.4-22 0-7.4-.7-12.9 8.1-8.9 14.4 1.8 3 5.1 4.8 8.6 4.7h33.2v-.1c3.4-.4 6.1-3.4 6.1-7z"
-          opacity="0.08"
-        />
-      </svg>
-    </div>
-  );
-};
+import { quick_links } from "@/constants/links";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { Suspense } from "react";
+import { getRandomNumbers } from "~/utils/number";
+import { ErrorActions } from "../utils/error";
+import { ButtonLink } from "../utils/link";
 
 interface NotFoundContainerProps extends React.ComponentProps<"div"> {
   className?: string;
@@ -101,62 +23,74 @@ export default function NotFoundContainer({
   const { children, ...props } = actionProps || {};
 
   return (
-    <div className="relative min-h-[80vh] w-full flex items-center justify-center overflow-hidden">
-      
- 
-      <main 
-        className={cn(
-          "relative z-10 w-full max-w-(--max-app-width) px-6 py-12 mx-auto",
-          className
-        )}
-      >
-        <section className="flex flex-col-reverse lg:flex-row items-center justify-between gap-12 lg:gap-24">
-          
-          {/* Text Content */}
-          <div className="flex-1 space-y-8 text-center lg:text-left max-w-xl">
-            <div className="space-y-4">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80">
-                404 Error
-              </h2>
-              <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-foreground">
-                {title || "Page not found"}
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground text-balance leading-relaxed">
-                {description || "Sorry, we couldn’t find the page you’re looking for. It might have been moved, deleted, or you may have mistyped the address."}
-              </p>
-            </div>
+    <main className="grow flex flex-col items-center justify-center p-6 relative z-10 min-h-96 mt-20">
+      <div className="w-full max-w-3xl mx-auto text-center space-y-8">
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2">
-              <PreviousPageLink 
-                 className="h-11 px-8 rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors font-medium flex items-center gap-2"
+        <div className="relative inline-block">
+          <h1 className="text-[150px] md:text-[200px] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-linear-to-b from-foreground/10 to-primary select-none">
+            404
+          </h1>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-2xl md:text-3xl font-semibold bg-background/20 backdrop-blur-sm px-6 py-2 rounded-full border border-border/50 shadow-xl">
+              Page Not Found
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto space-y-6">
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            The coordinates you entered seem to be off the map. The page might have been moved, deleted, or never existed.
+          </p>
+
+          <Suspense fallback={<div className="h-12" />}>
+            <ErrorActions />
+          </Suspense>
+        </div>
+
+        {/* --- Helpful Links (Reduces Bounce Rate) --- */}
+        <div className="pt-12 mt-12 border-t border-border/40 w-full">
+          <p className="text-sm text-muted-foreground uppercase tracking-wider font-semibold mb-6">
+            Or try exploring these pages
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+            {getRandomNumbers(3, 0, quick_links.length - 1).map((num) => (
+              <SuggestedLink
+                key={quick_links[num].title}
+                href={quick_links[num].href}
+                icon={quick_links[num].Icon}
+                title={quick_links[num].title}
+                desc={quick_links[num].description}
               />
-              
-              <ButtonLink
-                rounded="full"
-                variant="default"
-                href="/"
-                className="h-11 px-8 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
-                {...props}
-              >
-                {children ? (
-                  children
-                ) : (
-                  <>
-                    <Home className="w-4 h-4 mr-2" />
-                    Back to Home
-                  </>
-                )}
-              </ButtonLink>
-            </div>
+            ))}
           </div>
-
-          {/* Visual Content */}
-          <div className="flex-1 w-full max-w-lg flex justify-center lg:justify-end">
-             <NotFoundSvg className="w-full h-auto max-h-[400px] pointer-events-none select-none transition-transform hover:scale-105 duration-700 ease-in-out" />
-          </div>
-
-        </section>
-      </main>
-    </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+interface SuggestedLinkProps {
+  href: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  desc: string;
+}
+// Sub-component for clean links
+function SuggestedLink({ href, icon: Icon, title, desc }: SuggestedLinkProps) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-start gap-3 p-4 rounded-xl border border-border/40 bg-card/30 hover:bg-card/80 hover:border-primary/30 transition-all duration-200"
+    >
+      <div className="mt-1 p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+        <Icon className="w-4 h-4" />
+      </div>
+      <div>
+        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+          {title}
+          <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+        </h3>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+    </Link>
   );
 }

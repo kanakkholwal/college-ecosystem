@@ -44,7 +44,6 @@ export default function CommunityPostList({
           key={post._id}
           className="group relative flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
         >
-          {/* --- Header: Meta Info --- */}
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Link href={`/community?c=${post.category}`} className="shrink-0 z-20">
@@ -78,8 +77,8 @@ export default function CommunityPostList({
             </div>
           </div>
 
-          <div
-            onClick={() => router.push(`/community/posts/${post._id}`)}
+          <Link
+            href={`/community/posts/${post._id}`}
             className="cursor-pointer space-y-2 z-10"
           >
             <h3 className="text-base font-semibold leading-tight text-foreground group-hover:text-primary transition-colors">
@@ -89,7 +88,6 @@ export default function CommunityPostList({
             <div className="text-sm text-muted-foreground/80 line-clamp-3 leading-relaxed prose-p:my-0 prose-headings:text-sm">
               <Markdown
                 components={{
-                  // Strip images/headings for preview to keep it clean
                   img: () => null,
                   h1: ({ children }) => <p className="font-bold">{children}</p>,
                   h2: ({ children }) => <p className="font-bold">{children}</p>,
@@ -98,12 +96,10 @@ export default function CommunityPostList({
                 {post.content}
               </Markdown>
             </div>
-          </div>
+          </Link>
 
-          {/* --- Footer: Stats & Actions --- */}
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/40 z-20">
 
-            {/* Left: Interactive Buttons */}
             <div className="flex items-center gap-4">
               <OptimisticFooterActionBar post={post} user={user} className="h-8" />
 
@@ -116,7 +112,6 @@ export default function CommunityPostList({
               </Link>
             </div>
 
-            {/* Right: View Count & Share */}
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5" title={`${post.views} Views`}>
                 <BarChart2 className="size-3.5" />

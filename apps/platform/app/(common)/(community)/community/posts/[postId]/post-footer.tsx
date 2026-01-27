@@ -19,7 +19,7 @@ interface FooterProps {
   post: CommunityPostTypeWithId;
   user?: Session["user"];
   className?: string;
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export default function PostFooterOptimistic({ post, user, className, children }: FooterProps) {

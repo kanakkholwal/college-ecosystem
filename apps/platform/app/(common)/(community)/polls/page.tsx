@@ -1,9 +1,9 @@
 import EmptyArea from "@/components/common/empty-area";
 import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
 import {
-    getClosedPolls,
-    getOpenPolls,
-    getPollsCreatedByLoggedInUser,
+  getClosedPolls,
+  getOpenPolls,
+  getPollsCreatedByLoggedInUser,
 } from "~//actions/common.poll";
 import type { PollType } from "~/models/poll";
 import CreatePoll from "./components/create-poll";
@@ -14,9 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { AuthButtonLink } from "@/components/utils/link";
 import { LogIn } from "lucide-react";
 import type { Metadata } from "next";
-import { Fragment } from "react";
-import { CgPoll } from "react-icons/cg";
 import { headers } from "next/headers";
+import { CgPoll } from "react-icons/cg";
 import { auth } from "~/auth";
 
 export const metadata: Metadata = {
@@ -50,13 +49,13 @@ export default async function PollsPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
-  const activeTab = searchParams.tab || "opened-polls"; // Default to 'opened-polls' if no tab is provided
+  const activeTab = searchParams.tab || "opened-polls";
 
   const headersList = await headers();
   const session = await auth.api.getSession({
     headers: headersList,
   });
-  // Check if the user is logged in then only getPollsCreatedByLoggedInUser
+
   const polls = await Promise.all([
     getOpenPolls(),
     getClosedPolls(),
@@ -64,17 +63,17 @@ export default async function PollsPage(props: {
   ]);
 
   return (
-    <Tabs defaultValue={activeTab} className="w-full grid gap-4">
-      <VercelTabsList tabs={tabs} onTabChangeQuery="tab" className=" mt-5" />
+    <div className="container max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
+      <Tabs defaultValue={activeTab} className="w-full space-y-6">
+        <VercelTabsList tabs={tabs} onTabChangeQuery="tab" />
 
-      <div className="rounded-lg p-4 @container/polls max-w-6xl mx-auto w-full">
         {tabs.map((tab, idx) => {
           if (tab.id === "your-polls" && !session?.user) {
             return (
-              <TabsContent value={tab.id} key={tab.id}>
+              <TabsContent value={tab.id} key={tab.id} className="mt-0">
                 <EmptyArea
                   title="Your Polls"
-                  description="You need to be logged in to create or view your polls."
+                  description="Sign in to create and manage your own polls."
                   actionProps={{
                     asChild: true,
                     variant: "raw",
@@ -85,8 +84,8 @@ export default async function PollsPage(props: {
                         size="sm"
                         href="/polls?tab=opened-polls"
                       >
-                        Sign in to Continue
                         <LogIn />
+                        Sign In
                       </AuthButtonLink>
                     ),
                   }}
@@ -94,16 +93,17 @@ export default async function PollsPage(props: {
               </TabsContent>
             );
           }
+
           return (
-            <TabsContent value={tab.id} key={tab.id}>
-              <div className="md:sticky md:top-4 z-50 h-10 mb-5 w-full max-w-3xl mx-1.5 md:mx-auto flex justify-between items-center gap-2 bg-card px-2 lg:px-4 py-1 lg:py-2 rounded-lg border">
-                <h3 className="text-sm font-medium">
-                  <CgPoll className="inline-block align-middle mr-2 size-4" />
-                  {tab.label}
-                  <Badge size="sm" className="ml-2">
+            <TabsContent value={tab.id} key={tab.id} className="mt-0 space-y-6">
+              <div className="sticky top-20 z-30 flex items-center justify-between h-12 px-4 bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80 border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CgPoll className="size-4 text-muted-foreground" />
+                  <h2 className="text-sm font-semibold">{tab.label}</h2>
+                  <Badge variant="secondary" className="ml-1">
                     {polls[idx].length}
                   </Badge>
-                </h3>
+                </div>
                 {tab.id === "your-polls" && <CreatePoll />}
               </div>
 
@@ -113,27 +113,24 @@ export default async function PollsPage(props: {
                   description={`There are no ${tab.label.toLowerCase()} at the moment.`}
                 />
               ) : (
-                <div className="grid grid-cols-1 @2xl/polls:grid-cols-2 gap-3">
-                  {polls[idx].map((poll: PollType, i) => (
-                    <Fragment key={poll._id}>
-                      {/* Poll Component */}
-                      <PollComponent
-                        poll={poll}
-                        key={poll._id}
-                        user={session?.user}
-                      />
-                      {/* {(i + 1) % 2 === 0 && (
-                        <AdUnit adSlot="display-square" key={`ad-${poll._id.toString()}`} />
-                      )} */}
-                    </Fragment>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 @container">
+                  {polls[idx].map((poll: PollType) => (
+                    <PollComponent
+                      poll={poll}
+                      key={poll._id}
+                      user={session?.user}
+                    />
                   ))}
                 </div>
               )}
             </TabsContent>
           );
         })}
-        <AdUnit adSlot="display-horizontal" key="polls-page-ad" />
-      </div>
-    </Tabs>
+
+        <div className="pt-4">
+          <AdUnit adSlot="display-horizontal" key="polls-page-ad" />
+        </div>
+      </Tabs>
+    </div>
   );
 }

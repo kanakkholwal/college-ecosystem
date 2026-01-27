@@ -4,6 +4,7 @@ import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Icon, IconType } from "../icons";
 
 export const intents = {
   // Standard variants
@@ -156,28 +157,30 @@ const buttonVariants = cva(
     ]
   }
 );
-interface IconProps {
-  icon: React.ElementType;
-  iconPlacement: "left" | "right";
-}
-
-interface IconRefProps {
+type IconProps = {
+  icon: IconType;
+  iconPlacement?: "left" | "right";
+  iconClassName?: string;
+} | {
   icon?: never;
-  iconPlacement?: undefined;
+  iconPlacement?: never;
+  iconClassName?: never;
 }
 
-export interface ButtonProps
+
+
+interface ButtonBaseProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
   VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
   asChild?: boolean;
 }
 
-export type ButtonIconProps = IconProps | IconRefProps;
+export type ButtonProps = ButtonBaseProps & IconProps;
 
 const Button = React.forwardRef<
   HTMLButtonElement,
-  ButtonProps & ButtonIconProps
+  ButtonProps
 >(
   (
     {
@@ -190,8 +193,9 @@ const Button = React.forwardRef<
       width,
       effect,
       hoverEffect,
-      icon: Icon,
-      iconPlacement,
+      icon,
+      iconPlacement = "left",
+      iconClassName,
       ...props
     },
     ref
@@ -209,31 +213,15 @@ const Button = React.forwardRef<
             width,
             effect,
             hoverEffect,
-            
+
           })
         )}
         ref={ref}
         {...props}
       >
-        {Icon &&
-          iconPlacement === "left" &&
-          (effect === "expandIcon" ? (
-            <div className="w-0 translate-x-[0%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-100 group-hover:pr-2 group-hover:opacity-100">
-              <Icon />
-            </div>
-          ) : (
-            <Icon />
-          ))}
+        {(icon && iconPlacement === "left") && <Icon name={icon} className={cn(iconClassName)} />}
         <Slottable>{props.children}</Slottable>
-        {Icon &&
-          iconPlacement === "right" &&
-          (effect === "expandIcon" ? (
-            <div className="w-0 translate-x-[100%] pl-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-0 group-hover:pl-2 group-hover:opacity-100">
-              <Icon />
-            </div>
-          ) : (
-            <Icon />
-          ))}
+        {(icon && iconPlacement === "right") && (<Icon name={icon} className={cn(iconClassName)} />)}
       </Comp>
     );
   }

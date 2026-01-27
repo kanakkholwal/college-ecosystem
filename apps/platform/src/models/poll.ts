@@ -15,7 +15,7 @@ export const rawPollSchema = z.object({
 export type RawPollType = z.infer<typeof rawPollSchema>;
 
 export type PollType = Omit<RawPollType, "votes"> & {
-  votes: { option: string; userId: string }[];
+  votes: { option: string; userId: string, createdAt: Date }[];
   _id: string;
   createdAt: Date;
   updatedAt: Date;
@@ -34,6 +34,7 @@ const pollSchema = new mongoose.Schema(
       {
         option: { type: String, required: true },
         userId: { type: String },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
     closesAt: {

@@ -1,6 +1,8 @@
+"use client";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Copy, RefreshCcw } from "lucide-react";
-
+import { AlertCircle, Copy, Home, MoveLeft, RefreshCcw } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 type Props = {
   error?: Error & {
     digest?: string;
@@ -18,7 +20,7 @@ export default function ErrorBanner({ error, title, description, reset }: Props)
   return (
     <div className="flex h-full min-h-[50vh] w-full flex-col items-center justify-center p-6">
       <div className="max-w-md w-full space-y-6 text-center">
-        
+
         {/* Minimal Icon */}
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400">
           <AlertCircle className="size-6" />
@@ -66,7 +68,7 @@ export default function ErrorBanner({ error, title, description, reset }: Props)
             <RefreshCcw className="mr-2 size-3.5" />
             Reload
           </Button>
-          
+
           {reset && (
             <Button
               variant="default"
@@ -79,6 +81,38 @@ export default function ErrorBanner({ error, title, description, reset }: Props)
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+
+
+
+export function ErrorActions() {
+  const router = useRouter();
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+      <Button
+        variant="outline"
+        className="w-full sm:w-auto px-8 h-12 gap-2 border-border/60 hover:bg-muted/50"
+        size="lg"
+        onClick={() => router.back()}
+      >
+        <MoveLeft className="w-4 h-4" />
+        Go Back
+      </Button>
+
+      <Button
+        size="lg"
+        className="w-full sm:w-auto px-8 h-12 gap-2 shadow-lg shadow-primary/20"
+        asChild
+      >
+        <Link href="/">
+          <Home className="w-4 h-4" />
+          Back to Home
+        </Link>
+      </Button>
     </div>
   );
 }

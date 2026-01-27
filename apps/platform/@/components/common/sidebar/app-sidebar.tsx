@@ -23,14 +23,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { appConfig, orgConfig } from "~/project.config";
 
-
-
 interface SidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: Session["user"];
   moderator: string;
-  prefixPath?: string; // Optional prefix path for links
+  prefixPath?: string;
 }
-
 
 export function AppSidebar({
   user,
@@ -38,22 +35,25 @@ export function AppSidebar({
   prefixPath,
   ...props
 }: SidebarProps) {
-  const { value } = useCookieWithUtils('hostel:slug');
+  const { value } = useCookieWithUtils("hostel:slug");
 
-  const links = useMemo(() => getSideNavLinks(moderator, prefixPath, value), [moderator, prefixPath, value]);
+  const links = useMemo(
+    () => getSideNavLinks(moderator, prefixPath, value),
+    [moderator, prefixPath, value]
+  );
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
               size="lg"
               asChild
             >
               <Link href={`/${prefixPath ? prefixPath : moderator}`}>
-                <ApplicationSvgLogo className="!size-8" />
+                <ApplicationSvgLogo className="size-8!" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
                     {appConfig.name}
@@ -67,16 +67,16 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <NavMain items={links} />
-
       </SidebarContent>
 
       <SidebarFooter>
         <NavUser user={user} />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );
 }
-

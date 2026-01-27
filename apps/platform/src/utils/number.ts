@@ -25,3 +25,15 @@ export function formatNumberOrdinal(num: number) {
   const v = num % 100;
   return num + (s[(v - 20) % 10] || s[v] || s[0]);
 }
+
+
+export function getRandomNumbers(count: number, min: number, max: number): Array<number> {
+  const numbers = new Set<number>();
+
+  while (numbers.size < count) {
+    const random = Math.floor(Math.random() * (max - min + 1)) + min;
+    numbers.add(random);
+  }
+
+  return Array.from(numbers);
+}
