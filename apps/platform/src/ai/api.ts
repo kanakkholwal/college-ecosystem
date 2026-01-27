@@ -28,8 +28,6 @@ export async function generateJsonFromDocument(
       schemaDescription,
       system,
       messages: prompt,
-      mode: "json",
-      // optional settings:
       providerOptions: {
         mistral: {
           documentImageLimit: 0,

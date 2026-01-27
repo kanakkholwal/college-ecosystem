@@ -33,7 +33,6 @@ export interface IPoll {
 }
 
 export interface IWhisperPost extends Document, Omit<WhisperPostT, "_id" | "createdAt" | "updatedAt"> {
-    _id: string;
     createdAt: Date;
     updatedAt: Date;
     pseudo?: IPseudoIdentity; // no null

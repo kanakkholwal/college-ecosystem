@@ -1,4 +1,4 @@
-import { Db, MongoClient } from "mongodb";
+import { Db, MongoClient, MongoClientOptions } from "mongodb";
 import mongoose, { type ConnectOptions, type Mongoose } from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -67,6 +67,11 @@ async function dbConnect(dbName: string = defaultDb): Promise<Mongoose> {
   return mongooseCache.conn;
 }
 
+const mongoClientOptions: MongoClientOptions = {
+  retryWrites: true,
+  w: "majority",
+  appName: "nith",
+}
 async function getMongoClient(
   dbName: string = defaultDb
 ): Promise<{ client: MongoClient; db: Db }> {
@@ -79,7 +84,7 @@ async function getMongoClient(
 
   if (!mongoClientCache.promise) {
     try {
-      const client = new MongoClient(MONGODB_URI, mongoOptions);
+      const client = new MongoClient(MONGODB_URI, mongoClientOptions);
       mongoClientCache.promise = client.connect().then((connectedClient) => {
         console.log("Connected to MongoDB via native client");
         return connectedClient;

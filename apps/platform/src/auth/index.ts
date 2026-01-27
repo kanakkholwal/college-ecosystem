@@ -4,7 +4,7 @@ import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin, haveIBeenPwned, username } from "better-auth/plugins";
 import { getHostelStudent } from "~/actions/hostel.core";
-import { ROLES_ENUMS } from "~/constants";
+import { emailSchema, ROLES_ENUMS } from "~/constants";
 import {
   getDepartmentByRollNo,
   isValidRollNumber,
@@ -13,12 +13,13 @@ import { db } from "~/db/connect";
 import { accounts, sessions, users, verifications } from "~/db/schema";
 import { appConfig } from "~/project.config";
 import type { ResultType } from "~/types/result";
+import { getBaseURL } from "~/utils/env";
 import { mailFetch, serverFetch } from "../lib/fetch-server";
 
 const VERIFY_EMAIL_PATH_PREFIX = "/auth/verify-mail";
 const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password";
 
-const baseUrl = new URL(process.env.BASE_URL);
+const baseUrl = new URL(getBaseURL());
 
 
 export const betterAuthOptions = {
@@ -40,8 +41,13 @@ export const betterAuthOptions = {
     user: {
       create: {
         before: async (user) => {
+          if (!emailSchema.safeParse(user.email).success) {
+            throw new APIError("NOT_ACCEPTABLE", {
+              message: "Invalid email format",
+            });
+          }
           const info = await getUserInfo(user);
-          console.log("Creating user for ", info);
+          console.log("[CREATING_USER]:", info);
           return {
             data: {
               ...user,
@@ -52,7 +58,7 @@ export const betterAuthOptions = {
       },
       // delete:{
       //   before: async (user) => {
-      //     console.log("Deleting user", user.email);
+      //     console.log("[DELETING_USER]:", user.email);
       //     return {
       //       data: {
       //         ...user,
@@ -65,8 +71,8 @@ export const betterAuthOptions = {
   onAPIError: {
     throw: true,
     onError: (error, ctx) => {
-      console.log("Auth error:", error);
-      console.log("Auth error , context:", ctx);
+      console.log("[AUTH_ERROR]:", error);
+      console.log("[AUTH_ERROR_CONTEXT]:", ctx);
     },
     // errorURL: "/auth/error",
   },
@@ -74,16 +80,12 @@ export const betterAuthOptions = {
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url, token }, request) => {
-      // const verification_url = `${baseUrl}${RESET_PASSWORD_PATH_PREFIX}${token}`;
-      const reset_link = new URL(process.env.BASE_URL as string);
+      const reset_link = new URL(getBaseURL());
       reset_link.pathname = RESET_PASSWORD_PATH_PREFIX;
       reset_link.searchParams.set("token", token);
 
       try {
-        const response = await mailFetch<{
-          data: string[] | null;
-          error?: string | null | object;
-        }>("/api/send", {
+        const response = await mailFetch<{ data: string[] | null; error?: string | null | object }>("/api/send", {
           method: "POST",
           body: JSON.stringify({
             template_key: "reset-password",
@@ -113,7 +115,7 @@ export const betterAuthOptions = {
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
-      const verification_url = new URL(process.env.BASE_URL as string);
+      const verification_url = new URL(getBaseURL());
       verification_url.pathname = VERIFY_EMAIL_PATH_PREFIX;
       verification_url.searchParams.set("token", token);
       try {
