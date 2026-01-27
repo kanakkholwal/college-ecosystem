@@ -49,7 +49,7 @@ export async function OPTIONS(req: NextRequest) {
     res.headers.set("Access-Control-Allow-Origin", allowOrigin);
     res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
     res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.headers.set("Access-Control-Allow-Credentials", "true"); // <-- missing
+    res.headers.set("Access-Control-Allow-Credentials", "true");
   }
   return res;
 }

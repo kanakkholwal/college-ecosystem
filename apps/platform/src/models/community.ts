@@ -22,7 +22,7 @@ export type CommunityPostTypeWithId = RawCommunityPostType & {
   savedBy: string[];
 };
 
-interface ICommunityPost extends Document {
+export interface ICommunityPost extends Document {
   title: string;
   content: string;
   category: (typeof CATEGORY_TYPES)[number];

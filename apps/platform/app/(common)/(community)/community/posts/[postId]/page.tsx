@@ -10,6 +10,7 @@ import { CATEGORY_IMAGES } from "~/constants/common.community";
 import PostFooter from "./post-footer";
 
 import { CommentSection } from "@/components/application/comments";
+import { CommunityPostStats } from "@/components/application/community.posts.stats";
 import AdUnit from "@/components/common/adsense";
 import ShareButton from "@/components/common/share-button";
 import { Badge } from "@/components/ui/badge";
@@ -165,7 +166,10 @@ export default async function CommunityPost(props: Props) {
 
             {/* Footer Actions */}
             <div className="bg-muted/10 border-t border-border/40 px-6 md:px-8 py-4">
-              <PostFooter post={post} user={session?.user!} />
+
+              <PostFooter post={post} user={session?.user!} >
+                <CommunityPostStats postId={post._id} />
+              </PostFooter>
             </div>
 
           </main>
@@ -213,10 +217,6 @@ export default async function CommunityPost(props: Props) {
 
         <div className="mt-8 max-w-4xl mx-auto space-y-8">
           <AdUnit adSlot="display-horizontal" key="community-post-ad" />
-
-          <div id="comments" className="scroll-mt-20">
-            {/* <CommentsWithAuth page={`community/posts/${post._id}`} /> */}
-          </div>
         </div>
 
       </div>

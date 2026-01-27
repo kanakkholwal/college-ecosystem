@@ -1,12 +1,10 @@
 "use client";
 
 import ShareButton from "@/components/common/share-button";
+import { Icon } from "@/components/icons";
 import { AuthActionButton } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import { Comments, CommentsProps } from "@fuma-comment/react";
 import {
-  Bookmark,
-  Heart,
   Send
 } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
@@ -14,27 +12,28 @@ import toast from "react-hot-toast";
 import type { CommunityPostTypeWithId } from "src/models/community";
 import { updatePost } from "~/actions/common.community";
 import type { Session } from "~/auth";
-import { appConfig } from "~/project.config";
+import { getBaseURL } from "~/utils/env";
 import { formatNumber } from "~/utils/number";
 
 interface FooterProps {
   post: CommunityPostTypeWithId;
   user?: Session["user"];
   className?: string;
+  children: React.ReactNode
 }
 
-export default function PostFooterOptimistic({ post, user, className }: FooterProps) {
+export default function PostFooterOptimistic({ post, user, className, children }: FooterProps) {
   return (
     <div className={cn("mt-4 pt-4 border-t border-border/40", className)}>
-      <div className="flex items-center justify-between">
-
+      <div className="flex items-center justify-start">
+        {children}
         <OptimisticFooterActionBar post={post} user={user} />
 
         <ShareButton
           data={{
             title: post.title,
             text: "Check out this discussion!",
-            url: `${appConfig.url}/community/posts/${post._id}`,
+            url: `${getBaseURL()}/community/posts/${post._id}`,
           }}
           variant="ghost"
           size="sm"
@@ -58,7 +57,8 @@ interface OptimisticFooterActionBarProps {
 }
 
 export function OptimisticFooterActionBar({ post, user, className }: OptimisticFooterActionBarProps) {
-  const [isPending, startTransition] = useTransition();
+  const [isLiking, startLikingTransition] = useTransition();
+  const [isSaving, startSavingTransition] = useTransition();
 
   const [optimisticPost, setOptimisticPost] = useOptimistic(
     post,
@@ -87,7 +87,7 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
 
   const handleLike = () => {
     if (!user?.id) return;
-    startTransition(() => {
+    startLikingTransition(() => {
       setOptimisticPost({ type: "toggleLike", userId: user.id });
       void updatePost(post._id, { type: "toggleLike" }).catch((error) => {
         toast.error("Failed to like post");
@@ -97,7 +97,7 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
 
   const handleSave = () => {
     if (!user?.id) return;
-    startTransition(() => {
+    startSavingTransition(() => {
       setOptimisticPost({ type: "toggleSave", userId: user.id });
       void updatePost(post._id, { type: "toggleSave" }).catch((error) => {
         toast.error("Failed to save post");
@@ -119,14 +119,21 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
           title: "Join the conversation",
           description: "Sign in to like posts and support authors.",
         }}
+        title="Like the post"
+        disabled={isLiking}
         onClick={handleLike}
         className={cn(
           "group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all hover:bg-red-500/10 active:scale-95",
           isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
         )}
       >
-        <Heart
-          className={cn("size-4 transition-transform group-hover:scale-110", isLiked && "fill-current scale-110")}
+        <Icon
+          name={isLiking ? "loader-circle" : "heart"}
+          className={cn(
+            "size-4 transition-transform group-hover:scale-110",
+            isLiking && "animate-spin",
+            isLiked && "fill-current scale-110"
+          )}
         />
         <span className="text-xs font-semibold tabular-nums">
           {formatNumber(optimisticPost.likes.length)}
@@ -141,14 +148,21 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
           title: "Save for later",
           description: "Sign in to bookmark posts to your profile.",
         }}
+        title="Bookmark the post"
         onClick={handleSave}
+        disabled={isSaving}
         className={cn(
           "group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all hover:bg-emerald-500/10 active:scale-95",
           isSaved ? "text-emerald-500" : "text-muted-foreground hover:text-emerald-500"
         )}
       >
-        <Bookmark
-          className={cn("size-4 transition-transform group-hover:scale-110", isSaved && "fill-current scale-110")}
+        <Icon
+          name={isSaving ? "loader-circle" : "bookmark"}
+          className={cn(
+            "size-4 transition-transform group-hover:scale-110",
+            isSaved && "fill-current scale-110",
+            isSaving && "animate-spin",
+          )}
         />
         <span className={cn("text-xs font-semibold tabular-nums", !isSaved && "hidden sm:inline")}>
           {isSaved ? "Saved" : "Save"}

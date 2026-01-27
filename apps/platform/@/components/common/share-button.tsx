@@ -24,7 +24,7 @@ function ShareButton({ data, shareCurrentUrl, ...props }: ShareButtonProps) {
     if (shareCurrentUrl) {
       if (typeof window !== "undefined") {
         return window.location.href;
-      } 
+      }
     } else {
       return data.url;
     }
@@ -50,6 +50,7 @@ function ShareButton({ data, shareCurrentUrl, ...props }: ShareButtonProps) {
       btnProps={{
         children: props.children || "Share",
         variant: "outline",
+        title: "Share",
         ...props,
         onClick: (e) => {
           props.onClick?.(e);

@@ -1,17 +1,22 @@
 "use server";
 
+import { inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { headers } from "next/headers";
+import { z } from "zod";
 import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
 import {
-    RawCommunityPostType,
+  RawCommunityPostType,
 } from "~/constants/common.community";
+import { db } from "~/db/connect";
+import { users } from "~/db/schema";
 import dbConnect from "~/lib/dbConnect";
 import CommunityPost, {
-    CommunityComment,
-    CommunityPostTypeWithId,
-    rawCommunityCommentSchema,
+  CommunityComment,
+  CommunityPostTypeWithId,
+  ICommunityPost,
+  rawCommunityCommentSchema
 } from "~/models/community";
 
 // Create a new post
@@ -100,15 +105,12 @@ type UpdateAction =
   | { type: "toggleSave" }
   | { type: "incrementViews" }
   | {
-      type: "edit";
-      data: Partial<Pick<CommunityPostTypeWithId, "title" | "content">>;
-    };
+    type: "edit";
+    data: Partial<Pick<CommunityPostTypeWithId, "title" | "content">>;
+  };
 
 export async function updatePost(id: string, action: UpdateAction) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+  const session = await getSession()
   if (!session) throw new Error("You need to be logged in to update a post");
 
   await dbConnect();
@@ -189,6 +191,55 @@ export async function deletePost(id: string) {
   } catch (err) {
     console.error(err);
     return Promise.reject("Failed to delete post");
+  }
+}
+
+export async function getPostActivity(id: string) {
+  try {
+    // const session = await getSession()
+    // if (!(session && session?.user?.role === "admin")) {
+    //   throw new Error("You need to be logged in as ADMIN Privilege");
+    // }
+    await dbConnect();
+    const post = await CommunityPost.findById<ICommunityPost>(id);
+    if (!post) {
+      return Promise.reject("Post not found");
+    }
+
+    // Empty fast-paths
+    const likedBy =
+      post.likes.length === 0
+        ? []
+        : await db
+          .select({
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            image: users.image,
+          })
+          .from(users)
+          .where(inArray(users.id, post.likes));
+
+
+    const savedBy =
+      post.savedBy.length === 0
+        ? []
+        : await db
+          .select({
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            image: users.image,
+          })
+          .from(users)
+          .where(inArray(users.id, post.savedBy));
+    return Promise.resolve({
+      likedBy,
+      savedBy,
+    });
+  } catch (err) {
+    console.error(err);
+    return Promise.reject("Failed to fetch post stats");
   }
 }
 

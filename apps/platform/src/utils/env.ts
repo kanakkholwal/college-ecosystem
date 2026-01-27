@@ -20,12 +20,12 @@
  */
 export const getRuntime = (): 'browser' | 'node' | 'unknown' => {
   // Browser runtime
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     return 'browser';
   }
 
   // Node.js runtime (default server runtime)
-  if (typeof process !== 'undefined' && process.versions?.node) {
+  if (typeof process !== 'undefined' && typeof process?.versions !== 'undefined') {
     return 'node';
   }
 
@@ -42,7 +42,7 @@ export const isBrowser = (): boolean => getRuntime() === 'browser';
  */
 export const isNode = (): boolean => getRuntime() === 'node';
 
-// ---------- Environment detection ----------
+//  Environment detection 
 
 /**
  * Reads deployment environment on the server.

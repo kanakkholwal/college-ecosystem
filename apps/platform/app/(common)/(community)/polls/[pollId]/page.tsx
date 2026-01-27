@@ -70,7 +70,7 @@ export default async function Dashboard({ params }: Props) {
           </Link>
         </Button>
       </div>
-      <div className="w-full grid grid-cols-1 @2xl:grid-cols-12 gap-4">
+      <div className="w-full grid grid-cols-1 @4xl:grid-cols-12 gap-4">
 
         <main className="@4xl:col-span-8 w-full flex flex-col justify-start whitespace-nowrap gap-2 bg-card border rounded-lg p-4 lg:px-6">
           <div>
