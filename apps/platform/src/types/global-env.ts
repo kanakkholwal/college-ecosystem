@@ -13,9 +13,6 @@ const envVariables = z.object({
   DATABASE_URL: z.string(),
 
   NODE_ENV: z.string().default("testing"),
-  NEXT_PUBLIC_ENV: z.string().default("development"),
-  NEXT_PUBLIC_BASE_URL: z.string().url(),
-  BASE_URL: z.string().url(),
 
   // ai
   DEEPSEEK_API_KEY: z.string(),
@@ -38,6 +35,6 @@ envVariables.parse(process.env);
 
 declare global {
   namespace NodeJS {
-    interface ProcessEnv extends z.infer<typeof envVariables> {}
+    interface ProcessEnv extends z.infer<typeof envVariables> { }
   }
 }

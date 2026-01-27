@@ -54,9 +54,10 @@ export default function PostFooterOptimistic({ post, user, className }: FooterPr
 interface OptimisticFooterActionBarProps {
   post: CommunityPostTypeWithId;
   user?: Session["user"];
+  className?: string;
 }
 
-export function OptimisticFooterActionBar({ post, user }: OptimisticFooterActionBarProps) {
+export function OptimisticFooterActionBar({ post, user, className }: OptimisticFooterActionBarProps) {
   const [isPending, startTransition] = useTransition();
 
   const [optimisticPost, setOptimisticPost] = useOptimistic(
@@ -108,9 +109,8 @@ export function OptimisticFooterActionBar({ post, user }: OptimisticFooterAction
   const isSaved = user && optimisticPost.savedBy.includes(user.id);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className={cn("flex items-center gap-1", className)}>
 
-      {/* LIKE BUTTON */}
       <AuthActionButton
         variant="ghost"
         size="sm"
@@ -133,7 +133,6 @@ export function OptimisticFooterActionBar({ post, user }: OptimisticFooterAction
         </span>
       </AuthActionButton>
 
-      {/* SAVE BUTTON */}
       <AuthActionButton
         variant="ghost"
         size="sm"
@@ -156,7 +155,7 @@ export function OptimisticFooterActionBar({ post, user }: OptimisticFooterAction
         </span>
       </AuthActionButton>
 
-      {/* COMMENT COUNT (Visual Only for now) */}
+      {/* COMMENT COUNT */}
       {/* <div className="hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-all cursor-pointer">
          <MessageCircle className="size-4" />
          <span className="text-xs font-semibold tabular-nums">0</span>

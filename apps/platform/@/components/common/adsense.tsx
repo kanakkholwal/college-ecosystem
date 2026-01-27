@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useId, useRef } from "react";
 import { appConfig } from "~/project.config";
+import { getClientEnv } from "~/utils/env";
 import "./adsense.css";
 
 const adsTypes = {
@@ -44,13 +45,13 @@ const AdUnit: React.FC<AdUnitProps> = ({ adSlot, className }) => {
 
   useEffect(() => {
     try {
-      if(process.env.NEXT_PUBLIC_ENV !== "production") return;
+      if (!getClientEnv().isProd) return;
       if (typeof window !== "undefined") {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       }
     } catch (e) {
       console.error("Adsense error:", e);
-      adRef.current?.classList.add("error");
+      adRef.current?.classList?.add("error");
     }
   }, [pathname, adSlot]); // refresh ad when route or slot changes
 

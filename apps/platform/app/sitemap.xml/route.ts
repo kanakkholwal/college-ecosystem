@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { appConfig } from "~/project.config";
 
-const BASE_URL = appConfig.url;
+const APP_URL = appConfig.url;
 
 const staticRoutes = [
   { path: "/" },
@@ -24,17 +24,17 @@ export async function GET(request: NextRequest) {
   // const dynamicRoutes = await fetchDynamicRoutes();
 
   const sitemap = generateSiteMap([
-      ...staticRoutes.map((route) => ({
-          ...route,
-          date: LASTMOD,
-          priority: route.path === '/' ? 1 : 0.8,
-          changefreq: 'daily',
+    ...staticRoutes.map((route) => ({
+      ...route,
+      date: LASTMOD,
+      priority: route.path === '/' ? 1 : 0.8,
+      changefreq: 'daily',
 
-      })),
-      // ...dynamicRoutes
+    })),
+    // ...dynamicRoutes
   ]);
 
-   // Send the XML to the browser
+  // Send the XML to the browser
   return new Response(sitemap, {
     status: 200,
     headers: {
@@ -68,15 +68,15 @@ function generateSiteMap(
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 ${pages
-  .map(
-    (page) => `
+      .map(
+        (page) => `
     <url>
-        <loc>${BASE_URL}${escapeXml(page.path)}</loc>
+        <loc>${APP_URL}${escapeXml(page.path)}</loc>
         <lastmod>${escapeXml(page.date)}</lastmod>
         <changefreq>${page.changefreq}</changefreq>
         <priority>${page.priority}</priority>
     </url>`
-  )
-  .join("")}
+      )
+      .join("")}
 </urlset>`;
 }

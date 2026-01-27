@@ -1,3 +1,5 @@
+import { getBaseURL } from "./utils/env";
+
 // Project configuration for the College Ecosystem platform
 export const orgConfig = {
   name: "National Institute of Technology, Hamirpur",
@@ -109,7 +111,7 @@ export const appConfig = {
     "os.nith.eu.org",
     "nith-app.pages.dev",
   ],
-  url: "https://app.nith.eu.org",
+  url: getBaseURL() ?? "https://app.nith.eu.org",
   logoSquare: "/logo-square.svg",
   logo: "/logo.svg",
   logoDark: "/logo-dark.svg",

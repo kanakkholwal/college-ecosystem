@@ -27,6 +27,7 @@ import {
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import { appConfig } from "~/project.config";
+import { getBaseURL } from "~/utils/env";
 import { formatNumber } from "~/utils/number";
 
 interface Props {
@@ -47,7 +48,7 @@ export async function generateMetadata(
     title: `${post.title}`,
     description: post.content.slice(0, 100),
     openGraph: {
-      images: [`${process.env.BASE_URL}/${CATEGORY_IMAGES[post.category]}`],
+      images: [`${getBaseURL()}/${CATEGORY_IMAGES[post.category]}`],
     },
   };
 }
@@ -197,8 +198,8 @@ export default async function CommunityPost(props: Props) {
                 Join the Discussion
               </h3>
             </div>
-            <p className="text-muted-foreground text-base ml-[3.25rem]">
-              Share your thoughts on <span className="text-foreground font-medium">"{post.title}"</span>
+            <p className="text-muted-foreground text-base ml-13">
+              Share your thoughts on <span className="text-foreground font-medium">{`"${post.title}"`}</span>
             </p>
           </div>
 
