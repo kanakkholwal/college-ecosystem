@@ -1,12 +1,3 @@
-/**
- * Hard rules:
- * - Environment (prod/preview/dev) is BUILD-TIME.
- * - Runtime (browser/node/edge) is EXECUTION-TIME.
- * - Never infer environment from runtime.
- * - Never infer runtime from environment.
- */
-
-// Runtime detection 
 
 /**
  * Detects the current execution runtime.
