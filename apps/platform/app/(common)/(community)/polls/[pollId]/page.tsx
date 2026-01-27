@@ -122,7 +122,7 @@ export default async function PollPage({ params }: Props) {
               </p>
             )}
 
-            <div className="flex items-center gap-6 pt-2 text-sm text-muted-foreground border-t border-border/50 pt-4">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-border/50 pt-4">
               <div className="flex items-center gap-2">
                 <Info className="h-4 w-4" />
                 <span>{poll.multipleChoice ? "Multiple Choice" : "Single Choice"}</span>

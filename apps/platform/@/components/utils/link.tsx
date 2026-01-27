@@ -1,13 +1,12 @@
 "use client";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { getWindowOrigin } from "@/lib/env";
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "../icons";
 import { ResponsiveDialog } from "../ui/responsive-dialog";
 
-interface RedirectButtonProps extends ButtonProps {
+type RedirectButtonProps = ButtonProps & {
   href: string;
   children?: React.ReactNode;
 }
@@ -46,13 +45,10 @@ export function PreviousPageLink({ ...props }: ButtonProps) {
           ? router.back()
           : router.push(pathname.split("/").splice(-1).join("/"));
       }}
+      icon={props.children ? undefined : "arrow-left"}
       {...props}
     >
-      {props.children ? props.children : <>
-        <ArrowLeft />
-
-        Go Back
-      </>}
+      {props.children ? props.children : "Go Back"}
     </Button>
   );
 }

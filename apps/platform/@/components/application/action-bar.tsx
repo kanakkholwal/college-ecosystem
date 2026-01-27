@@ -62,7 +62,7 @@ export function ActionBar({
     </div>
   );
 }
-interface ActionButtonProps extends ButtonProps {
+type ActionButtonProps = ButtonProps & {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   action: () => Promise<any>;
   actionName?: string;
