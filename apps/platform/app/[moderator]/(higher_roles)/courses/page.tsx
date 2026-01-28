@@ -1,6 +1,6 @@
-import CourseCard from "@/components/application/course-card";
-import Pagination from "@/components/application/course-pagination";
-import SearchBox from "@/components/application/course-search";
+import CourseCard from "@/components/application/course/card";
+import Pagination from "@/components/application/course/pagination";
+import SearchBox from "@/components/application/course/search";
 import { HeaderBar } from "@/components/common/header-bar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,10 +66,10 @@ export default async function CoursesPage(props: Props) {
         actionNode={
           <div className="flex items-center gap-2">
             <ButtonLink variant="outline" size="sm" className="hidden sm:flex" href="/syllabus" target="_blank">
-              <BookOpen  /> Public View
+              <BookOpen /> Public View
             </ButtonLink>
             <ButtonLink size="sm" disabled className="gap-2 shadow-sm" href={`/${params.moderator}/courses/create`}>
-              <Plus  /> Create Course
+              <Plus /> Create Course
             </ButtonLink>
           </div>
         }

@@ -1,9 +1,9 @@
 "use client";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { rawEventsSchemaType } from "~/constants/common.events";
 import type { EventJSONType } from "~/models/events";
-import { Badge } from "../ui/badge";
 
 function EventCard({
   event,

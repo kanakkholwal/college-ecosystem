@@ -1,5 +1,5 @@
 import { BaseHeroSection } from "@/components/application/base-hero";
-import { SkeletonCard } from "@/components/application/result-card";
+import { SkeletonCard } from "@/components/application/result/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { orgConfig } from "~/project.config";
 

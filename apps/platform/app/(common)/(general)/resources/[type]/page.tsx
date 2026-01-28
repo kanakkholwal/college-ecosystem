@@ -1,4 +1,4 @@
-import ResourceCard from "@/components/application/resource-card";
+import ResourceCard from "@/components/application/resource/card";
 import { ResponsiveContainer } from "@/components/common/container";
 import { Icon, IconType } from "@/components/icons";
 import { ButtonLink } from "@/components/utils/link";

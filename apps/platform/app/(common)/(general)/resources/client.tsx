@@ -1,5 +1,5 @@
 "use client";
-import ResourceCard from "@/components/application/resource-card";
+import ResourceCard from "@/components/application/resource/card";
 import { ResponsiveContainer } from "@/components/common/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

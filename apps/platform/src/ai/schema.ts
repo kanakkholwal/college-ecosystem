@@ -56,6 +56,6 @@ export const eventArraySchema = z
   .array(eventsSchema)
   .describe("Array of events, each event must follow the events schema");
 
-  export const courseArraySchema = z
+export const courseArraySchema = z
   .array(courseSchemaByOCR)
   .describe("Array of courses, each course must follow the course schema");

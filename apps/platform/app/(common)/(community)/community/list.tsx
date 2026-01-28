@@ -1,5 +1,6 @@
 "use client";
 
+import { OptimisticFooterActionBar } from "@/components/application/community/post.footer";
 import { UserPreview } from "@/components/application/user-preview";
 import EmptyArea from "@/components/common/empty-area";
 import ShareButton from "@/components/common/share-button";
@@ -7,14 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { BarChart2, MessageSquare, MessageSquareText, Share2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Markdown from "react-markdown";
 import type { CommunityPostTypeWithId } from "src/models/community";
 import type { Session } from "~/auth";
 import { CATEGORY_IMAGES } from "~/constants/common.community";
 import { appConfig } from "~/project.config";
 import { formatNumber } from "~/utils/number";
-import { OptimisticFooterActionBar } from "./posts/[postId]/post-footer";
 
 export default function CommunityPostList({
   posts,
@@ -23,7 +22,6 @@ export default function CommunityPostList({
   posts: CommunityPostTypeWithId[];
   user?: Session["user"];
 }) {
-  const router = useRouter();
 
   if (posts.length === 0) {
     return (

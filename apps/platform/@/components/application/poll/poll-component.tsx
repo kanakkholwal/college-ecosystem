@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Check, Clock, User } from "lucide-react";
+import { Check, Clock, User } from "lucide-react";
 import Link from "next/link";
 import { BiUpvote } from "react-icons/bi";
 import type { PollType } from "src/models/poll";
@@ -188,23 +188,20 @@ export default function PollComponent({
       <div className="mt-auto">
         <PollStats poll={poll} />
 
-        {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 mt-4">
           {isCreator && <DeletePoll pollId={poll._id} />}
 
-          {!closesAlready && (
-            <Button
-              variant="default"
-              size="sm"
-              className="rounded-full px-5 font-medium shadow-sm hover:shadow transition-all group"
-              asChild
-            >
-              <Link href={`/polls/${poll._id}`}>
-                Vote Now
-                <ArrowRight className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </Button>
-          )}
+          <ButtonLink
+            variant="default"
+            size="sm"
+            className="rounded-full px-5 font-medium shadow-sm hover:shadow transition-all group"
+            href={`/polls/${poll._id}`}
+            icon="arrow-right"
+            iconPlacement="right"
+          >
+            {closesAlready ? "Check Results" : "Vote Now"}
+          </ButtonLink>
+
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import { Suspense, useCallback, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { Icon } from "../icons";
 
-// --- Types ---
+//  Types 
 type FilterOption = {
   key: string;
   label: string;
@@ -88,14 +88,11 @@ export default function BaseSearchBox({
   return (
     <div className={cn("w-full space-y-3", className)}>
 
-      {/* --- Main Input Bar --- */}
       <div className="relative group">
-        {/* Background Glow (Optional aesthetic touch) */}
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-primary/0 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
+        <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-primary/0 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
 
         <div className="relative flex items-center bg-card rounded-full shadow-sm border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
 
-          {/* Left: Filter Trigger */}
           {filterOptions.length > 0 && (
             <div className="pl-1.5">
               {variant === "default" ? (
@@ -270,7 +267,7 @@ function FilterContent({
                     key={item.value}
                     onClick={() => onSelect(group.key, item.value)}
                     size="xs"
-                    variant={isSelected ? "default_soft":"outline"}
+                    variant={isSelected ? "default_soft" : "outline"}
                   >
                     {item.label}
                     {isSelected && <Icon name="check:bold" className="ml-1 size-3" />}

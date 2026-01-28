@@ -1,4 +1,4 @@
-import CreateAnnouncement from "./form";
+import CreateAnnouncement from "@/components/application/announcements/form";
 
 import type { Metadata } from "next";
 

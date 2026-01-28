@@ -1,8 +1,6 @@
-import EditCommunityPost from "./form";
+import EditPostForm from "@/components/application/community/form.edit";
 
 import EmptyArea from "@/components/common/empty-area";
-import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeft } from "lucide-react";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -49,8 +47,8 @@ export default async function CommunityPostEditPage(props: Props) {
   // console.log(post);
   return (
     <main className="md:col-span-3 space-y-4 pr-2">
-    
-      <EditCommunityPost postId={post._id} post={post} />
+
+      <EditPostForm postId={post._id} post={post} />
     </main>
   );
 }

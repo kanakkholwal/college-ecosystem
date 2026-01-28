@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Megaphone, X } from "lucide-react";
 import { CgPoll } from "react-icons/cg";
 import { FaEdge, FaFirefoxBrowser, FaSafari } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -68,6 +68,7 @@ import {
 	PiMagnifyingGlassDuotone,
 	PiMailboxDuotone,
 	PiMediumLogoDuotone,
+	PiMegaphoneDuotone,
 	PiMicrophoneStageDuotone, // For Podcast
 	PiMonitorDuotone,
 	PiMoonDuotone,
@@ -88,6 +89,8 @@ import {
 	PiShieldCheckDuotone,
 	PiSidebarDuotone,
 	PiSidebarSimpleDuotone,
+	PiSignInBold,
+	PiSignOutBold,
 	PiSlidersHorizontalDuotone,
 	PiSparkleDuotone,
 	PiSpinner,
@@ -193,7 +196,7 @@ export const IconComponent = {
 	send: PiPaperPlaneRightDuotone,
 	bookmark: PiBookmarkSimpleDuotone,
 	"bookmark-check": PiCheckCircleDuotone,
-
+	edit: PiPencilSimpleDuotone,
 	// --- Social & Communication ---
 	facebook: PiFacebookLogoDuotone,
 	youtube: PiYoutubeLogoDuotone,
@@ -229,8 +232,10 @@ export const IconComponent = {
 	"caret-down": PiCaretDownBold,
 	"arrows-down-up": PiArrowsDownUp,
 	"dots-three": PiDotsThreeOutline,
-
+	"sign-in:bold": PiSignInBold,
+	"sign-out:bold": PiSignOutBold,
 	"sidebar:simple": PiSidebarSimpleDuotone,
+	"announcement": PiMegaphoneDuotone,
 	// bodies
 	moon: PiMoonDuotone,
 	sun: PiSunDuotone,

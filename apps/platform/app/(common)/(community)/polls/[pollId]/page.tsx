@@ -1,3 +1,5 @@
+import { PollOptions } from "@/components/application/poll/poll-component";
+import Polling from "@/components/application/poll/polling";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
@@ -8,12 +10,12 @@ import {
 } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { getPollById, updateVotes } from "src//actions/common.poll";
+import { getPollById, updateVotes } from "~/actions/common.poll";
 import { auth } from "~/auth";
-import { PollOptions } from "../components/poll-component";
-import Polling from "./polling";
 
 import { CommentSection } from "@/components/application/comments";
+import DeletePoll from "@/components/application/poll/delete-poll";
+import { ClosingBadge } from "@/components/application/poll/poll-timer";
 import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
 import ShareButton from "@/components/common/share-button";
@@ -21,8 +23,6 @@ import { AuthButtonLink, ButtonLink } from "@/components/utils/link";
 import type { Metadata } from "next";
 import { appConfig } from "~/project.config";
 import { getBaseURL } from "~/utils/env";
-import DeletePoll from "../components/delete-poll";
-import { ClosingBadge } from "../components/poll-timer";
 
 export async function generateMetadata({
   params,

@@ -1,12 +1,12 @@
-import CourseCard from "@/components/application/course-card";
+import CourseCard from "@/components/application/course/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import { Fragment, Suspense } from "react";
 import { getCourses } from "~/actions/common.course";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
-import Pagination from "@/components/application/course-pagination";
-import SearchBox from "@/components/application/course-search";
+import SearchBox from "@/components/application/course/search";
+import Pagination from "@/components/application/course/pagination";
 import AdUnit from "@/components/common/adsense";
 import { ResponsiveContainer } from "@/components/common/container";
 import { NoteSeparator } from "@/components/common/note-separator";

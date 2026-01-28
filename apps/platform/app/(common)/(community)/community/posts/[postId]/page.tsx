@@ -1,3 +1,4 @@
+import PostFooter from "@/components/application/community/post.footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { headers } from "next/headers";
@@ -7,10 +8,9 @@ import remarkGfm from "remark-gfm";
 import { getPostById } from "src/actions/common.community";
 import { auth } from "~/auth";
 import { CATEGORY_IMAGES } from "~/constants/common.community";
-import PostFooter from "./post-footer";
 
+import { ActivityList } from "@/components/application/activity/list";
 import { CommentSection } from "@/components/application/comments";
-import { CommunityPostStats } from "@/components/application/community.posts.stats";
 import AdUnit from "@/components/common/adsense";
 import ShareButton from "@/components/common/share-button";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import { ButtonLink } from "@/components/utils/link";
 import {
   ArrowLeft,
   Calendar,
-  Edit3,
   Eye,
   MessageCircle,
   MessageSquare,
@@ -119,8 +118,8 @@ export default async function CommunityPost(props: Props) {
                   size="sm"
                   href={`/community/edit?postId=${post._id}`}
                   className="text-muted-foreground"
+                  icon="edit"
                 >
-                  <Edit3 />
                   Edit
                 </ButtonLink>
               )}
@@ -225,7 +224,7 @@ export default async function CommunityPost(props: Props) {
             <div className="mt-8 pt-6 border-t">
               <PostFooter post={post} user={session?.user!}>
 
-                {session?.user?.role === "admin" && (<CommunityPostStats postId={post._id} />)}
+                {session?.user?.role === "admin" && (<ActivityList targetId={post._id} targetModel="communityPost" />)}
               </PostFooter>
             </div>
 

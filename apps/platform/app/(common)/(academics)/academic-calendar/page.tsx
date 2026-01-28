@@ -1,4 +1,4 @@
-import { EventCard } from "@/components/application/event-card";
+import { EventCard } from "@/components/application/event/card";
 import AdUnit from "@/components/common/adsense";
 import { ResponsiveContainer } from "@/components/common/container";
 import EmptyArea from "@/components/common/empty-area";
@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { getEvents } from "~/actions/common.events";
 import { auth } from "~/auth";
+import { getServerEnv } from "~/utils/env";
 
 type Props = {
   params: Promise<{
@@ -58,7 +59,7 @@ export default async function AcademicCalenderPage(props: Props) {
   const session = await auth.api.getSession({
     headers: headersList,
   });
-  if (session?.user?.role === "admin") {
+  if (session?.user?.role === "admin" && getServerEnv().isDev) {
     console.log("Events fetched for admin:", groupedEvents);
   }
   const futureEvents = groupedEvents.filter((group) => {
@@ -93,9 +94,9 @@ export default async function AcademicCalenderPage(props: Props) {
         </ButtonLink>
       </div>
       <AdUnit
-          adSlot="display-horizontal"
-          key={"academic-calendar-page-ad"}
-        />
+        adSlot="display-horizontal"
+        key={"academic-calendar-page-ad"}
+      />
       <Tabs defaultValue="calendar" className="bg-card p-4 lg:p-5 rounded-lg">
         <VercelTabsList
           className="mb-4 mx-auto"
@@ -146,9 +147,9 @@ export default async function AcademicCalenderPage(props: Props) {
         </TabsContent>
       </Tabs>
       <AdUnit
-          adSlot="multiplex"
-          key={"academic-calendar-page-ad-footer"}
-        />
+        adSlot="multiplex"
+        key={"academic-calendar-page-ad-footer"}
+      />
     </div>
   );
 }

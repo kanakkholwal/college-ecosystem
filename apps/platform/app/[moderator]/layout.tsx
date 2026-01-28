@@ -2,6 +2,7 @@ import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import AdUnit from "@/components/common/adsense";
 import Navbar from "@/components/common/app-navbar";
 import { AppSidebar } from "@/components/common/sidebar/app-sidebar";
+import { ThemeSwitcher } from "@/components/common/theme-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
@@ -75,14 +76,7 @@ export default async function DashboardLayout({
             </div>
           </footer>
 
-          {process.env.NODE_ENV !== "production" && (
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-              <div className="inline-flex items-center gap-2 rounded-full border bg-background/95 backdrop-blur px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
-                <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
-                <span>Development Mode</span>
-              </div>
-            </div>
-          )}
+
         </div>
       </SidebarInset>
     </SidebarProvider>

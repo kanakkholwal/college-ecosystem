@@ -1,4 +1,4 @@
-import PollingFunctional from "@/components/application/polling";
+import PollingFunctional from "@/components/application/poll/polling";
 import AdUnit from "@/components/common/adsense";
 import { Icon } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -132,12 +132,12 @@ export default async function WhisperFeedPage({ params }: WhisperFeedPageProps) 
                                         Live Poll • {whisper.poll.anonymousVotes ? "Anonymous Voting" : "Public Voting"}
                                     </div>
                                     <div className="p-4">
-                                        <PollingFunctional
+                                        {/* <PollingFunctional
                                             poll={whisper.poll}
                                             pollRefId={whisper._id!}
                                             user={session?.user!}
                                             updatePoll={updateWhisperPoll}
-                                        />
+                                        /> */}
                                     </div>
                                 </div>
                             )}

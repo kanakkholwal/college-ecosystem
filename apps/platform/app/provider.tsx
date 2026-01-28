@@ -41,17 +41,22 @@ export function Provider({ children }: { children: React.ReactNode }) {
           aria-hidden="true"
           className="absolute inset-0 grid grid-cols-2 -space-x-52 pattern_feed -z-1"
         >
-          <div className="blur-[106px] h-56 bg-gradient-to-br from-secondary via-emerald-500 to-primary" />
-          <div className="blur-[106px] h-32 bg-gradient-to-r from-primary via-violet-500 to-pink-500" />
+          <div className="blur-[106px] h-56 bg-linear-to-br from-secondary via-emerald-500 to-primary" />
+          <div className="blur-[106px] h-32 bg-linear-to-r from-primary via-violet-500 to-pink-500" />
         </div>
         <div className={cn("min-h-screen w-full h-full")}>
           <NuqsAdapter>{children}</NuqsAdapter>
         </div>
         {process.env.NODE_ENV !== "production" && (
-          <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
-            <ThemeSwitcher />
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-1 items-center">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-background/95 backdrop-blur px-3 pl-5 h-8 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+              <div className="size-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>Development Mode</span>
+              <ThemeSwitcher />
+            </div>
           </div>
         )}
+
         <GithubStarDialog />
       </NextThemesProvider>
       <HotToaster

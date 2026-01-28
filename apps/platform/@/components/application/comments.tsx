@@ -1,14 +1,15 @@
 import { AuthActionButton } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import { Comments, CommentsProps } from "@fuma-comment/react";
-import { PiSignInBold } from "react-icons/pi";
 import { Session } from "~/auth";
+import { ButtonProps } from "../ui/button";
 
 interface CommentSectionProps extends Omit<CommentsProps, "auth"> {
     sessionId?: Session["session"]["id"];
     className?: string;
+    btnProps?: ButtonProps
 }
-export function CommentSection({ page, sessionId, className, ...props }: CommentSectionProps) {
+export function CommentSection({ page, sessionId, className, btnProps, ...props }: CommentSectionProps) {
 
     return (<Comments
         id="comments"
@@ -29,9 +30,11 @@ export function CommentSection({ page, sessionId, className, ...props }: Comment
                     title: "Join the conversation",
                     description: "Sign in to like posts, comments, etc.",
                 }}
+                icon="sign-in:bold"
+                iconPlacement="right"
+                {...btnProps}
             >
                 Sign In
-                <PiSignInBold />
             </AuthActionButton>,
         }}
 

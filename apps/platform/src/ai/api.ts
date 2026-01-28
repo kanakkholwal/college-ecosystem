@@ -10,9 +10,9 @@ export const safetySettings = [
 ];
 
 // export const model = deepseek("deepseek-chat");
-export const model = google("gemini-1.5-pro-latest");
+export const model = google("gemini-2.5-flash-lite");
 
-export const modelId = "gemini-1.5-pro-latest";
+export const modelId = "gemini-2.5-flash-lite";
 
 export async function generateJsonFromDocument(
   files: (string | ArrayBuffer)[],
@@ -22,7 +22,7 @@ export async function generateJsonFromDocument(
   const { system, schemaName: sName, schemaDescription, schema } = PromptMaps.documentToJson[schemaName];
   try {
     const response = await generateObject({
-      model: docScannerModel,
+      model: model,
       schema,
       schemaName: sName,
       schemaDescription,
@@ -33,9 +33,7 @@ export async function generateJsonFromDocument(
           documentImageLimit: 0,
           // documentPageLimit: 64,
         },
-        google: {
-          safetySettings,
-        },
+
       },
     });
     return Promise.resolve({

@@ -1,5 +1,5 @@
-import RoomCard from "@/components/application/room-card";
-import SearchBox from "@/components/application/room-search";
+import RoomCard from "@/components/application/room/card";
+import SearchBox from "@/components/application/room/search";
 import { ResponsiveContainer } from "@/components/common/container";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";

@@ -25,20 +25,20 @@ const CATEGORY_THEME: Record<string, string> = {
 
 // 2. Icon Map
 const CATEGORY_ICONS: Record<string, any> = {
-    academic: GraduationCap,
-    event: CalendarDays,
-    cultural: Megaphone,
-    sports: Trophy,
-    other: Info
+  academic: GraduationCap,
+  event: CalendarDays,
+  cultural: Megaphone,
+  sports: Trophy,
+  other: Info
 }
 
 // 3. Dot Color Map (For the timeline)
 const DOT_COLORS: Record<string, string> = {
-    academic: "bg-blue-500",
-    event: "bg-orange-500",
-    cultural: "bg-purple-500",
-    sports: "bg-emerald-500",
-    other: "bg-zinc-500"
+  academic: "bg-blue-500",
+  event: "bg-orange-500",
+  cultural: "bg-purple-500",
+  sports: "bg-emerald-500",
+  other: "bg-zinc-500"
 }
 
 export default function AnnouncementsList({
@@ -50,7 +50,7 @@ export default function AnnouncementsList({
 }) {
   return (
     <div className="space-y-6 relative">
-      
+
       {/* Timeline Line (Thin & Subtle) */}
       <div className="absolute left-[19px] top-4 bottom-4 w-px bg-border/40 hidden md:block -z-10" />
 
@@ -62,10 +62,10 @@ export default function AnnouncementsList({
 
         return (
           <div key={announcement._id} className="relative pl-0 md:pl-12 group">
-            
+
             {/* Timeline Dot (Small & Colored) */}
             <div className="hidden md:flex absolute left-3 top-5 size-4 rounded-full border border-border bg-background items-center justify-center z-10 transition-transform group-hover:scale-110">
-                <div className={cn("size-1.5 rounded-full", dotColor)} />
+              <div className={cn("size-1.5 rounded-full", dotColor)} />
             </div>
 
             <div
@@ -80,8 +80,8 @@ export default function AnnouncementsList({
                   <div className="flex items-center gap-2">
                     {/* The Badge carries the color now, not the card border */}
                     <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 h-5 gap-1.5 uppercase tracking-wider font-semibold border", themeClass)}>
-                       <CatIcon className="size-3" />
-                       {announcement.relatedFor}
+                      <CatIcon className="size-3" />
+                      {announcement.relatedFor}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground/60 font-medium">
                       {formatDistanceToNow(new Date(announcement.createdAt), { addSuffix: true })}
@@ -102,28 +102,28 @@ export default function AnnouncementsList({
               {/* Content */}
               <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground/80 leading-relaxed text-sm">
                 <Markdown
-                    components={{
-                        h1: ({children}) => <p className="font-bold text-foreground text-sm mb-1">{children}</p>,
-                        h2: ({children}) => <p className="font-semibold text-foreground text-sm mb-1">{children}</p>,
-                        p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
-                        ul: ({children}) => <ul className="list-disc pl-4 my-2 space-y-1">{children}</ul>,
-                        a: ({href, children}) => <a href={href} className="text-primary hover:underline font-medium" target="_blank">{children}</a>
-                    }}
+                  components={{
+                    h1: ({ children }) => <p className="font-bold text-foreground text-sm mb-1">{children}</p>,
+                    h2: ({ children }) => <p className="font-semibold text-foreground text-sm mb-1">{children}</p>,
+                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc pl-4 my-2 space-y-1">{children}</ul>,
+                    a: ({ href, children }) => <a href={href} className="text-primary hover:underline font-medium" target="_blank">{children}</a>
+                  }}
                 >
-                    {announcement.content}
+                  {announcement.content}
                 </Markdown>
               </div>
 
               {/* Footer / Author */}
               <div className="mt-4 pt-3 border-t border-border/30 flex items-center gap-2">
-                 <UserPreview user={announcement.createdBy}>
-                    <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group/author">
-                        <span className="size-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground group-hover/author:bg-foreground group-hover/author:text-background transition-colors">
-                            {announcement.createdBy.name.charAt(0)}
-                        </span>
-                        <span className="font-medium">{announcement.createdBy.name}</span>
-                    </button>
-                 </UserPreview>
+                <UserPreview user={announcement.createdBy}>
+                  <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group/author">
+                    <span className="size-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground group-hover/author:bg-foreground group-hover/author:text-background transition-colors">
+                      {announcement.createdBy.name.charAt(0)}
+                    </span>
+                    <span className="font-medium">{announcement.createdBy.name}</span>
+                  </button>
+                </UserPreview>
               </div>
             </div>
           </div>

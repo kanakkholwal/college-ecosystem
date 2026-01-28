@@ -29,9 +29,11 @@ export const rawEventsSchema = z
       ), // Name of the event
     description: z.string(),
     links: z.array(z.string().url()).default([]).optional(), // Array of links related to the event
-    time: z.date().refine((date) => new Date(date) > new Date(), {
-      message: "Event time must be in the future",
-    }),
+    time: z.date()
+    // .refine((date) => ((new Date(date) > new Date()) && (new Date(date).getMonth() < new Date().getMonth())), {
+    //   message: "Event time must be in the future",
+    // })
+    ,
     endDate: z
       .date()
       .refine((date) => new Date(date) > new Date(), {

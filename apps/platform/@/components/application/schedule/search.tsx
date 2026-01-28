@@ -1,5 +1,5 @@
 "use client";
-import BaseSearchBox from "./base-search";
+import BaseSearchBox from "../base-search";
 
 type Props = {
   branches: string[];

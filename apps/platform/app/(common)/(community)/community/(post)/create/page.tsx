@@ -1,4 +1,4 @@
-import CreateCommunityPost from "./form";
+import CreateCommunityPost from "@/components/application/community/form.create";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

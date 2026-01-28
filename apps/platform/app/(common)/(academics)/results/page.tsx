@@ -1,6 +1,6 @@
-import { ResultCard, SkeletonCard } from "@/components/application/result-card";
-import Pagination from "@/components/application/result-pagination";
-import SearchBox from "@/components/application/result-search";
+import { ResultCard, SkeletonCard } from "@/components/application/result/card";
+import Pagination from "@/components/application/result/pagination";
+import SearchBox from "@/components/application/result/search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 import { BiSpreadsheet } from "react-icons/bi";
@@ -33,7 +33,7 @@ async function ResultDisplay({ searchParams }: {
   const new_cache = cache === "new";
 
   const resData = await getResults(query, currentPage, filter, new_cache);
-  const { results, totalPages,totalCount } = resData;
+  const { results, totalPages, totalCount } = resData;
   console.log("Results fetched:", results.length, "Total Pages:", totalPages, "Total Count:", totalCount);
   return <>
     <NoteSeparator label={`${results.length} Results found`} />
@@ -92,16 +92,16 @@ and track academic performance"
           <SearchBox new_cache={searchParams?.cache === "new"} />
         </Suspense>
       </BaseHeroSection>
-        <script type="application/ld+json" id="search-results-json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SearchResultsPage",
-            name: "NITH Results Portal",
-            description: "Official examination results portal for NIT Hamirpur",
-            url: `${appConfig.url}/results`,
-            publisher: orgConfig.jsonLds.EducationalOrganization,
-          })}
-        </script>
+      <script type="application/ld+json" id="search-results-json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SearchResultsPage",
+          name: "NITH Results Portal",
+          description: "Official examination results portal for NIT Hamirpur",
+          url: `${appConfig.url}/results`,
+          publisher: orgConfig.jsonLds.EducationalOrganization,
+        })}
+      </script>
 
       <ErrorBoundaryWithSuspense
         fallback={

@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import toast from "react-hot-toast";
-import type { CommunityPostTypeWithId } from "src/models/community";
 import { updatePost } from "~/actions/common.community";
 import type { Session } from "~/auth";
+import type { CommunityPostTypeWithId } from "~/models/community";
 import { getBaseURL } from "~/utils/env";
 import { formatNumber } from "~/utils/number";
 

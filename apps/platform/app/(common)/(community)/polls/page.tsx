@@ -1,13 +1,13 @@
+import CreatePoll from "@/components/application/poll/create-poll";
+import PollComponent from "@/components/application/poll/poll-component";
 import EmptyArea from "@/components/common/empty-area";
 import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
 import {
   getClosedPolls,
   getOpenPolls,
   getPollsCreatedByLoggedInUser,
-} from "~//actions/common.poll";
+} from "~/actions/common.poll";
 import type { PollType } from "~/models/poll";
-import CreatePoll from "./components/create-poll";
-import PollComponent from "./components/poll-component";
 
 import AdUnit from "@/components/common/adsense";
 import { Badge } from "@/components/ui/badge";

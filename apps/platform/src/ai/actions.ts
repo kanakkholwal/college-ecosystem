@@ -4,6 +4,7 @@ import { generateJsonFromDocument } from './api';
 import { courseArraySchema, eventArraySchema } from "./schema";
 
 
+
 export async function generateEventsByDoc(
   images: (string | ArrayBuffer)[]
 ): Promise<{
@@ -15,7 +16,7 @@ export async function generateEventsByDoc(
   try {
     const response = await generateJsonFromDocument(
       images,
-     "events"
+      "events"
     );
     const events = eventArraySchema.parse(response.object);
     return Promise.resolve({
@@ -42,8 +43,8 @@ export async function generateCoursesByDoc(
   error: any | null;
   courses: z.infer<typeof courseArraySchema>;
   message: string;
-}>{
- try {
+}> {
+  try {
     const response = await generateJsonFromDocument(
       images,
       "courses"

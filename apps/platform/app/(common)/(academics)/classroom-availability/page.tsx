@@ -1,5 +1,5 @@
-import RoomCard from "@/components/application/room-card";
-import SearchBox from "@/components/application/room-search";
+import SearchBox from "@/components/application/room/search";
+import RoomCard from "@/components/application/room/card";
 import { ResponsiveContainer } from "@/components/common/container";
 import EmptyArea from "@/components/common/empty-area";
 import { NoteSeparator } from "@/components/common/note-separator";
@@ -9,10 +9,9 @@ import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
 import { listAllRoomsWithHistory } from "~/actions/common.room";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
+import { getSession } from "~/auth/server";
 
 type Props = {
   searchParams: Promise<{
@@ -43,10 +42,7 @@ export const metadata: Metadata = {
 
 export default async function RoomsPage(props: Props) {
   const searchParams = await props.searchParams;
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+  const session = await getSession();
 
   const rooms = await listAllRoomsWithHistory({
     status: searchParams.currentStatus,

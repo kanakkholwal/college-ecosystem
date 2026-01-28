@@ -31,7 +31,6 @@ import { ButtonLink } from "@/components/utils/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Content, JSONContent } from "@tiptap/react";
 import {
-  ArrowLeft,
   BellRing,
   CalendarClock,
   Hash,
@@ -52,7 +51,7 @@ import {
 } from "~/constants/common.announcement";
 import { changeCase } from "~/utils/string";
 
-// --- Default State ---
+//  Default State 
 const defaultContent = {
   type: "doc",
   content: [
@@ -73,6 +72,7 @@ function convertToMd(data: Content) {
 export default function CreateAnnouncement() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof rawAnnouncementSchema>>({
     resolver: zodResolver(rawAnnouncementSchema),
     defaultValues: {
@@ -101,27 +101,27 @@ export default function CreateAnnouncement() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
 
-          <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-card/50 backdrop-blur-xl rounded-b-lg">
-            <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <header className="sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between rounded-2xl mt-5 w-full border-b border-border/40 bg-card/80 backdrop-blur-md support-[backdrop-filter]:bg-card/60">
+
               <div className="flex items-center gap-4">
-                <ButtonLink href="/announcements" variant="ghost" size="icon_sm" className="rounded-full">
-                  <ArrowLeft className="size-4" />
-                </ButtonLink>
+                <ButtonLink href="/announcements" variant="ghost" size="icon_sm" icon="arrow-left" />
                 <div className="flex flex-col">
                   <h1 className="text-sm font-semibold flex items-center gap-2">
                     New Announcement
-                    <Badge variant="default" className="px-1.5 py-0 text-[9px] font-normal uppercase">
-                      Admin
-                    </Badge>
                   </h1>
+                  <span className="text-[10px] text-muted-foreground">Draft mode</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
+                <Badge variant="outline" className="uppercase text-xs text-muted-foreground">
+                  Admin Access
+                </Badge>
                 <Button
                   type="submit"
                   size="sm"
-                  className="gap-2 rounded-full px-5 shadow-md shadow-primary/20"
+                  className="gap-2 rounded-full px-5 font-semibold shadow-sm"
                   disabled={form.formState.isSubmitting || loading}
                 >
                   {(form.formState.isSubmitting || loading) ? (
@@ -137,10 +137,8 @@ export default function CreateAnnouncement() {
 
           <main className="flex-1 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 p-4 lg:p-8">
 
-            {/* Left: Editor Canvas (8 cols) */}
-            <div className="lg:col-span-8 space-y-8">
+            <div className="lg:col-span-8 space-y-6">
 
-              {/* Title Input */}
               <FormField
                 control={form.control}
                 name="title"
@@ -148,9 +146,8 @@ export default function CreateAnnouncement() {
                   <FormItem>
                     <FormControl>
                       <Input
-                        placeholder="Announcement Headline..."
-                        variant="underlined_transparent"
-                        className="text-3xl md:text-4xl font-bold h-auto py-2"
+                        placeholder="Announcement Title"
+                        className="text-3xl md:text-4xl pl-4 font-bold h-auto py-4 border-none shadow-none focus-visible:ring-0 px-0 bg-transparent placeholder:text-muted-foreground/40"
                         {...field}
                         autoFocus
                         autoComplete="off"
@@ -161,8 +158,6 @@ export default function CreateAnnouncement() {
                 )}
               />
 
-              <Separator className="bg-border/40" />
-
               {/* Rich Text Editor */}
               <FormField
                 control={form.control}
@@ -170,14 +165,14 @@ export default function CreateAnnouncement() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <div className="min-h-[400px] prose prose-zinc dark:prose-invert max-w-none">
+                      <div className="min-h-[500px] prose prose-zinc dark:prose-invert max-w-none prose-p:text-base prose-headings:font-bold prose-blockquote:border-l-primary">
                         <NexoEditor
                           content={field.value as Content}
                           onChange={(content) => {
                             field.onChange(content);
                             form.setValue("content", convertToMd(content as Content));
                           }}
-                          placeholder="What needs to be announced?"
+                          placeholder="Write your update here... Use markdown shortcuts or the toolbar."
                         />
                       </div>
                     </FormControl>
@@ -187,77 +182,85 @@ export default function CreateAnnouncement() {
               />
             </div>
 
-            {/* Right: Settings Sidebar (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
+              <div className="sticky top-24 space-y-6">
 
-              <Card className="border-border/50 bg-card/50 shadow-sm sticky top-24">
-                <CardHeader className="pb-3 border-b border-border/40 p-3">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <BellRing className="size-4 text-primary" />
-                    Configuration
-                  </CardTitle>
-                </CardHeader>
+                <Card className="border-border/60 shadow-sm bg-card">
+                  <CardHeader className="pb-3 border-b border-border/40 p-4">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <BellRing className="size-4 text-primary" />
+                      Publishing Options
+                    </CardTitle>
+                  </CardHeader>
 
-                <CardContent className="space-y-6 pt-4 p-3">
+                  <CardContent className="space-y-6 pt-5 p-4">
 
-                  {/* Category Select */}
-                  <FormField
-                    control={form.control}
-                    name="relatedFor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
-                          <Hash className="size-3" /> Topic
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={form.formState.isSubmitting}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="bg-background">
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {RELATED_FOR_TYPES.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                <span className="capitalize">{changeCase(type, "camel_to_title")}</span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="relatedFor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5 mb-2">
+                            <Hash className="size-3" /> Topic Category
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            disabled={form.formState.isSubmitting}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="bg-background">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {RELATED_FOR_TYPES.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  <span className="capitalize">{changeCase(type, "camel_to_title")}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Expiration Date */}
-                  <FormField
-                    control={form.control}
-                    name="expiresAt"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
-                          <CalendarClock className="size-3" /> Expiration
-                        </FormLabel>
-                        <div className="relative">
-                          <DateTimePicker
-                            value={field.value.toISOString() ?? ""}
-                            onChange={(date) => field.onChange(new Date(date))}
-                          />
-                        </div>
-                        <FormDescription className="text-[10px]">
-                          Post will archive automatically after this date.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <Separator className="bg-border/40" />
 
-                </CardContent>
-              </Card>
+                    {/* Expiration Date */}
+                    <FormField
+                      control={form.control}
+                      name="expiresAt"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5 mb-2">
+                            <CalendarClock className="size-3" /> Auto-Archive Date
+                          </FormLabel>
+                          <div className="relative">
+                            <DateTimePicker
+                              value={field.value ? new Date(field.value).toISOString() : ""}
+                              onChange={(date) => field.onChange(date ? new Date(date) : undefined)}
+                            />
+                          </div>
+                          <FormDescription className="text-[10px] mt-1.5">
+                            This post will be hidden from the main feed after this date.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
+                  </CardContent>
+                </Card>
+
+                {/* Helper Tip */}
+                <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-xs text-muted-foreground">
+                  <p className="font-medium text-blue-600 mb-1">Pro Tip:</p>
+                  You can paste images directly into the editor. Use the toolbar for headers and lists.
+                </div>
+
+              </div>
             </div>
           </main>
         </form>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ResultCard } from "@/components/application/result-display";
+import { ResultCard } from "@/components/application/result/display";
 import EmptyArea from "@/components/common/empty-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,7 @@ import { orgConfig } from "~/project.config";
 import { changeCase } from "~/utils/string";
 import { sendMailUpdate } from "./actions";
 
-// ----------------------------------------------------------------------
-// 1. GET RESULT (Data Fetching)
-// ----------------------------------------------------------------------
-
+//  GET RESULT (Data Fetching)
 const fetchMethods = [
     "getResultByRollNoFromSite",
     "getResultByRollNo",
