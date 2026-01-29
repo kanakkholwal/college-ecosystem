@@ -285,6 +285,17 @@
     --animate-canopy-vertical: canopy-y var(--duration) infinite linear;
     --animate-bounce-slow: bounce 3s infinite;
     --animate-wiggle: bounce 3s infinite;
+    --animate-grid: grid 15s infinite linear;
+
+    @keyframes grid {
+        from {
+            transform: translateY(-50%);
+        }
+
+        to {
+            transform: translateY(0)
+        }
+    }
 
     @keyframes wiggle {
 

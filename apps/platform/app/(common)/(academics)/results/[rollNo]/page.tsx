@@ -23,7 +23,8 @@ import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-// --- Icon Replacements (Phosphor Duotone) ---
+
+import { CGPIChart } from "@/components/application/result/chart";
 import {
   PiArrowUpRightDuotone,
   PiBookOpenDuotone,
@@ -41,14 +42,13 @@ import {
 import type { ResultTypeWithId } from "src/models/result";
 import { getResultByRollNo } from "~/actions/common.result";
 import { orgConfig } from "~/project.config";
-import { CGPIChart } from "./components/chart";
 
 type Props = {
   params: Promise<{ rollNo: string }>;
   searchParams?: Promise<{ update?: string; new?: string }>;
 };
 
-// --- Helpers ---
+// Helpers 
 const getRankColor = (rank: number) => {
   if (rank === 1) return "bg-pink-500/10 text-pink-600 border-pink-500/20";
   if (rank === 2) return "bg-rose-400/10 text-rose-600 border-rose-400/20";
@@ -72,7 +72,7 @@ const getGradeColor = (grade: string | undefined) => {
     return "bg-orange-500/10 text-orange-600 border-orange-500/20"; // Below Average
   if (g === "D")
     return "bg-red-400/10 text-red-500 border-red-400/20"; // Marginal
-  if (g === "F") 
+  if (g === "F")
     return "bg-red-600/10 text-red-700 border-red-600/20"; // Fail
   return "bg-muted text-muted-foreground"; // Unknown
 };
@@ -152,8 +152,8 @@ export default async function ResultsPage(props: Props) {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Background Decor */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(#80808012_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
+
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(#80808012_1px,transparent_1px)] bg-size-[24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6">
         <PreviousPageLink
@@ -162,10 +162,9 @@ export default async function ResultsPage(props: Props) {
           className="mb-6 text-muted-foreground"
         />
 
-        {/* --- 1. PROFILE HEADER --- */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
           <div className="flex items-start gap-5">
-            <div className="hidden md:flex items-center justify-center size-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 text-2xl font-bold text-primary shadow-sm">
+            <div className="hidden md:flex items-center justify-center size-16 rounded-2xl bg-linear-to-br from-primary/20 to-primary/5 border border-primary/10 text-2xl font-bold text-primary shadow-sm">
               {result.name.charAt(0)}
             </div>
 
@@ -328,7 +327,6 @@ export default async function ResultsPage(props: Props) {
 
         <AdUnit adSlot="display-horizontal" key={"results-header-ad"} />
 
-        {/* --- 3. ACADEMIC TIMELINE --- */}
         <div className="mt-12">
           <Tabs defaultValue="table" className="w-full">
             <div className="flex items-center justify-between mb-6">
@@ -348,7 +346,6 @@ export default async function ResultsPage(props: Props) {
               </TabsList>
             </div>
 
-            {/* View 1: Accordion / Detailed View */}
             <TabsContent value="table" className="space-y-4">
               {result.semesters.map((sem, idx) => (
                 <Accordion
@@ -465,7 +462,6 @@ export default async function ResultsPage(props: Props) {
               ))}
             </TabsContent>
 
-            {/* View 2: Tabular / Mark sheet view */}
             {hasNewCreditSchema && (<TabsContent value="tabular" className="space-y-6">
               {result.semesters.map((sem) => (
                 <Card
@@ -558,7 +554,6 @@ export default async function ResultsPage(props: Props) {
               ))}
             </TabsContent>)}
 
-            {/* View 3: Graph */}
             <TabsContent
               value="graph"
               className="p-2 sm:p-4 border rounded-xl bg-card min-h-[400px]"

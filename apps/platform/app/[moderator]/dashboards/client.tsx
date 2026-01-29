@@ -1,25 +1,31 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { PiBroomDuotone } from "react-icons/pi";
+import { useTransition } from "react";
 import { toast } from "sonner";
-import { flushAllRedisKeys } from "~/lib/redis";
 
-export function FlushCacheButton({flushFn}:{
-    flushFn: () => Promise<boolean>;
+export function FlushCacheButton({ flushFn }: {
+  flushFn: () => Promise<boolean>;
 }) {
+  const [isPending, startTransition] = useTransition();
   return (
-    <Button size="sm" className="gap-2" onClick={() =>{``
-        toast.promise(
-          flushFn(),
-          {
-            loading: "Flushing cache...",
-            success: "Cache flushed successfully!",
-            error: "Failed to flush cache.",
-          }
-        );
-    }}>
-      <PiBroomDuotone className="size-4" /> Flush Cache
+    <Button size="sm" variant="default_soft" className="gap-2"
+      disabled={isPending}
+      icon={isPending ? "loader-circle" : "broom"}
+      iconClassName={isPending ? "animate-spin" : ""}
+      onClick={() => {
+        startTransition(() => {
+          toast.promise(
+            flushFn(),
+            {
+              loading: "Flushing cache...",
+              success: "Cache flushed successfully!",
+              error: "Failed to flush cache.",
+            }
+          );
+        });
+      }}>
+      {isPending ? "Flushing..." : "Flush Cache"}
     </Button>
   );
 }

@@ -13,7 +13,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { AuthButtonLink, ButtonLink } from "@/components/utils/link";
+import { AuthButtonLink } from "@/components/utils/link";
 import {
   NavLink,
   SUPPORT_LINKS,
@@ -58,7 +58,7 @@ export default function Navbar({ user }: NavbarProps) {
   }, [navLinks]);
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  
+
   const availableLinks = useMemo(
     () => navLinks.filter((link) => activeCategory === "all" || link.category === activeCategory),
     [activeCategory, navLinks]
@@ -73,10 +73,10 @@ export default function Navbar({ user }: NavbarProps) {
       )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto">
-        
+
         {/* --- TOP ROW: GLOBAL CONTEXT --- */}
         <div className="flex items-center justify-between px-4 py-3 h-16">
-          
+
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
             <ApplicationInfo />
@@ -85,12 +85,12 @@ export default function Navbar({ user }: NavbarProps) {
           {/* Actions */}
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <QuickLinks user={user} publicLinks={navLinks} />
-            
+
             <div className="h-6 w-px bg-border/50 hidden sm:block mx-1" />
-            
+
             <ThemeSwitcher />
             <ThemePopover className="hidden md:inline-flex" />
-            
+
             {user ? (
               <ProfileDropdown user={user} />
             ) : (
@@ -109,18 +109,18 @@ export default function Navbar({ user }: NavbarProps) {
         {/* --- BOTTOM ROW: LOCAL CONTEXT (Tabs) --- */}
         <div className="px-4 pb-0">
           <div className="flex flex-col gap-2">
-            
+
             {/* Category Filter (If more than 1 category exists) */}
             {categories.length > 1 && (
               <div className={cn("flex items-center gap-1 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 mask-fade-sides", twUtility.horizontalScroll)}>
                 {categories.map((category) => (
-                   <button
+                  <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
                     className={cn(
                       "relative px-3 py-1.5 text-xs font-medium capitalize transition-colors rounded-md whitespace-nowrap",
-                      activeCategory === category 
-                        ? "text-primary" 
+                      activeCategory === category
+                        ? "text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
@@ -139,21 +139,21 @@ export default function Navbar({ user }: NavbarProps) {
 
             {/* Main Navigation Tabs */}
             <div className="pt-1 pb-1">
-                 <NavTabs
-                    key={activeCategory}
-                    navLinks={availableLinks.map((link) => ({
-                        id: link.href,
-                        href: link.href,
-                        children: (
-                        <span className="flex items-center gap-2">
-                            {link.Icon && <link.Icon className="size-3.5 opacity-70" />}
-                            {link.title}
-                        </span>
-                        ),
-                        isNew: link.isNew,
-                        items: link.items,
-                    }))}
-                />
+              <NavTabs
+                key={activeCategory}
+                navLinks={availableLinks.map((link) => ({
+                  id: link.href,
+                  href: link.href,
+                  children: (
+                    <span className="flex items-center gap-2">
+                      {link.Icon && <link.Icon className="size-3.5 opacity-70" />}
+                      {link.title}
+                    </span>
+                  ),
+                  isNew: link.isNew,
+                  items: link.items,
+                }))}
+              />
             </div>
           </div>
         </div>
@@ -212,7 +212,7 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
         <CommandInput placeholder="Type to search ecosystem..." />
         <CommandList className="py-2">
           <CommandEmpty>No results found.</CommandEmpty>
-          
+
           <CommandGroup heading="Suggestions">
             {publicLinks.map((item, index) => (
               <CommandItem key={`cmd-${index}`} asChild>
@@ -224,8 +224,8 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
                   <div className="flex items-center">
                     {item.Icon ? <item.Icon className="mr-3 size-4 text-muted-foreground group-hover:text-primary transition-colors" /> : <ArrowUpRight className="mr-3 size-4" />}
                     <div className="flex flex-col">
-                        <span className="font-medium">{item.title}</span>
-                        {item.description && <span className="text-xs text-muted-foreground font-normal line-clamp-1">{item.description}</span>}
+                      <span className="font-medium">{item.title}</span>
+                      {item.description && <span className="text-xs text-muted-foreground font-normal line-clamp-1">{item.description}</span>}
                     </div>
                   </div>
                   <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-50 -translate-x-2 group-hover:translate-x-0 transition-all" />
@@ -233,32 +233,32 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
               </CommandItem>
             ))}
           </CommandGroup>
-          
-          <CommandSeparator className="my-2"/>
+
+          <CommandSeparator className="my-2" />
 
           {isLoggedIn ? (
-             <CommandGroup heading="Account">
-                <CommandItem onSelect={() => setOpen(false)}>
-                    <Link href={`/u/${user.username}`} className="flex items-center w-full">
-                        <User className="mr-2 size-4" /> Profile
-                    </Link>
+            <CommandGroup heading="Account">
+              <CommandItem onSelect={() => setOpen(false)}>
+                <Link href={`/u/${user.username}`} className="flex items-center w-full">
+                  <User className="mr-2 size-4" /> Profile
+                </Link>
+              </CommandItem>
+              {loggedInList.map((item, i) => (
+                <CommandItem key={i} onSelect={() => setOpen(false)}>
+                  <Link href={item.path} className="flex items-center w-full">
+                    <item.icon className="mr-2 size-4" /> {item.title}
+                  </Link>
                 </CommandItem>
-                {loggedInList.map((item, i) => (
-                    <CommandItem key={i} onSelect={() => setOpen(false)}>
-                        <Link href={item.path} className="flex items-center w-full">
-                            <item.icon className="mr-2 size-4" /> {item.title}
-                        </Link>
-                    </CommandItem>
-                ))}
-             </CommandGroup>
+              ))}
+            </CommandGroup>
           ) : (
-             <CommandGroup heading="Authentication">
-                <CommandItem onSelect={() => setOpen(false)}>
-                     <Link href="/auth/sign-in" className="flex items-center w-full">
-                        <LogIn className="mr-2 size-4" /> Sign In
-                     </Link>
-                </CommandItem>
-             </CommandGroup>
+            <CommandGroup heading="Authentication">
+              <CommandItem onSelect={() => setOpen(false)}>
+                <Link href="/auth/sign-in" className="flex items-center w-full">
+                  <LogIn className="mr-2 size-4" /> Sign In
+                </Link>
+              </CommandItem>
+            </CommandGroup>
           )}
         </CommandList>
       </CommandDialog>
@@ -305,16 +305,19 @@ export function SupportBar() {
     </div>
   );
 }
-
 export function GoToTopButton({ className }: { className?: string }) {
+  const handleClick = () => {
+    window?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <ButtonLink
-      href="#navbar"
+    <Button
       variant="ghost"
       size="sm"
       className={cn("text-xs text-muted-foreground hover:text-foreground", className)}
+      onClick={handleClick}
     >
-      Back to Top <Icon name="arrow-up" className="ml-2 size-3" />
-    </ButtonLink>
+      Back to Top <Icon name="arrow-up" />
+    </Button>
   );
 }

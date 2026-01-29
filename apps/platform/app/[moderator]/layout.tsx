@@ -2,7 +2,6 @@ import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import AdUnit from "@/components/common/adsense";
 import Navbar from "@/components/common/app-navbar";
 import { AppSidebar } from "@/components/common/sidebar/app-sidebar";
-import { ThemeSwitcher } from "@/components/common/theme-switcher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
@@ -44,39 +43,41 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar user={session.user} moderator={moderator} />
+      <AppSidebar user={session.user} moderator={moderator} className="border-r-transparent" />
       <SidebarInset className="flex flex-col flex-1 w-full rounded-t-2xl">
         <Navbar
           user={session.user}
           impersonatedBy={session.session.impersonatedBy}
         />
 
-        <div className="relative flex-1 flex flex-col">
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
+        <div className="relative flex-1 mr-2">
+          <div className="absolute top-0 left-0 z-0 w-full min-h-80 mask-[linear-gradient(to_top,transparent_25%,black_95%)]">
             <FlickeringGrid
-              className="absolute top-0 left-0 size-full opacity-40"
+              className="absolute top-0 left-0 size-full"
               squareSize={4}
               gridGap={6}
               color="#6B7280"
-              maxOpacity={0.3}
+              maxOpacity={0.2}
               flickerChance={0.05}
             />
           </div>
 
-          <main className="relative flex-1 px-4 py-6 md:px-6 md:py-8 lg:px-8 @container">
-            <div className="mx-auto max-w-7xl space-y-8">
+          <main className="relative rounded-2xl overflow-hidden dark:bg-muted flex-1 px-4 py-6 md:px-6 md:py-8 lg:px-8 @container">
+            <div className="mx-auto max-w-7xl space-y-8 z-4">
+              <header className="relative">
+                <div className="flex items-center justify-center w-full mx-auto max-w-7xl empty:hidden empty:p-0">
+                  <AdUnit adSlot="display-horizontal" key="dashboard-top" />
+                </div>
+              </header>
               {children}
             </div>
           </main>
 
-          <footer className="relative border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-            <div className="px-4 py-6">
+          <footer className="relative">
+            <div className="flex items-center justify-center w-full mx-auto max-w-7xl empty:hidden empty:p-0">
               <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
             </div>
           </footer>
-
-
         </div>
       </SidebarInset>
     </SidebarProvider>

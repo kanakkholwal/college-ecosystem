@@ -18,6 +18,68 @@ import { appConfig, orgConfig } from "~/project.config";
 import { searchParamsCache } from "./utils";
 
 
+
+
+export default async function ResultPage(props: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const searchParams = await props.searchParams;
+
+
+  return (
+    <div className="px-4 md:px-12 xl:px-6 @container">
+      <BaseHeroSection
+        title={`${orgConfig.shortName} Semester Results Portal`}
+        description="Access official exam results for National Institute of Technology Hamirpur. Check grades,
+        and track academic performance"
+        className="w-full"
+      >
+        <Suspense
+          key={"key_search_bar"}
+          fallback={<Skeleton className="h-12 w-full " />}
+        >
+          <SearchBox new_cache={searchParams?.cache === "new"} />
+        </Suspense>
+      </BaseHeroSection>
+      <script type="application/ld+json" id="search-results-json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SearchResultsPage",
+          name: "NITH Results Portal",
+          description: "Official examination results portal for NIT Hamirpur",
+          url: `${appConfig.url}/results`,
+          publisher: orgConfig.jsonLds.EducationalOrganization,
+        })}
+      </script>
+
+      <ErrorBoundaryWithSuspense
+        fallback={
+          <EmptyArea
+            icons={[BiSpreadsheet]}
+            title="Failed to load results"
+            description="An error occurred while fetching the results. Please try again later."
+          />
+        }
+        loadingFallback={
+          <div className="mx-auto max-w-7xl w-full grid gap-4 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
+            {[...Array(6)].map((_, i) => {
+              return <SkeletonCard key={i.toString()} />;
+            })}
+          </div>
+        }
+      >
+        <ResultDisplay searchParams={props.searchParams} />
+
+      </ErrorBoundaryWithSuspense>
+
+      <AdUnit
+        adSlot="multiplex"
+        key={"results-page-ad"}
+      />
+    </div>
+  );
+}
+
 async function ResultDisplay({ searchParams }: {
   searchParams: Promise<SearchParams>;
 }) {
@@ -71,67 +133,6 @@ async function ResultDisplay({ searchParams }: {
     </ConditionalRender>
   </>
 }
-
-export default async function ResultPage(props: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const searchParams = await props.searchParams;
-
-
-  return (
-    <div className="px-4 md:px-12 xl:px-6 @container">
-      <BaseHeroSection
-        title={`${orgConfig.shortName} Semester Results Portal`}
-        description="Access official exam results for National Institute of Technology Hamirpur. Check grades,
-and track academic performance"
-      >
-        <Suspense
-          key={"key_search_bar"}
-          fallback={<Skeleton className="h-12 w-full " />}
-        >
-          <SearchBox new_cache={searchParams?.cache === "new"} />
-        </Suspense>
-      </BaseHeroSection>
-      <script type="application/ld+json" id="search-results-json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "SearchResultsPage",
-          name: "NITH Results Portal",
-          description: "Official examination results portal for NIT Hamirpur",
-          url: `${appConfig.url}/results`,
-          publisher: orgConfig.jsonLds.EducationalOrganization,
-        })}
-      </script>
-
-      <ErrorBoundaryWithSuspense
-        fallback={
-          <EmptyArea
-            icons={[BiSpreadsheet]}
-            title="Failed to load results"
-            description="An error occurred while fetching the results. Please try again later."
-          />
-        }
-        loadingFallback={
-          <div className="mx-auto max-w-7xl w-full grid gap-4 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
-            {[...Array(6)].map((_, i) => {
-              return <SkeletonCard key={i.toString()} />;
-            })}
-          </div>
-        }
-      >
-        <ResultDisplay searchParams={props.searchParams} />
-
-      </ErrorBoundaryWithSuspense>
-
-      <AdUnit
-        adSlot="multiplex"
-        key={"results-page-ad"}
-      />
-    </div>
-  );
-}
-
-
 export const metadata: Metadata = {
   title:
     orgConfig.shortName + " Results Portal - Check Semester Results Online",

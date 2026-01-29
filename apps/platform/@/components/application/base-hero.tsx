@@ -77,6 +77,7 @@ function BaseHeroSection({
           </div>
         )}
       </div>
+
     </section>
   );
 }

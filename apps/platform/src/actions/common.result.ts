@@ -42,7 +42,7 @@ export async function getResults(
     const resultsPerPage = Math.max(1, filter?.limit || 32);
     const page = Math.max(1, Number(currentPage) || 1);
 
-    // ---- normalize batch ONCE ----
+    // normalize batch ONCE
     let normalizedBatch: number | null = null;
     if (
       filter.batch &&
@@ -54,7 +54,7 @@ export async function getResults(
       }
     }
 
-    // ---- deterministic cache key (normalized) ----
+    //  deterministic cache key (normalized)
     const keyParts = [
       `q=${encodeURIComponent(query || "")}`,
       `p=${page}`,
@@ -88,7 +88,6 @@ export async function getResults(
 
     const filterQuery: any = {};
 
-    // ---- Text search ----
     if (query && query.trim() !== "") {
       const tokens = query.trim().split(/\s+/).filter(Boolean);
 
@@ -101,12 +100,10 @@ export async function getResults(
       });
     }
 
-    // ---- Freshers handling (single source of truth) ----
     if (filter.include_freshers === false) {
       filterQuery["semesters.0"] = { $exists: true };
     }
 
-    // ---- Structured filters ----
     if (filter.branch && filter.branch !== "all") {
       filterQuery.branch = filter.branch;
     }
@@ -202,7 +199,7 @@ type CachedLabels = {
   programmes: string[];
 };
 export const getCachedLabels = cache(async (new_cache?: boolean): Promise<CachedLabels> => {
-  const cacheKey = "cached_labels_v1";
+  const cacheKey = "result:cached_labels:v1";
   if (!new_cache) {
     try {
       const cached = await redis?.get(cacheKey);
@@ -246,7 +243,7 @@ export async function getResultByRollNo(
   update?: boolean,
   is_new?: boolean
 ): Promise<ResultTypeWithId | null> {
-  const cacheKey = `result_r_${rollNo}`;
+  const cacheKey = `result:r:${rollNo}`;
   try {
     if (!is_new && !update) {
       try {

@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
@@ -8,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { Icon } from "../icons";
 
 //  Types 
 type FilterOption = {
@@ -86,7 +86,7 @@ export default function BaseSearchBox({
   );
 
   return (
-    <div className={cn("w-full space-y-3", className)}>
+    <div className={cn("w-full space-y-3 max-w-(--max-app-width) z-10", className)}>
 
       <div className="relative group">
         <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-primary/0 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />

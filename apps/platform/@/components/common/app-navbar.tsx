@@ -13,15 +13,18 @@ import { getNavLinks } from "@/constants/links";
 import { titlesMap } from "@/constants/titles";
 
 // Icons
+import { cn } from "@/lib/utils";
 import { ShieldAlert, Slash, X } from "lucide-react";
 import { QuickLinks } from "./navbar";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export default function Navbar({
   user,
+  className,
   impersonatedBy,
 }: {
   user: Session["user"];
+  className?: string;
   impersonatedBy?: string | null;
 }) {
   const pathname = usePathname();
@@ -45,9 +48,8 @@ export default function Navbar({
   };
 
   return (
-    <nav className="sticky top-0 z-10 w-full flex items-center gap-2 px-4 py-3 border-b border-border/40 bg-background/80 backdrop-blur-md transition-all support-[backdrop-filter]:bg-background/60">
+    <nav className={cn("sticky top-0 z-10 w-full flex items-center gap-2 px-4 py-3 bg-background/80 backdrop-blur-md transition-all support-[backdrop-filter]:bg-background/60", className)}>
 
-      {/* Left: Trigger & Title */}
       <div className="flex items-center gap-2 md:gap-3">
         <SidebarTrigger className="h-8 w-8 text-muted-foreground hover:text-foreground" />
 
@@ -58,7 +60,6 @@ export default function Navbar({
             <h3 className="text-sm font-semibold tracking-tight text-foreground">
               {title}
             </h3>
-            {/* Show description inline on large screens if short, or hide on mobile */}
             <Slash className="h-3 w-3 text-muted-foreground/40 hidden lg:block -rotate-12" />
             <p className="text-xs text-muted-foreground hidden lg:block truncate max-w-[300px]">
               {description}
@@ -67,10 +68,8 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Right: Actions */}
       <div className="ml-auto flex items-center gap-2 md:gap-4">
 
-        {/* Impersonation Banner */}
         {impersonatedBy && (
           <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 animate-in fade-in slide-in-from-top-1">
             <ShieldAlert className="h-3.5 w-3.5" />

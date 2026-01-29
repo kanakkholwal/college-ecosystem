@@ -1,4 +1,5 @@
 import { GoToTopButton, SocialBar } from "@/components/common/navbar";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { appConfig, supportLinks } from "~/project.config";
 import { ApplicationInfo } from "../logo";
@@ -25,13 +26,12 @@ const footerSections = [
   },
 ];
 
-export default async function Footer() {
+export default function Footer({ className }: { className?: string }) {
   return (
-    <footer className="border-t border-border/40 bg-background pt-16 pb-8 lg:pt-24 lg:pb-12">
+    <footer className={cn("border-t border-border/40 bg-background pt-16 pb-8 lg:pt-24 lg:pb-12", className)}>
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8">
 
-          {/* --- BRAND COLUMN (Left) --- */}
           <div className="lg:col-span-4 flex flex-col items-start gap-6">
             <Link href="/" className="transition-opacity hover:opacity-80">
               <ApplicationInfo />
@@ -56,7 +56,6 @@ export default async function Footer() {
             </div> */}
           </div>
 
-          {/* --- LINKS GRID (Right) --- */}
           <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:pl-12">
             {footerSections.map((section) => (
               <div key={section.title} className="flex flex-col gap-4">
@@ -80,7 +79,6 @@ export default async function Footer() {
           </div>
         </div>
 
-        {/* --- BOTTOM BAR --- */}
         <div className="mt-16 border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground text-center md:text-left">
             &copy; {new Date().getFullYear()} {appConfig.name} Inc. All rights reserved.

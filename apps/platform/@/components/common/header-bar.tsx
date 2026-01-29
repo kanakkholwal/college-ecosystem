@@ -20,7 +20,7 @@ export function HeaderBar({
   hideSeparator = false,
 }: HeaderBarProps) {
   return (
-    <div className={cn("w-full space-y-4", className)}>
+    <div className={cn("w-full space-y-4 z-1", className)}>
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">

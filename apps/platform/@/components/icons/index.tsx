@@ -1,7 +1,9 @@
-import { Megaphone, X } from "lucide-react";
+import { X } from "lucide-react";
 import { CgPoll } from "react-icons/cg";
 import { FaEdge, FaFirefoxBrowser, FaSafari } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import { PiBroomDuotone } from "react-icons/pi";
+
 import {
 	PiArrowClockwiseDuotone,
 	PiArrowCounterClockwiseDuotone,
@@ -236,6 +238,7 @@ export const IconComponent = {
 	"sign-out:bold": PiSignOutBold,
 	"sidebar:simple": PiSidebarSimpleDuotone,
 	"announcement": PiMegaphoneDuotone,
+	"broom": PiBroomDuotone,
 	// bodies
 	moon: PiMoonDuotone,
 	sun: PiSunDuotone,
