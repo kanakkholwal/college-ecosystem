@@ -2,19 +2,19 @@ import { getCachedLabels } from "~/actions/common.result";
 import BaseSearchBox from "../base-search";
 
 type Props = {
-  // branches: string[];
-  // batches: string[];
-  // programmes: string[];
+  branches: string[];
+  batches: string[];
+  programmes: string[];
   new_cache?: boolean;
 };
 
 export default async function ResultSearchBox({
-  // branches,
-  // batches,
-  // programmes,
+  branches,
+  batches,
+  programmes,
   new_cache,
 }: Props) {
-  const { branches, batches, programmes } = await getCachedLabels(new_cache);
+  // const { branches, batches, programmes } = await getCachedLabels(new_cache);
 
   const filterOptions = [
     {
@@ -52,6 +52,7 @@ export default async function ResultSearchBox({
       filterOptions={filterOptions}
       filterDialogTitle="Filter Results"
       filterDialogDescription="Filter by branches, batch, programme"
+      searchBoxClassName="shadow-xl shadow-black/5 mx-auto"
     />
   );
 }

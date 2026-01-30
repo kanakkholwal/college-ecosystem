@@ -26,6 +26,7 @@ type SearchBoxProps = {
   filterDialogDescription?: string;
   variant?: "default" | "expanded"; // Expanded shows chips below, Default uses Dialog
   className?: string;
+  searchBoxClassName?: string;
   disabled?: boolean;
   id?: string;
 };
@@ -39,6 +40,7 @@ export default function BaseSearchBox({
   filterDialogDescription = "Refine your search with specific criteria.",
   variant = "default",
   className,
+  searchBoxClassName,
   disabled = false,
   id = "search-input",
 }: SearchBoxProps) {
@@ -91,7 +93,7 @@ export default function BaseSearchBox({
       <div className="relative group">
         <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-primary/0 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
 
-        <div className="relative flex items-center bg-card rounded-full shadow-sm border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+        <div className={cn("relative flex items-center bg-card rounded-full shadow-sm border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all mx-auto", searchBoxClassName)}>
 
           {filterOptions.length > 0 && (
             <div className="pl-1.5">
@@ -147,21 +149,21 @@ export default function BaseSearchBox({
           {/* Right: Search Action */}
           <div className="pr-1.5">
             <Button
-              size="icon"
-              className="size-9 rounded-full shrink-0"
+              // size="icon"
+              className="h-9 rounded-full shrink-0"
               onClick={() => {
                 const input = document.getElementById(id) as HTMLInputElement;
                 if (input) handleSearch(input.value);
               }}
               disabled={disabled}
+              icon="search"
             >
-              <Icon name="search" className="size-4" />
+              Search
             </Button>
           </div>
         </div>
       </div>
 
-      {/* --- Variant: Expanded Filters (Tag Cloud) --- */}
       {variant === "expanded" && showExpandedFilters && filterOptions.length > 0 && (
         <div className="animate-in slide-in-from-top-2 fade-in duration-200">
           <div className="flex items-center justify-between mb-2 px-1">
@@ -215,7 +217,6 @@ export default function BaseSearchBox({
   );
 }
 
-// --- Sub-components ---
 
 function FilterButtonFallback() {
   return (

@@ -7,6 +7,7 @@ import { BiSpreadsheet } from "react-icons/bi";
 import { getResults } from "~/actions/common.result";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
+import { HeroLabel, HeroQuickFilters, HeroStats } from "@/components/application/result/hero";
 import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
 import { NoteSeparator } from "@/components/common/note-separator";
@@ -15,8 +16,10 @@ import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import type { Metadata } from "next";
 import { type SearchParams } from 'nuqs/server';
 import { appConfig, orgConfig } from "~/project.config";
+import { getServerEnv } from "~/utils/env";
 import { searchParamsCache } from "./utils";
 
+import { getCachedLabels } from "~/actions/common.result";
 
 
 
@@ -24,8 +27,21 @@ export default async function ResultPage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
-
-
+  const { branches, batches, programmes } = await getCachedLabels(searchParams?.cache === "new");
+  if (getServerEnv().isDev) {
+    console.log("[Branches]:", branches, "[Batches]:", batches, "[Programmes]:", programmes);
+  }
+  // get suffled filter combinations
+  const filterCombinations = [];
+  for (const branch of branches) {
+    for (const batch of batches) {
+      for (const programme of programmes) {
+        filterCombinations.push({ branch, batch, programme });
+      }
+    }
+  }
+  const suffledFilterCombinations = filterCombinations.sort(() => Math.random() - 0.5).slice(0, 4);
+  const session = "Fall 2025";
   return (
     <div className="px-4 md:px-12 xl:px-6 @container">
       <BaseHeroSection
@@ -38,7 +54,11 @@ export default async function ResultPage(props: {
           key={"key_search_bar"}
           fallback={<Skeleton className="h-12 w-full " />}
         >
-          <SearchBox new_cache={searchParams?.cache === "new"} />
+
+          <HeroLabel session={session} />
+          <SearchBox new_cache={searchParams?.cache === "new"} branches={branches} batches={batches} programmes={programmes} />
+          <HeroQuickFilters filters={suffledFilterCombinations} />
+          <HeroStats totalCount={5000} totalSemesters={8} />
         </Suspense>
       </BaseHeroSection>
       <script type="application/ld+json" id="search-results-json">
@@ -96,7 +116,9 @@ async function ResultDisplay({ searchParams }: {
 
   const resData = await getResults(query, currentPage, filter, new_cache);
   const { results, totalPages, totalCount } = resData;
-  console.log("Results fetched:", results.length, "Total Pages:", totalPages, "Total Count:", totalCount);
+  if (getServerEnv().isDev) {
+    console.log("[Results fetched]:", results.length, "[Total Pages]:", totalPages, "[Total Count]:", totalCount);
+  }
   return <>
     <NoteSeparator label={`${results.length} Results found`} />
 
