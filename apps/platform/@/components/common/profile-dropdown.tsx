@@ -51,7 +51,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
     <ResponsiveDialog
       title="Account"
       description="Manage your profile."
-      className="px-3 gap-0 overflow-hidden flex flex-col" // Added max-h and flex-col
+      className="px-3 gap-0 overflow-hidden flex flex-col sm:max-w-lg"
       btnProps={{
         size: "icon",
         rounded: "full",
@@ -79,7 +79,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
           <span className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background bg-emerald-500" />
         </div>
 
-         <div className="flex flex-col justify-center items-start min-w-0 flex-1">
+        <div className="flex flex-col justify-center items-start min-w-0 flex-1">
           <h4 className="font-semibold tracking-wide text-base">{user.name}</h4>
           <p className="text-muted-foreground font-medium text-xs font-mono">
             {user.email}
@@ -97,7 +97,6 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         </div>
       </div>
 
-      {/* --- SCROLLABLE BODY --- */}
       <div className="flex-1 overflow-y-auto min-h-0 py-2">
         <div className="pb-2">
           {/* Section Header with Count */}

@@ -5,8 +5,8 @@ import { Fragment, Suspense } from "react";
 import { getCourses } from "~/actions/common.course";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
-import SearchBox from "@/components/application/course/search";
 import Pagination from "@/components/application/course/pagination";
+import SearchBox from "@/components/application/course/search";
 import AdUnit from "@/components/common/adsense";
 import { ResponsiveContainer } from "@/components/common/container";
 import { NoteSeparator } from "@/components/common/note-separator";
@@ -64,7 +64,7 @@ export default async function CoursesPage(props: {
 
       <NoteSeparator label={`${courses.length} Courses found`} />
 
-      <ResponsiveContainer className="px-0 @3xl:grid-cols-3">
+      <ResponsiveContainer className="px-0 @3xl:grid-cols-3 w-full mx-auto">
         <Suspense
           key="Courses"
           fallback={

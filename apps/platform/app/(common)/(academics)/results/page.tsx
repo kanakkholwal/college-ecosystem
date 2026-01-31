@@ -31,16 +31,14 @@ export default async function ResultPage(props: {
   if (getServerEnv().isDev) {
     console.log("[Branches]:", branches, "[Batches]:", batches, "[Programmes]:", programmes);
   }
-  // get suffled filter combinations
+  // get shuffled filter combinations
   const filterCombinations = [];
-  for (const branch of branches) {
     for (const batch of batches) {
       for (const programme of programmes) {
-        filterCombinations.push({ branch, batch, programme });
+        filterCombinations.push({ batch, programme });
       }
     }
-  }
-  const suffledFilterCombinations = filterCombinations.sort(() => Math.random() - 0.5).slice(0, 4);
+  const shuffledFilterCombinations = filterCombinations.sort(() => Math.random() - 0.5).slice(0, 4);
   const session = "Fall 2025";
   return (
     <div className="px-4 md:px-12 xl:px-6 @container">
@@ -57,7 +55,7 @@ export default async function ResultPage(props: {
 
           <HeroLabel session={session} />
           <SearchBox new_cache={searchParams?.cache === "new"} branches={branches} batches={batches} programmes={programmes} />
-          <HeroQuickFilters filters={suffledFilterCombinations} />
+          <HeroQuickFilters filters={shuffledFilterCombinations} />
           <HeroStats totalCount={5000} totalSemesters={8} />
         </Suspense>
       </BaseHeroSection>

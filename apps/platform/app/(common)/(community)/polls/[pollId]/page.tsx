@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   CheckCircle2,
-  Clock,
   Info,
   MessageSquareText
 } from "lucide-react";
@@ -20,6 +19,7 @@ import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
 import { HeaderBar } from "@/components/common/header-bar";
 import ShareButton from "@/components/common/share-button";
+import { Icon } from "@/components/icons";
 import { AuthButtonLink, ButtonLink } from "@/components/utils/link";
 import type { Metadata } from "next";
 import { appConfig } from "~/project.config";
@@ -68,7 +68,7 @@ export default async function PollPage({ params }: Props) {
   const closesAlready = new Date(poll.closesAt) < new Date();
 
   return (
-    <div className="max-w-6xl mx-auto w-full px-4 py-8">
+    <div className="mx-auto w-full px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <ButtonLink
           href="/polls"
@@ -83,6 +83,18 @@ export default async function PollPage({ params }: Props) {
       <HeaderBar
         titleNode={poll.question}
         descriptionNode={<div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-border/50 pt-4">
+              
+
+          {closesAlready ? (
+            <Badge variant="destructive_soft">
+              <Icon name="clock" className="size-3.5" />
+              Closed</Badge>
+          ) : (
+            <Badge variant="info_soft" className="text-sm inline-flex items-center gap-1.5">
+              <Icon name="clock" className="size-3.5" />
+              <ClosingBadge poll={poll} />
+            </Badge>
+          )} 
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4" />
             <span>{poll.multipleChoice ? "Multiple Choice" : "Single Choice"}</span>
@@ -109,34 +121,18 @@ export default async function PollPage({ params }: Props) {
         </div>}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <main className="lg:col-span-8 space-y-8">
+        <main className="lg:col-span-7 space-y-8">
 
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              {closesAlready ? (
-                <Badge variant="destructive_soft">Closed</Badge>
-              ) : (
-                <Badge variant="success_soft">Active Poll</Badge>
-              )}
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                <ClosingBadge poll={poll} />
-              </span>
-            </div>
-
-
-            {poll.description && (
+          
+          <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
+              {poll.description && (
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {poll.description}
               </p>
             )}
 
-
-          </div>
-
-          <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
             {closesAlready ? (
               <div className="space-y-6">
                 <div className="flex items-center gap-2 text-muted-foreground pb-4 border-b border-border/50">
@@ -181,7 +177,7 @@ export default async function PollPage({ params }: Props) {
 
         </main>
 
-        <aside className="lg:col-span-4 space-y-6">
+        <aside className="lg:col-span-5 space-y-6">
           <div className="bg-card/30 rounded-2xl p-1 border border-border/50 sticky top-4">
             <CommentSection
               page={`community.polls.${poll._id}`}

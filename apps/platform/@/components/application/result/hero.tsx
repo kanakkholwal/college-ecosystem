@@ -5,8 +5,6 @@ import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { getDepartmentCode } from "~/constants/core.departments";
-import { changeCase } from "~/utils/string";
 
 export function HeroLabel({ session }: { session: string }) {
     return (<div className="mb-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -18,16 +16,15 @@ export function HeroLabel({ session }: { session: string }) {
 }
 
 
-export function HeroQuickFilters({ filters }: { filters: { branch: string, batch: string, programme: string }[] }) {
+export function HeroQuickFilters({ filters }: { filters: { batch: string, programme: string }[] }) {
     return (<div className="flex flex-wrap items-center justify-center gap-2 mt-5 text-sm text-muted-foreground">
         <span className="text-xs font-medium uppercase tracking-wide opacity-70 mr-1">Quick Filters:</span>
         {filters.map((filter) => (
             <Link
-                key={filter.branch + filter.batch + filter.programme}
+                key={ filter.batch + filter.programme}
                 href={{
                     pathname: "/results",
                     query: {
-                        branch: filter.branch,
                         batch: filter.batch,
                         programme: filter.programme,
                     },
@@ -35,7 +32,7 @@ export function HeroQuickFilters({ filters }: { filters: { branch: string, batch
                 shallow
                 className="px-2.5 py-1 rounded-md bg-muted/50 border border-border/50 hover:bg-muted hover:border-border transition-colors text-xs font-medium"
             >
-                {changeCase(getDepartmentCode(filter.branch), "title") + " " + filter.batch + " " + filter.programme}
+                {filter.batch + " " + filter.programme}
             </Link>
         ))}
     </div>);

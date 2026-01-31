@@ -2,6 +2,7 @@ import AdUnit from "@/components/common/adsense";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import {
   Flame,
@@ -142,20 +143,17 @@ export default async function Layout({
               </Button>
               <Separator orientation="vertical" className="h-8 mx-1" />
               {CATEGORIES.slice(0, 5).map(cat => (
-                <Button
+                <ButtonLink
                   key={cat.value}
                   variant="ghost"
                   size="sm"
                   className="shrink-0 rounded-full gap-2 bg-muted font-medium"
-                  asChild
-                >
-                  <Link href={`/community?c=${cat.value}`}>
-                    <div className="size-5 rounded-md overflow-hidden relative ring-1 ring-border">
-                      <Image src={cat.image} alt="" fill className="object-cover" />
-                    </div>
-                    {cat.name}
-                  </Link>
-                </Button>
+                  href={`/community?c=${cat.value}`}>
+                  <div className="size-5 rounded-md overflow-hidden relative ring-1 ring-border">
+                    <Image src={cat.image} alt={cat.value} width={40} height={40} className="object-cover rounded-2xl" />
+                  </div>
+                  {cat.name}
+                </ButtonLink>
               ))}
             </div>
           </div>
@@ -180,15 +178,12 @@ function SidebarLink({
   iconColor?: string;
 }) {
   return (
-    <Button
+    <ButtonLink
       variant="ghost"
-      className="w-full justify-start gap-3 px-4 h-10 font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg"
-      asChild
-    >
-      <Link href={href}>
-        <Icon className={cn("size-4.5 shrink-0", iconColor)} />
-        {label}
-      </Link>
-    </Button>
+      className="w-full justify-start gap-3 px-4 h-10 font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
+      href={href}>
+      <Icon className={cn("size-4.5 shrink-0", iconColor)} />
+      {label}
+    </ButtonLink>
   );
 }

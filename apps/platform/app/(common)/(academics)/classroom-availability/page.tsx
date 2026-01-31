@@ -1,5 +1,5 @@
-import SearchBox from "@/components/application/room/search";
 import RoomCard from "@/components/application/room/card";
+import SearchBox from "@/components/application/room/search";
 import { ResponsiveContainer } from "@/components/common/container";
 import EmptyArea from "@/components/common/empty-area";
 import { NoteSeparator } from "@/components/common/note-separator";
@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import { listAllRoomsWithHistory } from "~/actions/common.room";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
+import { Suspense } from "react";
 import { getSession } from "~/auth/server";
 
 type Props = {
@@ -59,7 +60,9 @@ export default async function RoomsPage(props: Props) {
         }
         description="Search for rooms based on their availability and type."
       >
-        <SearchBox />
+        <Suspense fallback={<Skeleton className="h-12 w-full" />}>
+          <SearchBox />
+        </Suspense>
       </BaseHeroSection>
 
       <NoteSeparator label={`${rooms.length} Rooms found`} />
