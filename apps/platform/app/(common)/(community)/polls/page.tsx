@@ -10,7 +10,7 @@ import {
 import type { PollType } from "~/models/poll";
 
 import AdUnit from "@/components/common/adsense";
-import { Badge } from "@/components/ui/badge";
+import { HeaderBar } from "@/components/common/header-bar";
 import { AuthButtonLink } from "@/components/utils/link";
 import { LogIn } from "lucide-react";
 import type { Metadata } from "next";
@@ -65,7 +65,18 @@ export default async function PollsPage(props: {
   return (
     <div className="container max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
       <Tabs defaultValue={activeTab} className="w-full space-y-6">
-        <VercelTabsList tabs={tabs} onTabChangeQuery="tab" />
+        <HeaderBar
+          titleNode="Polls"
+          descriptionNode="Check the latest polls here."
+          actionNode={<CreatePoll />}
+        />    
+        <div className="sticky top-5 z-5 flex items-center justify-between h-12 px-4 bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80 border rounded-lg">
+          <div className="flex items-center gap-2">
+            <CgPoll className="size-4 text-muted-foreground" />
+            <VercelTabsList tabs={tabs} onTabChangeQuery="tab" tabsListClassName="bg-transparent border-transparent" />
+          </div>
+        </div>
+
 
         {tabs.map((tab, idx) => {
           if (tab.id === "your-polls" && !session?.user) {
@@ -96,16 +107,6 @@ export default async function PollsPage(props: {
 
           return (
             <TabsContent value={tab.id} key={tab.id} className="mt-0 space-y-6">
-              <div className="sticky top-20 z-30 flex items-center justify-between h-12 px-4 bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80 border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CgPoll className="size-4 text-muted-foreground" />
-                  <h2 className="text-sm font-semibold">{tab.label}</h2>
-                  <Badge variant="secondary" className="ml-1">
-                    {polls[idx].length}
-                  </Badge>
-                </div>
-                {tab.id === "your-polls" && <CreatePoll />}
-              </div>
 
               {polls[idx].length === 0 ? (
                 <EmptyArea

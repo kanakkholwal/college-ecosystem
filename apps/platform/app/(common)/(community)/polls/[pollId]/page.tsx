@@ -18,6 +18,7 @@ import DeletePoll from "@/components/application/poll/delete-poll";
 import { ClosingBadge } from "@/components/application/poll/poll-timer";
 import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
+import { HeaderBar } from "@/components/common/header-bar";
 import ShareButton from "@/components/common/share-button";
 import { AuthButtonLink, ButtonLink } from "@/components/utils/link";
 import type { Metadata } from "next";
@@ -68,7 +69,6 @@ export default async function PollPage({ params }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto w-full px-4 py-8">
-
       <div className="mb-8 flex items-center justify-between">
         <ButtonLink
           href="/polls"
@@ -78,7 +78,21 @@ export default async function PollPage({ params }: Props) {
         >
           Back to all polls
         </ButtonLink>
-        <div className="flex items-center gap-2">
+
+      </div>
+      <HeaderBar
+        titleNode={poll.question}
+        descriptionNode={<div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-border/50 pt-4">
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            <span>{poll.multipleChoice ? "Multiple Choice" : "Single Choice"}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <span>Created {new Date(poll.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>}
+        actionNode={<div className="flex items-center gap-2">
           <DeletePoll pollId={poll._id} className="relative right-auto top-auto" />
           <ShareButton
             data={{
@@ -92,8 +106,8 @@ export default async function PollPage({ params }: Props) {
           >
             Share
           </ShareButton>
-        </div>
-      </div>
+        </div>}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
 
@@ -112,9 +126,6 @@ export default async function PollPage({ params }: Props) {
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
-              {poll.question}
-            </h1>
 
             {poll.description && (
               <p className="text-lg text-muted-foreground leading-relaxed">
@@ -122,16 +133,7 @@ export default async function PollPage({ params }: Props) {
               </p>
             )}
 
-            <div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-border/50 pt-4">
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                <span>{poll.multipleChoice ? "Multiple Choice" : "Single Choice"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>Created {new Date(poll.createdAt).toLocaleDateString()}</span>
-              </div>
-            </div>
+
           </div>
 
           <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">

@@ -86,7 +86,7 @@ export default function CommunityPostList({
             <div className="text-sm text-muted-foreground/80 line-clamp-3 leading-relaxed prose-p:my-0 prose-headings:text-sm">
               <Markdown
                 components={{
-                  img: () => null,
+                  img: ({ alt, src, ...props }) => <img alt={alt} src={src} className="rounded-lg max-h-40 object-cover" {...props} />,
                   h1: ({ children }) => <p className="font-bold">{children}</p>,
                   h2: ({ children }) => <p className="font-bold">{children}</p>,
                 }}

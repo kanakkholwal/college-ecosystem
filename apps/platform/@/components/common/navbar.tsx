@@ -69,12 +69,11 @@ export default function Navbar({ user }: NavbarProps) {
       id="navbar"
       className={cn(
         "z-50 w-full transition-all duration-300",
-        "bg-background/80 backdrop-blur-xl border-b border-border/40 supports-[backdrop-filter]:bg-background/60"
+        "bg-background/80 backdrop-blur-xl border-b border-border/40 supports-backdrop-filter:bg-background/60"
       )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto">
 
-        {/* --- TOP ROW: GLOBAL CONTEXT --- */}
         <div className="flex items-center justify-between px-4 py-3 h-16">
 
           {/* Brand */}
@@ -106,11 +105,9 @@ export default function Navbar({ user }: NavbarProps) {
           </div>
         </div>
 
-        {/* --- BOTTOM ROW: LOCAL CONTEXT (Tabs) --- */}
         <div className="px-4 pb-0">
           <div className="flex flex-col gap-2">
 
-            {/* Category Filter (If more than 1 category exists) */}
             {categories.length > 1 && (
               <div className={cn("flex items-center gap-1 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 mask-fade-sides", twUtility.horizontalScroll)}>
                 {categories.map((category) => (
@@ -162,7 +159,6 @@ export default function Navbar({ user }: NavbarProps) {
   );
 }
 
-// --- QUICK LINKS (COMMAND PALETTE) ---
 
 interface QuickLinksProps extends NavbarProps {
   publicLinks: NavLink[];
@@ -186,10 +182,9 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
 
   return (
     <>
-      {/* Desktop Trigger (Input Look) */}
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center w-56 h-9 px-3 rounded-lg border border-border/50 bg-card/50 hover:bg-card/80 dark:bg-muted/20 dark:hover:bg-muted/50 hover:border-border transition-all text-sm text-muted-foreground group"
+        className="hidden md:flex items-center w-56 h-9 px-3 rounded-lg border border-border/50 bg-card/80 hover:bg-card dark:bg-muted/50 dark:hover:bg-muted/80 hover:border-border transition-all text-sm text-muted-foreground group"
       >
         <Search className="size-3.5 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" />
         <span className="flex-1 text-left">Search...</span>
@@ -198,7 +193,6 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
         </kbd>
       </button>
 
-      {/* Mobile Trigger (Icon Only) */}
       <Button
         onClick={() => setOpen(true)}
         size="icon_sm"
@@ -208,9 +202,9 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
         <Search className="size-5" />
       </Button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={setOpen} title="Search Ecosystem" description="Search through the college ecosystem">
         <CommandInput placeholder="Type to search ecosystem..." />
-        <CommandList className="py-2">
+        <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
 
           <CommandGroup heading="Suggestions">

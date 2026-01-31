@@ -44,8 +44,7 @@ export const intents = {
 
   outline:
     "border border-border bg-card hover:bg-card/80 dark:bg-muted text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:border-primary",
-  ghost:
-    "bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground dark:text-muted-foreground dark:hover:text-white",
+  ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
 
   gray:
     "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 dark:hover:text-gray-100",

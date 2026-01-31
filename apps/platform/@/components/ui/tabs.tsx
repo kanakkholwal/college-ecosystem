@@ -159,7 +159,7 @@ const VercelTabsList = React.forwardRef<HTMLDivElement, TabsProps>(
           className="absolute top-auto z-10 bottom-0 h-0.5 bg-primary rounded-full transition-all duration-300 ease-out"
           style={activeStyle}
         />
-        <TabsList className={cn("inline-flex space-x-[6px] items-center border",tabsListClassName)}>
+        <TabsList className={cn("inline-flex space-x-1.5 items-center border",tabsListClassName)}>
           {tabs.map((tab, index) => (
             <TabsTrigger
               value={tab.id}
@@ -187,7 +187,7 @@ const VercelTabsList = React.forwardRef<HTMLDivElement, TabsProps>(
               }}
             >
               <div className="text-sm font-medium leading-5 whitespace-nowrap flex items-center justify-center h-full gap-2 z-10">
-                {tab.icon && <tab.icon className="size-4 text-[inherit]" />}
+                {tab.icon && <tab.icon className="size-4 text-inherit" />}
                 {tab.label}
               </div>
             </TabsTrigger>
