@@ -117,6 +117,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${rollNo} | Academic Performance`,
     description: `Detailed academic results and performance analysis for ${rollNo}`,
     alternates: { canonical: "/results/" + rollNo },
+    robots: {
+      // don't index in search engines
+      index: false,
+      follow: false,
+      googleBot: {
+        index: false,
+        follow: false,
+      }
+    }
   };
 }
 
