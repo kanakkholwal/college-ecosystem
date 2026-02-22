@@ -37,6 +37,7 @@
     --accent-foreground: hsl(220.9 39.3% 11%);
     --destructive: hsl(0 84.2% 60.2%);
     --destructive-foreground: hsl(0deg 0% 92.16%);
+    --noise-bg: url(/light-noise.svg), linear-gradient(hsl(40, 30%, 96%), hsl(40, 30%, 96%));
 
     /* proposed */
     /* --destructive: oklch(0.577 0.245 27.325);
@@ -147,6 +148,7 @@
     --accent-foreground: hsl(0, 0%, 61%);
     --destructive: hsl(0 62.8% 30.6%);
     --destructive-foreground: hsl(0deg 0% 92.16%);
+    --noise-bg: url(/dark-noise.png), linear-gradient(#393737, #1b1b1b);
 
 
     /* proposed */
@@ -587,6 +589,8 @@ body {
        - scales with viewport
        - grows reasonably beyond 1440px without a hard limit */
     --max-app-width: clamp(1280px, 80vw, 1920px);
+    @apply bg-(image:--noise-bg) text-foreground selection:bg-primary/75 selection:text-white selection:rounded-2xl antialiased transition-all duration-300;
+
 
 }
 

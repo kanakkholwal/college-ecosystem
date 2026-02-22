@@ -66,7 +66,7 @@ export default async function TimeTables() {
             <LayoutGrid className="size-4" />
             <span>Viewing <strong>{timeTables.length}</strong> active schedules</span>
           </div>
-          <Separator className="flex-1 ml-4 mr-2 max-w-[100px] opacity-50" />
+          <Separator className="flex-1 ml-4 mr-2 max-w-25 opacity-50" />
         </div>
 
         {timeTables.length === 0 ? (
@@ -93,7 +93,7 @@ export default async function TimeTables() {
   );
 }
 
-// --- SUB-COMPONENT: CARD ---
+
 
 function TimetableLinkCard({ timetable, index }: { timetable: Partial<TimeTableWithID>, index: number }) {
   const deptShort = getDepartmentShort(timetable.department_code as string);
@@ -101,6 +101,7 @@ function TimetableLinkCard({ timetable, index }: { timetable: Partial<TimeTableW
   return (
     <Link
       href={`/schedules/${timetable.department_code}/${timetable.year}/${timetable.semester}`}
+      prefetch={false}
       className="group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
       style={{ animationDelay: `${index * 50}ms` }}
     >

@@ -30,7 +30,7 @@ export default async function StudentDashboard({ role }: { role: string }) {
   ];
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto space-y-10 py-8 px-4 sm:px-6">
+    <div className="w-full mx-auto space-y-10 py-8 px-4 sm:px-6">
 
       <section className="space-y-4">
         <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export default async function StudentDashboard({ role }: { role: string }) {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col justify-center h-full min-h-[60px]">
+              <div className="flex flex-col justify-center h-full min-h-15">
                 <p className="text-sm text-muted-foreground">Contact admin for allotment.</p>
               </div>
             )}

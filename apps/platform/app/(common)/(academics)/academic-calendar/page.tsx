@@ -87,6 +87,7 @@ export default async function AcademicCalenderPage(props: Props) {
           variant="dark"
           target="_blank"
           effect="shine"
+          prefetch={false}
         >
           <CalendarDays />
           View Official Calendar

@@ -2,7 +2,8 @@ import { StaggerChildrenItem } from "@/components/animation/motion";
 import { FeatureItem } from "@/constants/landing";
 import { cn } from "@/lib/utils";
 
-// Feature card component
+// 
+
 const FeatureCard = ({ 
   feature, 
   className 

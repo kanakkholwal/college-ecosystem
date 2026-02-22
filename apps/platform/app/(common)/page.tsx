@@ -1,5 +1,4 @@
 import { AnimatedTestimonials } from "@/components/animation/animated-testimonials";
-import { BackgroundBeamsWithCollision } from "@/components/animation/bg-beam-with-collision";
 import { StaggerChildrenContainer, StaggerChildrenItem } from "@/components/animation/motion";
 import { HeaderBar } from "@/components/common/header-bar";
 import { RouterCard } from "@/components/common/router-card";
@@ -60,9 +59,9 @@ export default async function HomePage() {
       </script>
 
       {/* Visual hook: High contrast intro */}
-      <BackgroundBeamsWithCollision className="h-auto md:h-auto md:min-h-96 flex flex-col justify-center overflow-hidden w-full">
+      {/* <BackgroundBeamsWithCollision className="h-auto md:h-auto md:min-h-96 flex flex-col justify-center overflow-hidden w-full"> */}
         <IntroSection user={session?.user} stats={publicStats} />
-      </BackgroundBeamsWithCollision>
+      {/* </BackgroundBeamsWithCollision> */}
 
       <div className="w-full max-w-(--max-app-width) mx-auto flex flex-col gap-24 py-16">
 

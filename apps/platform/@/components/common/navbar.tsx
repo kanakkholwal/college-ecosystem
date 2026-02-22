@@ -69,7 +69,7 @@ export default function Navbar({ user }: NavbarProps) {
       id="navbar"
       className={cn(
         "z-50 w-full transition-all duration-300",
-        "bg-background/80 backdrop-blur-xl border-b border-border/40 supports-backdrop-filter:bg-background/60"
+        "bg-background/40 backdrop-blur-xl border-b border-border/40 supports-backdrop-filter:bg-background/30"
       )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto">
@@ -184,7 +184,7 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center w-56 h-9 px-3 rounded-lg border border-border/50 bg-card/80 hover:bg-card dark:bg-muted/50 dark:hover:bg-muted/80 hover:border-border transition-all text-sm text-muted-foreground group"
+        className="hidden md:flex items-center w-56 h-9 px-3 rounded-lg border border-border/80 bg-card/80 hover:bg-card hover:border-border transition-all text-sm text-muted-foreground group"
       >
         <Search className="size-3.5 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" />
         <span className="flex-1 text-left">Search...</span>

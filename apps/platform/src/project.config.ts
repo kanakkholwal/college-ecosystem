@@ -220,6 +220,7 @@ export const appConfig = {
   },
 };
 
+
 export const supportLinks = [
   {
     href: appConfig.githubRepo,

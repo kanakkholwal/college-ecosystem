@@ -16,7 +16,7 @@ type ResultType = Omit<ResultTypeWithId, "semesters"> & {
   prevCgpi?: number;
 };
 
-// --- Helpers ---
+//  Helpers 
 const getRankStyle = (rank: number) => {
   if (rank === 1) return "bg-pink-500/10 text-pink-600 border-pink-500/20";
   if (rank === 2) return "bg-rose-400/10 text-rose-600 border-rose-400/20";
@@ -24,7 +24,7 @@ const getRankStyle = (rank: number) => {
   return "bg-primary/5 text-primary border-primary/20";
 };
 
-// --- 1. MAIN RESULT CARD (Standard) ---
+
 export function ResultCard({
   result,
   className,
@@ -59,7 +59,7 @@ export function ResultCard({
             {result.programme && (
               <>
                 <span className="w-1 h-1 rounded-full bg-border" />
-                <span className="truncate max-w-[120px]">{result.programme}</span>
+                <span className="truncate max-w-30">{result.programme}</span>
               </>
             )}
           </div>
@@ -123,6 +123,7 @@ export function ResultCard({
 
         <Link
           href={`/results/${result.rollNo}`}
+          prefetch={false}
           className="flex items-center gap-1 text-xs font-semibold text-primary opacity-80 hover:opacity-100 transition-opacity"
         >
           View Report <ArrowRight className="size-3" />
@@ -132,7 +133,7 @@ export function ResultCard({
   );
 }
 
-// --- 2. MINIMAL CARD (List View) ---
+
 export function ResultCardMinimal({
   result,
   className,
@@ -140,6 +141,7 @@ export function ResultCardMinimal({
   return (
     <Link
       href={`/results/${result.rollNo}`}
+      prefetch={false}
       className={cn(
         "group flex items-center justify-between p-4 rounded-lg border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/20 transition-all",
         className

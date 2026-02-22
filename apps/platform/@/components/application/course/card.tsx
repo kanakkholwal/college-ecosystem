@@ -5,6 +5,7 @@ import {
   CardFooter,
   CardHeader
 } from "@/components/ui/card";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import { ArrowRight, BookOpen, Edit2, Hash, Layers } from "lucide-react";
 import Link from "next/link";
@@ -65,45 +66,43 @@ export default function CourseCard({
           >
             {deptCode} Dept
           </Badge>
-          
+
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-             <Layers className="h-3.5 w-3.5 opacity-70" />
-             <span>{course.credits} Credits</span>
+            <Layers className="h-3.5 w-3.5 opacity-70" />
+            <span>{course.credits} Credits</span>
           </div>
         </div>
 
         {/* Title Area */}
         <div className="space-y-2 pt-1">
-            <h3 className="font-bold text-lg leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors">
-                {course.name}
-            </h3>
-            
-            <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded bg-muted/50 border border-border px-1.5 py-0.5 text-[11px] font-mono text-muted-foreground">
-                    <Hash className="h-3 w-3 opacity-50" /> {course.code}
-                </span>
-                <span className="text-[10px] text-muted-foreground">•</span>
-                <span className="text-[11px] text-muted-foreground capitalize">{course.type} Course</span>
-            </div>
+          <h3 className="font-bold text-lg leading-snug tracking-tight text-foreground group-hover:text-primary transition-colors">
+            {course.name}
+          </h3>
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded bg-muted/50 border border-border px-1.5 py-0.5 text-[11px] font-mono text-muted-foreground">
+              <Hash className="h-3 w-3 opacity-50" /> {course.code}
+            </span>
+            <span className="text-[10px] text-muted-foreground">•</span>
+            <span className="text-[11px] text-muted-foreground capitalize">{course.type} Course</span>
+          </div>
         </div>
       </CardHeader>
 
-  
+
 
       <CardFooter className="p-5 pt-0 mt-auto">
-         <Button 
-            className="w-full justify-between group/btn bg-muted/40 hover:bg-primary hover:text-primary-foreground text-foreground border border-border/50 shadow-none transition-all duration-300"
-            variant="outline"
-            asChild
-         >
-            <Link href={`/syllabus/${course.code}`}>
-               <span className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 opacity-70" />
-                  <span className="font-medium">View Syllabus</span>
-               </span>
-               <ArrowRight className="h-4 w-4 opacity-50 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
-            </Link>
-         </Button>
+        <ButtonLink
+          className="w-full justify-between group/btn bg-muted/40 hover:bg-primary hover:text-primary-foreground text-foreground border border-border/50 shadow-none transition-all duration-300"
+          variant="outline"
+
+          href={`/syllabus/${course.code}`} prefetch={false}>
+          <span className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 opacity-70" />
+            <span className="font-medium">View Syllabus</span>
+          </span>
+          <ArrowRight className="h-4 w-4 opacity-50 -translate-x-2 group-hover/btn:opacity-100 group-hover/btn:translate-x-0 transition-all" />
+        </ButtonLink>
       </CardFooter>
     </Card>
   );
@@ -111,21 +110,21 @@ export default function CourseCard({
 
 // Helper for Subtle Themes (Pastels)
 function getDepartmentTheme(code: string = "GEN") {
-    const c = code.toUpperCase();
-    
-    // Returning classes for the Badge background and text
-    if (c.includes("CS") || c.includes("IT")) {
-        return { badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300" };
-    }
-    if (c.includes("EC") || c.includes("EE")) {
-        return { badge: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300" };
-    }
-    if (c.includes("ME") || c.includes("CV")) {
-        return { badge: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300" };
-    }
-    if (c.includes("AS") || c.includes("HU")) {
-        return { badge: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" };
-    }
-    
-    return { badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" };
+  const c = code.toUpperCase();
+
+  // Returning classes for the Badge background and text
+  if (c.includes("CS") || c.includes("IT")) {
+    return { badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300" };
+  }
+  if (c.includes("EC") || c.includes("EE")) {
+    return { badge: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300" };
+  }
+  if (c.includes("ME") || c.includes("CV")) {
+    return { badge: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300" };
+  }
+  if (c.includes("AS") || c.includes("HU")) {
+    return { badge: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" };
+  }
+
+  return { badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" };
 }

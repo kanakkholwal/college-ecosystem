@@ -1,4 +1,3 @@
-import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import Footer from "@/components/common/footer";
 import GithubBanner from "@/components/common/github-banner";
 import Navbar from "@/components/common/navbar";
@@ -21,17 +20,6 @@ export default async function Layout({ children }: LayoutProps) {
     <div className="flex flex-1 flex-col justify-center min-h-svh min-w-full z-0">
 
       <Navbar user={session?.user} />
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
-        <FlickeringGrid
-          className="absolute top-0 left-0 size-full opacity-40"
-          squareSize={4}
-          gridGap={6}
-          color="#6B7280"
-          maxOpacity={0.3}
-          flickerChance={0.5}
-        />
-      </div>
       <div className="relative flex-1 z-1 mx-auto max-w-(--max-app-width) w-full h-full min-h-screen @container flex-col items-center justify-start space-y-4 pb-8">
         {children}
         <GithubBanner />
