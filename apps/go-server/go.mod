@@ -3,7 +3,7 @@ module github.com/kanakkholwal/go-server
 go 1.24.2
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/joho/godotenv v1.5.1
 )
 
