@@ -29,7 +29,6 @@ export const LIST_TYPE = {
   NEW_BATCH: "new_batch",
   FULL_RESET: "full_reset",
   FRESHERS: "freshers",
-
 } as const;
 type listType = (typeof LIST_TYPE)[keyof typeof LIST_TYPE];
 

@@ -54,7 +54,9 @@ export function UpdateAttendanceRecord({
   };
 
   return (
-    <div className={cn("flex gap-2 items-center justify-start mt-4", className)}>
+    <div
+      className={cn("flex gap-2 items-center justify-start mt-4", className)}
+    >
       <Button
         variant="success_soft"
         disabled={updating}
@@ -85,7 +87,7 @@ export function UpdateAttendanceRecord({
         disabled={updating}
         onClick={() => handleDelete()}
         className={cn(
-          deleteFloating && "absolute right-2 top-2 left-auto bg-transparent",
+          deleteFloating && "absolute right-2 top-2 left-auto bg-transparent"
         )}
       >
         <Trash2 />

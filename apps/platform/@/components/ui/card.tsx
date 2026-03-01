@@ -18,7 +18,8 @@ const cardVariants = cva("rounded-lg border text-card-foreground shadow-sm", {
   },
 });
 export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(

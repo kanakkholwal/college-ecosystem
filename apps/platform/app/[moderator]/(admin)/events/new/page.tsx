@@ -2,14 +2,20 @@
 import { DateTimePicker } from "@/components/extended/date-n-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +30,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarCheck, CalendarDays, FileText, Loader2, RefreshCw, Save, UploadCloud } from "lucide-react";
+import {
+  CalendarCheck,
+  CalendarDays,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Save,
+  UploadCloud,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -38,8 +52,12 @@ import {
 
 export default function CreateNewEvent() {
   const searchParams = useSearchParams();
-  const [fileReference, setFileReference] = useState<string | ArrayBuffer | null>(null);
-  const [generatedEvents, setGeneratedEvents] = useState<rawEventsSchemaType[] | null>(null);
+  const [fileReference, setFileReference] = useState<
+    string | ArrayBuffer | null
+  >(null);
+  const [generatedEvents, setGeneratedEvents] = useState<
+    rawEventsSchemaType[] | null
+  >(null);
   const [acceptedIndices, setAcceptedIndices] = useState<number[]>([]);
   const [generatingEvents, setGeneratingEvents] = useState<boolean>(false);
   const [savingEvents, setSavingEvents] = useState<boolean>(false);
@@ -51,8 +69,12 @@ export default function CreateNewEvent() {
       title: "",
       description: "",
       links: [],
-      time: searchParams.get("time") ? new Date(searchParams.get("time") || "") : new Date(),
-      endDate: searchParams.get("endDate") ? new Date(searchParams.get("endDate") || "") : undefined,
+      time: searchParams.get("time")
+        ? new Date(searchParams.get("time") || "")
+        : new Date(),
+      endDate: searchParams.get("endDate")
+        ? new Date(searchParams.get("endDate") || "")
+        : undefined,
       eventType: eventTypes[0],
       location: "",
     },
@@ -123,10 +145,14 @@ export default function CreateNewEvent() {
 
   const handleSaveAcceptedEvents = async () => {
     if (!generatedEvents) return toast.error("No events generated");
-    if (acceptedIndices.length === 0) return toast.error("No events accepted to save");
+    if (acceptedIndices.length === 0)
+      return toast.error("No events accepted to save");
 
-    const acceptedEvents = generatedEvents?.filter((_, i) => acceptedIndices.includes(i));
-    if (!acceptedEvents || acceptedEvents.length === 0) return toast.error("No events to save");
+    const acceptedEvents = generatedEvents?.filter((_, i) =>
+      acceptedIndices.includes(i)
+    );
+    if (!acceptedEvents || acceptedEvents.length === 0)
+      return toast.error("No events to save");
 
     const validatedEvents = rawEventsSchema.array().safeParse(acceptedEvents);
     if (!validatedEvents.success) {
@@ -147,8 +173,8 @@ export default function CreateNewEvent() {
   };
 
   const handleToggleAccept = (index: number) => {
-    setAcceptedIndices(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    setAcceptedIndices((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
 
@@ -158,10 +184,16 @@ export default function CreateNewEvent() {
 
       <Tabs className="w-full" defaultValue="create-event">
         <TabsList className="bg-transparent h-auto p-0 gap-8 border-b w-full justify-start rounded-none">
-          <TabsTrigger value="create-event" className="rounded-none border-b-2 border-transparent px-0 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          <TabsTrigger
+            value="create-event"
+            className="rounded-none border-b-2 border-transparent px-0 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
             Manual Entry
           </TabsTrigger>
-          <TabsTrigger value="import-events" className="rounded-none border-b-2 border-transparent px-0 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+          <TabsTrigger
+            value="import-events"
+            className="rounded-none border-b-2 border-transparent px-0 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
             AI Import (Beta)
           </TabsTrigger>
         </TabsList>
@@ -170,12 +202,16 @@ export default function CreateNewEvent() {
           <Card>
             <CardHeader>
               <CardTitle>Event Details</CardTitle>
-              <CardDescription>Define the schedule and scope of the academic calendar entry.</CardDescription>
+              <CardDescription>
+                Define the schedule and scope of the academic calendar entry.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleManualSubmit)} className="space-y-6">
-
+                <form
+                  onSubmit={form.handleSubmit(handleManualSubmit)}
+                  className="space-y-6"
+                >
                   {/* Row 1: Title & Description */}
                   <FormField
                     control={form.control}
@@ -184,7 +220,10 @@ export default function CreateNewEvent() {
                       <FormItem>
                         <FormLabel>Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="E.g. Mid-Semester Exam Week" {...field} />
+                          <Input
+                            placeholder="E.g. Mid-Semester Exam Week"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -197,7 +236,11 @@ export default function CreateNewEvent() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Details about the event" className="resize-y" {...field} />
+                          <Textarea
+                            placeholder="Details about the event"
+                            className="resize-y"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -212,15 +255,22 @@ export default function CreateNewEvent() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Event Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a event Type" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {eventTypes.map(event => (
-                                <SelectItem key={event} value={event} className="capitalize">
+                              {eventTypes.map((event) => (
+                                <SelectItem
+                                  key={event}
+                                  value={event}
+                                  className="capitalize"
+                                >
                                   {event}
                                 </SelectItem>
                               ))}
@@ -237,7 +287,10 @@ export default function CreateNewEvent() {
                         <FormItem>
                           <FormLabel>Location</FormLabel>
                           <FormControl>
-                            <Input placeholder="Room A-101 / Online" {...field} />
+                            <Input
+                              placeholder="Room A-101 / Online"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -254,7 +307,12 @@ export default function CreateNewEvent() {
                         <FormItem>
                           <FormLabel>Start Date / Time</FormLabel>
                           <FormControl>
-                            <DateTimePicker value={field.value.toISOString()} onChange={(date) => field.onChange(new Date(date))} />
+                            <DateTimePicker
+                              value={field.value.toISOString()}
+                              onChange={(date) =>
+                                field.onChange(new Date(date))
+                              }
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -268,8 +326,14 @@ export default function CreateNewEvent() {
                           <FormLabel>End Date / Time (Optional)</FormLabel>
                           <FormControl>
                             <DateTimePicker
-                              value={field.value ? field.value?.toISOString() : new Date().toISOString()}
-                              onChange={(date) => field.onChange(new Date(date))}
+                              value={
+                                field.value
+                                  ? field.value?.toISOString()
+                                  : new Date().toISOString()
+                              }
+                              onChange={(date) =>
+                                field.onChange(new Date(date))
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -293,14 +357,20 @@ export default function CreateNewEvent() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UploadCloud className="h-5 w-5 text-primary" /> Import from Document
+                <UploadCloud className="h-5 w-5 text-primary" /> Import from
+                Document
               </CardTitle>
-              <CardDescription>Upload a calendar screenshot or official document to automatically extract events.</CardDescription>
+              <CardDescription>
+                Upload a calendar screenshot or official document to
+                automatically extract events.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border p-4 rounded-xl bg-muted/20">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="file-upload" className="font-semibold">Upload Source Document (Image/PDF)</Label>
+                  <Label htmlFor="file-upload" className="font-semibold">
+                    Upload Source Document (Image/PDF)
+                  </Label>
                   <Input
                     type="file"
                     accept="image/*, application/pdf"
@@ -310,7 +380,8 @@ export default function CreateNewEvent() {
                   />
                   {fileReference && (
                     <p className="text-xs text-muted-foreground pt-1 flex items-center gap-1.5">
-                      <FileText className="h-3 w-3" /> File ready for processing.
+                      <FileText className="h-3 w-3" /> File ready for
+                      processing.
                     </p>
                   )}
                 </div>
@@ -320,7 +391,11 @@ export default function CreateNewEvent() {
                   disabled={!fileReference || generatingEvents}
                   className="shrink-0 h-10 w-full sm:w-auto mt-6 sm:mt-0"
                 >
-                  {generatingEvents ? <Loader2 className="animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                  {generatingEvents ? (
+                    <Loader2 className="animate-spin mr-2" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
                   {generatingEvents ? " Analyzing..." : "Generate Events"}
                 </Button>
               </div>
@@ -332,14 +407,25 @@ export default function CreateNewEvent() {
                     <h3 className="text-sm font-semibold">
                       Review Generated Events
                       <Badge variant="secondary" className="ml-2">
-                        {acceptedIndices.length} / {generatedEvents.length} Accepted
+                        {acceptedIndices.length} / {generatedEvents.length}{" "}
+                        Accepted
                       </Badge>
                     </h3>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setAcceptedIndices(Array.from({ length: generatedEvents.length }, (_, i) => i))}
-                      disabled={acceptedIndices.length === generatedEvents.length || generatingEvents}
+                      onClick={() =>
+                        setAcceptedIndices(
+                          Array.from(
+                            { length: generatedEvents.length },
+                            (_, i) => i
+                          )
+                        )
+                      }
+                      disabled={
+                        acceptedIndices.length === generatedEvents.length ||
+                        generatingEvents
+                      }
                     >
                       Accept All
                     </Button>
@@ -350,10 +436,15 @@ export default function CreateNewEvent() {
                     {generatedEvents.map((event, index) => {
                       const accepted = acceptedIndices.includes(index);
                       return (
-                        <div key={index} className={cn(
-                          "flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-xl transition-all",
-                          accepted ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-md" : "border-border/60 bg-card"
-                        )}>
+                        <div
+                          key={index}
+                          className={cn(
+                            "flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-xl transition-all",
+                            accepted
+                              ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-md"
+                              : "border-border/60 bg-card"
+                          )}
+                        >
                           <div className="flex-1 min-w-0 pr-4">
                             {/* Visual Indication */}
                             <div className="flex items-center gap-2 mb-1">
@@ -362,10 +453,13 @@ export default function CreateNewEvent() {
                               ) : (
                                 <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
                               )}
-                              <span className="font-medium truncate">{event.title}</span>
+                              <span className="font-medium truncate">
+                                {event.title}
+                              </span>
                             </div>
                             <p className="text-xs text-muted-foreground ml-6">
-                              {event.time.toDateString()} at {event.time.toLocaleTimeString()}
+                              {event.time.toDateString()} at{" "}
+                              {event.time.toLocaleTimeString()}
                             </p>
                           </div>
 
@@ -401,8 +495,14 @@ export default function CreateNewEvent() {
                       disabled={acceptedIndices.length === 0 || savingEvents}
                       className="gap-2 min-w-[150px]"
                     >
-                      {savingEvents ? <Loader2 className="animate-spin" /> : <Save className="h-4 w-4" />}
-                      {savingEvents ? " Saving..." : `Save ${acceptedIndices.length} Events`}
+                      {savingEvents ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      {savingEvents
+                        ? " Saving..."
+                        : `Save ${acceptedIndices.length} Events`}
                     </Button>
                   </div>
                 </div>

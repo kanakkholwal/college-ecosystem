@@ -57,7 +57,11 @@ function useStorage<T>(
     }
   };
 
-  const value = useSyncExternalStore(subscribe, getSnapshot, () => initialValue);
+  const value = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => initialValue
+  );
 
   const setValue = (newValue: T | ((prev: T) => T)) => {
     if (typeof window === "undefined") return;

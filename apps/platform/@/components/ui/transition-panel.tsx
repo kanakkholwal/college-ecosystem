@@ -1,11 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
 import {
-    AnimatePresence,
-    motion,
-    type MotionProps,
-    type Transition,
-    type Variant,
+  AnimatePresence,
+  motion,
+  type MotionProps,
+  type Transition,
+  type Variant,
 } from "framer-motion";
 
 type TransitionPanelProps = {

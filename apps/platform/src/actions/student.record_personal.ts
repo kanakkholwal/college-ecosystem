@@ -182,16 +182,20 @@ export async function getAttendanceRecordById(recordId: string) {
   try {
     const session = await getSession();
     if (!session) {
-      throw new Error("You need to be logged in to fetch an attendance record.");
+      throw new Error(
+        "You need to be logged in to fetch an attendance record."
+      );
     }
     // 1. Fetch the parent record
     const parent = await db
       .select()
       .from(personalAttendance)
-      .where(and(
-        eq(personalAttendance.id, recordId),
-        eq(personalAttendance.userId, session.user.id)
-      ))
+      .where(
+        and(
+          eq(personalAttendance.id, recordId),
+          eq(personalAttendance.userId, session.user.id)
+        )
+      )
       .limit(1);
 
     if (parent.length === 0) return null;

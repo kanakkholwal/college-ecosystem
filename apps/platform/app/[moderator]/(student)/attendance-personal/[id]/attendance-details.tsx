@@ -50,12 +50,21 @@ export function AttendanceDetails({ record }: AttendanceDetailsProps) {
   const totalClasses = record.records.length;
   const presentClasses = record.records.filter((r) => r.isPresent).length;
   const absentClasses = totalClasses - presentClasses;
-  const percentage = totalClasses > 0 ? (presentClasses / totalClasses) * 100 : 0;
+  const percentage =
+    totalClasses > 0 ? (presentClasses / totalClasses) * 100 : 0;
 
   const chartData = React.useMemo(
     () => [
-      { browser: "present", visitors: presentClasses, fill: "var(--color-present)" },
-      { browser: "absent", visitors: absentClasses, fill: "var(--color-absent)" },
+      {
+        browser: "present",
+        visitors: presentClasses,
+        fill: "var(--color-present)",
+      },
+      {
+        browser: "absent",
+        visitors: absentClasses,
+        fill: "var(--color-absent)",
+      },
     ],
     [presentClasses, absentClasses]
   );
@@ -248,7 +257,10 @@ export function AttendanceDetails({ record }: AttendanceDetailsProps) {
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {history.date
-                              ? format(new Date(history.date), "EEEE, MMMM do, yyyy")
+                              ? format(
+                                  new Date(history.date),
+                                  "EEEE, MMMM do, yyyy"
+                                )
                               : "Unknown Date"}
                           </p>
                         </div>

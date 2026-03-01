@@ -6,7 +6,7 @@ import {
   Award,
   TrendingDown,
   TrendingUp,
-  Trophy
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 import type { ResultTypeWithId } from "src/models/result";
@@ -16,7 +16,7 @@ type ResultType = Omit<ResultTypeWithId, "semesters"> & {
   prevCgpi?: number;
 };
 
-//  Helpers 
+//  Helpers
 const getRankStyle = (rank: number) => {
   if (rank === 1) return "bg-pink-500/10 text-pink-600 border-pink-500/20";
   if (rank === 2) return "bg-rose-400/10 text-rose-600 border-rose-400/20";
@@ -24,16 +24,13 @@ const getRankStyle = (rank: number) => {
   return "bg-primary/5 text-primary border-primary/20";
 };
 
-
 export function ResultCard({
   result,
   className,
   ...props
 }: { result: ResultType; className?: string } & React.ComponentProps<"div">) {
   const trend =
-    result.prevCgpi !== undefined
-      ? result.cgpi - result.prevCgpi
-      : 0;
+    result.prevCgpi !== undefined ? result.cgpi - result.prevCgpi : 0;
 
   return (
     <div
@@ -68,9 +65,16 @@ export function ResultCard({
         {/* Rank Badge */}
         <Badge
           variant="outline"
-          className={cn("flex items-center gap-1 px-2.5 py-1 text-xs font-semibold", getRankStyle(result.rank.college))}
+          className={cn(
+            "flex items-center gap-1 px-2.5 py-1 text-xs font-semibold",
+            getRankStyle(result.rank.college)
+          )}
         >
-          {result.rank.college <= 3 ? <Trophy className="size-3" /> : <Award className="size-3" />}
+          {result.rank.college <= 3 ? (
+            <Trophy className="size-3" />
+          ) : (
+            <Award className="size-3" />
+          )}
           #{result.rank.college}
         </Badge>
       </div>
@@ -87,11 +91,17 @@ export function ResultCard({
               {result.cgpi?.toFixed(2)}
             </span>
             {trend !== 0 && (
-              <div className={cn(
-                "flex items-center mb-1.5 text-xs font-medium",
-                trend > 0 ? "text-emerald-600" : "text-rose-600"
-              )}>
-                {trend > 0 ? <TrendingUp className="size-3 mr-0.5" /> : <TrendingDown className="size-3 mr-0.5" />}
+              <div
+                className={cn(
+                  "flex items-center mb-1.5 text-xs font-medium",
+                  trend > 0 ? "text-emerald-600" : "text-rose-600"
+                )}
+              >
+                {trend > 0 ? (
+                  <TrendingUp className="size-3 mr-0.5" />
+                ) : (
+                  <TrendingDown className="size-3 mr-0.5" />
+                )}
                 {Math.abs(trend).toFixed(2)}
               </div>
             )}
@@ -133,11 +143,13 @@ export function ResultCard({
   );
 }
 
-
 export function ResultCardMinimal({
   result,
   className,
-}: { result: ResultType; className?: string }) {
+}: {
+  result: ResultType;
+  className?: string;
+}) {
   return (
     <Link
       href={`/results/${result.rollNo}`}
@@ -149,10 +161,12 @@ export function ResultCardMinimal({
     >
       <div className="flex items-center gap-4">
         {/* Rank Circle */}
-        <div className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold border",
-          getRankStyle(result.rank.college)
-        )}>
+        <div
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold border",
+            getRankStyle(result.rank.college)
+          )}
+        >
           #{result.rank.college}
         </div>
 

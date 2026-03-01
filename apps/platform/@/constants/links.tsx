@@ -23,7 +23,7 @@ import {
   PiTicketDuotone,
   PiUserCheckDuotone,
   PiUserListDuotone,
-  PiUsersThreeDuotone
+  PiUsersThreeDuotone,
 } from "react-icons/pi";
 // Brand Icons (Keep these as they are specific logos)
 import { BsInstagram } from "react-icons/bs";
@@ -60,7 +60,7 @@ export type rawLinkType = {
   allowed_roles: AllowedRoleType[] | AllowedRoleType;
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
   preserveParams?: boolean;
-  category: "none" | "metrics" | "action" | "view"
+  category: "none" | "metrics" | "action" | "view";
   items?: {
     title: string;
     path: string;
@@ -396,7 +396,7 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
   // console.log("Links by role:", linksByRole);
 
   if (user) {
-   linksByRole.push({
+    linksByRole.push({
       title: "Dashboard",
       href: "/" + user.other_roles[0],
       description: "Manage your account settings.",
@@ -412,26 +412,22 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
       category: "dashboard",
       allowed_roles: ["*"],
     });
-
-
   }
   // if(process.env.NODE_ENV !== "production"){
-if (!linksByRole.some(l => l.title === "Whisper Room")) {
-      linksByRole.push({
-        title: "Whisper Room",
-        href: "/whisper-room",
-        description: "Anonymous discussion forum for students.",
-        Icon: PiGhostDuotone,
-        category: "community",
-        allowed_roles: ["student"],
-        isNew: true
-      });
+  if (!linksByRole.some((l) => l.title === "Whisper Room")) {
+    linksByRole.push({
+      title: "Whisper Room",
+      href: "/whisper-room",
+      description: "Anonymous discussion forum for students.",
+      Icon: PiGhostDuotone,
+      category: "community",
+      allowed_roles: ["student"],
+      isNew: true,
+    });
   }
   // }
-  return linksByRole
-
+  return linksByRole;
 };
-
 
 export const getHostelRoutes = (moderator: string, slug: string) =>
   [
@@ -457,7 +453,7 @@ export const getHostelRoutes = (moderator: string, slug: string) =>
       title: "Room Management",
       description: "View occupancy and room details.",
       href: `/${moderator}/h/${slug}/rooms`,
-      Icon: PiBedDuotone, 
+      Icon: PiBedDuotone,
     },
     {
       title: "CGPA Allotment",
@@ -479,7 +475,7 @@ const hostelAccessRoles = [
   ROLES_ENUMS.ASSISTANT_WARDEN,
   ROLES_ENUMS.WARDEN,
   ROLES_ENUMS.MMCA,
-]
+];
 type SideNavLink = {
   title: string;
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
@@ -490,12 +486,19 @@ type SideNavLink = {
     href: string;
     disabled?: boolean;
   }[];
-}
-export const getSideNavLinks = (role: string, prefixPath?: string, hostelSlug?: string | null): SideNavLink[] => {
+};
+export const getSideNavLinks = (
+  role: string,
+  prefixPath?: string,
+  hostelSlug?: string | null
+): SideNavLink[] => {
   // Create a shallow copy of the array to avoid mutating the original
   let sidebar_links_modified = [...sidebar_links];
 
-  if (hostelAccessRoles.includes(role as typeof hostelAccessRoles[number]) && hostelSlug) {
+  if (
+    hostelAccessRoles.includes(role as (typeof hostelAccessRoles)[number]) &&
+    hostelSlug
+  ) {
     sidebar_links_modified.splice(-2, 0, {
       title: "Hostel Actions",
       icon: PiBuildingsDuotone,
@@ -508,7 +511,7 @@ export const getSideNavLinks = (role: string, prefixPath?: string, hostelSlug?: 
         allowed_roles: hostelAccessRoles,
         disabled: route?.disabled,
       })),
-    })
+    });
   }
 
   return sidebar_links_modified

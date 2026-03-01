@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 export default function CreateCommunityPostPage() {
   return (
     <main className="md:col-span-3 space-y-4 pr-2">
-
       <CreateCommunityPost />
     </main>
   );

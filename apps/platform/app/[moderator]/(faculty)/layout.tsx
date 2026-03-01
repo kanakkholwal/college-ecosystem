@@ -9,7 +9,7 @@ const ONLY_ALLOWED_ROLES = [ROLES_ENUMS.FACULTY, ROLES_ENUMS.HOD];
 interface DashboardLayoutProps {
   children: React.ReactNode;
   params: Promise<{
-    moderator: typeof ALLOWED_ROLES[number];
+    moderator: (typeof ALLOWED_ROLES)[number];
   }>;
 }
 
@@ -24,11 +24,12 @@ export default async function DashboardLayout({
   const { moderator } = await params;
   if (
     !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number]) ||
-    !ONLY_ALLOWED_ROLES.includes(moderator as (typeof ONLY_ALLOWED_ROLES)[number])
+    !ONLY_ALLOWED_ROLES.includes(
+      moderator as (typeof ONLY_ALLOWED_ROLES)[number]
+    )
   ) {
     return notFound();
   }
-
 
   if (
     !(

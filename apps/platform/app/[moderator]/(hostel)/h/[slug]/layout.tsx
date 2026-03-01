@@ -1,24 +1,23 @@
 import { HostelCookieSetter } from "app/[moderator]/dashboards/dashboard.client";
 
-
 interface DashboardLayoutProps {
-    children: React.ReactNode;
-    params: Promise<{
-        moderator: string
-        slug: string;
-    }>;
+  children: React.ReactNode;
+  params: Promise<{
+    moderator: string;
+    slug: string;
+  }>;
 }
 
 export default async function DashboardLayout({
-    children,
-    params,
+  children,
+  params,
 }: DashboardLayoutProps) {
-  
-    const { moderator, slug } = await params;
+  const { moderator, slug } = await params;
 
-
-    return <>
-        {children}
-        {moderator !==  "chief_warden"&& (<HostelCookieSetter hostelSlug={slug} />)}
+  return (
+    <>
+      {children}
+      {moderator !== "chief_warden" && <HostelCookieSetter hostelSlug={slug} />}
     </>
+  );
 }

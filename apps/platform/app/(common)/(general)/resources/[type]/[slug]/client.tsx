@@ -17,18 +17,22 @@ export function ClientMdx({
   return <MDXRemote {...mdxSource} />;
 }
 
-
 interface TableOfContentsProps {
   items: TocItem[];
   className?: string;
 }
 
-export const TableOfContents = ({ items, className = "" }: TableOfContentsProps) => {
+export const TableOfContents = ({
+  items,
+  className = "",
+}: TableOfContentsProps) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
   // Filter out H1 (depth 1) usually title, start from H2
-  const filteredItems = items.filter((item) => item.depth > 1 && item.depth < 5);
+  const filteredItems = items.filter(
+    (item) => item.depth > 1 && item.depth < 5
+  );
 
   useEffect(() => {
     const handleObserver: IntersectionObserverCallback = (entries) => {
@@ -59,13 +63,14 @@ export const TableOfContents = ({ items, className = "" }: TableOfContentsProps)
       // Offset for sticky header
       const headerOffset = 100;
       const elementPosition = target.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      const offsetPosition =
+        elementPosition + window.pageYOffset - headerOffset;
 
       window.scrollTo({
         top: offsetPosition,
         behavior: "smooth",
       });
-      
+
       // Update URL without jump
       window.history.pushState(null, "", href);
       setActiveId(href.slice(1));
@@ -80,7 +85,7 @@ export const TableOfContents = ({ items, className = "" }: TableOfContentsProps)
         <ListCollapse className="size-4" />
         <span>On this page</span>
       </div>
-      
+
       <div className="relative pl-0.5">
         {/* The Track Line */}
         <div className="absolute left-0 top-0 bottom-0 w-px bg-border/60" />
@@ -89,9 +94,10 @@ export const TableOfContents = ({ items, className = "" }: TableOfContentsProps)
           {filteredItems.map((item) => {
             const id = item.href.slice(1);
             const isActive = activeId === id;
-            
+
             // Dynamic indentation based on depth
-            const indent = item.depth === 2 ? "pl-4" : item.depth === 3 ? "pl-7" : "pl-10";
+            const indent =
+              item.depth === 2 ? "pl-4" : item.depth === 3 ? "pl-7" : "pl-10";
 
             return (
               <li key={id} className="relative">
@@ -110,9 +116,9 @@ export const TableOfContents = ({ items, className = "" }: TableOfContentsProps)
                   className={cn(
                     "block py-1.5 pr-2 transition-colors duration-200 line-clamp-1 hover:text-foreground",
                     indent,
-                    isActive 
-                        ? "text-primary font-medium" 
-                        : "text-muted-foreground/80"
+                    isActive
+                      ? "text-primary font-medium"
+                      : "text-muted-foreground/80"
                   )}
                 >
                   {item.value}
@@ -126,7 +132,6 @@ export const TableOfContents = ({ items, className = "" }: TableOfContentsProps)
   );
 };
 
-
 export function CommentSection() {
   const { resolvedTheme } = useTheme();
   // Map next-themes to giscus themes
@@ -136,11 +141,13 @@ export function CommentSection() {
     <div className="mt-12 w-full border-t border-border/50 pt-10">
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary">
-            <MessageSquare className="size-5" />
+          <MessageSquare className="size-5" />
         </div>
         <div>
-            <h3 className="text-lg font-semibold tracking-tight">Discussion</h3>
-            <p className="text-sm text-muted-foreground">Join the conversation via GitHub</p>
+          <h3 className="text-lg font-semibold tracking-tight">Discussion</h3>
+          <p className="text-sm text-muted-foreground">
+            Join the conversation via GitHub
+          </p>
         </div>
       </div>
 

@@ -6,9 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "~/auth";
 import { getSession } from "~/auth/server";
-import {
-  RawCommunityPostType,
-} from "~/constants/common.community";
+import { RawCommunityPostType } from "~/constants/common.community";
 import { db } from "~/db/connect";
 import { users } from "~/db/schema";
 import dbConnect from "~/lib/dbConnect";
@@ -16,7 +14,7 @@ import CommunityPost, {
   CommunityComment,
   CommunityPostTypeWithId,
   ICommunityPost,
-  rawCommunityCommentSchema
+  rawCommunityCommentSchema,
 } from "~/models/community";
 
 // Create a new post
@@ -105,12 +103,12 @@ type UpdateAction =
   | { type: "toggleSave" }
   | { type: "incrementViews" }
   | {
-    type: "edit";
-    data: Partial<Pick<CommunityPostTypeWithId, "title" | "content">>;
-  };
+      type: "edit";
+      data: Partial<Pick<CommunityPostTypeWithId, "title" | "content">>;
+    };
 
 export async function updatePost(id: string, action: UpdateAction) {
-  const session = await getSession()
+  const session = await getSession();
   if (!session) throw new Error("You need to be logged in to update a post");
 
   await dbConnect();
@@ -211,28 +209,27 @@ export async function getPostActivity(id: string) {
       post.likes.length === 0
         ? []
         : await db
-          .select({
-            id: users.id,
-            name: users.name,
-            username: users.username,
-            image: users.image,
-          })
-          .from(users)
-          .where(inArray(users.id, post.likes));
-
+            .select({
+              id: users.id,
+              name: users.name,
+              username: users.username,
+              image: users.image,
+            })
+            .from(users)
+            .where(inArray(users.id, post.likes));
 
     const savedBy =
       post.savedBy.length === 0
         ? []
         : await db
-          .select({
-            id: users.id,
-            name: users.name,
-            username: users.username,
-            image: users.image,
-          })
-          .from(users)
-          .where(inArray(users.id, post.savedBy));
+            .select({
+              id: users.id,
+              name: users.name,
+              username: users.username,
+              image: users.image,
+            })
+            .from(users)
+            .where(inArray(users.id, post.savedBy));
     return Promise.resolve({
       likedBy,
       savedBy,

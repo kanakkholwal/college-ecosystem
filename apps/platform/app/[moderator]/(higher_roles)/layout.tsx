@@ -7,7 +7,7 @@ const NOT_ALLOWED_ROLES = [ROLES_ENUMS.STUDENT, ROLES_ENUMS.GUARD];
 interface DashboardLayoutProps {
   children: React.ReactNode;
   params: Promise<{
-    moderator: typeof ALLOWED_ROLES[number];
+    moderator: (typeof ALLOWED_ROLES)[number];
   }>;
 }
 

@@ -34,16 +34,14 @@ export async function GET(
   const customImage = await getCustomImage(slug);
   if (customImage) {
     return new ImageResponse(
-      (
-        <img
-          src={customImage}
-          alt="Open Graph Image"
-          style={{
-            position: "absolute",
-            inset: 0,
-          }}
-        />
-      ),
+      <img
+        src={customImage}
+        alt="Open Graph Image"
+        style={{
+          position: "absolute",
+          inset: 0,
+        }}
+      />,
       size
     );
   }
@@ -51,87 +49,85 @@ export async function GET(
   const title = page.frontmatter.title;
   const description = page.frontmatter.summary?.slice(0, 50) + "...";
   return new ImageResponse(
-    (
-      <div
-        style={{
-          background: "linear-gradient(to bottom right, #000, #000, #35353A)",
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          padding: "50px 0 0",
-          gap: "20px",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "Inter",
-        }}
-      >
-        {/* <img
+    <div
+      style={{
+        background: "linear-gradient(to bottom right, #000, #000, #35353A)",
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        padding: "50px 0 0",
+        gap: "20px",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "Inter",
+      }}
+    >
+      {/* <img
           src={images.bg}
           alt="Background"
           style={{ position: 'absolute', inset: 0 }}
         /> */}
 
-        <header
+      <header
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "32px",
+          display: "flex",
+          alignItems: "center",
+          gap: "20px",
+          margin: "0 0 40px",
+          width: "100%",
+          padding: "0 40px",
+        }}
+      >
+        <img
+          src={images.logo}
+          alt={appConfig.name}
           style={{
-            position: "absolute",
-            left: 0,
-            top: "32px",
-            display: "flex",
-            alignItems: "center",
-            gap: "20px",
-            margin: "0 0 40px",
-            width: "100%",
-            padding: "0 40px",
+            height: "53px",
           }}
-        >
-          <img
-            src={images.logo}
-            alt={appConfig.name}
-            style={{
-              height: "53px",
-            }}
-          />
-          <p
-            style={{
-              fontSize: "28px",
-              color: "white",
-              marginLeft: "auto",
-              fontWeight: 500,
-            }}
-          >
-            {changeCase(type, "title")}
-          </p>
-        </header>
-        <h1
+        />
+        <p
           style={{
-            fontSize: getFontSize(title) + "px",
+            fontSize: "28px",
             color: "white",
-            fontWeight: 700,
-            textAlign: "center",
-            lineHeight: 1.1,
-            margin: "0 16px 20px 16px",
-            textWrap: title.length > 20 ? "balance" : "wrap",
+            marginLeft: "auto",
+            fontWeight: 500,
           }}
         >
-          {title}
-        </h1>
-        {description && (
-          <p
-            style={{
-              fontWeight: 300,
-              fontSize: "48px",
-              color: "#CBCBD2",
-              textAlign: "center",
-              textWrap: description.length > 50 ? "balance" : "wrap",
-              margin: 0,
-            }}
-          >
-            {description}
-          </p>
-        )}
-      </div>
-    ),
+          {changeCase(type, "title")}
+        </p>
+      </header>
+      <h1
+        style={{
+          fontSize: getFontSize(title) + "px",
+          color: "white",
+          fontWeight: 700,
+          textAlign: "center",
+          lineHeight: 1.1,
+          margin: "0 16px 20px 16px",
+          textWrap: title.length > 20 ? "balance" : "wrap",
+        }}
+      >
+        {title}
+      </h1>
+      {description && (
+        <p
+          style={{
+            fontWeight: 300,
+            fontSize: "48px",
+            color: "#CBCBD2",
+            textAlign: "center",
+            textWrap: description.length > 50 ? "balance" : "wrap",
+            margin: 0,
+          }}
+        >
+          {description}
+        </p>
+      )}
+    </div>,
     {
       ...size,
       fonts: [

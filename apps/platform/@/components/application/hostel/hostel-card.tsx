@@ -1,26 +1,22 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import {
-    ArrowRight,
-    Building2,
-    Lock,
-    ShieldCheck,
-    Users
-} from "lucide-react";
+import { ArrowRight, Building2, Lock, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import type { HostelType } from "~/models/hostel_n_outpass";
-
 
 interface HostelCardProps {
   hostel: HostelType;
   href: string;
   disabled: boolean;
 }
-
-
 
 export function HostelCard({ hostel, href, disabled }: HostelCardProps) {
   const isGirls = hostel.gender === "female";
@@ -46,24 +42,36 @@ export function HostelCard({ hostel, href, disabled }: HostelCardProps) {
         disabled ? "cursor-not-allowed opacity-75" : "cursor-pointer"
       )}
     >
-      <Card className={cn(
-        "h-full flex flex-col overflow-hidden border-border/50 bg-card transition-all duration-300",
-        !disabled && `hover:shadow-md hover:-translate-y-1 ${theme.hoverBorder}`
-      )}>
-
-
+      <Card
+        className={cn(
+          "h-full flex flex-col overflow-hidden border-border/50 bg-card transition-all duration-300",
+          !disabled &&
+            `hover:shadow-md hover:-translate-y-1 ${theme.hoverBorder}`
+        )}
+      >
         <CardHeader className="pb-2 pt-5 px-5 space-y-0">
           <div className="flex justify-between items-start">
-            <div className={cn("flex items-center justify-center size-10 rounded-lg transition-colors", theme.iconBox)}>
+            <div
+              className={cn(
+                "flex items-center justify-center size-10 rounded-lg transition-colors",
+                theme.iconBox
+              )}
+            >
               <Building2 className="size-5" />
             </div>
 
             {disabled ? (
-              <Badge variant="secondary" className="gap-1.5 bg-muted text-muted-foreground border-transparent">
+              <Badge
+                variant="secondary"
+                className="gap-1.5 bg-muted text-muted-foreground border-transparent"
+              >
                 <Lock className="size-3" /> Restricted
               </Badge>
             ) : (
-              <Badge variant="outline" className="capitalize font-medium text-[10px] px-2 py-0.5 h-5 border-border/60 text-muted-foreground">
+              <Badge
+                variant="outline"
+                className="capitalize font-medium text-[10px] px-2 py-0.5 h-5 border-border/60 text-muted-foreground"
+              >
                 {hostel.gender}
               </Badge>
             )}
@@ -122,7 +130,10 @@ export function HostelGridSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-[380px] rounded-xl border bg-card p-6 space-y-6">
+        <div
+          key={i}
+          className="h-[380px] rounded-xl border bg-card p-6 space-y-6"
+        >
           <div className="flex justify-between items-start">
             <Skeleton className="h-12 w-12 rounded-xl" />
             <Skeleton className="h-6 w-20 rounded-full" />

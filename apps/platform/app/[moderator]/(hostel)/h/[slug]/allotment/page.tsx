@@ -1,14 +1,15 @@
 import EmptyArea from "@/components/common/empty-area"; // Keep your existing
+import { AlertCircle } from "lucide-react";
 import {
-  AlertCircle
-} from "lucide-react";
-import { getAllotmentProcess, getHostelRooms } from "~/actions/hostel.allotment-process";
+  getAllotmentProcess,
+  getHostelRooms,
+} from "~/actions/hostel.allotment-process";
 import { getHostel } from "~/actions/hostel.core";
 import {
   AdminHeader,
   ProcessControlCard,
   RoomsTableWrapper,
-  SlotManagementCard
+  SlotManagementCard,
 } from "./client";
 
 export default async function HostelRoomAllotmentPage({
@@ -35,23 +36,29 @@ export default async function HostelRoomAllotmentPage({
   // Parallel Fetching for Admin Performance
   const [allotmentProcess, roomsRes] = await Promise.all([
     getAllotmentProcess(hostel._id),
-    getHostelRooms(hostel._id)
+    getHostelRooms(hostel._id),
   ]);
 
   const rooms = roomsRes.data || [];
-  
+
   // Calculate Quick Stats for Dashboard
   const totalRooms = rooms.length;
-  const totalCapacity = rooms.reduce((acc: number, r: any) => acc + r.capacity, 0);
-  const totalOccupied = rooms.reduce((acc: number, r: any) => acc + r.occupied_seats, 0);
-  const occupancyRate = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
+  const totalCapacity = rooms.reduce(
+    (acc: number, r: any) => acc + r.capacity,
+    0
+  );
+  const totalOccupied = rooms.reduce(
+    (acc: number, r: any) => acc + r.occupied_seats,
+    0
+  );
+  const occupancyRate =
+    totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
       {/* 1. Dashboard Header */}
-      <AdminHeader 
-        hostelName={hostel.name} 
+      <AdminHeader
+        hostelName={hostel.name}
         gender={hostel.gender}
         stats={{ totalRooms, totalCapacity, totalOccupied, occupancyRate }}
       />
@@ -59,11 +66,11 @@ export default async function HostelRoomAllotmentPage({
       {/* 2. Control Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Status Control */}
-        <ProcessControlCard 
-          hostelId={hostel._id} 
-          currentStatus={allotmentProcess?.status || "waiting"} 
+        <ProcessControlCard
+          hostelId={hostel._id}
+          currentStatus={allotmentProcess?.status || "waiting"}
         />
-        
+
         {/* Slot Operations */}
         <SlotManagementCard hostelId={hostel._id} />
 
@@ -75,12 +82,13 @@ export default async function HostelRoomAllotmentPage({
               System Status
             </h3>
             <p className="text-sm text-muted-foreground mt-2">
-              System is operating normally. Ensure slots are distributed before opening the process.
+              System is operating normally. Ensure slots are distributed before
+              opening the process.
             </p>
           </div>
           <div className="mt-4 pt-4 border-t flex justify-between text-sm">
-             <span className="text-muted-foreground">Last Updated</span>
-             <span className="font-mono">Just now</span>
+            <span className="text-muted-foreground">Last Updated</span>
+            <span className="font-mono">Just now</span>
           </div>
         </div>
       </div>
@@ -89,13 +97,16 @@ export default async function HostelRoomAllotmentPage({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-             <h2 className="text-lg font-semibold tracking-tight">Room Inventory</h2>
-             <p className="text-sm text-muted-foreground">Manage locks and view detailed occupancy.</p>
+            <h2 className="text-lg font-semibold tracking-tight">
+              Room Inventory
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Manage locks and view detailed occupancy.
+            </p>
           </div>
         </div>
         <RoomsTableWrapper rooms={rooms} />
       </div>
-
     </div>
   );
 }

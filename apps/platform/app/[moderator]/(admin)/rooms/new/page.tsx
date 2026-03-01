@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CoursesPage() {
-  return <CreateRoomForm onSubmit={createRoom} />
+  return <CreateRoomForm onSubmit={createRoom} />;
 }

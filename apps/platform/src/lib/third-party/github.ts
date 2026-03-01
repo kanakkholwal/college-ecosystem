@@ -6,45 +6,45 @@ export const githubApiFetch = createFetch({
   baseURL: "https://api.github.com",
   headers: process.env.GITHUB_OAUTH_TOKEN
     ? {
-      Authorization: `Bearer ${process.env.GITHUB_OAUTH_TOKEN}`,
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    }
+        Authorization: `Bearer ${process.env.GITHUB_OAUTH_TOKEN}`,
+        "Content-Type": "application/json",
+        Accept: "application/vnd.github+json",
+      }
     : {
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    },
+        "Content-Type": "application/json",
+        Accept: "application/vnd.github+json",
+      },
   next: {
     revalidate: 3600,
   },
 });
 
-export const getRepoStarGazers = cache(async (
-  repoUri = appConfig.githubUri
-): Promise<number> => {
-  try {
-    if (process.env.NODE_ENV !== "production") {
-      return 12; // Fallback value for non-production environments
-    }
-    const response = await githubApiFetch<RepoData>(`/repos/${repoUri}`);
-    if (response.error) {
-      if (
-        !(
-          response.error.status === 403 ||
-          response.error.statusText === "rate limit exceeded"
-        )
-      ) {
-        return Promise.reject(response.error);
+export const getRepoStarGazers = cache(
+  async (repoUri = appConfig.githubUri): Promise<number> => {
+    try {
+      if (process.env.NODE_ENV !== "production") {
+        return 12; // Fallback value for non-production environments
       }
-      console.warn("GitHub API rate limit exceeded. Returning cached stats.");
-      return Promise.resolve(12); // Fallback value
+      const response = await githubApiFetch<RepoData>(`/repos/${repoUri}`);
+      if (response.error) {
+        if (
+          !(
+            response.error.status === 403 ||
+            response.error.statusText === "rate limit exceeded"
+          )
+        ) {
+          return Promise.reject(response.error);
+        }
+        console.warn("GitHub API rate limit exceeded. Returning cached stats.");
+        return Promise.resolve(12); // Fallback value
+      }
+      return response.data.stargazers_count || 12; // Default to 12 if not available
+    } catch (error) {
+      console.warn("Error fetching GitHub stars:", error);
+      return 12; // Fallback value
     }
-    return response.data.stargazers_count || 12; // Default to 12 if not available
-  } catch (error) {
-    console.warn("Error fetching GitHub stars:", error);
-    return 12; // Fallback value
   }
-})
+);
 export const extractVisitorCount = cache(async (): Promise<number> => {
   const url =
     "https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge";
@@ -79,72 +79,74 @@ export const extractVisitorCount = cache(async (): Promise<number> => {
     console.error("Error extracting visitor count:", error);
     throw error;
   }
-})
-export const getRepoStats = cache(async (
-  repoUri = appConfig.githubUri
-): Promise<StatsData> => {
-  try {
-    if (process.env.NODE_ENV !== "production") {
-      return { stars: 12, forks: 2, contributors: 1, visitors: 345221 };
-    }
-    const response = await githubApiFetch<RepoData>(`/repos/${repoUri}`);
-    if (response.error) {
-      if (
-        !(
-          response.error.status === 403 ||
-          response.error.statusText === "rate limit exceeded"
-        )
-      ) {
-        return Promise.reject(response.error);
+});
+export const getRepoStats = cache(
+  async (repoUri = appConfig.githubUri): Promise<StatsData> => {
+    try {
+      if (process.env.NODE_ENV !== "production") {
+        return { stars: 12, forks: 2, contributors: 1, visitors: 345221 };
       }
-      console.warn("GitHub API rate limit exceeded. Returning cached stats.");
+      const response = await githubApiFetch<RepoData>(`/repos/${repoUri}`);
+      if (response.error) {
+        if (
+          !(
+            response.error.status === 403 ||
+            response.error.statusText === "rate limit exceeded"
+          )
+        ) {
+          return Promise.reject(response.error);
+        }
+        console.warn("GitHub API rate limit exceeded. Returning cached stats.");
+        return {
+          stars: 12,
+          forks: 2,
+          contributors: 1,
+          visitors: await extractVisitorCount(),
+        };
+      }
+
       return {
-        stars: 12,
-        forks: 2,
-        contributors: 1,
+        stars: response.data.stargazers_count || 9,
+        forks: response.data.forks_count || 2,
+        contributors: response.data.subscribers_count || 1, // Assuming subscribers as contributors
         visitors: await extractVisitorCount(),
       };
+    } catch (error) {
+      console.error("Caught Error fetching GitHub repository data:", error);
+      return Promise.reject(error);
     }
-
-    return {
-      stars: response.data.stargazers_count || 9,
-      forks: response.data.forks_count || 2,
-      contributors: response.data.subscribers_count || 1, // Assuming subscribers as contributors
-      visitors: await extractVisitorCount(),
-    };
-  } catch (error) {
-    console.error("Caught Error fetching GitHub repository data:", error);
-    return Promise.reject(error);
   }
-})
-export const getRepoContributors = cache(async (
-  repoUri = appConfig.githubUri
-): Promise<
-  {
-    name: string;
-    username: string;
-    avatar: string;
-    contributions: number;
-  }[]
-> => {
-  try {
-    const response = await githubApiFetch<Contributor[]>(
-      `/repos/${repoUri}/contributors`
-    );
-    if (response.error) {
-      return Promise.reject(response.error);
+);
+export const getRepoContributors = cache(
+  async (
+    repoUri = appConfig.githubUri
+  ): Promise<
+    {
+      name: string;
+      username: string;
+      avatar: string;
+      contributions: number;
+    }[]
+  > => {
+    try {
+      const response = await githubApiFetch<Contributor[]>(
+        `/repos/${repoUri}/contributors`
+      );
+      if (response.error) {
+        return Promise.reject(response.error);
+      }
+      return response.data.map((contributor) => ({
+        name: contributor.login,
+        username: contributor.login,
+        avatar: contributor.avatar_url,
+        contributions: contributor.contributions,
+      }));
+    } catch (error) {
+      console.error("Error fetching GitHub contributors:", error);
+      return Promise.reject(error);
     }
-    return response.data.map((contributor) => ({
-      name: contributor.login,
-      username: contributor.login,
-      avatar: contributor.avatar_url,
-      contributions: contributor.contributions,
-    }));
-  } catch (error) {
-    console.error("Error fetching GitHub contributors:", error);
-    return Promise.reject(error);
   }
-})
+);
 
 export type StatsData = {
   stars: number;
@@ -157,7 +159,6 @@ export type PublicStatsType = {
   userCount: number;
   githubStats: StatsData;
   visitors: number;
-
 };
 
 export interface RepoData {

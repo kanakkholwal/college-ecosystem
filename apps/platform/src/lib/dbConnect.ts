@@ -71,7 +71,7 @@ const mongoClientOptions: MongoClientOptions = {
   retryWrites: true,
   w: "majority",
   appName: "nith",
-}
+};
 async function getMongoClient(
   dbName: string = defaultDb
 ): Promise<{ client: MongoClient; db: Db }> {

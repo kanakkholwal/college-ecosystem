@@ -1,5 +1,8 @@
 import { AnimatedTestimonials } from "@/components/animation/animated-testimonials";
-import { StaggerChildrenContainer, StaggerChildrenItem } from "@/components/animation/motion";
+import {
+  StaggerChildrenContainer,
+  StaggerChildrenItem,
+} from "@/components/animation/motion";
 import { HeaderBar } from "@/components/common/header-bar";
 import { RouterCard } from "@/components/common/router-card";
 import { Icon } from "@/components/icons";
@@ -22,7 +25,10 @@ const RESOURCES_LIMIT = 6;
 
 export default async function HomePage() {
   const session = await getSession();
-  const links = getLinksByRole(session?.user?.other_roles[0] ?? ROLES_ENUMS.STUDENT, quick_links);
+  const links = getLinksByRole(
+    session?.user?.other_roles[0] ?? ROLES_ENUMS.STUDENT,
+    quick_links
+  );
 
   if (
     session?.user?.other_roles?.includes(ROLES_ENUMS.GUARD) &&
@@ -60,11 +66,10 @@ export default async function HomePage() {
 
       {/* Visual hook: High contrast intro */}
       {/* <BackgroundBeamsWithCollision className="h-auto md:h-auto md:min-h-96 flex flex-col justify-center overflow-hidden w-full"> */}
-        <IntroSection user={session?.user} stats={publicStats} />
+      <IntroSection user={session?.user} stats={publicStats} />
       {/* </BackgroundBeamsWithCollision> */}
 
       <div className="w-full max-w-(--max-app-width) mx-auto flex flex-col gap-24 py-16">
-
         {/* Purpose: Immediate utility access. Clean, grid-based layout. */}
         <StaggerChildrenContainer id="quick-links" className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-l-4 border-primary pl-4">
@@ -84,24 +89,36 @@ export default async function HomePage() {
                 key={link.href}
                 {...link}
                 style={{ animationDelay: `${i * 100}ms` }}
-              // We can add logic here to span specific distinct cards if needed
-              // className={i === 0 ? "md:col-span-2" : ""} 
+                // We can add logic here to span specific distinct cards if needed
+                // className={i === 0 ? "md:col-span-2" : ""}
               />
             ))}
           </StaggerChildrenItem>
         </StaggerChildrenContainer>
 
-
         <StaggerChildrenContainer className="relative z-10 space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <HeaderBar
               Icon={Newspaper}
-              titleNode={<span className="text-2xl font-semibold tracking-tight">Latest Updates</span>}
+              titleNode={
+                <span className="text-2xl font-semibold tracking-tight">
+                  Latest Updates
+                </span>
+              }
               descriptionNode="Announcements, guides, and insights from the student community."
               className="mb-0" // Reset margin since we handle gap in parent
             />
-            <ButtonLink href="/resources" size="sm" variant="ghost" className="hidden sm:flex group">
-              View Archive <Icon name="arrow-right" className="ml-2 group-hover:translate-x-1 transition-transform" />
+            <ButtonLink
+              href="/resources"
+              size="sm"
+              variant="ghost"
+              className="hidden sm:flex group"
+            >
+              View Archive{" "}
+              <Icon
+                name="arrow-right"
+                className="ml-2 group-hover:translate-x-1 transition-transform"
+              />
             </ButtonLink>
           </div>
 
@@ -113,7 +130,12 @@ export default async function HomePage() {
           </div>
 
           <StaggerChildrenItem className="w-full flex sm:hidden justify-center pt-4">
-            <ButtonLink href="/resources" size="lg" variant="rainbow_outline" className="w-full">
+            <ButtonLink
+              href="/resources"
+              size="lg"
+              variant="rainbow_outline"
+              className="w-full"
+            >
               Checkout All Updates
             </ButtonLink>
           </StaggerChildrenItem>
@@ -124,7 +146,10 @@ export default async function HomePage() {
           <FeatureSection />
         </section>
 
-        <StaggerChildrenContainer className="space-y-12 pb-16" id="testimonials">
+        <StaggerChildrenContainer
+          className="space-y-12 pb-16"
+          id="testimonials"
+        >
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20">
               <TrendingUp className="w-3 h-3 mr-1" /> trusted by students
@@ -133,12 +158,12 @@ export default async function HomePage() {
               What your peers are saying
             </h2>
             <p className="text-muted-foreground text-lg">
-              Hear how the College Ecosystem is simplifying campus life for thousands of students.
+              Hear how the College Ecosystem is simplifying campus life for
+              thousands of students.
             </p>
           </div>
           <AnimatedTestimonials data={testimonialsContent} />
         </StaggerChildrenContainer>
-
       </div>
     </main>
   );

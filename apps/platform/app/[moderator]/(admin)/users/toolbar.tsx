@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Cross2Icon } from "@radix-ui/react-icons";
@@ -23,8 +23,12 @@ export function UsersToolbar() {
 
   // 1. Search State
   const [text, setText] = useState(searchParams.get("searchValue") || "");
-  const [field, setField] = useState(searchParams.get("searchField") || "email");
-  const [sortDir, setSortDir] = useState(searchParams.get("sortDirection") || "desc");
+  const [field, setField] = useState(
+    searchParams.get("searchField") || "email"
+  );
+  const [sortDir, setSortDir] = useState(
+    searchParams.get("sortDirection") || "desc"
+  );
 
   // 2. Debounce the search text (300ms delay)
   // useDebounce from 'use-debounce' returns a tuple; destructure the debounced value
@@ -71,7 +75,6 @@ export function UsersToolbar() {
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-1">
-      
       {/* Search Group */}
       <div className="flex items-center gap-2 w-full sm:w-auto">
         <div className="relative flex-1 sm:w-[300px]">

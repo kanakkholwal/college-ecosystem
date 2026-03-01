@@ -18,7 +18,7 @@ import {
   Plus,
   Save,
   Settings2,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import React, { useRef } from "react";
 import toast from "react-hot-toast";
@@ -40,13 +40,13 @@ import { useTimeTableStore } from "./store";
 // --- Types ---
 export type TimeTableEditorProps =
   | {
-    timetableData: TimeTableWithID;
-    mode: "edit";
-  }
+      timetableData: TimeTableWithID;
+      mode: "edit";
+    }
   | {
-    timetableData?: RawTimetableType;
-    mode: "create";
-  };
+      timetableData?: RawTimetableType;
+      mode: "create";
+    };
 
 export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
   editorProps
@@ -87,7 +87,10 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
 
     const promise =
       editorProps.mode === "edit"
-        ? updateTimeTable((timetableData as TimeTableWithID)?._id, timetableData as TimeTableWithID)
+        ? updateTimeTable(
+            (timetableData as TimeTableWithID)?._id,
+            timetableData as TimeTableWithID
+          )
         : createTimeTable(validatedData.data);
 
     toast
@@ -115,7 +118,6 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1400px] mx-auto pb-20">
-
       {/* --- Sticky Command Bar --- */}
       <div className="sticky top-4 z-30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/80 p-4 backdrop-blur-xl shadow-sm">
         <div className="flex items-center gap-4">
@@ -127,7 +129,10 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
               {timetableData?.sectionName || "Untitled Schedule"}
             </h2>
             <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-              <span>{getDepartmentName(timetableData?.department_code) || "Select Dept"}</span>
+              <span>
+                {getDepartmentName(timetableData?.department_code) ||
+                  "Select Dept"}
+              </span>
               <span className="h-3 w-px bg-border" />
               <span>Sem {timetableData?.semester || "-"}</span>
             </div>
@@ -146,11 +151,7 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
               Delete
             </Button>
           )}
-          <Button
-            size="sm"
-            onClick={handleSaveTimetable}
-            disabled={disabled}
-          >
+          <Button size="sm" onClick={handleSaveTimetable} disabled={disabled}>
             <Save className="mr-2 size-4" />
             {editorProps.mode === "create" ? "Create Schedule" : "Save Changes"}
           </Button>
@@ -205,7 +206,6 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
                 {/* Custom Grid Implementation */}
                 {/* UPDATED: Changed first column from 80px to 120px */}
                 <div className="grid grid-cols-[124px_1fr] auto-rows-max">
-
                   {/* 1. Corner Cell (Top-Left) */}
                   <div className="sticky top-0 z-20 left-0 flex h-10 items-center justify-center border-b border-r bg-card/80 backdrop-blur-lg text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">
                     <Clock className="mr-1.5 size-3.5" /> Time
@@ -249,8 +249,9 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
                       <React.Fragment key={timeIndex}>
                         {Array.from(daysMap.entries()).map(([dayIndex]) => {
                           const events =
-                            timetableData.schedule[dayIndex]?.timeSlots[timeIndex]
-                              ?.events || [];
+                            timetableData.schedule[dayIndex]?.timeSlots[
+                              timeIndex
+                            ]?.events || [];
                           const hasEvents = events.length > 0;
                           const isToday = currentDayIndex === dayIndex;
 
@@ -267,7 +268,9 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
                               }}
                               className={cn(
                                 "group relative flex h-24 flex-col gap-1 border-b border-r p-1 transition-colors hover:bg-muted/40 last:border-r-0",
-                                isToday && !hasEvents && "bg-primary/5 hover:bg-primary/10",
+                                isToday &&
+                                  !hasEvents &&
+                                  "bg-primary/5 hover:bg-primary/10",
                                 !hasEvents && "cursor-pointer"
                               )}
                             >

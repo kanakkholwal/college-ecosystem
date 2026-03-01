@@ -46,7 +46,7 @@ export default function ResetPassword() {
       toast.error("Invalid or missing reset token.");
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const res = await authClient.resetPassword(
@@ -56,12 +56,12 @@ export default function ResetPassword() {
         },
         { credentials: "include" }
       );
-      
+
       if (res.error) {
         toast.error(res.error.message || "Failed to reset password");
         return;
       }
-      
+
       toast.success("Password updated successfully!");
       router.push("/auth/sign-in");
     } catch (err) {
@@ -73,13 +73,14 @@ export default function ResetPassword() {
 
   return (
     <div className="space-y-6">
-      
       {/* Header */}
       <div className="flex flex-col items-center text-center space-y-2">
         <div className="p-3 rounded-xl bg-primary/5 text-primary mb-2 ring-1 ring-primary/10">
-            <KeyRound className="size-6" />
+          <KeyRound className="size-6" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Set new password</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Set new password
+        </h1>
         <p className="text-sm text-muted-foreground max-w-xs">
           Your new password must be different from previously used passwords.
         </p>
@@ -87,7 +88,6 @@ export default function ResetPassword() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          
           <FormField
             control={form.control}
             name="newPassword"
@@ -97,12 +97,12 @@ export default function ResetPassword() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <FormControl>
-                    <Input 
-                        {...field} 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="pl-9" 
-                        disabled={isSubmitting}
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="••••••••"
+                      className="pl-9"
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                 </div>
@@ -120,12 +120,12 @@ export default function ResetPassword() {
                 <div className="relative">
                   <CheckCircle2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <FormControl>
-                    <Input 
-                        {...field} 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="pl-9"
-                        disabled={isSubmitting} 
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="••••••••"
+                      className="pl-9"
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                 </div>
@@ -136,19 +136,24 @@ export default function ResetPassword() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
-               <>
-                 <Loader2 className="animate-spin" /> Resetting...
-               </>
+              <>
+                <Loader2 className="animate-spin" /> Resetting...
+              </>
             ) : (
-               "Reset Password"
+              "Reset Password"
             )}
           </Button>
         </form>
       </Form>
 
       <div className="flex justify-center">
-        <ButtonLink variant="link" size="sm" className="text-muted-foreground"  href="/auth/sign-in">
-            <ArrowLeft /> Back to Sign In
+        <ButtonLink
+          variant="link"
+          size="sm"
+          className="text-muted-foreground"
+          href="/auth/sign-in"
+        >
+          <ArrowLeft /> Back to Sign In
         </ButtonLink>
       </div>
     </div>

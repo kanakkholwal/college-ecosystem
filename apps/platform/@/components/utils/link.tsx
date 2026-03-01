@@ -9,7 +9,7 @@ import { ResponsiveDialog } from "../ui/responsive-dialog";
 type RedirectButtonProps = ButtonProps & {
   href: string;
   children?: React.ReactNode;
-}
+};
 export function RedirectWithSearchParamsLink({
   href,
   children,
@@ -73,7 +73,6 @@ export function AuthButtonLink({
   React.ComponentProps<typeof Link> & {
     authorized?: boolean;
   }) {
-
   return (
     <Button asChild {...props}>
       <Link href={authorized ? href : `/auth/sign-in?next=${href}`}>
@@ -95,7 +94,7 @@ function AuthActionButton({
     description: string;
     content?: React.ReactNode;
     showHeader?: boolean;
-  }
+  };
 }) {
   const pathname = usePathname();
 
@@ -106,9 +105,11 @@ function AuthActionButton({
       <ResponsiveDialog
         hideHeader={true}
         title={dialog?.title ?? "Sign In Required"}
-        description={dialog?.description ?? "You need to sign in to perform this action"}
+        description={
+          dialog?.description ?? "You need to sign in to perform this action"
+        }
         btnProps={{
-          ...restProps
+          ...restProps,
         }}
       >
         {dialog?.content ? (
@@ -118,9 +119,12 @@ function AuthActionButton({
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-muted shadow-sm mb-4">
               <Icon name="lock" className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Authentication Needed</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Authentication Needed
+            </h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              You need to sign in to access this feature. Please continue with your account to unlock it.
+              You need to sign in to access this feature. Please continue with
+              your account to unlock it.
             </p>
           </div>
         )}
@@ -142,7 +146,6 @@ function AuthActionButton({
 
 AuthActionButton.displayName = "AuthActionButton";
 export { AuthActionButton };
-
 
 export type ParamsPreserverLinkProps = React.ComponentProps<typeof Link> & {
   preserveParams?: boolean;

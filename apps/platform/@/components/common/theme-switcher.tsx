@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,6 @@ import { sendGAEvent } from "@next/third-parties/google";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Palette } from "lucide-react";
 import React from "react";
-
-
 
 import { Icon, IconComponent } from "@/components/icons";
 import {
@@ -74,7 +71,12 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon_sm" className={cn("rounded-full", className)} disabled>
+      <Button
+        variant="ghost"
+        size="icon_sm"
+        className={cn("rounded-full", className)}
+        disabled
+      >
         <Icon name="sun" className="size-4 opacity-50" />
       </Button>
     );
@@ -84,14 +86,30 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
     <div className={cn("relative", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon_sm" className={cn("relative rounded-full text-muted-foreground hover:text-foreground transition-colors", className)}>
-            <Icon name="sun" className="size-4 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0" />
-            <Icon name="moon" className="absolute size-4 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100" />
+          <Button
+            variant="ghost"
+            size="icon_sm"
+            className={cn(
+              "relative rounded-full text-muted-foreground hover:text-foreground transition-colors",
+              className
+            )}
+          >
+            <Icon
+              name="sun"
+              className="size-4 rotate-0 scale-100 transition-all duration-300 dark:-rotate-90 dark:scale-0"
+            />
+            <Icon
+              name="moon"
+              className="absolute size-4 rotate-90 scale-0 transition-all duration-300 dark:rotate-0 dark:scale-100"
+            />
             <span className="sr-only">Toggle theme</span>
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="min-w-[140px] p-1.5 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl">
+        <DropdownMenuContent
+          align="end"
+          className="min-w-[140px] p-1.5 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl"
+        >
           <div className="flex flex-col gap-1">
             {themes_modes.map((t) => {
               const isActive = theme === t.id;
@@ -107,7 +125,9 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
                   }}
                   className={cn(
                     "relative flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium outline-none transition-colors cursor-pointer focus:bg-transparent",
-                    isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                    isActive
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {/* Animated Background Pill */}
@@ -115,17 +135,23 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
                     <motion.div
                       layoutId="theme-switcher-active"
                       className="absolute inset-0 rounded-md bg-muted"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      transition={{
+                        type: "spring",
+                        bounce: 0.2,
+                        duration: 0.6,
+                      }}
                     />
                   )}
 
                   {/* Content */}
                   <div className="relative z-10 flex items-center gap-2.5">
-                    <t.Icon className={cn("size-3.5",isActive && "text-primary")}/>
+                    <t.Icon
+                      className={cn("size-3.5", isActive && "text-primary")}
+                    />
                     <span>{t.label}</span>
                   </div>
                 </DropdownMenuItem>
-              )
+              );
             })}
           </div>
         </DropdownMenuContent>
@@ -133,7 +159,6 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
     </div>
   );
 };
-
 
 export interface BrandThemeType {
   id: string;
@@ -157,29 +182,29 @@ export const brand_themes: BrandThemeType[] = [
 ];
 
 function brandThemeCallback(currentTheme: BrandThemeType) {
-    // Fallback to default if storage has invalid data
-    const selected =
-      brand_themes.find((t) => t.id === currentTheme.id) || brand_themes[0];
+  // Fallback to default if storage has invalid data
+  const selected =
+    brand_themes.find((t) => t.id === currentTheme.id) || brand_themes[0];
 
-    const root = document.documentElement;
+  const root = document.documentElement;
 
-    // Inject Hex Color
-    root.style.setProperty("--primary", selected.color);
-    root.style.setProperty("--ring", selected.color);
-    // Optional: If you use HSL in Tailwind (e.g. 262 80% 50%)
-    // You might need a hexToHsl helper here if your tailwind.config uses <alpha-value>
+  // Inject Hex Color
+  root.style.setProperty("--primary", selected.color);
+  root.style.setProperty("--ring", selected.color);
+  // Optional: If you use HSL in Tailwind (e.g. 262 80% 50%)
+  // You might need a hexToHsl helper here if your tailwind.config uses <alpha-value>
 
-    // Update Meta Theme Color for Mobile Browsers
-    let themeMeta = document.querySelector<HTMLMetaElement>(
-      'meta[name="theme-color"]'
-    );
-    if (!themeMeta) {
-      themeMeta = document.createElement("meta");
-      themeMeta.name = "theme-color";
-      document.head.appendChild(themeMeta);
-    }
+  // Update Meta Theme Color for Mobile Browsers
+  let themeMeta = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]'
+  );
+  if (!themeMeta) {
+    themeMeta = document.createElement("meta");
+    themeMeta.name = "theme-color";
+    document.head.appendChild(themeMeta);
+  }
 
-    themeMeta.content = selected.color;
+  themeMeta.content = selected.color;
 }
 
 export function ThemePopover({ className }: { className?: string }) {

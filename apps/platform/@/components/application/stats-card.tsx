@@ -28,7 +28,8 @@ export function StatsCard({
       gradientOpacity={0.1}
       layerClassName={cn(
         "bg-card transition-colors duration-300",
-        variant === "destructive" && "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900"
+        variant === "destructive" &&
+          "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900"
       )}
       className={cn(
         "relative overflow-hidden rounded-xl border border-border shadow-sm transition-all duration-300 hover:shadow-md",
@@ -45,9 +46,7 @@ export function StatsCard({
           )}
         </div>
         {Icon && (
-          <>
-            {typeof Icon === "function" ? <Icon className="size-4" /> : Icon}
-          </>
+          <>{typeof Icon === "function" ? <Icon className="size-4" /> : Icon}</>
         )}
       </CardHeader>
       <CardContent className="p-5 pt-2">
@@ -59,7 +58,6 @@ export function StatsCard({
     </MagicCard>
   );
 }
-
 
 export const StatCardSimple = ({
   title,
@@ -80,11 +78,14 @@ export const StatCardSimple = ({
         <CardTitle className="text-sm font-semibold tracking-tight text-muted-foreground uppercase">
           {title}
         </CardTitle>
-
       </div>
       {Icon && (
         <>
-          {typeof Icon === "function" ? <Icon className="size-4 inline-block" /> : Icon}
+          {typeof Icon === "function" ? (
+            <Icon className="size-4 inline-block" />
+          ) : (
+            Icon
+          )}
         </>
       )}
     </CardHeader>

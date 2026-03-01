@@ -43,7 +43,11 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar user={session.user} moderator={moderator} className="border-r-transparent" />
+      <AppSidebar
+        user={session.user}
+        moderator={moderator}
+        className="border-r-transparent"
+      />
       <SidebarInset className="flex flex-col flex-1 w-full rounded-t-2xl">
         <Navbar
           user={session.user}

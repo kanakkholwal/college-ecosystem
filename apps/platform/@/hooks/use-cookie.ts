@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 /**
  * Custom hook to get a cookie value by name
@@ -10,15 +10,15 @@ export function useCookie(name: string): string | null {
 
   useEffect(() => {
     const getCookie = (cookieName: string): string | null => {
-      if (typeof document === 'undefined') return null;
-      
+      if (typeof document === "undefined") return null;
+
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${cookieName}=`);
-      
+
       if (parts.length === 2) {
-        return parts.pop()?.split(';').shift() || null;
+        return parts.pop()?.split(";").shift() || null;
       }
-      
+
       return null;
     };
 
@@ -38,15 +38,15 @@ export function useCookieWithUtils(name: string) {
 
   useEffect(() => {
     const getCookie = (cookieName: string): string | null => {
-      if (typeof document === 'undefined') return null;
-      
+      if (typeof document === "undefined") return null;
+
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${cookieName}=`);
-      
+
       if (parts.length === 2) {
-        return parts.pop()?.split(';').shift() || null;
+        return parts.pop()?.split(";").shift() || null;
       }
-      
+
       return null;
     };
 
@@ -60,10 +60,10 @@ export function useCookieWithUtils(name: string) {
       path?: string;
       domain?: string;
       secure?: boolean;
-      sameSite?: 'strict' | 'lax' | 'none';
+      sameSite?: "strict" | "lax" | "none";
     }
   ) => {
-    if (typeof document === 'undefined') return;
+    if (typeof document === "undefined") return;
 
     let cookie = `${name}=${newValue}`;
 
@@ -77,7 +77,7 @@ export function useCookieWithUtils(name: string) {
       cookie += `; domain=${options.domain}`;
     }
     if (options?.secure) {
-      cookie += '; secure';
+      cookie += "; secure";
     }
     if (options?.sameSite) {
       cookie += `; samesite=${options.sameSite}`;
@@ -88,7 +88,7 @@ export function useCookieWithUtils(name: string) {
   };
 
   const removeCookie = (options?: { path?: string; domain?: string }) => {
-    if (typeof document === 'undefined') return;
+    if (typeof document === "undefined") return;
 
     let cookie = `${name}=; max-age=0`;
 

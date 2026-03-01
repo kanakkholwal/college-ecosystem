@@ -1,7 +1,15 @@
 import type { BetterFetch } from "@better-fetch/fetch";
 
-export type FetchParams = BetterFetch extends (...args: infer P) => any ? P : never;
-export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "OPTIONS" | "PATCH";
+export type FetchParams = BetterFetch extends (...args: infer P) => any
+  ? P
+  : never;
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "DELETE"
+  | "PUT"
+  | "OPTIONS"
+  | "PATCH";
 
 export interface ApiConfigEntry<P, R> {
   url: string;

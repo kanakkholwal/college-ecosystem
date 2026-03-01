@@ -8,7 +8,7 @@ import {
   MessageSquareQuote,
   ShieldCheck,
   Sparkles,
-  VenetianMask
+  VenetianMask,
 } from "lucide-react";
 
 const features = [
@@ -32,12 +32,10 @@ const features = [
 export default function WhisperLandingPage() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
-      
       {/* Background Ambience */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none opacity-50 dark:opacity-20" />
-      
+
       <div className="relative z-10 max-w-5xl mx-auto w-full flex flex-col items-center gap-16 py-20">
-        
         {/* --- Hero Section --- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -48,30 +46,31 @@ export default function WhisperLandingPage() {
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-2 ring-1 ring-indigo-500/20 shadow-lg shadow-indigo-500/10">
             <Ghost className="size-8" />
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
             The Whisper Room
           </h1>
-          
+
           <p className="text-xl text-muted-foreground leading-relaxed text-balance max-w-2xl mx-auto">
-            A digital sanctuary for anonymous expression. 
-            Share your confessions, secrets, and unfiltered thoughts with the campus community.
+            A digital sanctuary for anonymous expression. Share your
+            confessions, secrets, and unfiltered thoughts with the campus
+            community.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <ButtonLink 
-                href="/whisper-room/whisper" 
-                size="lg" 
-                variant="default"
-                className="h-12 px-8 rounded-full text-base shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105"
+            <ButtonLink
+              href="/whisper-room/whisper"
+              size="lg"
+              variant="default"
+              className="h-12 px-8 rounded-full text-base shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105"
             >
               <Sparkles className="mr-2 size-4" /> Start Whispering
             </ButtonLink>
-            <ButtonLink 
-                href="/whisper-room/feed" 
-                size="lg" 
-                variant="outline"
-                className="h-12 px-8 rounded-full text-base bg-background/50 backdrop-blur-sm border-border/50 hover:bg-background/80"
+            <ButtonLink
+              href="/whisper-room/feed"
+              size="lg"
+              variant="outline"
+              className="h-12 px-8 rounded-full text-base bg-background/50 backdrop-blur-sm border-border/50 hover:bg-background/80"
             >
               Read Confessions <ArrowRight className="ml-2 size-4" />
             </ButtonLink>
@@ -121,7 +120,6 @@ export default function WhisperLandingPage() {
           </p>
           <div className="h-px w-24 bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
         </motion.div>
-
       </div>
     </div>
   );

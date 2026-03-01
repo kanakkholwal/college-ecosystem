@@ -38,11 +38,14 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
   }, [searchParams]);
 
   // 2. Optimized URL Generator
-  const createPageURL = useCallback((pageNumber: number | string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", pageNumber.toString());
-    return `${pathname}?${params.toString()}`;
-  }, [pathname, searchParams]);
+  const createPageURL = useCallback(
+    (pageNumber: number | string) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", pageNumber.toString());
+      return `${pathname}?${params.toString()}`;
+    },
+    [pathname, searchParams]
+  );
 
   // 3. Single-pass Range Generator
   const paginationRange = useMemo(() => {
@@ -66,7 +69,6 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
   return (
     <Pagination className={cn("w-auto", className)}>
       <PaginationContent className="gap-1">
-
         {/* Previous */}
         <PaginationItem>
           <PaginationPrevious
@@ -78,7 +80,7 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
               currentPage <= 1 && "pointer-events-none opacity-40"
             )}
           >
-            <ChevronLeft  />
+            <ChevronLeft />
           </PaginationPrevious>
         </PaginationItem>
 
@@ -115,14 +117,17 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
         {/* Mobile: Compact Indicator */}
         <div className="flex sm:hidden items-center px-2">
           <span className="text-sm text-muted-foreground font-medium">
-            <span className="text-foreground">{currentPage}</span> / {totalPages}
+            <span className="text-foreground">{currentPage}</span> /{" "}
+            {totalPages}
           </span>
         </div>
 
         {/* Next */}
         <PaginationItem>
           <PaginationNext
-            href={currentPage >= totalPages ? "#" : createPageURL(currentPage + 1)}
+            href={
+              currentPage >= totalPages ? "#" : createPageURL(currentPage + 1)
+            }
             aria-disabled={currentPage >= totalPages}
             size="sm"
             className={cn(
@@ -136,15 +141,23 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
 
         {/* Jump To (Desktop Only) */}
         <div className="hidden sm:block pl-1">
-          <JumpToPage totalPages={totalPages} onJump={(p) => replace(createPageURL(p))} />
+          <JumpToPage
+            totalPages={totalPages}
+            onJump={(p) => replace(createPageURL(p))}
+          />
         </div>
-
       </PaginationContent>
     </Pagination>
   );
 }
 
-function JumpToPage({ totalPages, onJump }: { totalPages: number, onJump: (page: number) => void }) {
+function JumpToPage({
+  totalPages,
+  onJump,
+}: {
+  totalPages: number;
+  onJump: (page: number) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [val, setVal] = useState("");
 
@@ -191,12 +204,17 @@ function JumpToPage({ totalPages, onJump }: { totalPages: number, onJump: (page:
               value={val}
               onChange={(e) => setVal(e.target.value)}
             />
-            <Button type="submit" size="sm" className="h-8 px-3 text-xs" disabled={!val}>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-8 px-3 text-xs"
+              disabled={!val}
+            >
               Go
             </Button>
           </div>
         </form>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

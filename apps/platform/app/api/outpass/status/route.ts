@@ -1,8 +1,8 @@
 import { Types } from "mongoose";
 import { type NextRequest, NextResponse } from "next/server";
 import {
-    getOutPassById,
-    getOutPassHistoryByRollNo,
+  getOutPassById,
+  getOutPassHistoryByRollNo,
 } from "~/actions/hostel.outpass";
 import { headers } from "next/headers";
 import { auth } from "~/auth";

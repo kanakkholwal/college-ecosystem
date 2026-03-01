@@ -39,12 +39,19 @@ export default async function RequestOutPassPage(props: PageProps) {
     <div className="container max-w-2xl py-8 space-y-6">
       {/* Header with Navigation */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" asChild>
-            <Link href="/student/outpass">
-                <ChevronLeft className="h-4 w-4" />
-            </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground"
+          asChild
+        >
+          <Link href="/student/outpass">
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
         </Button>
-        <h1 className="text-lg font-semibold tracking-tight">New Outpass Request</h1>
+        <h1 className="text-lg font-semibold tracking-tight">
+          New Outpass Request
+        </h1>
       </div>
 
       <RequestOutPassForm student={hosteler} onSubmit={createOutPass} />

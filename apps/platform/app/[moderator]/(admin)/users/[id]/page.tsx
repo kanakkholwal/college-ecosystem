@@ -11,12 +11,9 @@ interface PageProps {
 
 export default async function UpdateUserPage({ params }: PageProps) {
   const { id } = await params;
-  
+
   // Parallel fetching for performance
-  const [user, hostelRes] = await Promise.all([
-    getUser(id),
-    getHostels()
-  ]);
+  const [user, hostelRes] = await Promise.all([getUser(id), getHostels()]);
 
   if (!user) return notFound();
 
@@ -28,12 +25,12 @@ export default async function UpdateUserPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
         {/* 2. Sidebar: Quick Actions, ID, Read-only meta */}
         <aside className="space-y-6 lg:sticky lg:top-8">
-             <UserSidebar user={user} />
+          <UserSidebar user={user} />
         </aside>
 
         {/* 3. Main Content: Forms & Sessions */}
         <main>
-             <UserContent user={user} hostels={hostelRes.data || []} />
+          <UserContent user={user} hostels={hostelRes.data || []} />
         </main>
       </div>
     </div>

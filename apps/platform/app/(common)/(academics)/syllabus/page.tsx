@@ -76,22 +76,23 @@ export default async function CoursesPage(props: {
           }
         >
           {courses.map((course, i) => {
-            return (<Fragment key={course.id}>
-              <CourseCard
-                key={course.id}
-                course={course}
-                className="hover:shadow-lg animate-in popup flex flex-col items-stretch justify-between"
-                style={{
-                  animationDelay: `${i * 100}ms`,
-                }}
-              />
-              {/* {(i + 1) % 4 === 0 && (
+            return (
+              <Fragment key={course.id}>
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  className="hover:shadow-lg animate-in popup flex flex-col items-stretch justify-between"
+                  style={{
+                    animationDelay: `${i * 100}ms`,
+                  }}
+                />
+                {/* {(i + 1) % 4 === 0 && (
                 <AdUnit
                   adSlot="display-square"
                   key={`ad-${course.id}`}
                 />
               )} */}
-            </Fragment>
+              </Fragment>
             );
           })}
         </Suspense>
@@ -100,10 +101,7 @@ export default async function CoursesPage(props: {
       <div className="max-w-7xl mx-auto p-4">
         {courses.length > 0 ? <Pagination totalPages={totalPages} /> : null}
       </div>
-      <AdUnit
-        adSlot="multiplex"
-        key={`syllabus-page-ad-footer`}
-      />
+      <AdUnit adSlot="multiplex" key={`syllabus-page-ad-footer`} />
     </div>
   );
 }

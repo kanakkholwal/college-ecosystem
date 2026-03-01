@@ -1,7 +1,7 @@
 "use client";
 
 import { useShare } from "@/hooks/useShare";
-import { sendGAEvent } from '@next/third-parties/google';
+import { sendGAEvent } from "@next/third-parties/google";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Icon } from "../icons";
@@ -58,7 +58,7 @@ function ShareButton({ data, shareCurrentUrl, ...props }: ShareButtonProps) {
             url: shareUrl,
             hasNativeSupport: isNativeShareSupported,
           });
-        }
+        },
       }}
       className="grid-cols-1 gap-4 grid w-full"
     >

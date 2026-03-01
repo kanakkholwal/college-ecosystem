@@ -3,10 +3,8 @@ import * as z from "zod";
 import {
   CATEGORY_TYPES,
   SUB_CATEGORY_TYPES,
-  RawCommunityPostType
+  RawCommunityPostType,
 } from "~/constants/common.community";
-
-
 
 export type CommunityPostTypeWithId = RawCommunityPostType & {
   _id: string;

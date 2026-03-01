@@ -39,13 +39,17 @@ export async function getWardenDashboardStats(
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user) return { success: false, error: "Unauthorized" };
 
-    const hostel = await HostelModel.findOne<IHostelType>({ slug: hostelSlug }).lean();
+    const hostel = await HostelModel.findOne<IHostelType>({
+      slug: hostelSlug,
+    }).lean();
     if (!hostel) return { success: false, error: "Hostel not found" };
 
     // Security check: Ensure current user is an admin of this hostel
     const isAuthorized =
       hostel.warden.email === session.user.email ||
-      hostel.administrators.some((admin: any) => admin.email === session.user.email) ||
+      hostel.administrators.some(
+        (admin: any) => admin.email === session.user.email
+      ) ||
       session.user.role === "admin";
 
     if (!isAuthorized) return { success: false, error: "Forbidden Access" };
@@ -86,13 +90,14 @@ export async function getWardenDashboardStats(
   } catch (error) {
     console.error("Stats Fetch Error:", error);
     return {
-      success: false, error: "Failed to load dashboard stats",
+      success: false,
+      error: "Failed to load dashboard stats",
       data: {
         pendingOutpasses: 0,
         activeOutpasses: 0,
         totalStudents: 0,
         bannedStudents: 0,
-      }
+      },
     };
   }
 }
@@ -108,7 +113,9 @@ export async function getPendingOutpasses(
 ): ActionResponse {
   try {
     await dbConnect();
-    const hostel = await HostelModel.findOne({ slug: hostelSlug }).select("_id");
+    const hostel = await HostelModel.findOne({ slug: hostelSlug }).select(
+      "_id"
+    );
     if (!hostel) throw new Error("Hostel not found");
 
     const requests = await OutPassModel.find({
@@ -152,7 +159,7 @@ export async function processOutpassRequest(
     }
 
     outpass.status = decision;
-    // If you had a 'remarks' field in schema, update it here. 
+    // If you had a 'remarks' field in schema, update it here.
     // Since schema doesn't have it explicitly, we skip saving remarks or add it to schema later.
 
     await outpass.save();
@@ -177,7 +184,9 @@ export async function getHostelResidents(
 ): ActionResponse {
   try {
     await dbConnect();
-    const hostel = await HostelModel.findOne({ slug: hostelSlug }).select("_id");
+    const hostel = await HostelModel.findOne({ slug: hostelSlug }).select(
+      "_id"
+    );
 
     // Build Search Filter
     const filter: any = { hostelId: hostel._id };

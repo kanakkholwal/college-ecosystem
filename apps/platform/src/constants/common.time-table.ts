@@ -49,6 +49,6 @@ export const rawTimetableSchema = z.object({
       ),
     })
   ),
-  status: z.enum(["draft", "published","archived"]).default("draft"),
+  status: z.enum(["draft", "published", "archived"]).default("draft"),
 });
 export type RawTimetableType = z.infer<typeof rawTimetableSchema>;

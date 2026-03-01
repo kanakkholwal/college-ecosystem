@@ -13,7 +13,11 @@ export default async function CreateCoursePage({
     <div className="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 space-y-8">
       <HeaderBar
         Icon={PlusCircle}
-        titleNode={<h1 className="text-xl font-bold tracking-tight">Create New Course</h1>}
+        titleNode={
+          <h1 className="text-xl font-bold tracking-tight">
+            Create New Course
+          </h1>
+        }
         descriptionNode="Define the course structure. You can add chapters and resources after creation."
       />
 

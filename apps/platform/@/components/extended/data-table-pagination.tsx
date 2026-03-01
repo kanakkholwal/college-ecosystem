@@ -2,17 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -41,7 +41,7 @@ export function DataTablePagination({
   const updateUrl = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => params.set(key, value));
-    
+
     startTransition(() => {
       router.replace(`?${params.toString()}`);
     });
@@ -56,16 +56,15 @@ export function DataTablePagination({
       </div>
 
       <div className="flex items-center space-x-6 lg:space-x-8">
-        
         {/* Rows Per Page Selector */}
         <div className="flex items-center space-x-2">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
             value={`${pageSize}`}
             onValueChange={(value) => {
-              updateUrl({ 
-                  limit: value, 
-                  offset: "0" // Reset to first page on size change
+              updateUrl({
+                limit: value,
+                offset: "0", // Reset to first page on size change
               });
             }}
             disabled={isLoading}
@@ -102,7 +101,9 @@ export function DataTablePagination({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => updateUrl({ offset: `${(pageIndex - 1) * pageSize}` })}
+            onClick={() =>
+              updateUrl({ offset: `${(pageIndex - 1) * pageSize}` })
+            }
             disabled={pageIndex === 0 || isLoading}
           >
             <span className="sr-only">Go to previous page</span>
@@ -111,7 +112,9 @@ export function DataTablePagination({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => updateUrl({ offset: `${(pageIndex + 1) * pageSize}` })}
+            onClick={() =>
+              updateUrl({ offset: `${(pageIndex + 1) * pageSize}` })
+            }
             disabled={pageIndex >= pageCount - 1 || isLoading}
           >
             <span className="sr-only">Go to next page</span>
@@ -120,7 +123,9 @@ export function DataTablePagination({
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => updateUrl({ offset: `${(pageCount - 1) * pageSize}` })}
+            onClick={() =>
+              updateUrl({ offset: `${(pageCount - 1) * pageSize}` })
+            }
             disabled={pageIndex >= pageCount - 1 || isLoading}
           >
             <span className="sr-only">Go to last page</span>

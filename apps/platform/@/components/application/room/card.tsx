@@ -17,14 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import type { InferSelectModel } from "drizzle-orm";
-import {
-  Box,
-  Clock,
-  MoreHorizontal,
-  Trash2,
-  Users,
-  Zap
-} from "lucide-react";
+import { Box, Clock, MoreHorizontal, Trash2, Users, Zap } from "lucide-react";
 import { useTransition } from "react";
 import toast from "react-hot-toast";
 import { deleteRoom, updateRoom } from "~/actions/common.room";
@@ -57,8 +50,8 @@ export default function RoomCard({
 
   const authorized = user
     ? user?.role === "admin" ||
-    user.other_roles?.includes("cr") ||
-    user.other_roles?.includes("faculty")
+      user.other_roles?.includes("cr") ||
+      user.other_roles?.includes("faculty")
     : false;
 
   const isAvailable = room.currentStatus === "available";
@@ -92,20 +85,27 @@ export default function RoomCard({
       )}
       {...props}
     >
-
-
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 pt-5">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-xl tracking-tight">{room.roomNumber}</h3>
+            <h3 className="font-bold text-xl tracking-tight">
+              {room.roomNumber}
+            </h3>
             {/* Status Dot */}
-            <div className={cn(
-              "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-              isAvailable
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-600 border-rose-500/20"
-            )}>
-              <span className={cn("size-1.5 rounded-full animate-pulse", isAvailable ? "bg-emerald-500" : "bg-rose-500")} />
+            <div
+              className={cn(
+                "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                isAvailable
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+              )}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full animate-pulse",
+                  isAvailable ? "bg-emerald-500" : "bg-rose-500"
+                )}
+              />
               {isAvailable ? "Online" : "Busy"}
             </div>
           </div>
@@ -118,7 +118,11 @@ export default function RoomCard({
         {authorized && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon_sm" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="icon_sm"
+                className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground"
+              >
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -131,7 +135,7 @@ export default function RoomCard({
                       toast.promise(deleteRoom(room.id), {
                         loading: "Deleting...",
                         success: "Room deleted",
-                        error: "Failed"
+                        error: "Failed",
                       });
                     }
                   }}
@@ -156,7 +160,9 @@ export default function RoomCard({
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
               <Box className="size-3" /> Type
             </span>
-            <span className="text-sm font-medium capitalize">{room.roomType}</span>
+            <span className="text-sm font-medium capitalize">
+              {room.roomType}
+            </span>
           </div>
         </div>
 
@@ -164,7 +170,12 @@ export default function RoomCard({
         {authorized && (
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40">
             <div className="flex items-center gap-2">
-              <Zap className={cn("size-4", isAvailable ? "text-muted-foreground" : "text-rose-500")} />
+              <Zap
+                className={cn(
+                  "size-4",
+                  isAvailable ? "text-muted-foreground" : "text-rose-500"
+                )}
+              />
               <span className="text-xs font-medium">Occupancy Status</span>
             </div>
             <Switch
@@ -184,7 +195,10 @@ export default function RoomCard({
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 w-full border-t border-border/40 pt-3">
           <Clock className="size-3" />
           <span className="truncate">
-            Updated {room.lastUpdatedTime ? formatDateAgo(new Date(room.lastUpdatedTime).toISOString()) : "never"}
+            Updated{" "}
+            {room.lastUpdatedTime
+              ? formatDateAgo(new Date(room.lastUpdatedTime).toISOString())
+              : "never"}
             {room.latestUsageHistory && (
               <span className="text-foreground/80 ml-1">
                 by {room.latestUsageHistory.name}

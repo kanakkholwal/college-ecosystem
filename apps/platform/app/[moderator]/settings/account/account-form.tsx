@@ -6,7 +6,7 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator"; // Ensure you have this or use a <div className="h-px bg-border" />
@@ -94,7 +94,9 @@ function ProfileSection({ currentUser }: Props) {
         {/* Gender Field */}
         <div className="grid gap-4 md:grid-cols-3 md:gap-8">
           <div className="space-y-1">
-            <h4 className="text-sm font-medium leading-none">Gender Identity</h4>
+            <h4 className="text-sm font-medium leading-none">
+              Gender Identity
+            </h4>
             <p className="text-xs text-muted-foreground">
               {isGenderLocked
                 ? "This field is locked as it has already been set."

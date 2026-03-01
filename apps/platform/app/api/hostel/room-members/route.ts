@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "~/lib/dbConnect";
 import { HostelRoomModel, RoomMemberModel } from "~/models/allotment";
 
-
 type RoomResponse = {
   roomNumber: string;
   capacity: number;
@@ -18,8 +17,8 @@ type RoomResponse = {
     name: string;
     rollNumber: string;
     email: string;
-  }>
-}
+  }>;
+};
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

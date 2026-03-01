@@ -4,11 +4,7 @@ import AdUnit from "@/components/common/adsense";
 import { Badge } from "@/components/ui/badge";
 import { AuthButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import {
-  Globe,
-  LayoutGrid,
-  MessageSquarePlus
-} from "lucide-react";
+import { Globe, LayoutGrid, MessageSquarePlus } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { getPostsByCategory } from "~/actions/common.community";
@@ -42,21 +38,28 @@ export default async function CommunitiesPage(props: {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
       {/* --- CENTER COLUMN: FEED --- */}
       <div className="lg:col-span-2 min-h-screen space-y-6">
-
         {/* Sticky Header */}
         <div className="sticky top-4 z-30 rounded-xl border border-border/40 bg-card/80 backdrop-blur-xl px-4 py-3 shadow-sm transition-all">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={cn(
-                "flex size-10 items-center justify-center rounded-lg border shadow-sm",
-                activeCategory ? "bg-background" : "bg-primary/10 text-primary border-primary/20"
-              )}>
+              <div
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-lg border shadow-sm",
+                  activeCategory
+                    ? "bg-background"
+                    : "bg-primary/10 text-primary border-primary/20"
+                )}
+              >
                 {activeCategory ? (
                   <div className="relative size-full overflow-hidden rounded-lg">
-                    <Image src={activeCategory.image} alt="" fill className="object-cover" />
+                    <Image
+                      src={activeCategory.image}
+                      alt=""
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 ) : (
                   <Globe className="size-5" />
@@ -71,7 +74,9 @@ export default async function CommunitiesPage(props: {
                   </Badge>
                 </h1>
                 <p className="text-xs text-muted-foreground line-clamp-1">
-                  {activeCategory ? "Community Discussions" : "All public conversations"}
+                  {activeCategory
+                    ? "Community Discussions"
+                    : "All public conversations"}
                 </p>
               </div>
             </div>
@@ -96,7 +101,6 @@ export default async function CommunitiesPage(props: {
       </div>
 
       <div className="hidden lg:block lg:col-span-1 space-y-6">
-
         <div className="sticky top-24 space-y-6">
           <div className="rounded-xl border border-border/50 bg-card overflow-hidden shadow-sm">
             <div className="h-16 bg-accent/50 w-full relative">
@@ -107,7 +111,12 @@ export default async function CommunitiesPage(props: {
               {/* Icon */}
               <div className="relative size-16 rounded-xl border-4 border-card bg-background overflow-hidden shadow-sm mb-3">
                 {activeCategory ? (
-                  <Image src={activeCategory.image} alt="" fill className="object-cover" />
+                  <Image
+                    src={activeCategory.image}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
                 ) : (
                   <div className="size-full flex items-center justify-center bg-primary/5 text-primary">
                     <LayoutGrid className="size-8" />
@@ -120,7 +129,8 @@ export default async function CommunitiesPage(props: {
               </h2>
 
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                {activeCategory?.description || "Welcome to the NITH community forum. A place to share ideas, ask questions, and connect with peers."}
+                {activeCategory?.description ||
+                  "Welcome to the NITH community forum. A place to share ideas, ask questions, and connect with peers."}
               </p>
 
               <div className="flex gap-4 mt-4 py-4 border-t border-b border-border/50">
@@ -150,7 +160,6 @@ export default async function CommunitiesPage(props: {
           <AdUnit adSlot="display-vertical" key="communities-context-sidebar" />
         </div>
       </div>
-
     </div>
   );
 }

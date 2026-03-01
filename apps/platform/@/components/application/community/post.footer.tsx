@@ -4,9 +4,7 @@ import ShareButton from "@/components/common/share-button";
 import { Icon } from "@/components/icons";
 import { AuthActionButton } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import {
-  Send
-} from "lucide-react";
+import { Send } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import toast from "react-hot-toast";
 import { updatePost } from "~/actions/common.community";
@@ -19,10 +17,15 @@ interface FooterProps {
   post: CommunityPostTypeWithId;
   user?: Session["user"];
   className?: string;
-  children?: React.ReactNode
+  children?: React.ReactNode;
 }
 
-export default function PostFooterOptimistic({ post, user, className, children }: FooterProps) {
+export default function PostFooterOptimistic({
+  post,
+  user,
+  className,
+  children,
+}: FooterProps) {
   return (
     <div className={cn("mt-4 pt-4 border-t border-border/40", className)}>
       <div className="flex items-center justify-start">
@@ -43,12 +46,9 @@ export default function PostFooterOptimistic({ post, user, className, children }
           <span className="text-xs font-medium hidden sm:inline">Share</span>
         </ShareButton>
       </div>
-
     </div>
   );
 }
-
-
 
 interface OptimisticFooterActionBarProps {
   post: CommunityPostTypeWithId;
@@ -56,13 +56,20 @@ interface OptimisticFooterActionBarProps {
   className?: string;
 }
 
-export function OptimisticFooterActionBar({ post, user, className }: OptimisticFooterActionBarProps) {
+export function OptimisticFooterActionBar({
+  post,
+  user,
+  className,
+}: OptimisticFooterActionBarProps) {
   const [isLiking, startLikingTransition] = useTransition();
   const [isSaving, startSavingTransition] = useTransition();
 
   const [optimisticPost, setOptimisticPost] = useOptimistic(
     post,
-    (current, action: { type: "toggleLike" | "toggleSave"; userId: string }) => {
+    (
+      current,
+      action: { type: "toggleLike" | "toggleSave"; userId: string }
+    ) => {
       if (action.type === "toggleLike") {
         const liked = current.likes.includes(action.userId);
         return {
@@ -110,7 +117,6 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
-
       <AuthActionButton
         variant="ghost"
         size="sm"
@@ -153,7 +159,9 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
         disabled={isSaving}
         className={cn(
           "group flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all hover:bg-emerald-500/10 active:scale-95",
-          isSaved ? "text-emerald-500" : "text-muted-foreground hover:text-emerald-500"
+          isSaved
+            ? "text-emerald-500"
+            : "text-muted-foreground hover:text-emerald-500"
         )}
       >
         <Icon
@@ -161,10 +169,15 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
           className={cn(
             "size-4 transition-transform group-hover:scale-110",
             isSaved && "fill-current scale-110",
-            isSaving && "animate-spin",
+            isSaving && "animate-spin"
           )}
         />
-        <span className={cn("text-xs font-semibold tabular-nums", !isSaved && "hidden sm:inline")}>
+        <span
+          className={cn(
+            "text-xs font-semibold tabular-nums",
+            !isSaved && "hidden sm:inline"
+          )}
+        >
           {isSaved ? "Saved" : "Save"}
         </span>
       </AuthActionButton>
@@ -174,7 +187,6 @@ export function OptimisticFooterActionBar({ post, user, className }: OptimisticF
          <MessageCircle className="size-4" />
          <span className="text-xs font-semibold tabular-nums">0</span>
       </div> */}
-
     </div>
   );
 }

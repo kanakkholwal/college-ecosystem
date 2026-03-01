@@ -22,7 +22,7 @@ import {
   Eye,
   MessageCircle,
   MessageSquare,
-  Share2
+  Share2,
 } from "lucide-react";
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
@@ -65,7 +65,8 @@ export default async function CommunityPost(props: Props) {
 
   if (post) viewCache.add(params.postId);
 
-  const isAuthor = session?.user?.id === post.author.id || session?.user?.role === "admin";
+  const isAuthor =
+    session?.user?.id === post.author.id || session?.user?.role === "admin";
 
   return (
     <div className="min-h-screen">
@@ -223,8 +224,12 @@ export default async function CommunityPost(props: Props) {
             {/* Post Footer Actions */}
             <div className="mt-8 pt-6 border-t">
               <PostFooter post={post} user={session?.user!}>
-
-                {session?.user?.role === "admin" && (<ActivityList targetId={post._id} targetModel="communityPost" />)}
+                {session?.user?.role === "admin" && (
+                  <ActivityList
+                    targetId={post._id}
+                    targetModel="communityPost"
+                  />
+                )}
               </PostFooter>
             </div>
 
@@ -263,11 +268,7 @@ export default async function CommunityPost(props: Props) {
           {/* Sidebar Actions - Desktop Only */}
           <aside className="hidden lg:block">
             <div className="sticky top-[72px] flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                size="icon_lg"
-                asChild
-              >
+              <Button variant="ghost" size="icon_lg" asChild>
                 <a href="#comments" title="Comments">
                   <MessageSquare />
                 </a>

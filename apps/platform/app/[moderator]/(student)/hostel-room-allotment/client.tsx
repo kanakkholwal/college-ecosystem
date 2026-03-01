@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   Lock,
   Plus,
-  Unlock, User, Users
+  Unlock,
+  User,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner"; // Assuming sonner, or use react-hot-toast
@@ -26,26 +28,41 @@ import type { HostelRoomJson } from "~/models/allotment";
 import { orgConfig } from "~/project.config";
 
 // --- Header Component ---
-export function AllotmentHeader({ status, joinedRoom }: { status: string, joinedRoom?: string }) {
+export function AllotmentHeader({
+  status,
+  joinedRoom,
+}: {
+  status: string;
+  joinedRoom?: string;
+}) {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Room Selection</h1>
         <p className="text-muted-foreground mt-1">
-          Select your preferred room. Coordinate with your squad for group allocation.
+          Select your preferred room. Coordinate with your squad for group
+          allocation.
         </p>
       </div>
       <div className="flex items-center gap-3">
         {joinedRoom ? (
-          <Badge variant="default" className="px-3 py-1 bg-muted text-green-700 border-green-200">
+          <Badge
+            variant="default"
+            className="px-3 py-1 bg-muted text-green-700 border-green-200"
+          >
             <CheckCircle2 className="w-4 h-4 mr-2" />
             Allocated: {joinedRoom}
           </Badge>
         ) : (
-          <Badge variant="default" className={cn(
-            "px-3 py-1 capitalize whitespace-nowrap",
-            status === "open" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-muted"
-          )}>
+          <Badge
+            variant="default"
+            className={cn(
+              "px-3 py-1 capitalize whitespace-nowrap",
+              status === "open"
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : "bg-muted"
+            )}
+          >
             Status: {status}
           </Badge>
         )}
@@ -55,14 +72,22 @@ export function AllotmentHeader({ status, joinedRoom }: { status: string, joined
 }
 
 // --- Grid Component ---
-export function RoomGrid({ rooms, hostId, userRoomId }: { rooms: HostelRoomJson[], hostId: string, userRoomId?: string }) {
+export function RoomGrid({
+  rooms,
+  hostId,
+  userRoomId,
+}: {
+  rooms: HostelRoomJson[];
+  hostId: string;
+  userRoomId?: string;
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       {rooms.map((room) => (
-        <RoomCard 
-          key={room._id} 
-          room={room} 
-          hostId={hostId} 
+        <RoomCard
+          key={room._id}
+          room={room}
+          hostId={hostId}
           isUserRoom={userRoomId === room._id}
         />
       ))}
@@ -71,7 +96,15 @@ export function RoomGrid({ rooms, hostId, userRoomId }: { rooms: HostelRoomJson[
 }
 
 // --- Card Component (The "Stripe" Look) ---
-function RoomCard({ room, hostId, isUserRoom }: { room: HostelRoomJson, hostId: string, isUserRoom: boolean }) {
+function RoomCard({
+  room,
+  hostId,
+  isUserRoom,
+}: {
+  room: HostelRoomJson;
+  hostId: string;
+  isUserRoom: boolean;
+}) {
   const isFull = room.occupied_seats >= room.capacity;
   const isLocked = room.isLocked;
   const percentage = (room.occupied_seats / room.capacity) * 100;
@@ -79,7 +112,7 @@ function RoomCard({ room, hostId, isUserRoom }: { room: HostelRoomJson, hostId: 
   // State Logic
   let statusColor = "bg-green-500";
   let borderColor = "hover:border-green-300";
-  
+
   if (isLocked) {
     statusColor = "bg-gray-400";
     borderColor = "border-gray-100 opacity-80";
@@ -92,16 +125,17 @@ function RoomCard({ room, hostId, isUserRoom }: { room: HostelRoomJson, hostId: 
   }
 
   return (
-    <Card className={cn(
-      "group relative overflow-hidden transition-all duration-300",
-      "border border-border/60 shadow-sm hover:shadow-md",
-      borderColor
-    )}>
+    <Card
+      className={cn(
+        "group relative overflow-hidden transition-all duration-300",
+        "border border-border/60 shadow-sm hover:shadow-md",
+        borderColor
+      )}
+    >
       {/* Top Highlight Bar */}
       <div className={cn("absolute top-0 left-0 w-full h-1", statusColor)} />
 
       <div className="p-5 flex flex-col h-full justify-between gap-4">
-        
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
@@ -127,16 +161,25 @@ function RoomCard({ room, hostId, isUserRoom }: { room: HostelRoomJson, hostId: 
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Occupancy</span>
-            <span className={cn("font-medium", isFull ? "text-amber-600" : "text-foreground")}>
+            <span
+              className={cn(
+                "font-medium",
+                isFull ? "text-amber-600" : "text-foreground"
+              )}
+            >
               {room.occupied_seats} / {room.capacity}
             </span>
           </div>
-          <Progress value={percentage} className="h-2" indicatorClassName={statusColor} />
-          
+          <Progress
+            value={percentage}
+            className="h-2"
+            indicatorClassName={statusColor}
+          />
+
           {/* Avatar Stack Visual */}
           <div className="flex items-center gap-1 pt-1 h-6">
             {Array.from({ length: room.capacity }).map((_, i) => (
-              <div 
+              <div
                 key={i}
                 className={cn(
                   "w-2 h-2 rounded-full transition-colors",
@@ -148,7 +191,13 @@ function RoomCard({ room, hostId, isUserRoom }: { room: HostelRoomJson, hostId: 
         </div>
 
         {/* Action Button */}
-        <RoomDetailsDialog room={room} hostId={hostId} isLocked={isLocked} isFull={isFull} isUserRoom={isUserRoom} />
+        <RoomDetailsDialog
+          room={room}
+          hostId={hostId}
+          isLocked={isLocked}
+          isFull={isFull}
+          isUserRoom={isUserRoom}
+        />
       </div>
     </Card>
   );
@@ -158,12 +207,20 @@ function RoomCard({ room, hostId, isUserRoom }: { room: HostelRoomJson, hostId: 
 // Note: Moved fetch logic inside for cleaner separation
 
 async function fetchRoomDetails(roomId: string) {
-  const res = await fetch(`/api/hostel/room-members?roomId=${roomId}`, { cache: "no-store" });
+  const res = await fetch(`/api/hostel/room-members?roomId=${roomId}`, {
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Failed to load details");
   return res.json();
 }
 
-function RoomDetailsDialog({ room, hostId, isLocked, isFull, isUserRoom }: any) {
+function RoomDetailsDialog({
+  room,
+  hostId,
+  isLocked,
+  isFull,
+  isUserRoom,
+}: any) {
   const { data: roomDetails, isLoading } = useQuery({
     queryKey: ["room", room._id],
     queryFn: () => fetchRoomDetails(room._id),
@@ -174,34 +231,43 @@ function RoomDetailsDialog({ room, hostId, isLocked, isFull, isUserRoom }: any) 
   const [loading, setLoading] = useState(false);
 
   // Derive Host Logic
-  const isMeHost = roomDetails?.hostStudent?.email === roomDetails?.members?.find((m: any) => m.email.includes(hostId))?.email 
-                   || room.hostStudent === hostId; // Simplified check
-  
+  const isMeHost =
+    roomDetails?.hostStudent?.email ===
+      roomDetails?.members?.find((m: any) => m.email.includes(hostId))?.email ||
+    room.hostStudent === hostId; // Simplified check
+
   // Handlers
   const handleJoin = async () => {
     setLoading(true);
     try {
       const res = await joinRoom(room._id, hostId);
-      if(res.error) toast.error(res.message);
+      if (res.error) toast.error(res.message);
       else toast.success(res.message);
-    } catch(e) { toast.error("Failed to join"); }
+    } catch (e) {
+      toast.error("Failed to join");
+    }
     setLoading(false);
   };
 
   const handleAddMember = async () => {
-    if(!inputVal) return;
+    if (!inputVal) return;
     setLoading(true);
-    const rolls = inputVal.split(',').map(s => s.trim()).filter(Boolean);
-    const emails = rolls.map(r => `${r}${orgConfig.mailSuffix}`); // Ensure suffix logic matches your org
-    
+    const rolls = inputVal
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const emails = rolls.map((r) => `${r}${orgConfig.mailSuffix}`); // Ensure suffix logic matches your org
+
     try {
       const res = await addRoomMembers(room._id, hostId, emails);
-      if(res.error) toast.error(res.message);
+      if (res.error) toast.error(res.message);
       else {
         toast.success("Members added");
         setInputVal("");
       }
-    } catch(e) { toast.error("Failed to add members"); }
+    } catch (e) {
+      toast.error("Failed to add members");
+    }
     setLoading(false);
   };
 
@@ -211,13 +277,20 @@ function RoomDetailsDialog({ room, hostId, isLocked, isFull, isUserRoom }: any) 
         variant: isUserRoom ? "default" : "outline",
         className: "w-full mt-2",
         disabled: isLocked,
-        children: isUserRoom ? "Manage Room" : isLocked ? "Locked" : "View & Join",
+        children: isUserRoom
+          ? "Manage Room"
+          : isLocked
+            ? "Locked"
+            : "View & Join",
       }}
       title={`Room ${room.roomNumber}`}
-      description={isLocked ? "This room is currently locked by administration." : "Manage members and occupancy."}
+      description={
+        isLocked
+          ? "This room is currently locked by administration."
+          : "Manage members and occupancy."
+      }
     >
       <div className="space-y-6 py-4">
-        
         {/* Host Section */}
         {roomDetails?.hostStudent && (
           <div className="bg-muted/50 p-3 rounded-lg flex items-center gap-3">
@@ -225,9 +298,15 @@ function RoomDetailsDialog({ room, hostId, isLocked, isFull, isUserRoom }: any) 
               <User className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase">Room Host</p>
-              <p className="text-sm font-semibold">{roomDetails.hostStudent.name}</p>
-              <p className="text-xs text-muted-foreground">{roomDetails.hostStudent.rollNumber}</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase">
+                Room Host
+              </p>
+              <p className="text-sm font-semibold">
+                {roomDetails.hostStudent.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {roomDetails.hostStudent.rollNumber}
+              </p>
             </div>
           </div>
         )}
@@ -238,31 +317,38 @@ function RoomDetailsDialog({ room, hostId, isLocked, isFull, isUserRoom }: any) 
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Users className="w-4 h-4" /> Roommates
             </h4>
-            <span className="text-xs text-muted-foreground">{room.occupied_seats}/{room.capacity}</span>
+            <span className="text-xs text-muted-foreground">
+              {room.occupied_seats}/{room.capacity}
+            </span>
           </div>
-          
+
           <div className="space-y-2">
             {isLoading ? (
               <div className="h-20 bg-muted animate-pulse rounded-md" />
             ) : roomDetails?.members?.length > 0 ? (
               roomDetails.members.map((m: any) => (
-                <div key={m.email} className="flex items-center justify-between p-2 border rounded-md bg-card">
+                <div
+                  key={m.email}
+                  className="flex items-center justify-between p-2 border rounded-md bg-card"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
                       {m.name.charAt(0)}
                     </div>
                     <div>
                       <p className="text-sm font-medium">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">{m.rollNumber}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {m.rollNumber}
+                      </p>
                     </div>
                   </div>
                   {/* Optional: Add Remove Button here if (isMeHost) */}
                 </div>
               ))
             ) : (
-               <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-md">
-                 No members yet. Be the first to join!
-               </div>
+              <div className="text-center py-4 text-sm text-muted-foreground border border-dashed rounded-md">
+                No members yet. Be the first to join!
+              </div>
             )}
           </div>
         </div>
@@ -272,25 +358,36 @@ function RoomDetailsDialog({ room, hostId, isLocked, isFull, isUserRoom }: any) 
           <div className="pt-2 border-t">
             {isMeHost ? (
               <div className="space-y-3">
-                 <p className="text-xs font-medium text-muted-foreground uppercase">Invite Roommates</p>
-                 <div className="flex gap-2">
-                   <Input 
-                     placeholder="Enter Roll Numbers (comma separated)" 
-                     value={inputVal}
-                     onChange={(e) => setInputVal(e.target.value)}
-                     className="flex-1"
-                   />
-                   <Button onClick={handleAddMember} disabled={loading || !inputVal} size="icon">
-                     <Plus className="w-4 h-4" />
-                   </Button>
-                 </div>
-                 <p className="text-[10px] text-muted-foreground">
-                   * Adding members will auto-reserve them into this room.
-                 </p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Invite Roommates
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter Roll Numbers (comma separated)"
+                    value={inputVal}
+                    onChange={(e) => setInputVal(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleAddMember}
+                    disabled={loading || !inputVal}
+                    size="icon"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  * Adding members will auto-reserve them into this room.
+                </p>
               </div>
             ) : (
-              !isFull && !isUserRoom && (
-                <Button onClick={handleJoin} disabled={loading} className="w-full">
+              !isFull &&
+              !isUserRoom && (
+                <Button
+                  onClick={handleJoin}
+                  disabled={loading}
+                  className="w-full"
+                >
                   {loading ? "Joining..." : "Join Room as Host"}
                 </Button>
               )

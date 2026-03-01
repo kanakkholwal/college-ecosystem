@@ -127,24 +127,30 @@ export async function getCourseById(id: string) {
   return (course[0] as CourseSelect) || null;
 }
 
-export async function createCourse(data: Omit<CourseInsert, "id" | "createdAt" | "updatedAt">) {
+export async function createCourse(
+  data: Omit<CourseInsert, "id" | "createdAt" | "updatedAt">
+) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
-  
+
   if (!session) throw new Error("Unauthorized");
-  
+
   // Authorization check (Admin, Faculty, CR)
   const { role, other_roles } = session.user;
-  const isAuthorized = role === "admin" || other_roles.includes("cr") || other_roles.includes("faculty");
-  
-  if (!isAuthorized) throw new Error("You do not have permission to create courses.");
+  const isAuthorized =
+    role === "admin" ||
+    other_roles.includes("cr") ||
+    other_roles.includes("faculty");
+
+  if (!isAuthorized)
+    throw new Error("You do not have permission to create courses.");
 
   // Insert
   const [newCourse] = await db
     .insert(courses)
     .values({
-        ...data,
-        outcomes: data.outcomes || [], // Ensure array if undefined
+      ...data,
+      outcomes: data.outcomes || [], // Ensure array if undefined
     })
     .returning();
 
@@ -186,9 +192,9 @@ export async function updateOrInsertChapterForCourseId(
   courseId: string,
   action: "update" | "insert",
   chapterData: Partial<ChapterSelect>,
-  chapterId?: string,
+  chapterId?: string
 ) {
-  try{
+  try {
     if (action === "update") {
       if (!chapterId) {
         throw new Error("Chapter id is required for update");
@@ -196,9 +202,7 @@ export async function updateOrInsertChapterForCourseId(
       const updatedChapter = await db
         .update(chapters)
         .set(chapterData)
-        .where(
-          and(eq(chapters.id, chapterId), eq(chapters.courseId, courseId))
-        )
+        .where(and(eq(chapters.id, chapterId), eq(chapters.courseId, courseId)))
         .returning();
       return updatedChapter[0] as ChapterSelect;
     } else if (action === "insert") {
@@ -213,7 +217,6 @@ export async function updateOrInsertChapterForCourseId(
         .returning();
       return newChapter[0] as ChapterSelect;
     }
-   
   } catch (error) {
     throw new Error("Failed to update chapter: " + (error as Error).message);
   }
@@ -221,9 +224,7 @@ export async function updateOrInsertChapterForCourseId(
 export async function deleteChapter(chapterId: string, courseId: string) {
   const deletedChapter = await db
     .delete(chapters)
-    .where(
-      and(eq(chapters.id, chapterId), eq(chapters.courseId, courseId))
-    )
+    .where(and(eq(chapters.id, chapterId), eq(chapters.courseId, courseId)))
     .returning();
   return deletedChapter[0] as ChapterSelect;
 }
@@ -289,4 +290,3 @@ export async function deleteCourse(id: string) {
     .returning();
   return deletedCourse[0] as CourseSelect;
 }
-

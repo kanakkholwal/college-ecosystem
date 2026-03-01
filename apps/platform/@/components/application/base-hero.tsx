@@ -34,7 +34,6 @@ function BaseHeroSection({
       <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(hsl(var(--muted-foreground)/0.15)_1px,transparent_1px)] bg-size-[20px_20px] mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
 
       <div className="relative z-10 w-full max-w-[calc(var(--max-app-width)*0.75)] mx-auto flex flex-col items-center">
-
         {/* Optional Top Badge */}
         {badge && (
           <div className="mb-8 animate-in fade-in zoom-in duration-500 slide-in-from-bottom-2">
@@ -47,7 +46,7 @@ function BaseHeroSection({
           className={cn(
             "text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-foreground text-balance",
             // If it's a string, give it a subtle gradient finish by default, otherwise let the node handle it
-            typeof title === 'string' && "text-metallic",
+            typeof title === "string" && "text-metallic",
             titleClassName
           )}
         >
@@ -77,11 +76,9 @@ function BaseHeroSection({
           </div>
         )}
       </div>
-
     </section>
   );
 }
 
 BaseHeroSection.displayName = "BaseHeroSection";
 export { BaseHeroSection };
-

@@ -63,13 +63,16 @@ export default function ResourceCard({
           />
           {/* Subtle gradient overlay for depth */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-          
+
           {/* Category Badge - Floating on Image */}
           {category && (
             <div className="absolute top-3 left-3">
-               <Badge variant="secondary" className="backdrop-blur-md bg-background/90 text-foreground/80 font-medium text-[10px] uppercase tracking-wider border-none shadow-sm px-2 py-0.5">
-                  {category}
-               </Badge>
+              <Badge
+                variant="secondary"
+                className="backdrop-blur-md bg-background/90 text-foreground/80 font-medium text-[10px] uppercase tracking-wider border-none shadow-sm px-2 py-0.5"
+              >
+                {category}
+              </Badge>
             </div>
           )}
         </div>
@@ -81,7 +84,6 @@ export default function ResourceCard({
 
       {/* --- CONTENT SECTION --- */}
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        
         {/* Top Meta (Date & Read Time) */}
         <div className="mb-3 flex items-center gap-3 text-xs text-muted-foreground/60 font-medium tracking-wide">
           <div className="flex items-center gap-1.5">
@@ -113,24 +115,26 @@ export default function ResourceCard({
 
         {/* Footer (Author & Category if no image) */}
         <div className="mt-auto flex items-center justify-between border-t border-border/30 pt-4">
-           {/* Author */}
-           <div className="flex items-center gap-2 text-xs font-medium text-foreground/70">
-              <div className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground/80">
-                 <User className="size-3" />
-              </div>
-              {frontmatter?.author?.name || "Editorial"}
-           </div>
-           
-           {/* Category fallback (if no image) or Tags count */}
-           {!showImage && category ? (
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                {category}
-              </span>
-           ) : tags.length > 0 && (
+          {/* Author */}
+          <div className="flex items-center gap-2 text-xs font-medium text-foreground/70">
+            <div className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground/80">
+              <User className="size-3" />
+            </div>
+            {frontmatter?.author?.name || "Editorial"}
+          </div>
+
+          {/* Category fallback (if no image) or Tags count */}
+          {!showImage && category ? (
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {category}
+            </span>
+          ) : (
+            tags.length > 0 && (
               <span className="text-[10px] text-muted-foreground/60 font-medium bg-muted/50 px-2 py-1 rounded-md">
                 #{tags[0]} {tags.length > 1 && `+${tags.length - 1}`}
               </span>
-           )}
+            )
+          )}
         </div>
       </div>
     </Link>

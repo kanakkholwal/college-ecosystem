@@ -69,14 +69,17 @@ export default async function PollsPage(props: {
           titleNode="Polls"
           descriptionNode="Check the latest polls here."
           actionNode={<CreatePoll />}
-        />    
+        />
         <div className="sticky top-5 z-5 flex items-center justify-between h-12 px-4 bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80 border rounded-lg">
           <div className="flex items-center gap-2">
             <CgPoll className="size-4 text-muted-foreground" />
-            <VercelTabsList tabs={tabs} onTabChangeQuery="tab" tabsListClassName="bg-transparent border-transparent" />
+            <VercelTabsList
+              tabs={tabs}
+              onTabChangeQuery="tab"
+              tabsListClassName="bg-transparent border-transparent"
+            />
           </div>
         </div>
-
 
         {tabs.map((tab, idx) => {
           if (tab.id === "your-polls" && !session?.user) {
@@ -107,7 +110,6 @@ export default async function PollsPage(props: {
 
           return (
             <TabsContent value={tab.id} key={tab.id} className="mt-0 space-y-6">
-
               {polls[idx].length === 0 ? (
                 <EmptyArea
                   title={`No ${tab.label.toLowerCase()}`}

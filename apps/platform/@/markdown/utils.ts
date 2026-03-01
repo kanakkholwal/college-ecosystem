@@ -56,8 +56,6 @@ export const compileMdxSource = async (
   }
 };
 
-
-
 /**
  * Extract Table of Contents from MDX content
  * @param content - The MDX content as a string

@@ -1,9 +1,7 @@
 "use server";
 import z from "zod";
-import { generateJsonFromDocument } from './api';
+import { generateJsonFromDocument } from "./api";
 import { courseArraySchema, eventArraySchema } from "./schema";
-
-
 
 export async function generateEventsByDoc(
   images: (string | ArrayBuffer)[]
@@ -12,12 +10,8 @@ export async function generateEventsByDoc(
   events: z.infer<typeof eventArraySchema>;
   message: string;
 }> {
-
   try {
-    const response = await generateJsonFromDocument(
-      images,
-      "events"
-    );
+    const response = await generateJsonFromDocument(images, "events");
     const events = eventArraySchema.parse(response.object);
     return Promise.resolve({
       error: null,
@@ -45,10 +39,7 @@ export async function generateCoursesByDoc(
   message: string;
 }> {
   try {
-    const response = await generateJsonFromDocument(
-      images,
-      "courses"
-    );
+    const response = await generateJsonFromDocument(images, "courses");
     const courses = courseArraySchema.parse(response.object);
     return Promise.resolve({
       error: null,
@@ -66,5 +57,4 @@ export async function generateCoursesByDoc(
         "An error occurred while generating courses from the document. Please try again later.",
     });
   }
-
 }

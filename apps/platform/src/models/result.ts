@@ -33,7 +33,7 @@ export interface ResultTypeWithId {
   programme: string;
   semesters: Semester[];
   rank: Rank;
-    gender?: "male" | "female" | "not_specified";
+  gender?: "male" | "female" | "not_specified";
 
   createdAt?: Date;
   updatedAt?: Date;
@@ -70,7 +70,6 @@ const SemesterSchema: Schema = new Schema({
   semester: { type: String, required: true },
   sgpi_total: { type: Number, required: true },
   cgpi_total: { type: Number, required: true },
-  
 });
 
 const ResultSchema = new Schema<IResultType>(
@@ -105,13 +104,14 @@ const ResultSchema = new Schema<IResultType>(
 // ResultSchema.index({ batch: 1, branch: 1, latestCgpi: -1 });
 
 // Pre-save hook to update latestCgpi
-ResultSchema.pre('save', function(next) {
+ResultSchema.pre("save", function (next) {
   if (this.semesters && this.semesters?.length > 0) {
     this.latestCgpi = this.semesters[this.semesters.length - 1].cgpi || 0;
   }
   next();
 });
 const ResultModel =
-  mongoose.models?.Result || mongoose.model<IResultType>("Result", ResultSchema);
+  mongoose.models?.Result ||
+  mongoose.model<IResultType>("Result", ResultSchema);
 
 export default ResultModel;

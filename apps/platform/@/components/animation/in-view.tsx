@@ -1,11 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
 import {
-    motion,
-    Transition,
-    useInView,
-    UseInViewOptions,
-    Variant,
+  motion,
+  Transition,
+  useInView,
+  UseInViewOptions,
+  Variant,
 } from "framer-motion";
 import { ReactNode, useRef, useState } from "react";
 

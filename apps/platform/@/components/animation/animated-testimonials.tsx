@@ -92,10 +92,10 @@ const TestimonialCard = ({
         </p>
       </div>
       <div className="ml-auto text-primary/20">
-         <Quote className="size-4" fill="currentColor" />
+        <Quote className="size-4" fill="currentColor" />
       </div>
     </div>
-    
+
     <blockquote className="mt-4 text-sm leading-relaxed text-muted-foreground/90 text-pretty">
       {testimonial.description}
     </blockquote>
@@ -116,7 +116,12 @@ export const AnimatedTestimonials = ({
   const secondRow = data.slice(Math.ceil(data.length / 2));
 
   return (
-    <div className={cn("relative flex w-full flex-col gap-4 overflow-hidden py-10", className)}>
+    <div
+      className={cn(
+        "relative flex w-full flex-col gap-4 overflow-hidden py-10",
+        className
+      )}
+    >
       <AnimatedCanopy pauseOnHover className="[--duration:40s]">
         {firstRow.map((testimonial) => (
           <TestimonialCard
@@ -126,7 +131,7 @@ export const AnimatedTestimonials = ({
           />
         ))}
       </AnimatedCanopy>
-      
+
       <AnimatedCanopy reverse pauseOnHover className="[--duration:40s]">
         {secondRow.map((testimonial) => (
           <TestimonialCard
@@ -136,7 +141,7 @@ export const AnimatedTestimonials = ({
           />
         ))}
       </AnimatedCanopy>
-      
+
       {/* Decorative background elements behind the marquee */}
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background to-transparent z-20" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background to-transparent z-20" />

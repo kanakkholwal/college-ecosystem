@@ -2,19 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,7 +30,7 @@ import {
   Loader2,
   SendHorizontal,
   Sparkles,
-  Tags
+  Tags,
 } from "lucide-react";
 import { defaultExtensions, NexoEditor, renderToMarkdown } from "nexo-editor";
 import "nexo-editor/index.css";
@@ -88,23 +83,37 @@ export default function CreateCommunityPost() {
   return (
     <div className="min-h-screen flex flex-col">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
-
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col h-full flex-1"
+        >
           {/* --- 1. Sticky Header --- */}
           <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-card backdrop-blur-xl rounded-lg">
             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <ButtonLink href="/community" variant="ghost" size="icon_sm" className="rounded-full">
+                <ButtonLink
+                  href="/community"
+                  variant="ghost"
+                  size="icon_sm"
+                  className="rounded-full"
+                >
                   <ArrowLeft className="size-4" />
                 </ButtonLink>
                 <div className="flex flex-col">
                   <h1 className="text-sm font-semibold">Create Post</h1>
-                  <span className="text-[10px] text-muted-foreground">Draft mode</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Draft mode
+                  </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <ButtonLink href="/community" variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground">
+                <ButtonLink
+                  href="/community"
+                  variant="ghost"
+                  size="sm"
+                  className="hidden sm:flex text-muted-foreground"
+                >
                   Discard
                 </ButtonLink>
                 <Button
@@ -125,9 +134,7 @@ export default function CreateCommunityPost() {
           </header>
 
           <div className="flex-1 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 px-2">
-
             <div className="lg:col-span-8 space-y-8">
-
               {/* Title Input (Hero Style) */}
               <FormField
                 control={form.control}
@@ -166,7 +173,9 @@ export default function CreateCommunityPost() {
                             form.setValue(
                               "content",
                               renderToMarkdown({
-                                content: form.getValues("content_json") as JSONContent,
+                                content: form.getValues(
+                                  "content_json"
+                                ) as JSONContent,
                                 extensions: defaultExtensions,
                               })
                             );
@@ -183,7 +192,6 @@ export default function CreateCommunityPost() {
 
             {/* Right: Settings Sidebar (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
-
               <Card className="border-border/50 shadow-sm">
                 <CardHeader className="pb-3 border-b border-border/40 p-4">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -192,14 +200,15 @@ export default function CreateCommunityPost() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-4 p-4">
-
                   {/* Category Select */}
                   <FormField
                     control={form.control}
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Community</FormLabel>
+                        <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                          Community
+                        </FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -215,7 +224,9 @@ export default function CreateCommunityPost() {
                               <SelectItem key={type} value={type}>
                                 <div className="flex items-center gap-2">
                                   <Globe className="size-3.5 text-muted-foreground" />
-                                  <span className="capitalize">{changeCase(type, "title")}</span>
+                                  <span className="capitalize">
+                                    {changeCase(type, "title")}
+                                  </span>
                                 </div>
                               </SelectItem>
                             ))}
@@ -233,7 +244,9 @@ export default function CreateCommunityPost() {
                       name="subCategory"
                       render={({ field }) => (
                         <FormItem className="animate-in slide-in-from-top-2 fade-in">
-                          <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Department</FormLabel>
+                          <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                            Department
+                          </FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value || ""}
@@ -263,14 +276,16 @@ export default function CreateCommunityPost() {
                     <div className="flex items-start gap-2">
                       <Sparkles className="size-4 text-blue-500 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Pro Tip</p>
+                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          Pro Tip
+                        </p>
                         <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          Use headers (H1, H2) to structure your post. Engaging titles get 2x more views.
+                          Use headers (H1, H2) to structure your post. Engaging
+                          titles get 2x more views.
                         </p>
                       </div>
                     </div>
                   </div>
-
                 </CardContent>
               </Card>
 
@@ -279,9 +294,10 @@ export default function CreateCommunityPost() {
                 <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <Tags className="size-3.5" /> Tags (Coming Soon)
                 </span>
-                <Badge variant="outline" className="text-[10px]">Auto-generated</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  Auto-generated
+                </Badge>
               </div>
-
             </div>
           </div>
         </form>

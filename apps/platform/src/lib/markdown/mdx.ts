@@ -52,9 +52,6 @@ export type CompliedResource = {
   data: { toc: TocItem[] };
 };
 
-
-
-
 const RESOURCE_DIR = path.join(process.cwd(), "resources");
 
 /**

@@ -2,28 +2,28 @@
 
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,7 +129,11 @@ export function GeneralSettingsForm({ course }: { course: CourseSelect }) {
                   <FormControl>
                     <div className="relative">
                       <Hash className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground opacity-50" />
-                      <Input className="pl-9 font-mono" placeholder="CS-101" {...field} />
+                      <Input
+                        className="pl-9 font-mono"
+                        placeholder="CS-101"
+                        {...field}
+                      />
                     </div>
                   </FormControl>
                   <FormDescription>Unique identifier.</FormDescription>
@@ -144,7 +148,10 @@ export function GeneralSettingsForm({ course }: { course: CourseSelect }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Department</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Department" />
@@ -172,7 +179,10 @@ export function GeneralSettingsForm({ course }: { course: CourseSelect }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Course Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Type" />
@@ -211,7 +221,9 @@ export function GeneralSettingsForm({ course }: { course: CourseSelect }) {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold">Learning Outcomes</h3>
-                <p className="text-xs text-muted-foreground">What will students learn?</p>
+                <p className="text-xs text-muted-foreground">
+                  What will students learn?
+                </p>
               </div>
               <Button
                 type="button"

@@ -1,25 +1,32 @@
-"use client"
+"use client";
 
-import { NumberTicker } from "@/components/animation/number-ticker"
-import { cn } from "@/lib/utils"
-import { Calculator, CheckCircle2, TrendingUp, XCircle } from "lucide-react"
-import type { PersonalAttendanceWithRecords } from "~/db/schema/attendance_record"
+import { NumberTicker } from "@/components/animation/number-ticker";
+import { cn } from "@/lib/utils";
+import { Calculator, CheckCircle2, TrendingUp, XCircle } from "lucide-react";
+import type { PersonalAttendanceWithRecords } from "~/db/schema/attendance_record";
 
 interface AttendanceAnalyticsProps {
-  records: PersonalAttendanceWithRecords[]
+  records: PersonalAttendanceWithRecords[];
 }
 
-export default function AttendanceAnalytics({ records }: AttendanceAnalyticsProps) {
-  const totalClasses = records.reduce((acc, record) => acc + record.records.length, 0)
+export default function AttendanceAnalytics({
+  records,
+}: AttendanceAnalyticsProps) {
+  const totalClasses = records.reduce(
+    (acc, record) => acc + record.records.length,
+    0
+  );
   const presentClasses = records.reduce(
     (acc, record) => acc + record.records.filter((a) => a.isPresent).length,
     0
-  )
-  const absentClasses = totalClasses - presentClasses
+  );
+  const absentClasses = totalClasses - presentClasses;
   const attendancePercentage =
-    totalClasses > 0 ? ((presentClasses / totalClasses) * 100).toFixed(1) : "0.0"
+    totalClasses > 0
+      ? ((presentClasses / totalClasses) * 100).toFixed(1)
+      : "0.0";
 
-  const percentageValue = parseFloat(attendancePercentage)
+  const percentageValue = parseFloat(attendancePercentage);
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-4 lg:gap-8">
@@ -29,13 +36,20 @@ export default function AttendanceAnalytics({ records }: AttendanceAnalyticsProp
           <TrendingUp className="w-24 h-24" />
         </div>
         <div>
-          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Overall Attendance</h4>
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            Overall Attendance
+          </h4>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className={cn(
-              "text-5xl font-extrabold tracking-tighter",
-              percentageValue >= 75 ? "text-primary" :
-                percentageValue >= 60 ? "text-amber-500" : "text-red-500"
-            )}>
+            <span
+              className={cn(
+                "text-5xl font-extrabold tracking-tighter",
+                percentageValue >= 75
+                  ? "text-primary"
+                  : percentageValue >= 60
+                    ? "text-amber-500"
+                    : "text-red-500"
+              )}
+            >
               <NumberTicker value={percentageValue} />%
             </span>
           </div>
@@ -43,9 +57,13 @@ export default function AttendanceAnalytics({ records }: AttendanceAnalyticsProp
         <div className="mt-4">
           <div className="h-2 w-full bg-secondary/50 rounded-full overflow-hidden">
             <div
-              className={cn("h-full transition-all duration-1000 ease-out",
-                percentageValue >= 75 ? "bg-primary" :
-                  percentageValue >= 60 ? "bg-amber-500" : "bg-red-500"
+              className={cn(
+                "h-full transition-all duration-1000 ease-out",
+                percentageValue >= 75
+                  ? "bg-primary"
+                  : percentageValue >= 60
+                    ? "bg-amber-500"
+                    : "bg-red-500"
               )}
               style={{ width: `${percentageValue}%` }}
             />
@@ -82,30 +100,36 @@ export default function AttendanceAnalytics({ records }: AttendanceAnalyticsProp
         />
       </div>
     </div>
-  )
+  );
 }
 
 interface StatBoxProps {
-  label: string
-  value: number
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  color: string
-  bg: string
-  className?: string
+  label: string;
+  value: number;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  color: string;
+  bg: string;
+  className?: string;
 }
 function StatBox({ label, value, Icon, color, bg, className }: StatBoxProps) {
   return (
-    <div className={cn("flex flex-col justify-center rounded-xl border bg-card p-4 shadow-sm", className)}>
+    <div
+      className={cn(
+        "flex flex-col justify-center rounded-xl border bg-card p-4 shadow-sm",
+        className
+      )}
+    >
       <div className="flex items-center gap-2 mb-2">
         <div className={cn("p-1.5 rounded-md", bg, color)}>
           <Icon className="w-4 h-4" />
         </div>
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
       </div>
       <span className="text-2xl font-bold tracking-tight">
         <NumberTicker value={value} />
       </span>
     </div>
-  )
+  );
 }
-

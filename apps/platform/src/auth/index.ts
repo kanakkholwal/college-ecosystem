@@ -36,7 +36,6 @@ export const trustedOrigins = new Set<string>([
   appConfig.url,
   `https://${appConfig.appDomain}`,
   `https://*.nith.eu.org`,
-
 ]);
 
 export const betterAuthOptions = {
@@ -102,7 +101,10 @@ export const betterAuthOptions = {
       reset_link.searchParams.set("token", token);
 
       try {
-        const response = await mailFetch<{ data: string[] | null; error?: string | null | object }>("/api/send", {
+        const response = await mailFetch<{
+          data: string[] | null;
+          error?: string | null | object;
+        }>("/api/send", {
           method: "POST",
           body: JSON.stringify({
             template_key: "reset-password",
@@ -278,7 +280,9 @@ type FacultyType = {
   department: string;
 };
 
-async function getUserInfo(user: User & Record<string, unknown>): Promise<getUserInfoReturnType> {
+async function getUserInfo(
+  user: User & Record<string, unknown>
+): Promise<getUserInfoReturnType> {
   const username = user.email.split("@")[0];
   const isStudent = isValidRollNumber(username);
 
@@ -293,8 +297,11 @@ async function getUserInfo(user: User & Record<string, unknown>): Promise<getUse
         cause: { rollNo: username, error: error },
       });
     }
-    console.log("[getUserInfo]:", data ? "Result found" : "Result not found", username);
-
+    console.log(
+      "[getUserInfo]:",
+      data ? "Result found" : "Result not found",
+      username
+    );
 
     // TODO: temporarily disable result check for 2025 batch
     if (username.startsWith("25")) {

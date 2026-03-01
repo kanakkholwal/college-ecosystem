@@ -11,61 +11,49 @@ export const intents = {
   default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
   default_soft:
     "bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/10 dark:text-primary hover:dark:bg-primary/5 hover:dark:text-primary",
-  secondary:
-    "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+  secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90",
   secondary_soft:
     "bg-secondary/10 text-secondary hover:bg-secondary/20 dark:bg-secondary/10 dark:text-secondary hover:dark:bg-secondary/5 hover:dark:text-secondary",
-  tertiary:
-    "bg-tertiary text-tertiary-foreground hover:bg-tertiary/90",
+  tertiary: "bg-tertiary text-tertiary-foreground hover:bg-tertiary/90",
   tertiary_soft:
     "bg-tertiary/10 text-tertiary hover:bg-tertiary/20 dark:bg-tertiary/10 dark:text-tertiary hover:dark:bg-tertiary/5 hover:dark:text-tertiary",
-  accent:
-    "bg-accent text-accent-foreground hover:bg-accent/90",
-  muted:
-    "bg-muted text-muted-foreground hover:bg-muted/90",
+  accent: "bg-accent text-accent-foreground hover:bg-accent/90",
+  muted: "bg-muted text-muted-foreground hover:bg-muted/90",
 
   // Colored variants
-  success:
-    "bg-emerald-600 hover:bg-emerald-500 text-emerald-100",
-  success_soft:
-    "bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20",
-  info:
-    "bg-sky-600 hover:bg-sky-500 text-sky-100",
-  info_soft:
-    "bg-sky-600/10 text-sky-600 hover:bg-sky-600/20",
-  warning:
-    "bg-amber-600 hover:bg-amber-500 text-amber-100",
-  warning_soft:
-    "bg-amber-600/10 text-amber-600 hover:bg-amber-600/20",
-  destructive:
-    "bg-rose-600 hover:bg-rose-500 text-rose-100",
-  destructive_soft:
-    "bg-rose-600/10 text-rose-600 hover:bg-rose-600/20",
+  success: "bg-emerald-600 hover:bg-emerald-500 text-emerald-100",
+  success_soft: "bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20",
+  info: "bg-sky-600 hover:bg-sky-500 text-sky-100",
+  info_soft: "bg-sky-600/10 text-sky-600 hover:bg-sky-600/20",
+  warning: "bg-amber-600 hover:bg-amber-500 text-amber-100",
+  warning_soft: "bg-amber-600/10 text-amber-600 hover:bg-amber-600/20",
+  destructive: "bg-rose-600 hover:bg-rose-500 text-rose-100",
+  destructive_soft: "bg-rose-600/10 text-rose-600 hover:bg-rose-600/20",
 
   outline:
     "border border-border bg-card hover:bg-card/80 dark:bg-muted text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:border-primary",
-  ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
+  ghost:
+    "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
 
-  gray:
-    "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 dark:hover:text-gray-100",
+  gray: "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 dark:hover:text-gray-100",
   link: "text-primary underline-offset-4 hover:underline",
   dark: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-800/50 dark:hover:bg-neutral-800",
   light:
     "bg-white shadow text-gray-700 hover:text-gray-700 border border-border",
-  glass:
-    "bg-white/10 backdrop-blur-sm shadow-lg border border-white/5",
+  glass: "bg-white/10 backdrop-blur-sm shadow-lg border border-white/5",
 
   // Fancy variants
   rainbow:
     "animate-rainbow border-0 bg-[linear-gradient(#121213,#121213),linear-gradient(#121213_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-primary-foreground dark:text-black [background-clip:padding-box,border-box,border-box] [background-origin:border-box] [border:calc(0.125rem)_solid_transparent] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#fff,#fff),linear-gradient(#fff_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
   rainbow_outline:
     "border border-input border-b-transparent bg-[linear-gradient(#ffffff,#ffffff),linear-gradient(#ffffff_50%,rgba(18,18,19,0.6)_80%,rgba(18,18,19,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] bg-[length:200%] text-accent-foreground dark:text-primary-foreground [background-clip:padding-box,border-box,border-box] [background-origin:border-box] before:absolute before:bottom-[-20%] before:left-1/2 before:z-0 before:h-1/5 before:w-3/5 before:-translate-x-1/2 before:animate-rainbow before:bg-[linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))] before:[filter:blur(0.75rem)] dark:bg-[linear-gradient(#0a0a0a,#0a0a0a),linear-gradient(#0a0a0a_50%,rgba(255,255,255,0.6)_80%,rgba(0,0,0,0)),linear-gradient(90deg,var(--color-1),var(--color-5),var(--color-3),var(--color-4),var(--color-2))]",
-  // base 
+  // base
   raw: "",
 } as const;
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium capitalize transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none  shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-all relative cursor-pointer group user-select-none",
-  { // [&_svg:not([class*='size-'])]:size-4
+  {
+    // [&_svg:not([class*='size-'])]:size-4
     variants: {
       variant: intents,
       size: {
@@ -79,13 +67,14 @@ const buttonVariants = cva(
         icon_sm: "size-8 p-2 [&>svg]:size-4",
         icon_lg: "size-12 p-3.5 [&>svg]:size-6",
         icon_xl: "size-14 p-4 [&>svg]:size-8",
-        responsive_lg: "h-9 px-4 py-2 text-sm md:h-11 md:px-5 md:py-3 md:text-base [&>svg]:size-4 md:[&>svg]:size-6 ",
-
+        responsive_lg:
+          "h-9 px-4 py-2 text-sm md:h-11 md:px-5 md:py-3 md:text-base [&>svg]:size-4 md:[&>svg]:size-6 ",
       },
       effect: {
         none: "",
         expandIcon: "group gap-0",
-        ringHover: "hover:ring-2 hover:ring-primary/20 hover:ring-offset-2 transition-all",
+        ringHover:
+          "hover:ring-2 hover:ring-primary/20 hover:ring-offset-2 transition-all",
         shine:
           "before:animate-shine relative overflow-hidden before:absolute before:inset-0 before:rounded-[inherit] before:bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%,transparent_100%)] before:bg-[length:250%_250%,100%_100%] before:bg-no-repeat background-position_0s_ease",
         shineHover:
@@ -125,7 +114,7 @@ const buttonVariants = cva(
         lift: "transition-all hover:-translate-y-0.5 hover:shadow-lg",
         press: "transition-all active:translate-y-0.5",
       },
-      // Shadows are now mostly integrated into variants for better "native" feel, 
+      // Shadows are now mostly integrated into variants for better "native" feel,
       // but these helpers remain for overrides.
       shadow: {
         none: "shadow-none",
@@ -138,7 +127,6 @@ const buttonVariants = cva(
         light: "shadow-md shadow-gray-200/50",
         glass: "shadow-lg shadow-black/5",
       },
-
     },
     defaultVariants: {
       variant: "default",
@@ -150,37 +138,40 @@ const buttonVariants = cva(
       shadow: "none",
     },
     compoundVariants: [
-      { variant: "default", size: "lg", shadow: "none", className: "shadow-lg shadow-primary/40" },
+      {
+        variant: "default",
+        size: "lg",
+        shadow: "none",
+        className: "shadow-lg shadow-primary/40",
+      },
       { variant: "default_soft", shadow: "default_soft" },
       { variant: "destructive", shadow: "destructive" },
-    ]
+    ],
   }
 );
-type IconProps = {
-  icon: IconType;
-  iconPlacement?: "left" | "right";
-  iconClassName?: string;
-} | {
-  icon?: never;
-  iconPlacement?: never;
-  iconClassName?: never;
-}
-
-
+type IconProps =
+  | {
+      icon: IconType;
+      iconPlacement?: "left" | "right";
+      iconClassName?: string;
+    }
+  | {
+      icon?: never;
+      iconPlacement?: never;
+      iconClassName?: never;
+    };
 
 interface ButtonBaseProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-  VariantProps<typeof buttonVariants> {
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
   asChild?: boolean;
 }
 
 export type ButtonProps = ButtonBaseProps & IconProps;
 
-const Button = React.forwardRef<
-  HTMLButtonElement,
-  ButtonProps
->(
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
@@ -212,15 +203,18 @@ const Button = React.forwardRef<
             width,
             effect,
             hoverEffect,
-
           })
         )}
         ref={ref}
         {...props}
       >
-        {(icon && iconPlacement === "left") && <Icon name={icon} className={cn(iconClassName)} />}
+        {icon && iconPlacement === "left" && (
+          <Icon name={icon} className={cn(iconClassName)} />
+        )}
         <Slottable>{props.children}</Slottable>
-        {(icon && iconPlacement === "right") && (<Icon name={icon} className={cn(iconClassName)} />)}
+        {icon && iconPlacement === "right" && (
+          <Icon name={icon} className={cn(iconClassName)} />
+        )}
       </Comp>
     );
   }
@@ -228,4 +222,3 @@ const Button = React.forwardRef<
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
-

@@ -13,7 +13,7 @@ import {
   LayoutGrid,
   ShieldCheck,
   Tickets,
-  Users
+  Users,
 } from "lucide-react";
 import { LuBuilding } from "react-icons/lu";
 import { PiStudentFill } from "react-icons/pi";
@@ -50,7 +50,6 @@ export default async function HostelPage({
 
   return (
     <div className="space-y-8 my-6">
-      
       {/* --- 1. Hero / Info Section --- */}
       <div className="space-y-4">
         {/* Header */}
@@ -68,14 +67,16 @@ export default async function HostelPage({
               <span className="text-sm">Hostel Management Dashboard</span>
             </p>
           </div>
-          <Badge variant="outline" className={cn("px-3 py-1 text-sm capitalize w-fit", genderTheme)}>
+          <Badge
+            variant="outline"
+            className={cn("px-3 py-1 text-sm capitalize w-fit", genderTheme)}
+          >
             {hostel.gender} Hostel
           </Badge>
         </div>
 
         {/* Management Team Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
           {/* Warden Card */}
           <Card className="md:col-span-1">
             <CardHeader className="pb-2">
@@ -92,10 +93,16 @@ export default async function HostelPage({
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-0.5 overflow-hidden">
-                  <p className="font-semibold truncate" title={hostel.warden.name}>
+                  <p
+                    className="font-semibold truncate"
+                    title={hostel.warden.name}
+                  >
                     {hostel.warden.name}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate" title={hostel.warden.email}>
+                  <p
+                    className="text-xs text-muted-foreground truncate"
+                    title={hostel.warden.email}
+                  >
                     {hostel.warden.email}
                   </p>
                 </div>
@@ -107,20 +114,26 @@ export default async function HostelPage({
           <Card className="md:col-span-2 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Users className="h-4 w-4" /> Administration Team ({hostel.administrators.length})
+                <Users className="h-4 w-4" /> Administration Team (
+                {hostel.administrators.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {hostel.administrators.map((admin) => (
-                  <div key={admin.email} className="flex items-center gap-2.5 bg-muted/30 p-2 rounded-lg border border-border/50">
+                  <div
+                    key={admin.email}
+                    className="flex items-center gap-2.5 bg-muted/30 p-2 rounded-lg border border-border/50"
+                  >
                     <Avatar className="h-8 w-8">
-                       <AvatarFallback className="text-xs bg-muted text-muted-foreground">
-                          {admin.name.charAt(0)}
-                       </AvatarFallback>
+                      <AvatarFallback className="text-xs bg-muted text-muted-foreground">
+                        {admin.name.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{admin.name}</p>
+                      <p className="text-sm font-medium truncate">
+                        {admin.name}
+                      </p>
                       <p className="text-[10px] text-muted-foreground truncate opacity-80">
                         {admin.email}
                       </p>
@@ -141,7 +154,7 @@ export default async function HostelPage({
           <LayoutGrid className="h-5 w-5 text-muted-foreground" />
           Operational Modules
         </h3>
-        
+
         <ResponsiveContainer>
           {getHostelRoutes(moderator, slug).map((route) => (
             <RouterCard
@@ -155,8 +168,6 @@ export default async function HostelPage({
           ))}
         </ResponsiveContainer>
       </div>
-
     </div>
   );
 }
-

@@ -53,14 +53,15 @@ export const formSchema = z.object({
 export default function CreatePoll() {
   const [open, setOpen] = useState(true);
 
-
   return (
     <ResponsiveDialog
       onOpenChange={setOpen}
-      title={<>
-        <CgPoll className="size-4 inline-block mr-2 text-primary" />
-        Create Poll
-      </>}
+      title={
+        <>
+          <CgPoll className="size-4 inline-block mr-2 text-primary" />
+          Create Poll
+        </>
+      }
       description="Engage with the community by asking a question."
       btnProps={{
         variant: "default_soft",
@@ -270,10 +271,10 @@ function PollForm({
         <div className="flex justify-end pt-4 border-t mt-2">
           <Button
             type="submit"
-            disabled={(form.formState.isSubmitting || form.formState.isLoading)}
+            disabled={form.formState.isSubmitting || form.formState.isLoading}
             className="w-full sm:w-auto"
           >
-            {(form.formState.isSubmitting || form.formState.isLoading) ? (
+            {form.formState.isSubmitting || form.formState.isLoading ? (
               <>
                 <Icon name="loader-circle" className="animate-spin" />
                 Creating...

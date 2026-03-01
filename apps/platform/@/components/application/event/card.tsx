@@ -50,4 +50,3 @@ function EventCard({
 EventCard.displayName = "EventCard";
 
 export { EventCard };
-

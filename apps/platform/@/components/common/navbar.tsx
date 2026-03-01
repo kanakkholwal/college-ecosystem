@@ -29,7 +29,7 @@ import {
   LogIn,
   Search,
   Settings,
-  User
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -54,14 +54,20 @@ export default function Navbar({ user }: NavbarProps) {
 
   // Memoized categories logic
   const { categories } = useMemo(() => {
-    const cats = ["all", ...new Set(navLinks.map((l) => l.category).filter(Boolean))];
+    const cats = [
+      "all",
+      ...new Set(navLinks.map((l) => l.category).filter(Boolean)),
+    ];
     return { categories: cats };
   }, [navLinks]);
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const availableLinks = useMemo(
-    () => navLinks.filter((link) => activeCategory === "all" || link.category === activeCategory),
+    () =>
+      navLinks.filter(
+        (link) => activeCategory === "all" || link.category === activeCategory
+      ),
     [activeCategory, navLinks]
   );
 
@@ -74,11 +80,12 @@ export default function Navbar({ user }: NavbarProps) {
       )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto">
-
         <div className="flex items-center justify-between px-4 py-3 h-16">
-
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <Link
+            href="/"
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
             <ApplicationInfo />
           </Link>
 
@@ -108,9 +115,13 @@ export default function Navbar({ user }: NavbarProps) {
 
         <div className="px-4 pb-0">
           <div className="flex flex-col gap-2">
-
             {categories.length > 1 && (
-              <div className={cn("flex items-center gap-1 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 mask-fade-sides", twUtility.horizontalScroll)}>
+              <div
+                className={cn(
+                  "flex items-center gap-1 overflow-x-auto no-scrollbar py-1 -mx-4 px-4 mask-fade-sides",
+                  twUtility.horizontalScroll
+                )}
+              >
                 {categories.map((category) => (
                   <button
                     key={category}
@@ -127,7 +138,11 @@ export default function Navbar({ user }: NavbarProps) {
                       <motion.div
                         layoutId="navbar-category-pill"
                         className="absolute inset-0 bg-primary/10 rounded-md -z-10"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        transition={{
+                          type: "spring",
+                          bounce: 0.2,
+                          duration: 0.6,
+                        }}
                       />
                     )}
                   </button>
@@ -144,7 +159,9 @@ export default function Navbar({ user }: NavbarProps) {
                   href: link.href,
                   children: (
                     <span className="flex items-center gap-2">
-                      {link.Icon && <link.Icon className="size-3.5 opacity-70" />}
+                      {link.Icon && (
+                        <link.Icon className="size-3.5 opacity-70" />
+                      )}
                       {link.title}
                     </span>
                   ),
@@ -160,7 +177,6 @@ export default function Navbar({ user }: NavbarProps) {
   );
 }
 
-
 interface QuickLinksProps extends NavbarProps {
   publicLinks: NavLink[];
 }
@@ -169,7 +185,9 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
   const { push } = useRouter();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = React.useState("");
-  const [selectedType, setSelectedType] = React.useState<"page" | "account" | null>(null);
+  const [selectedType, setSelectedType] = React.useState<
+    "page" | "account" | null
+  >(null);
   const isLoggedIn = !!user;
 
   // Filter links based on search
@@ -192,13 +210,10 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
     }
   };
 
-  const runCommand = React.useCallback(
-    (command: () => unknown) => {
-      handleOpenChange(false);
-      command();
-    },
-    []
-  );
+  const runCommand = React.useCallback((command: () => unknown) => {
+    handleOpenChange(false);
+    command();
+  }, []);
 
   // Handle Ctrl/Cmd + K and /
   React.useEffect(() => {
@@ -224,7 +239,10 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
     if (filteredPublicLinks.length === 0) return null;
 
     return (
-      <CommandGroup heading="Pages" className="p-0! **:[[cmdk-group-heading]]:scroll-mt-16 **:[[cmdk-group-heading]]:p-3! **:[[cmdk-group-heading]]:pb-1!">
+      <CommandGroup
+        heading="Pages"
+        className="p-0! **:[[cmdk-group-heading]]:scroll-mt-16 **:[[cmdk-group-heading]]:p-3! **:[[cmdk-group-heading]]:pb-1!"
+      >
         {filteredPublicLinks.map((item, index) => (
           <CommandMenuItemComponent
             key={`page-${index}`}
@@ -235,7 +253,11 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
               runCommand(() => push(item.href));
             }}
           >
-            {item.Icon ? <item.Icon className="size-5 opacity-70" /> : <ArrowUpRight className="size-5 opacity-70" />}
+            {item.Icon ? (
+              <item.Icon className="size-5 opacity-70" />
+            ) : (
+              <ArrowUpRight className="size-5 opacity-70" />
+            )}
             <div className="flex flex-col flex-1 min-w-0">
               <span className="text-sm font-medium">{item.title}</span>
               {item.description && (
@@ -253,7 +275,10 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
   const accountSection = useMemo(() => {
     if (!isLoggedIn) {
       return (
-        <CommandGroup heading="Authentication" className="p-0! **:[[cmdk-group-heading]]:p-3!">
+        <CommandGroup
+          heading="Authentication"
+          className="p-0! **:[[cmdk-group-heading]]:p-3!"
+        >
           <CommandMenuItemComponent
             value="Sign In"
             keywords={["auth", "login"]}
@@ -270,7 +295,10 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
     }
 
     return (
-      <CommandGroup heading="Account" className="p-0! **:[[cmdk-group-heading]]:p-3!">
+      <CommandGroup
+        heading="Account"
+        className="p-0! **:[[cmdk-group-heading]]:p-3!"
+      >
         <CommandMenuItemComponent
           value={`Profile ${user.username}`}
           keywords={["profile", "user"]}
@@ -326,11 +354,11 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
       </Button>
 
       {/* Command Dialog */}
-      <CommandDialog 
-        open={open} 
-        onOpenChange={handleOpenChange} 
-        title="Search Ecosystem" 
-        description="Search pages, navigate settings, and more" 
+      <CommandDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title="Search Ecosystem"
+        description="Search pages, navigate settings, and more"
         showCloseButton={false}
       >
         <CommandInput
@@ -342,7 +370,9 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
           <CommandEmpty>
             <div className="py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                {search ? `No results found for "${search}"` : "Start typing to search"}
+                {search
+                  ? `No results found for "${search}"`
+                  : "Start typing to search"}
               </p>
               <p className="text-xs text-muted-foreground/60 mt-1">
                 Search for pages, commands, and more
@@ -352,7 +382,9 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
 
           {pagesSection}
 
-          {pagesSection && accountSection && <CommandSeparator className="my-2" />}
+          {pagesSection && accountSection && (
+            <CommandSeparator className="my-2" />
+          )}
 
           {accountSection}
         </CommandList>
@@ -439,7 +471,7 @@ function CommandMenuKbd({ className, ...props }: React.ComponentProps<"kbd">) {
   );
 }
 
-//  UTILITY COMPONENTS 
+//  UTILITY COMPONENTS
 
 export function SocialBar({ className }: { className?: string }) {
   if (socials.length === 0) return null;
@@ -480,14 +512,17 @@ export function SupportBar() {
 }
 export function GoToTopButton({ className }: { className?: string }) {
   const handleClick = () => {
-    window?.scrollTo({ top: 0, behavior: 'smooth' });
+    window?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <Button
       variant="ghost"
       size="sm"
-      className={cn("text-xs text-muted-foreground hover:text-foreground", className)}
+      className={cn(
+        "text-xs text-muted-foreground hover:text-foreground",
+        className
+      )}
       onClick={handleClick}
     >
       Back to Top <Icon name="arrow-up" />

@@ -14,7 +14,7 @@ import {
   LayoutGrid,
   LifeBuoy,
   LogOut,
-  ShieldAlert
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,9 +61,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         children: (
           <Avatar className="size-8 rounded-full">
             <AvatarImage src={avatarSrc} alt={user.username} />
-            <AvatarFallback>
-              {user.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
+            <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         ),
       }}
@@ -92,7 +90,9 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
             </Link>
           </p>
           <p>
-            <Badge size="sm" className="font-mono whitespace-nowrap">{user.department || "Student"}</Badge>
+            <Badge size="sm" className="font-mono whitespace-nowrap">
+              {user.department || "Student"}
+            </Badge>
           </p>
         </div>
       </div>
@@ -176,8 +176,12 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                   <ShieldAlert className="size-4" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-medium text-muted-foreground">No Access</span>
-                  <span className="text-[10px] text-muted-foreground/50">Contact admin for roles.</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    No Access
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/50">
+                    Contact admin for roles.
+                  </span>
                 </div>
               </div>
             )}
@@ -261,4 +265,3 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
     </ResponsiveDialog>
   );
 }
-

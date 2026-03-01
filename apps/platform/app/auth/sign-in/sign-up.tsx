@@ -84,7 +84,6 @@ export default function SignUpForm() {
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          
           <FormField
             control={form.control}
             name="name"
@@ -94,7 +93,12 @@ export default function SignUpForm() {
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <FormControl>
-                    <Input {...field} placeholder="John Doe" className="pl-9" disabled={isLoading} />
+                    <Input
+                      {...field}
+                      placeholder="John Doe"
+                      className="pl-9"
+                      disabled={isLoading}
+                    />
                   </FormControl>
                 </div>
                 <FormMessage />
@@ -111,16 +115,16 @@ export default function SignUpForm() {
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <FormControl>
-                    <Input 
-                        {...field} 
-                        placeholder={`user${orgConfig.mailSuffix}`} 
-                        className="pl-9" 
-                        disabled={isLoading}
+                    <Input
+                      {...field}
+                      placeholder={`user${orgConfig.mailSuffix}`}
+                      className="pl-9"
+                      disabled={isLoading}
                     />
                   </FormControl>
                 </div>
                 <p className="text-[10px] text-muted-foreground/80 font-medium pt-1">
-                   Only {orgConfig.mailSuffix} emails are allowed.
+                  Only {orgConfig.mailSuffix} emails are allowed.
                 </p>
                 <FormMessage />
               </FormItem>
@@ -136,12 +140,12 @@ export default function SignUpForm() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <FormControl>
-                    <Input 
-                        {...field} 
-                        type="password" 
-                        placeholder="Create a password" 
-                        className="pl-9" 
-                        disabled={isLoading}
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Create a password"
+                      className="pl-9"
+                      disabled={isLoading}
                     />
                   </FormControl>
                 </div>
@@ -162,7 +166,9 @@ export default function SignUpForm() {
           <span className="w-full border-t border-border/60" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground font-medium">Or sign up with</span>
+          <span className="bg-background px-2 text-muted-foreground font-medium">
+            Or sign up with
+          </span>
         </div>
       </div>
 

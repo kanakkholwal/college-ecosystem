@@ -13,7 +13,7 @@ import {
   LayoutGrid,
   Lock,
   Plus,
-  Search
+  Search,
 } from "lucide-react";
 import type { Metadata, ResolvingMetadata } from "next";
 import { getRoomsInfo, listAllRoomsWithHistory } from "~/actions/common.room";
@@ -60,7 +60,6 @@ export default async function RoomsPage(props: Props) {
 
   return (
     <div className="min-h-screen bg-background pb-20 space-y-8">
-
       {/* --- 1. Header & KPI Section --- */}
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
@@ -74,14 +73,16 @@ export default async function RoomsPage(props: Props) {
             </p>
           </div>
 
-          {session?.user.role === "admin" && (<ButtonLink
-            href={`/admin/rooms/new`}
-            variant="default"
-            size="sm"
-            className="gap-2 shadow-md shadow-primary/20 rounded-full"
-          >
-            <Plus className="size-4" /> New Room
-          </ButtonLink>)}
+          {session?.user.role === "admin" && (
+            <ButtonLink
+              href={`/admin/rooms/new`}
+              variant="default"
+              size="sm"
+              className="gap-2 shadow-md shadow-primary/20 rounded-full"
+            >
+              <Plus className="size-4" /> New Room
+            </ButtonLink>
+          )}
         </div>
 
         {/* KPI Grid */}
@@ -177,14 +178,14 @@ function StatCard({
   icon: Icon,
   color,
   bg,
-  borderColor
+  borderColor,
 }: {
-  label: string,
-  value: number,
-  icon: React.FC<React.SVGProps<SVGSVGElement>>,
-  color: string,
-  bg: string,
-  borderColor: string
+  label: string;
+  value: number;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  color: string;
+  bg: string;
+  borderColor: string;
 }) {
   return (
     <Card className={cn("border shadow-sm", borderColor)}>
@@ -198,5 +199,5 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

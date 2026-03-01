@@ -32,8 +32,8 @@ export async function getInfo(): Promise<{
     year: studentInfo.currentYear,
     // You might want to filter by semester too
   })
-  .sort({ updatedAt: -1 }) // Get latest first
-  .lean<TimeTableWithID[]>();
+    .sort({ updatedAt: -1 }) // Get latest first
+    .lean<TimeTableWithID[]>();
 
   const stats = {
     totalSchedules: timetables.length,

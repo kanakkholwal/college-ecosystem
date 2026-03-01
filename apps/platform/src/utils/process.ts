@@ -1,4 +1,3 @@
-
 export const TIME_INTERVALS = [
   {
     value: "last_hour",
@@ -25,12 +24,12 @@ export const TIME_INTERVALS = [
     label: "Last Year",
     days: 365,
   },
-] 
-export type TimeInterval = 
-  | "last_hour" 
-  | "last_24_hours" 
-  | "last_week" 
-  | "last_month" 
+];
+export type TimeInterval =
+  | "last_hour"
+  | "last_24_hours"
+  | "last_week"
+  | "last_month"
   | "last_year";
 export interface DateRange {
   start: Date;
@@ -70,17 +69,17 @@ export function calculateGrowthPercentage(
   if (current === 0 && previous === 0) {
     return 0;
   }
-  
+
   // Previous period had no users, current period has users
   if (previous === 0 && current > 0) {
     return 100; // 100% growth (or could use current * 100 for actual count-based growth)
   }
-  
+
   // Current period has no users, previous period had users
   if (current === 0 && previous > 0) {
     return -100; // -100% decline
   }
-  
+
   // Normal calculation: percentage change
   return Number((((current - previous) / previous) * 100).toFixed(2));
 }
@@ -93,7 +92,7 @@ export function calculateTrend(growth: number): -1 | 1 | 0 {
   return 0;
 }
 
- /**
+/**
  * Get date ranges for current and previous periods
  */
 export function getDateRanges(
@@ -104,7 +103,7 @@ export function getDateRanges(
     case "last_hour": {
       const currentStart = new Date(now.getTime() - 60 * 60 * 1000);
       const previousStart = new Date(currentStart.getTime() - 60 * 60 * 1000);
-      
+
       return {
         current: { start: currentStart, end: now },
         previous: { start: previousStart, end: currentStart },
@@ -113,8 +112,10 @@ export function getDateRanges(
 
     case "last_24_hours": {
       const currentStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const previousStart = new Date(currentStart.getTime() - 24 * 60 * 60 * 1000);
-      
+      const previousStart = new Date(
+        currentStart.getTime() - 24 * 60 * 60 * 1000
+      );
+
       return {
         current: { start: currentStart, end: now },
         previous: { start: previousStart, end: currentStart },
@@ -126,7 +127,7 @@ export function getDateRanges(
       const previousWeekStart = new Date(
         currentWeekStart.getTime() - 7 * 24 * 60 * 60 * 1000
       );
-      
+
       return {
         current: { start: currentWeekStart, end: now },
         previous: { start: previousWeekStart, end: currentWeekStart },
@@ -149,7 +150,7 @@ export function getDateRanges(
         59,
         999
       );
-      
+
       return {
         current: { start: currentMonthStart, end: now },
         previous: { start: previousMonthStart, end: previousMonthEnd },
@@ -168,7 +169,7 @@ export function getDateRanges(
         59,
         999
       );
-      
+
       return {
         current: { start: currentYearStart, end: now },
         previous: { start: previousYearStart, end: previousYearEnd },
@@ -204,7 +205,7 @@ export function getGroupByFormat(timeInterval: TimeInterval): string {
  * Generate graph-ready data points
  */
 export function generateGraphData(
-   timeSeriesData: {
+  timeSeriesData: {
     currentData: Array<{ timestamp: Date; count: number }>;
     previousData: Array<{ timestamp: Date; count: number }>;
   },
@@ -221,7 +222,7 @@ export function generateGraphData(
       timestamp: new Date(point.timestamp),
       count: point.count,
       cumulativeCount: cumulativePrevious,
-      label: formatLabel(new Date(point.timestamp), timeInterval, 'previous'),
+      label: formatLabel(new Date(point.timestamp), timeInterval, "previous"),
     });
   });
 
@@ -232,12 +233,13 @@ export function generateGraphData(
       timestamp: new Date(point.timestamp),
       count: point.count,
       cumulativeCount: cumulativeCurrent,
-      label: formatLabel(new Date(point.timestamp), timeInterval, 'current'),
+      label: formatLabel(new Date(point.timestamp), timeInterval, "current"),
     });
   });
 
-  return graphData.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
+  return graphData.sort(
+    (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+  );
 }
 
 /**
@@ -246,31 +248,31 @@ export function generateGraphData(
 export function formatLabel(
   date: Date,
   timeInterval: TimeInterval,
-  period: 'current' | 'previous'
+  period: "current" | "previous"
 ): string {
-  const periodPrefix = period === 'previous' ? 'Prev: ' : '';
-  
+  const periodPrefix = period === "previous" ? "Prev: " : "";
+
   switch (timeInterval) {
     case "last_hour":
-      return `${periodPrefix}${date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return `${periodPrefix}${date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
       })}`;
     case "last_24_hours":
-      return `${periodPrefix}${date.toLocaleTimeString('en-US', { 
-        hour: '2-digit',
-        hour12: true 
+      return `${periodPrefix}${date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        hour12: true,
       })}`;
     case "last_week":
     case "last_month":
-      return `${periodPrefix}${date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
+      return `${periodPrefix}${date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
       })}`;
     case "last_year":
-      return `${periodPrefix}${date.toLocaleDateString('en-US', { 
-        month: 'short',
-        year: 'numeric'
+      return `${periodPrefix}${date.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
       })}`;
     default:
       return `${periodPrefix}${date.toLocaleDateString()}`;
@@ -282,10 +284,10 @@ export function formatLabel(
  */
 export function getPeriodLabel(
   timeInterval: TimeInterval,
-  period: 'current' | 'previous'
+  period: "current" | "previous"
 ): string {
-  const prefix = period === 'previous' ? 'Previous' : 'Current';
-  
+  const prefix = period === "previous" ? "Previous" : "Current";
+
   switch (timeInterval) {
     case "last_hour":
       return `${prefix} Hour`;
@@ -301,5 +303,3 @@ export function getPeriodLabel(
       return prefix;
   }
 }
-
-

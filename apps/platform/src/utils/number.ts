@@ -26,8 +26,11 @@ export function formatNumberOrdinal(num: number) {
   return num + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-
-export function getRandomNumbers(count: number, min: number, max: number): Array<number> {
+export function getRandomNumbers(
+  count: number,
+  min: number,
+  max: number
+): Array<number> {
   const numbers = new Set<number>();
 
   while (numbers.size < count) {

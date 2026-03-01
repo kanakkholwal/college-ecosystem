@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  BadgeCheck,
-  ChevronsUpDown,
-  Home,
-  LogOut
-} from "lucide-react";
+import { BadgeCheck, ChevronsUpDown, Home, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -37,7 +32,7 @@ export function NavUser({ user }: { user: Session["user"] }) {
     ? (user.image as string)
     : user.gender !== "non_specified"
       ? `/assets/avatars/${user.gender}_user.png`
-      : ""
+      : "";
 
   const userInitials = user.name
     .split(" ")
@@ -95,27 +90,21 @@ export function NavUser({ user }: { user: Session["user"] }) {
               </div>
             </DropdownMenuLabel>
 
-
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem
-                className="gap-2 cursor-pointer"
-                asChild>
+              <DropdownMenuItem className="gap-2 cursor-pointer" asChild>
                 <Link href="/">
                   <Home className="size-4 text-muted-foreground" />
                   Home
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2 cursor-pointer"
-                asChild>
+              <DropdownMenuItem className="gap-2 cursor-pointer" asChild>
                 <Link href={`/u/${user.username}`}>
                   <BadgeCheck className="size-4 text-muted-foreground" />
                   Profile
                 </Link>
               </DropdownMenuItem>
-
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />

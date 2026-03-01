@@ -10,7 +10,7 @@ export type EmptyAreaProps = {
   description: string | React.ReactNode;
   actionProps?: React.ComponentProps<typeof Button> & {
     href?: string;
-  }
+  };
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export default function EmptyArea({
@@ -80,18 +80,27 @@ export default function EmptyArea({
       <div className="text-sm text-muted-foreground mt-1 whitespace-pre-line mb-5">
         {description}
       </div>
-      {actionProps && (
-        actionProps.href ?
-          <Button asChild {...actionProps} className={cn("shadow-sm active:shadow-none", actionProps.className)}>
-           <Link href={actionProps.href}>
-             {actionProps.children}
-           </Link>
-          </Button> :
+      {actionProps &&
+        (actionProps.href ? (
+          <Button
+            asChild
+            {...actionProps}
+            className={cn(
+              "shadow-sm active:shadow-none",
+              actionProps.className
+            )}
+          >
+            <Link href={actionProps.href}>{actionProps.children}</Link>
+          </Button>
+        ) : (
           <Button
             {...actionProps}
-            className={cn("shadow-sm active:shadow-none", actionProps.className)}
+            className={cn(
+              "shadow-sm active:shadow-none",
+              actionProps.className
+            )}
           />
-      )}
+        ))}
     </div>
   );
 }

@@ -19,7 +19,10 @@ export default async function ModeratorDashboard(props: Props) {
 
   return (
     <div className="w-full space-y-6 my-5">
-      <DashboardTemplate user_role={params.moderator} searchParams={searchParams} />
+      <DashboardTemplate
+        user_role={params.moderator}
+        searchParams={searchParams}
+      />
     </div>
   );
 }

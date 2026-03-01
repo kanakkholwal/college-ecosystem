@@ -13,7 +13,9 @@ type DashboardComponentProps = {
   role: string;
   searchParams: Record<string, string | undefined>;
 };
-type DashboardTemplateType = Promise<React.ReactNode> | React.FC<DashboardComponentProps>;
+type DashboardTemplateType =
+  | Promise<React.ReactNode>
+  | React.FC<DashboardComponentProps>;
 
 const dashboard_templates = new Map<string, DashboardTemplateType>([
   ["admin", AdminDashboard],
@@ -30,17 +32,23 @@ interface DashboardTemplateProps {
   searchParams: Record<string, string | undefined>;
 }
 
-export function DashboardTemplate({ user_role, searchParams }: DashboardTemplateProps) {
+export function DashboardTemplate({
+  user_role,
+  searchParams,
+}: DashboardTemplateProps) {
   if (dashboard_templates.has(user_role)) {
-    const DashboardComponent = dashboard_templates.get(user_role) as React.FC<DashboardComponentProps>;
+    const DashboardComponent = dashboard_templates.get(
+      user_role
+    ) as React.FC<DashboardComponentProps>;
     if (DashboardComponent) {
       return (
         <ErrorBoundaryWithSuspense
-
-          fallback={<EmptyArea
-            title="Something went wrong!"
-            description="Looks like you are not assigned to any dashboard yet."
-          />}
+          fallback={
+            <EmptyArea
+              title="Something went wrong!"
+              description="Looks like you are not assigned to any dashboard yet."
+            />
+          }
           loadingFallback={
             <SkeletonCardArea
               className="mx-auto"

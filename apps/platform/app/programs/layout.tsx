@@ -4,8 +4,6 @@ import GithubBanner from "@/components/common/github-banner";
 import Navbar from "@/components/common/navbar";
 import { getSession } from "~/auth/server";
 
-
-
 export const dynamic = "force-dynamic";
 
 type LayoutProps = Readonly<{
@@ -13,12 +11,10 @@ type LayoutProps = Readonly<{
 }>;
 
 export default async function Layout({ children }: LayoutProps) {
-
   const session = await getSession();
 
   return (
     <div className="flex flex-1 flex-col justify-center min-h-svh min-w-full z-0">
-
       <Navbar user={session?.user} />
       <div className="absolute top-0 left-0 z-0 w-full min-h-80 [mask-image:linear-gradient(to_top,transparent_25%,black_95%)]">
         <FlickeringGrid

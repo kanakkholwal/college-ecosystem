@@ -8,19 +8,24 @@ import toast from "react-hot-toast";
 import type { PollType } from "src/models/poll";
 import { deletePoll } from "~/actions/common.poll";
 
-
-
-export default function DeletePoll({ pollId, className }: { pollId: PollType["_id"], className?: string }) {
+export default function DeletePoll({
+  pollId,
+  className,
+}: {
+  pollId: PollType["_id"];
+  className?: string;
+}) {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
 
-    toast.promise(deletePoll(pollId), {
-      loading: "Deleting poll...",
-      success: "Poll deleted successfully",
-      error: "Failed to delete poll",
-    })
+    toast
+      .promise(deletePoll(pollId), {
+        loading: "Deleting poll...",
+        success: "Poll deleted successfully",
+        error: "Failed to delete poll",
+      })
       .finally(() => setDeleting(false));
   };
 

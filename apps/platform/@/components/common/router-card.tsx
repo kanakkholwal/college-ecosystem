@@ -37,7 +37,8 @@ function RouterCard({
         // Base Layout
         "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/50 bg-card p-6 transition-all duration-300",
         // Hover State (Stripe-like lift and glow)
-        !disabled && "hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 hover:shadow-primary/5",
+        !disabled &&
+          "hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 hover:shadow-primary/5",
         // Disabled State
         disabled && "opacity-60 cursor-not-allowed bg-muted/20 grayscale",
         className
@@ -45,14 +46,19 @@ function RouterCard({
     >
       {/* Header: Icon + Action Arrow */}
       <div className="flex w-full items-start justify-between">
-        <div className={cn(
+        <div
+          className={cn(
             "flex size-10 items-center justify-center rounded-lg border border-border/50 bg-muted/50 transition-colors",
-            !disabled && "group-hover:bg-primary/10 group-hover:border-primary/20"
-        )}>
-          <Icon className={cn(
+            !disabled &&
+              "group-hover:bg-primary/10 group-hover:border-primary/20"
+          )}
+        >
+          <Icon
+            className={cn(
               "size-5 text-muted-foreground transition-colors",
               !disabled && "group-hover:text-primary"
-          )} />
+            )}
+          />
         </div>
 
         {/* Action Icon (Dynamic) */}
@@ -74,12 +80,15 @@ function RouterCard({
             {title}
           </h3>
           {disabled && (
-            <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium tracking-wide uppercase">
+            <Badge
+              variant="secondary"
+              className="h-5 px-1.5 text-[10px] font-medium tracking-wide uppercase"
+            >
               Soon
             </Badge>
           )}
         </div>
-        
+
         <p className="text-sm text-muted-foreground leading-relaxed text-balance">
           {description}
         </p>
@@ -88,8 +97,8 @@ function RouterCard({
       {/* Decorative Bottom Light (Only visible on hover) */}
       {!disabled && (
         <>
-           <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-           <span className="absolute inset-x-0 bottom-0 h-[2px] blur-sm bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <span className="absolute inset-x-0 bottom-0 h-[2px] blur-sm bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         </>
       )}
     </Link>

@@ -11,7 +11,7 @@ import {
   Info,
   Megaphone,
   Trophy,
-  Users
+  Users,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -27,7 +27,10 @@ export const metadata: Metadata = {
 };
 
 // --- Config: Category Icons & Colors ---
-const CATEGORY_CONFIG: Record<string, { icon: any; color: string; label?: string }> = {
+const CATEGORY_CONFIG: Record<
+  string,
+  { icon: any; color: string; label?: string }
+> = {
   all: { icon: Bell, color: "text-foreground", label: "All Updates" },
   academic: { icon: GraduationCap, color: "text-blue-500" },
   event: { icon: Calendar, color: "text-orange-500" },
@@ -55,12 +58,9 @@ export default async function AnnouncementsPage(props: {
 
   return (
     <div className="min-h-screen pb-20">
-
       <div className="sticky top-0 z-40">
         <div className="mt-5 container max-w-5xl rounded-2xl mx-auto px-4 w-full border-b border-border/40 bg-card/80 backdrop-blur-md support-[backdrop-filter]:bg-card/60">
-
           <div className="flex h-16 items-center justify-between gap-4">
-
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-sm shadow-primary/10">
                 <Icon name="announcement" className="size-5" />
@@ -106,7 +106,11 @@ export default async function AnnouncementsPage(props: {
               return (
                 <Link
                   key={cat}
-                  href={cat === "all" ? "/announcements" : `/announcements?category=${cat}`}
+                  href={
+                    cat === "all"
+                      ? "/announcements"
+                      : `/announcements?category=${cat}`
+                  }
                   className={cn(
                     "group relative flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all whitespace-nowrap select-none",
                     isActive
@@ -114,7 +118,12 @@ export default async function AnnouncementsPage(props: {
                       : "bg-card text-muted-foreground border-border hover:border-foreground/20 hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <Icon className={cn("h-3.5 w-3.5", isActive ? "text-primary-foreground" : config.color)} />
+                  <Icon
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      isActive ? "text-primary-foreground" : config.color
+                    )}
+                  />
                   <span>
                     {config.label || changeCase(cat, "camel_to_title")}
                   </span>
@@ -133,13 +142,14 @@ export default async function AnnouncementsPage(props: {
       </div>
 
       <main className="container max-w-3xl mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
         <div className="sm:hidden mb-6">
           <h2 className="text-xl font-bold text-foreground">
-            {CATEGORY_CONFIG[currentCategory]?.label || changeCase(currentCategory, "camel_to_title")}
+            {CATEGORY_CONFIG[currentCategory]?.label ||
+              changeCase(currentCategory, "camel_to_title")}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {filteredAnnouncements.length} {filteredAnnouncements.length === 1 ? 'post' : 'posts'} found
+            {filteredAnnouncements.length}{" "}
+            {filteredAnnouncements.length === 1 ? "post" : "posts"} found
           </p>
         </div>
 
@@ -149,13 +159,19 @@ export default async function AnnouncementsPage(props: {
               icons={[Megaphone]}
               title="All caught up!"
               description={`There are no announcements in the ${currentCategory} category yet.`}
-              actionProps={session?.user ? {
-                asChild: true,
-                variant: "outline",
-                children: (
-                  <Link href="/announcements/create">Create the first one</Link>
-                )
-              } : undefined}
+              actionProps={
+                session?.user
+                  ? {
+                      asChild: true,
+                      variant: "outline",
+                      children: (
+                        <Link href="/announcements/create">
+                          Create the first one
+                        </Link>
+                      ),
+                    }
+                  : undefined
+              }
             />
           </div>
         ) : (

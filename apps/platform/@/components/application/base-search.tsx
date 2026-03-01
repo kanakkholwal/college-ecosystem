@@ -10,7 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
-//  Types 
+//  Types
 type FilterOption = {
   key: string;
   label: string;
@@ -50,7 +50,10 @@ export default function BaseSearchBox({
   const [showExpandedFilters, setShowExpandedFilters] = useState(false);
 
   // Memoize URL Params
-  const params = useMemo(() => new URLSearchParams(searchParams), [searchParams]);
+  const params = useMemo(
+    () => new URLSearchParams(searchParams),
+    [searchParams]
+  );
 
   // --- Handlers ---
 
@@ -64,17 +67,20 @@ export default function BaseSearchBox({
     replace(`${pathname}?${params.toString()}`);
   }, debounceTime);
 
-  const handleFilter = useCallback((key: string, value: string) => {
-    // If selecting the currently selected value, clear it (toggle behavior)
-    // OR if value is explicit "all"/"none"
-    if (params.get(key) === value || value === "all") {
-      params.delete(key);
-    } else {
-      params.set(key, value);
-    }
-    params.set("page", "1"); // Reset pagination on filter
-    replace(`${pathname}?${params.toString()}`);
-  }, [params, pathname, replace]);
+  const handleFilter = useCallback(
+    (key: string, value: string) => {
+      // If selecting the currently selected value, clear it (toggle behavior)
+      // OR if value is explicit "all"/"none"
+      if (params.get(key) === value || value === "all") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+      params.set("page", "1"); // Reset pagination on filter
+      replace(`${pathname}?${params.toString()}`);
+    },
+    [params, pathname, replace]
+  );
 
   const clearAllFilters = useCallback(() => {
     filterOptions.forEach((opt) => params.delete(opt.key));
@@ -88,13 +94,18 @@ export default function BaseSearchBox({
   );
 
   return (
-    <div className={cn("w-full space-y-3 max-w-(--max-app-width) z-10", className)}>
-
+    <div
+      className={cn("w-full space-y-3 max-w-(--max-app-width) z-10", className)}
+    >
       <div className="relative group">
         <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-primary/0 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
 
-        <div className={cn("relative flex items-center bg-card rounded-full shadow-sm border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all mx-auto", searchBoxClassName)}>
-
+        <div
+          className={cn(
+            "relative flex items-center bg-card rounded-full shadow-sm border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all mx-auto",
+            searchBoxClassName
+          )}
+        >
           {filterOptions.length > 0 && (
             <div className="pl-1.5">
               {variant === "default" ? (
@@ -107,9 +118,12 @@ export default function BaseSearchBox({
                       size: "icon",
                       className: cn(
                         "size-9 rounded-full text-muted-foreground hover:bg-muted transition-colors",
-                        activeFilterCount > 0 && "text-primary bg-primary/10 hover:bg-primary/20"
+                        activeFilterCount > 0 &&
+                          "text-primary bg-primary/10 hover:bg-primary/20"
                       ),
-                      children: <Icon name="sliders-horizontal" className="size-4" />,
+                      children: (
+                        <Icon name="sliders-horizontal" className="size-4" />
+                      ),
                     }}
                   >
                     <FilterContent
@@ -164,63 +178,72 @@ export default function BaseSearchBox({
         </div>
       </div>
 
-      {variant === "expanded" && showExpandedFilters && filterOptions.length > 0 && (
-        <div className="animate-in slide-in-from-top-2 fade-in duration-200">
-          <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Filters
-            </span>
-            {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className="h-6 text-[10px] text-muted-foreground hover:text-destructive px-2"
-              >
-                Clear All
-              </Button>
-            )}
-          </div>
+      {variant === "expanded" &&
+        showExpandedFilters &&
+        filterOptions.length > 0 && (
+          <div className="animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Filters
+              </span>
+              {activeFilterCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="h-6 text-[10px] text-muted-foreground hover:text-destructive px-2"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-2">
-            {filterOptions.map((option) => (
-              <div key={option.key} className="flex items-center gap-2 p-1 pr-2 rounded-full border border-border/60 bg-card/50">
-                <span className="pl-2 text-[10px] font-medium text-muted-foreground/70 uppercase">
-                  {option.label}
-                </span>
-                <Separator orientation="vertical" className="h-4" />
-                <div className="flex gap-1">
-                  {option.values.map((val) => {
-                    const isActive = params.get(option.key) === val.value;
-                    return (
-                      <button
-                        key={val.value}
-                        onClick={() => handleFilter(option.key, val.value)}
-                        className={cn(
-                          "px-2 py-0.5 rounded-full text-xs transition-all border border-transparent",
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        {val.label}
-                      </button>
-                    );
-                  })}
+            <div className="flex flex-wrap gap-2">
+              {filterOptions.map((option) => (
+                <div
+                  key={option.key}
+                  className="flex items-center gap-2 p-1 pr-2 rounded-full border border-border/60 bg-card/50"
+                >
+                  <span className="pl-2 text-[10px] font-medium text-muted-foreground/70 uppercase">
+                    {option.label}
+                  </span>
+                  <Separator orientation="vertical" className="h-4" />
+                  <div className="flex gap-1">
+                    {option.values.map((val) => {
+                      const isActive = params.get(option.key) === val.value;
+                      return (
+                        <button
+                          key={val.value}
+                          onClick={() => handleFilter(option.key, val.value)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-xs transition-all border border-transparent",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )}
+                        >
+                          {val.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
 
-
 function FilterButtonFallback() {
   return (
-    <Button variant="ghost" size="icon" className="size-9 rounded-full" disabled>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-9 rounded-full"
+      disabled
+    >
       <Icon name="sliders-horizontal" className="size-4 opacity-50" />
     </Button>
   );
@@ -262,7 +285,8 @@ function FilterContent({
             </div>
             <div className="flex flex-wrap gap-2">
               {group.values.map((item) => {
-                const isSelected = currentParams.get(group.key) === item.value.toString();
+                const isSelected =
+                  currentParams.get(group.key) === item.value.toString();
                 return (
                   <Button
                     key={item.value}
@@ -271,12 +295,15 @@ function FilterContent({
                     variant={isSelected ? "default_soft" : "outline"}
                   >
                     {item.label}
-                    {isSelected && <Icon name="check:bold" className="ml-1 size-3" />}
+                    {isSelected && (
+                      <Icon name="check:bold" className="ml-1 size-3" />
+                    )}
                   </Button>
                 );
               })}
             </div>
-          </div>)
+          </div>
+        );
       })}
       {options.length === 0 && (
         <div className="text-center text-sm text-muted-foreground py-4">

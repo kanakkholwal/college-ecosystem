@@ -106,7 +106,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
           content={appConfig.verifications.google_adsense}
         />
         <meta name="apple-mobile-web-app-title" content={appConfig.shortName} />
-
       </head>
       <body
         className={cn(
@@ -125,29 +124,33 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
         {/* ✅ Load AdSense script once globally */}
         <Provider>{children} </Provider>
-        {process.env.NODE_ENV === "production" && (<>
-          <Script
-            id="adsense-script"
-            strategy="afterInteractive"
-            async
-            src={"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + appConfig.verifications.google_adsense}
-            crossOrigin="anonymous"
-          />
-          <GoogleAnalytics gaId={appConfig.verifications.google_analytics} />
-          {/* eslint-disable @next/next/no-img-element */}
-          <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
-            <span>
-              <img
-                height={20}
-                width={80}
-                src="https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge"
-                alt="Visitor counter"
-                className="inline-block font-inherit h-4"
-                loading="lazy"
-              />
-            </span>
-          </div>
-        </>
+        {process.env.NODE_ENV === "production" && (
+          <>
+            <Script
+              id="adsense-script"
+              strategy="afterInteractive"
+              async
+              src={
+                "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
+                appConfig.verifications.google_adsense
+              }
+              crossOrigin="anonymous"
+            />
+            <GoogleAnalytics gaId={appConfig.verifications.google_analytics} />
+            {/* eslint-disable @next/next/no-img-element */}
+            <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
+              <span>
+                <img
+                  height={20}
+                  width={80}
+                  src="https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge"
+                  alt="Visitor counter"
+                  className="inline-block font-inherit h-4"
+                  loading="lazy"
+                />
+              </span>
+            </div>
+          </>
         )}
       </body>
     </html>

@@ -1,4 +1,7 @@
-import { HostelCard, HostelGridSkeleton } from "@/components/application/hostel/hostel-card";
+import {
+  HostelCard,
+  HostelGridSkeleton,
+} from "@/components/application/hostel/hostel-card";
 import EmptyArea from "@/components/common/empty-area";
 import { HeaderBar } from "@/components/common/header-bar";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +16,7 @@ import {
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import ConditionalRender from "@/components/utils/conditional-render";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
-import {
-  AlertCircle,
-  Building2,
-  Plus
-} from "lucide-react";
+import { AlertCircle, Building2, Plus } from "lucide-react";
 import { MdRoom } from "react-icons/md";
 import { getHostels } from "~/actions/hostel.core";
 import { getSession } from "~/auth/server";
@@ -42,8 +41,13 @@ export default async function ChiefWardenPage({
         Icon={MdRoom}
         titleNode={
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Hostel Directory</h1>
-            <Badge variant="secondary" className="rounded-full px-2.5 bg-muted text-muted-foreground border-border">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Hostel Directory
+            </h1>
+            <Badge
+              variant="secondary"
+              className="rounded-full px-2.5 bg-muted text-muted-foreground border-border"
+            >
               {hostels?.length || 0} Properties
             </Badge>
           </div>
@@ -98,7 +102,9 @@ export default async function ChiefWardenPage({
               const isUserAllowed =
                 isAdmin ||
                 (userEmail && allowedEmails.includes(userEmail)) ||
-                allowedEmails.some((email: string) => userOtherEmails.includes(email));
+                allowedEmails.some((email: string) =>
+                  userOtherEmails.includes(email)
+                );
 
               return (
                 <HostelCard
@@ -113,7 +119,6 @@ export default async function ChiefWardenPage({
         </ConditionalRender>
 
         <ConditionalRender condition={!hostels || hostels.length === 0}>
-
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -121,7 +126,8 @@ export default async function ChiefWardenPage({
               </EmptyMedia>
               <EmptyTitle>No Hostels Configured</EmptyTitle>
               <EmptyDescription>
-                Your campus housing ecosystem is empty. Start by adding your first hostel block.
+                Your campus housing ecosystem is empty. Start by adding your
+                first hostel block.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
@@ -139,5 +145,3 @@ export default async function ChiefWardenPage({
     </div>
   );
 }
-
-

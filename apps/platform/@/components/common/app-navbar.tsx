@@ -48,12 +48,19 @@ export default function Navbar({
   };
 
   return (
-    <nav className={cn("sticky top-0 z-10 w-full flex items-center gap-2 px-4 py-3 bg-background/80 backdrop-blur-md transition-all support-[backdrop-filter]:bg-background/60", className)}>
-
+    <nav
+      className={cn(
+        "sticky top-0 z-10 w-full flex items-center gap-2 px-4 py-3 bg-background/80 backdrop-blur-md transition-all support-[backdrop-filter]:bg-background/60",
+        className
+      )}
+    >
       <div className="flex items-center gap-2 md:gap-3">
         <SidebarTrigger className="h-8 w-8 text-muted-foreground hover:text-foreground" />
 
-        <Separator orientation="vertical" className="h-4 bg-border/60 hidden md:block" />
+        <Separator
+          orientation="vertical"
+          className="h-4 bg-border/60 hidden md:block"
+        />
 
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
@@ -69,14 +76,16 @@ export default function Navbar({
       </div>
 
       <div className="ml-auto flex items-center gap-2 md:gap-4">
-
         {impersonatedBy && (
           <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 animate-in fade-in slide-in-from-top-1">
             <ShieldAlert className="h-3.5 w-3.5" />
             <span className="truncate max-w-[150px]">
               Viewing as <span className="font-bold">{user.name}</span>
             </span>
-            <Separator orientation="vertical" className="h-3 bg-amber-500/20 mx-1" />
+            <Separator
+              orientation="vertical"
+              className="h-3 bg-amber-500/20 mx-1"
+            />
             <button
               onClick={handleStopImpersonation}
               className="hover:bg-amber-500/20 rounded-full p-0.5 transition-colors"
@@ -93,7 +102,10 @@ export default function Navbar({
           <ThemeSwitcher />
         </div>
 
-        <Separator orientation="vertical" className="h-6 bg-border/60 hidden sm:block" />
+        <Separator
+          orientation="vertical"
+          className="h-6 bg-border/60 hidden sm:block"
+        />
 
         {/* Profile */}
         <ProfileDropdown user={user} />
@@ -108,7 +120,8 @@ export default function Navbar({
             size="sm"
             className="shadow-lg rounded-full text-xs font-medium"
           >
-            <ShieldAlert className="mr-2 h-3 w-3" /> Stop Viewing as {user.name.split(' ')[0]}
+            <ShieldAlert className="mr-2 h-3 w-3" /> Stop Viewing as{" "}
+            {user.name.split(" ")[0]}
           </Button>
         </div>
       )}

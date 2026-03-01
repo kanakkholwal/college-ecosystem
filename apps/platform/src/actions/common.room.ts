@@ -162,11 +162,13 @@ type RoomType = z.infer<typeof roomSchema>;
 
 // Function to create a new room
 export async function createRoom(
-  roomData: z.infer<typeof roomSchema>,
+  roomData: z.infer<typeof roomSchema>
   // initialUsageHistory?: UsageHistoryInsert
-): Promise<Omit<RoomSelect,"currentStatus"> & {
-  currentStatus: RoomType["currentStatus"];
-}> {
+): Promise<
+  Omit<RoomSelect, "currentStatus"> & {
+    currentStatus: RoomType["currentStatus"];
+  }
+> {
   "use server";
   // Validate room data
   const response = roomSchema.safeParse(roomData);
@@ -190,9 +192,9 @@ export async function createRoom(
   //   });
   // }
 
-  return newRoom as Omit<RoomSelect,"currentStatus"> & {
+  return newRoom as Omit<RoomSelect, "currentStatus"> & {
     currentStatus: RoomType["currentStatus"];
-  }
+  };
 }
 
 // Function to update a room

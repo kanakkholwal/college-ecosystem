@@ -1,4 +1,3 @@
-
 // provider.tsx
 "use client";
 import GithubStarDialog from "@/components/common/dialog.star";
@@ -67,8 +66,6 @@ export function Provider({ children }: { children: React.ReactNode }) {
         }}
       />
       <Toaster position="bottom-right" richColors />
-
     </QueryClientProvider>
   );
 }
-

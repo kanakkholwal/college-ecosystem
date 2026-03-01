@@ -25,7 +25,6 @@ export default function NotFoundContainer({
   return (
     <main className="grow flex flex-col items-center justify-center p-6 relative z-10 min-h-96 mt-20">
       <div className="w-full max-w-3xl mx-auto text-center space-y-8">
-
         <div className="relative inline-block">
           <h1 className="text-[150px] md:text-[200px] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-linear-to-b from-foreground/10 to-primary select-none">
             404
@@ -39,7 +38,8 @@ export default function NotFoundContainer({
 
         <div className="max-w-lg mx-auto space-y-6">
           <p className="text-lg text-muted-foreground leading-relaxed">
-            The coordinates you entered seem to be off the map. The page might have been moved, deleted, or never existed.
+            The coordinates you entered seem to be off the map. The page might
+            have been moved, deleted, or never existed.
           </p>
 
           <Suspense fallback={<div className="h-12" />}>

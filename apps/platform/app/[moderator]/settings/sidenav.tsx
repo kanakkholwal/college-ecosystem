@@ -52,8 +52,8 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
 
             {/* Content Layer */}
             <span className="relative z-10 flex items-center gap-2">
-               {Icon && <Icon className="size-4" />}
-               {item.title}
+              {Icon && <Icon className="size-4" />}
+              {item.title}
             </span>
           </Link>
         );

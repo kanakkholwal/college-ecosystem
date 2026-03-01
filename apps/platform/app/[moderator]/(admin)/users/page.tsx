@@ -21,13 +21,11 @@ interface PageProps {
     sortDirection?: string;
   }>;
 }
-type UserType = Awaited<
-  ReturnType<typeof auth.api.listUsers>
->["users"][number];
+type UserType = Awaited<ReturnType<typeof auth.api.listUsers>>["users"][number];
 
 export default async function UsersPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const requestHeaders = await headers(); 
+  const requestHeaders = await headers();
 
   // 1. Parse Params with Defaults
   const limit = parseInt(params.limit || "10");
@@ -36,7 +34,6 @@ export default async function UsersPage({ searchParams }: PageProps) {
   const sortDirection = (params.sortDirection as "asc" | "desc") || "desc";
   const searchField = params.searchField || "name";
   const searchOperator = params.searchOperator || "contains";
-
 
   // 2. Fetch Data (Server Side)
   // We declare variables with types or rely on const to avoid "implicitly has 'any' type" errors
@@ -53,7 +50,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
         offset,
         searchField: searchField,
         searchOperator: searchOperator,
-        searchValue: searchField === "name" ? searchValue.trim().toUpperCase() : searchValue,
+        searchValue:
+          searchField === "name"
+            ? searchValue.trim().toUpperCase()
+            : searchValue,
         sortDirection,
         sortBy: params.sortBy || "createdAt",
       },
@@ -68,7 +68,6 @@ export default async function UsersPage({ searchParams }: PageProps) {
       // If data is null, there is usually an error
       errorMessage = "Failed to fetch users.";
     }
-
   } catch (e: any) {
     // Catch network or unexpected errors
     errorMessage = e.message || "An unexpected error occurred.";
@@ -87,7 +86,6 @@ export default async function UsersPage({ searchParams }: PageProps) {
 
   return (
     <div className="w-full max-w-[1600px] mx-auto space-y-8 py-8 px-4 sm:px-6">
-
       {/* Header */}
       <HeaderBar
         Icon={Users}
@@ -112,10 +110,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
         <UsersToolbar />
 
         <div className="rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col">
-          <DataTable
-            data={usersData}
-            columns={columns}
-          />
+          <DataTable data={usersData} columns={columns} />
 
           {/* Pagination Control */}
           <div className="border-t bg-muted/20">

@@ -1,25 +1,24 @@
 // app/attendance/page.tsx
-import EmptyArea from "@/components/common/empty-area"
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog"
-import { BookUser, Plus } from "lucide-react"
-import type { Metadata } from "next"
-import { Suspense } from "react"
-import { getAttendanceRecords } from "~/actions/student.record_personal"
-import AttendanceAnalytics from "./attendance-analytics"
-import CreateAttendanceRecord from "./create-record"
-import AttendanceRecord from "./record"
+import EmptyArea from "@/components/common/empty-area";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { BookUser, Plus } from "lucide-react";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { getAttendanceRecords } from "~/actions/student.record_personal";
+import AttendanceAnalytics from "./attendance-analytics";
+import CreateAttendanceRecord from "./create-record";
+import AttendanceRecord from "./record";
 
 export const metadata: Metadata = {
   title: "Attendance",
   description: "Manage your attendance records here.",
-}
+};
 
 export default async function PersonalAttendanceManager() {
-  const attendance_records = await getAttendanceRecords()
+  const attendance_records = await getAttendanceRecords();
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-10 py-6 px-4">
-
       {/* Analytics Section */}
       <section>
         <AttendanceAnalytics records={attendance_records} />
@@ -27,11 +26,12 @@ export default async function PersonalAttendanceManager() {
 
       {/* Main Content Area */}
       <section className="space-y-6">
-
         {/* Controls Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h3 className="text-xl font-semibold tracking-tight">Your Subjects</h3>
+            <h3 className="text-xl font-semibold tracking-tight">
+              Your Subjects
+            </h3>
             <p className="text-sm text-muted-foreground">
               Manage attendance for {attendance_records.length} active courses.
             </p>
@@ -51,7 +51,13 @@ export default async function PersonalAttendanceManager() {
         )}
 
         {/* Records Grid */}
-        <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">Loading records...</div>}>
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">
+              Loading records...
+            </div>
+          }
+        >
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
             {attendance_records.map((record, index) => (
               <AttendanceRecord
@@ -65,7 +71,7 @@ export default async function PersonalAttendanceManager() {
         </Suspense>
       </section>
     </div>
-  )
+  );
 }
 
 function CreateAttendanceRecordButton() {
@@ -87,5 +93,5 @@ function CreateAttendanceRecordButton() {
     >
       <CreateAttendanceRecord />
     </ResponsiveDialog>
-  )
+  );
 }

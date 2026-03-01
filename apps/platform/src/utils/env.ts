@@ -1,4 +1,3 @@
-
 /**
  * Detects the current execution runtime.
  *
@@ -9,31 +8,34 @@
  * - 'unknown' → Fallback (should never happen in Next.js)
  *
  */
-export const getRuntime = (): 'browser' | 'node' | 'unknown' => {
+export const getRuntime = (): "browser" | "node" | "unknown" => {
   // Browser runtime
-  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    return 'browser';
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    return "browser";
   }
 
   // Node.js runtime (default server runtime)
-  if (typeof process !== 'undefined' && typeof process?.versions !== 'undefined') {
-    return 'node';
+  if (
+    typeof process !== "undefined" &&
+    typeof process?.versions !== "undefined"
+  ) {
+    return "node";
   }
 
-  return 'unknown';
+  return "unknown";
 };
 
 /**
  * True when executing in the browser.
  */
-export const isBrowser = (): boolean => getRuntime() === 'browser';
+export const isBrowser = (): boolean => getRuntime() === "browser";
 
 /**
  * True when executing in the Node.js server runtime.
  */
-export const isNode = (): boolean => getRuntime() === 'node';
+export const isNode = (): boolean => getRuntime() === "node";
 
-//  Environment detection 
+//  Environment detection
 
 /**
  * Reads deployment environment on the server.
@@ -52,27 +54,27 @@ export const getServerEnv = () => {
     /**
      * Vercel deployment environment.
      */
-    vercel: vercelEnv ?? 'unknown',
+    vercel: vercelEnv ?? "unknown",
 
     /**
      * Node.js build environment.
      */
-    node: nodeEnv ?? 'unknown',
+    node: nodeEnv ?? "unknown",
 
     /**
      * True in production deployments.
      */
-    isProd: vercelEnv === 'production' || nodeEnv === 'production',
+    isProd: vercelEnv === "production" || nodeEnv === "production",
 
     /**
      * True in preview deployments.
      */
-    isPreview: vercelEnv === 'preview',
+    isPreview: vercelEnv === "preview",
 
     /**
      * True in local development.
      */
-    isDev: vercelEnv === 'development' || nodeEnv === 'development',
+    isDev: vercelEnv === "development" || nodeEnv === "development",
   };
 };
 
@@ -91,22 +93,22 @@ export const getClientEnv = () => {
     /**
      * Vercel deployment environment (mirrored).
      */
-    vercel: env ?? 'unknown',
+    vercel: env ?? "unknown",
 
     /**
      * True in production builds.
      */
-    isProd: env === 'production',
+    isProd: env === "production",
 
     /**
      * True in preview builds.
      */
-    isPreview: env === 'preview',
+    isPreview: env === "preview",
 
     /**
      * True in development builds.
      */
-    isDev: env === 'development',
+    isDev: env === "development",
   };
 };
 
@@ -126,7 +128,7 @@ export const getClientEnv = () => {
 export const getExecutionContext = () => {
   const runtime = getRuntime();
 
-  if (runtime === 'browser') {
+  if (runtime === "browser") {
     return {
       runtime,
       ...getClientEnv(),
@@ -138,8 +140,6 @@ export const getExecutionContext = () => {
     ...getServerEnv(),
   };
 };
-
-
 
 /**
 * Get canonical base URL for the current execution.
@@ -159,22 +159,19 @@ export const getExecutionContext = () => {
 export const getBaseURL = () => {
   const ctx = getExecutionContext();
 
-
   // Browser: trust the actual origin
-  if (ctx.runtime === 'browser') {
+  if (ctx.runtime === "browser") {
     return window.location.origin;
   }
-
 
   // Server / Edge
 
   // Vercel production / preview
-  if (process.env.VERCEL === '1') {
+  if (process.env.VERCEL === "1") {
     const host =
       process.env.VERCEL_PROJECT_PRODUCTION_URL ||
       process.env.VERCEL_PROJECT_PREVIEW_URL ||
       process.env.VERCEL_URL;
-
 
     if (host) {
       return `https://${host}`;
@@ -186,13 +183,9 @@ export const getBaseURL = () => {
     return process.env.BETTER_AUTH_URL;
   }
 
-
-
-
   // Local fallback
-  return 'http://localhost:3000';
+  return "http://localhost:3000";
 };
-
 
 /**
  * Get backend API URL from current app domain.
@@ -201,15 +194,14 @@ export const getBaseURL = () => {
 export const getServerURL = async () => {
   const runtime = getRuntime();
 
-  //  Explicit override 
-  if (runtime !== 'browser' && process.env.BASE_SERVER_URL) {
+  //  Explicit override
+  if (runtime !== "browser" && process.env.BASE_SERVER_URL) {
     return process.env.BASE_SERVER_URL;
   }
 
-  if (runtime === 'browser' && process.env.NEXT_PUBLIC_BASE_SERVER_URL) {
+  if (runtime === "browser" && process.env.NEXT_PUBLIC_BASE_SERVER_URL) {
     return process.env.NEXT_PUBLIC_BASE_SERVER_URL;
   }
 
-
-  return 'http://localhost:8080';
+  return "http://localhost:8080";
 };

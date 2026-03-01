@@ -16,7 +16,11 @@ export default async function HostelRoomAllotmentPage() {
   // 1. Fetch Core Data
   const hostelResponse = await getHostelForStudent();
 
-  if (!hostelResponse.success || !hostelResponse.hosteler || !hostelResponse.hostel) {
+  if (
+    !hostelResponse.success ||
+    !hostelResponse.hosteler ||
+    !hostelResponse.hostel
+  ) {
     return (
       <div className="w-full min-h-[50vh] flex items-center justify-center">
         <EmptyArea
@@ -40,11 +44,11 @@ export default async function HostelRoomAllotmentPage() {
   // 3. Conditional Data Fetching (Only if open)
   let rooms = [];
   let slots = [];
-  
+
   if (allotmentProcess?.status === "open") {
     const [roomsRes, slotsRes] = await Promise.all([
       getHostelRooms(hostel._id),
-      getUpcomingSlots(hostel._id)
+      getUpcomingSlots(hostel._id),
     ]);
     rooms = roomsRes.data || [];
     slots = slotsRes.data || [];
@@ -53,19 +57,21 @@ export default async function HostelRoomAllotmentPage() {
   return (
     <div className="space-y-8 my-6 max-w-7xl mx-auto px-4 sm:px-6">
       {/* Header Section */}
-      <AllotmentHeader 
-        status={allotmentProcess?.status} 
+      <AllotmentHeader
+        status={allotmentProcess?.status}
         joinedRoom={hostJoinedRoom?.roomNumber}
       />
 
-      <ErrorBoundaryWithSuspense loadingFallback={<SkeletonCardArea count={8} />}>
+      <ErrorBoundaryWithSuspense
+        loadingFallback={<SkeletonCardArea count={8} />}
+      >
         {/* State Handling */}
         {allotmentProcess?.status !== "open" ? (
           <StatusMessage status={allotmentProcess?.status} />
         ) : (
-          <RoomGrid 
-            rooms={rooms} 
-            hostId={hosteler._id as string} 
+          <RoomGrid
+            rooms={rooms}
+            hostId={hosteler._id as string}
             userRoomId={hostJoinedRoom?._id}
           />
         )}
@@ -76,10 +82,22 @@ export default async function HostelRoomAllotmentPage() {
 
 function StatusMessage({ status }: { status: string }) {
   const messages = {
-    closed: { title: "Allotment Closed", desc: "The allocation window has ended." },
-    paused: { title: "Process Paused", desc: "Admin has temporarily paused allocation." },
-    waiting: { title: "Starting Soon", desc: "The allocation window has not opened yet." },
-    completed: { title: "Allotment Done", desc: "The process is complete for this semester." },
+    closed: {
+      title: "Allotment Closed",
+      desc: "The allocation window has ended.",
+    },
+    paused: {
+      title: "Process Paused",
+      desc: "Admin has temporarily paused allocation.",
+    },
+    waiting: {
+      title: "Starting Soon",
+      desc: "The allocation window has not opened yet.",
+    },
+    completed: {
+      title: "Allotment Done",
+      desc: "The process is complete for this semester.",
+    },
   };
 
   const msg = messages[status as keyof typeof messages] || messages.waiting;

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link as LinkIcon, Loader2, Minus, Plus } from "lucide-react";
@@ -13,7 +13,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,8 +53,8 @@ export function ApplicationForm() {
       mobile: "",
       workLinks: [{ url: "" }],
       bestProject: "",
-      bestHack: ""
-    }
+      bestHack: "",
+    },
   });
 
   const { control, handleSubmit } = form;
@@ -66,20 +66,23 @@ export function ApplicationForm() {
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitting(true);
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     console.log(data);
-    toast.success("Application Transmitted", { description: "We'll be in touch shortly." });
+    toast.success("Application Transmitted", {
+      description: "We'll be in touch shortly.",
+    });
     setIsSubmitting(false);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-
         {/* Section: Identity */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">01</div>
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">
+              01
+            </div>
             <h3 className="text-lg font-semibold tracking-tight">Identity</h3>
           </div>
 
@@ -89,9 +92,15 @@ export function ApplicationForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Full Name</FormLabel>
+                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                    Full Name
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" className="bg-muted/30 focus:bg-background h-11" {...field} />
+                    <Input
+                      placeholder="John Doe"
+                      className="bg-muted/30 focus:bg-background h-11"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,17 +111,26 @@ export function ApplicationForm() {
               name="collegeYear"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Academic Year</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                    Academic Year
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger className="bg-muted/30 h-11">
                         <SelectValue placeholder="Select year" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {["1st Year", "2nd Year", "3rd Year", "Final Year"].map(year => (
-                        <SelectItem key={year} value={year}>{year}</SelectItem>
-                      ))}
+                      {["1st Year", "2nd Year", "3rd Year", "Final Year"].map(
+                        (year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -127,9 +145,15 @@ export function ApplicationForm() {
               name="collegeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">College Email</FormLabel>
+                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                    College Email
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="rollno@nith.ac.in" className="bg-muted/30 focus:bg-background h-11 font-mono" {...field} />
+                    <Input
+                      placeholder="rollno@nith.ac.in"
+                      className="bg-muted/30 focus:bg-background h-11 font-mono"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,9 +164,15 @@ export function ApplicationForm() {
               name="mobile"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Contact</FormLabel>
+                  <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                    Contact
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="+91 98765 43210" className="bg-muted/30 focus:bg-background h-11 font-mono" {...field} />
+                    <Input
+                      placeholder="+91 98765 43210"
+                      className="bg-muted/30 focus:bg-background h-11 font-mono"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -156,13 +186,19 @@ export function ApplicationForm() {
         {/* Section: Proof of Work */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">02</div>
-            <h3 className="text-lg font-semibold tracking-tight">Proof of Work</h3>
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">
+              02
+            </div>
+            <h3 className="text-lg font-semibold tracking-tight">
+              Proof of Work
+            </h3>
           </div>
 
           <div className="space-y-4">
             <div className="flex flex-col gap-3">
-              <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Links (GitHub, LinkedIn, Portfolio)</FormLabel>
+              <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                Links (GitHub, LinkedIn, Portfolio)
+              </FormLabel>
               {fields.map((field, index) => (
                 <FormField
                   key={field.id}
@@ -174,7 +210,11 @@ export function ApplicationForm() {
                         <FormControl>
                           <div className="relative flex-1">
                             <LinkIcon className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="https://github.com/username" className="pl-9 bg-muted/30 focus:bg-background h-11 font-mono" {...field} />
+                            <Input
+                              placeholder="https://github.com/username"
+                              className="pl-9 bg-muted/30 focus:bg-background h-11 font-mono"
+                              {...field}
+                            />
                           </div>
                         </FormControl>
                         <Button
@@ -211,7 +251,9 @@ export function ApplicationForm() {
         {/* Section: The Build */}
         <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">03</div>
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono text-xs font-bold">
+              03
+            </div>
             <h3 className="text-lg font-semibold tracking-tight">The Build</h3>
           </div>
 
@@ -220,7 +262,9 @@ export function ApplicationForm() {
             name="bestProject"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">What is the best thing you{"'"}ve built?</FormLabel>
+                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                  What is the best thing you{"'"}ve built?
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Tell us about the stack, the problem, and how you solved it..."
@@ -238,7 +282,9 @@ export function ApplicationForm() {
             name="bestHack"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">Optional: Describe a technical {'Hack'} you are proud of</FormLabel>
+                <FormLabel className="uppercase text-xs font-mono text-muted-foreground">
+                  Optional: Describe a technical {"Hack"} you are proud of
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Did you reverse engineer an API? Optimize a slow query? Bypass a constraint?"
@@ -254,10 +300,16 @@ export function ApplicationForm() {
 
         {/* Submit Area */}
         <div className="pt-4">
-          <Button type="submit" disabled={isSubmitting} size="lg" className="w-full h-14 text-base font-bold shadow-lg shadow-primary/40">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            size="lg"
+            className="w-full h-14 text-base font-bold shadow-lg shadow-primary/40"
+          >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Transmitting...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />{" "}
+                Transmitting...
               </>
             ) : (
               "Initialize Application"
@@ -267,7 +319,6 @@ export function ApplicationForm() {
             By clicking submit, you agree to commit 10 days to the build.
           </p>
         </div>
-
       </form>
     </Form>
   );

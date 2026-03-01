@@ -31,7 +31,6 @@ export default async function StudentDashboard({ role }: { role: string }) {
 
   return (
     <div className="w-full mx-auto space-y-10 py-8 px-4 sm:px-6">
-
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <LayoutGrid className="size-5 text-muted-foreground" />
@@ -39,7 +38,6 @@ export default async function StudentDashboard({ role }: { role: string }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
           {/* Rank Card - Takes prominence */}
           <StatsCard
             title="Class Rank"
@@ -48,14 +46,17 @@ export default async function StudentDashboard({ role }: { role: string }) {
             className="lg:col-span-1"
           >
             <div className="flex items-baseline gap-1 mt-2">
-              <span className="text-4xl font-extrabold tracking-tighter text-foreground">#</span>
+              <span className="text-4xl font-extrabold tracking-tighter text-foreground">
+                #
+              </span>
               <NumberTicker
                 value={dashboardData?.result?.rank?.class || 0}
                 className="text-5xl font-extrabold tracking-tighter text-primary"
               />
             </div>
             <p className="text-sm font-medium text-muted-foreground mt-2">
-              Top {(Math.random() * 10).toFixed(1)}% of class {/* Placeholder logic or add real data */}
+              Top {(Math.random() * 10).toFixed(1)}% of class{" "}
+              {/* Placeholder logic or add real data */}
             </p>
           </StatsCard>
 
@@ -64,7 +65,11 @@ export default async function StudentDashboard({ role }: { role: string }) {
             title="Hostel Status"
             Icon={<BedDouble className="size-4" />}
             variant={dashboardData.hosteler?.banned ? "destructive" : "default"}
-            description={dashboardData.hosteler ? "Your current residence." : "No hostel assigned."}
+            description={
+              dashboardData.hosteler
+                ? "Your current residence."
+                : "No hostel assigned."
+            }
             className="lg:col-span-1"
           >
             {dashboardData.hosteler ? (
@@ -86,7 +91,9 @@ export default async function StudentDashboard({ role }: { role: string }) {
               </div>
             ) : (
               <div className="flex flex-col justify-center h-full min-h-15">
-                <p className="text-sm text-muted-foreground">Contact admin for allotment.</p>
+                <p className="text-sm text-muted-foreground">
+                  Contact admin for allotment.
+                </p>
               </div>
             )}
           </StatsCard>
@@ -123,7 +130,9 @@ export default async function StudentDashboard({ role }: { role: string }) {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Link2 className="size-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold tracking-tight">Quick Actions</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            Quick Actions
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

@@ -1,11 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Loader2,
-  ShieldAlert,
-  ShieldCheck
-} from "lucide-react";
+import { Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,8 +11,10 @@ import { authClient } from "~/auth/client";
 export default function VerifyEmail() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
-  const [status, setStatus] = useState<"idle" | "verifying" | "success" | "error">("idle");
+
+  const [status, setStatus] = useState<
+    "idle" | "verifying" | "success" | "error"
+  >("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const token = searchParams.get("token");
@@ -31,11 +29,14 @@ export default function VerifyEmail() {
     const verify = async () => {
       setStatus("verifying");
       try {
-        const res = await authClient.verifyEmail({
-          query: { token },
-        }, {
-            credentials: 'include'
-        });
+        const res = await authClient.verifyEmail(
+          {
+            query: { token },
+          },
+          {
+            credentials: "include",
+          }
+        );
 
         if (res.error) {
           setStatus("error");
@@ -65,7 +66,9 @@ export default function VerifyEmail() {
           <Loader2 className="size-8 animate-spin" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">Verifying Identity</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Verifying Identity
+          </h2>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
             Please wait while we validate your email token secure connection...
           </p>
@@ -81,9 +84,12 @@ export default function VerifyEmail() {
           <ShieldCheck className="size-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">Email Verified</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Email Verified
+          </h2>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-            Your account has been successfully verified. You can now access the platform.
+            Your account has been successfully verified. You can now access the
+            platform.
           </p>
         </div>
         <Button className="w-full" asChild>
@@ -100,17 +106,19 @@ export default function VerifyEmail() {
         <ShieldAlert className="size-8" />
       </div>
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight">Verification Failed</h2>
+        <h2 className="text-xl font-semibold tracking-tight">
+          Verification Failed
+        </h2>
         <p className="text-sm text-muted-foreground max-w-xs mx-auto text-balance">
           {errorMessage || "The link may be invalid or expired."}
         </p>
       </div>
       <div className="flex gap-4 w-full flex-wrap">
         <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Home</Link>
+          <Link href="/">Home</Link>
         </Button>
         <Button variant="default" className="w-full" asChild>
-            <Link href="/auth/sign-in">Back to Sign In</Link>
+          <Link href="/auth/sign-in">Back to Sign In</Link>
         </Button>
       </div>
     </div>

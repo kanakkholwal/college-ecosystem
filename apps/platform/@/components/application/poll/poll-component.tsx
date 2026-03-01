@@ -8,7 +8,7 @@ import type { Session } from "~/auth/client";
 import DeletePoll from "./delete-poll";
 import { ClosingBadge } from "./poll-timer";
 
-// Helper Functions 
+// Helper Functions
 
 function parseVotes(votes: PollType["votes"], option: string) {
   const count = votes?.filter((vote) => vote.option === option).length || 0;
@@ -46,15 +46,15 @@ function notAllowed(
   }
 }
 
-//  Components 
+//  Components
 
 function PollHeader({ poll }: { poll: PollType }) {
   const createdAt = poll?.createdAt
     ? new Date(poll.createdAt).toLocaleString("default", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
     : "";
 
   return (
@@ -84,7 +84,13 @@ function PollHeader({ poll }: { poll: PollType }) {
   );
 }
 
-export function PollOptions({ poll, user }: { poll: PollType; user?: Session["user"] }) {
+export function PollOptions({
+  poll,
+  user,
+}: {
+  poll: PollType;
+  user?: Session["user"];
+}) {
   return (
     <div className="grid gap-3 mt-5">
       {poll.options.map((option, index) => {
@@ -101,7 +107,9 @@ export function PollOptions({ poll, user }: { poll: PollType; user?: Session["us
             key={index}
             className={cn(
               "relative w-full rounded-lg border overflow-hidden group transition-all",
-              voted ? "border-primary/50 shadow-sm" : "border-border hover:border-primary/30"
+              voted
+                ? "border-primary/50 shadow-sm"
+                : "border-border hover:border-primary/30"
             )}
           >
             {/* Progress Bar Background */}
@@ -167,7 +175,6 @@ function PollStats({ poll }: { poll: PollType }) {
   );
 }
 
-
 export default function PollComponent({
   poll,
   user,
@@ -176,11 +183,10 @@ export default function PollComponent({
   user?: Session["user"];
 }) {
   const closesAlready = new Date(poll.closesAt) < new Date();
-  const isCreator = (user?.id === poll.createdBy) || user?.role === "admin";
+  const isCreator = user?.id === poll.createdBy || user?.role === "admin";
 
   return (
     <div className="bg-card p-6 rounded-xl relative border border-border/60 shadow-sm transition-all hover:shadow-md hover:border-border/80 flex flex-col h-full">
-
       <PollHeader poll={poll} />
 
       <PollOptions poll={poll} user={user} />
@@ -201,7 +207,6 @@ export default function PollComponent({
           >
             {closesAlready ? "Check Results" : "Vote Now"}
           </ButtonLink>
-
         </div>
       </div>
     </div>

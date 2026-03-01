@@ -112,10 +112,9 @@ export async function updateHostel(
 
       if (students.length !== (data.students ?? []).length) {
         console.log("syncHostelStudents");
-        const response = await syncHostelStudents(
-          hostel._id.toString(),
-          [...new Set(data.students)]
-        );
+        const response = await syncHostelStudents(hostel._id.toString(), [
+          ...new Set(data.students),
+        ]);
 
         if (!response.success) {
           console.log("Failed to sync students", response.error);
@@ -261,12 +260,12 @@ async function syncHostelStudents(hostelId: string, studentEmails: string[]) {
 export async function getHostel(slug: string): Promise<{
   success: boolean;
   hostel:
-  | (HostelType & {
-    students: {
-      count: number;
-    };
-  })
-  | null;
+    | (HostelType & {
+        students: {
+          count: number;
+        };
+      })
+    | null;
   error?: object;
 }> {
   try {
@@ -656,10 +655,11 @@ export async function getHostelsStats(): Promise<{
     });
   } catch (err) {
     return Promise.resolve({
-      success: false, data: {
+      success: false,
+      data: {
         hostels: [],
-        totalStudents: 0
-      }
+        totalStudents: 0,
+      },
     });
   }
 }

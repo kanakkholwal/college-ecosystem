@@ -10,7 +10,17 @@ import CommunityPostModel from "~/models/community";
 import { EventModel } from "~/models/events";
 import PollModel from "~/models/poll";
 import ResultModel from "~/models/result";
-import { calculateGrowthPercentage, calculateTrend, DateRange, generateGraphData, getDateRanges, getPeriodLabel, GraphDataPoint, PeriodSummary, TimeInterval } from "~/utils/process";
+import {
+  calculateGrowthPercentage,
+  calculateTrend,
+  DateRange,
+  generateGraphData,
+  getDateRanges,
+  getPeriodLabel,
+  GraphDataPoint,
+  PeriodSummary,
+  TimeInterval,
+} from "~/utils/process";
 import { updateHostelStudent } from "./hostel.core";
 
 export interface UserCountAndGrowthResult {
@@ -29,10 +39,6 @@ export interface UserCountAndGrowthResult {
   };
 }
 
-
-
-
-
 /**
  * Calculate user count and growth metrics for a given time interval
  * @param timeInterval - The time period to analyze
@@ -49,41 +55,45 @@ export async function users_CountAndGrowth(
     const { current, previous } = getDateRanges(timeInterval, now);
 
     // Execute all queries in parallel for better performance
-    const [totalUsersResult, currentPeriodResult, previousPeriodResult, timeSeriesData] =
-      await Promise.all([
-        // Total user count (all time)
-        db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(users)
-          .execute(),
+    const [
+      totalUsersResult,
+      currentPeriodResult,
+      previousPeriodResult,
+      timeSeriesData,
+    ] = await Promise.all([
+      // Total user count (all time)
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(users)
+        .execute(),
 
-        // Current period count
-        db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(users)
-          .where(
-            and(
-              gte(users.createdAt, current.start),
-              lte(users.createdAt, current.end)
-            )
+      // Current period count
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(users)
+        .where(
+          and(
+            gte(users.createdAt, current.start),
+            lte(users.createdAt, current.end)
           )
-          .execute(),
+        )
+        .execute(),
 
-        // Previous period count
-        db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(users)
-          .where(
-            and(
-              gte(users.createdAt, previous.start),
-              lte(users.createdAt, previous.end)
-            )
+      // Previous period count
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(users)
+        .where(
+          and(
+            gte(users.createdAt, previous.start),
+            lte(users.createdAt, previous.end)
           )
-          .execute(),
+        )
+        .execute(),
 
-        // Time series data for graph
-        fetchTimeSeriesData(timeInterval, current, previous),
-      ]);
+      // Time series data for graph
+      fetchTimeSeriesData(timeInterval, current, previous),
+    ]);
 
     const totalUsers = totalUsersResult[0]?.count ?? 0;
     const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
@@ -115,24 +125,24 @@ export async function users_CountAndGrowth(
           start: current.start,
           end: current.end,
           count: currentPeriodCount,
-          label: getPeriodLabel(timeInterval, 'current'),
+          label: getPeriodLabel(timeInterval, "current"),
         },
         previousPeriod: {
           start: previous.start,
           end: previous.end,
           count: previousPeriodCount,
-          label: getPeriodLabel(timeInterval, 'previous'),
+          label: getPeriodLabel(timeInterval, "previous"),
         },
       },
     };
   } catch (error) {
     throw new Error(
-      `Failed to calculate user count and growth: ${error instanceof Error ? error.message : "Unknown error"
+      `Failed to calculate user count and growth: ${
+        error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
 }
-
 
 /**
  * Fetch time series data for graphing
@@ -148,8 +158,8 @@ async function fetchTimeSeriesData(
   const [currentData, previousData] = await Promise.all([
     db
       .select({
-        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
-        count: sql<number>`COUNT(*)`.as('count'),
+        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
+        count: sql<number>`COUNT(*)`.as("count"),
       })
       .from(users)
       .where(
@@ -164,8 +174,8 @@ async function fetchTimeSeriesData(
 
     db
       .select({
-        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
-        count: sql<number>`COUNT(*)`.as('count'),
+        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
+        count: sql<number>`COUNT(*)`.as("count"),
       })
       .from(users)
       .where(
@@ -208,8 +218,6 @@ async function fetchTimeSeriesData(
   return { currentData, previousData };
 }
 
-
-
 export interface SessionCountAndGrowthResult {
   currentPeriodCount: number;
   totalSessions: number;
@@ -251,7 +259,7 @@ export async function sessions_CountAndGrowth(
       currentPeriodResult,
       previousPeriodResult,
       uniqueUsersCurrentResult,
-      timeSeriesData
+      timeSeriesData,
     ] = await Promise.all([
       // Total session count (all time)
       db
@@ -311,7 +319,8 @@ export async function sessions_CountAndGrowth(
     const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
     const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
     const uniqueUsers = uniqueUsersCurrentResult[0]?.count ?? 0;
-    const avgSessionsPerUser = uniqueUsers > 0 ? currentPeriodCount / uniqueUsers : 0;
+    const avgSessionsPerUser =
+      uniqueUsers > 0 ? currentPeriodCount / uniqueUsers : 0;
 
     // Calculate growth metrics
     const growth = currentPeriodCount - previousPeriodCount;
@@ -340,13 +349,13 @@ export async function sessions_CountAndGrowth(
           start: current.start,
           end: current.end,
           count: currentPeriodCount,
-          label: getPeriodLabel(timeInterval, 'current'),
+          label: getPeriodLabel(timeInterval, "current"),
         },
         previousPeriod: {
           start: previous.start,
           end: previous.end,
           count: previousPeriodCount,
-          label: getPeriodLabel(timeInterval, 'previous'),
+          label: getPeriodLabel(timeInterval, "previous"),
         },
       },
       uniqueUsers,
@@ -354,7 +363,8 @@ export async function sessions_CountAndGrowth(
     };
   } catch (error) {
     throw new Error(
-      `Failed to calculate session count and growth: ${error instanceof Error ? error.message : "Unknown error"
+      `Failed to calculate session count and growth: ${
+        error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -374,8 +384,8 @@ async function fetchSessionTimeSeriesData(
   const [currentData, previousData] = await Promise.all([
     db
       .select({
-        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
-        count: sql<number>`COUNT(*)`.as('count'),
+        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
+        count: sql<number>`COUNT(*)`.as("count"),
       })
       .from(sessions)
       .where(
@@ -390,8 +400,8 @@ async function fetchSessionTimeSeriesData(
 
     db
       .select({
-        timestamp: sql<Date>`${truncateExpression}`.as('timestamp'),
-        count: sql<number>`COUNT(*)`.as('count'),
+        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
+        count: sql<number>`COUNT(*)`.as("count"),
       })
       .from(sessions)
       .where(

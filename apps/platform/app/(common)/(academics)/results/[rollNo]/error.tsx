@@ -38,48 +38,47 @@ export default function ErrorBoundary({
         <AlertDescription className="mb-2 text-muted-foreground">
           If you are still facing following issues then follow steps or please
           contact the support team.
-        <div className="w-full flex-1 mt-5">
-
-        <StaticStep step={1} title="How to add my result to portal?">
-          Open the this in new tab{" "}
-          <a
-            href={`${pathname}?update=1`}
-            className="ml-2 text-primary underline"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {pathname}?update=1
-          </a>
-        </StaticStep>
-        <StaticStep step={2} title="How to update my result?">
-          Open the this in new tab{" "}
-          <a
-            href={`${pathname}?new=1`}
-            className="ml-2 text-primary underline"
-          >
-            {pathname}?new=1
-          </a>
-        </StaticStep>
-        <StaticStep step={3} title="How to update my result?">
-          Open the this in new tab{" "}
-          <a
-            href={`/results?cache=new`}
-            className="ml-2 text-primary underline"
-          >
-            /results?cache=new
-          </a>
-        </StaticStep>
-          <ButtonLink
-            href={appConfig.contact}
-            className="mt-4"
-            variant="dark"
-            size="sm"
-            target="_blank"
-          >
-            <Contact />
-            Contact Support
-          </ButtonLink>
-        </div>
+          <div className="w-full flex-1 mt-5">
+            <StaticStep step={1} title="How to add my result to portal?">
+              Open the this in new tab{" "}
+              <a
+                href={`${pathname}?update=1`}
+                className="ml-2 text-primary underline"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {pathname}?update=1
+              </a>
+            </StaticStep>
+            <StaticStep step={2} title="How to update my result?">
+              Open the this in new tab{" "}
+              <a
+                href={`${pathname}?new=1`}
+                className="ml-2 text-primary underline"
+              >
+                {pathname}?new=1
+              </a>
+            </StaticStep>
+            <StaticStep step={3} title="How to update my result?">
+              Open the this in new tab{" "}
+              <a
+                href={`/results?cache=new`}
+                className="ml-2 text-primary underline"
+              >
+                /results?cache=new
+              </a>
+            </StaticStep>
+            <ButtonLink
+              href={appConfig.contact}
+              className="mt-4"
+              variant="dark"
+              size="sm"
+              target="_blank"
+            >
+              <Contact />
+              Contact Support
+            </ButtonLink>
+          </div>
         </AlertDescription>
       </Alert>
     </div>

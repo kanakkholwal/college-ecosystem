@@ -2,21 +2,30 @@
 
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AddPrevModal, AddRefsModal } from "app/(common)/(academics)/syllabus/[code]/modal";
+import {
+  AddPrevModal,
+  AddRefsModal,
+} from "app/(common)/(academics)/syllabus/[code]/modal";
 import { Book, FileText, Link as LinkIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import type { BookReferenceSelect, PreviousPaperSelect } from "src/db/schema/course";
+import type {
+  BookReferenceSelect,
+  PreviousPaperSelect,
+} from "src/db/schema/course";
 import * as z from "zod";
-import { updateBooksAndRefPublic, updatePrevPapersPublic } from "~/actions/common.course";
+import {
+  updateBooksAndRefPublic,
+  updatePrevPapersPublic,
+} from "~/actions/common.course";
 
 // Schemas
 const bookSchema = z.object({
@@ -85,7 +94,8 @@ export function ResourceManager({
   };
 
   // Note: No delete action provided for individual resources yet
-  const handleDeleteMock = () => toast.error("Delete functionality not available yet");
+  const handleDeleteMock = () =>
+    toast.error("Delete functionality not available yet");
 
   return (
     <div className="grid gap-8">
@@ -98,7 +108,7 @@ export function ResourceManager({
             </CardTitle>
             <CardDescription>Textbooks and external links.</CardDescription>
           </div>
-         <AddRefsModal courseId={courseId} code={courseCode} />
+          <AddRefsModal courseId={courseId} code={courseCode} />
         </CardHeader>
         <CardContent>
           <div className="rounded-md border divide-y">
@@ -119,7 +129,9 @@ export function ResourceManager({
                       </span>
                     </div>
                     <div className="truncate">
-                      <p className="text-sm font-medium truncate">{book.name}</p>
+                      <p className="text-sm font-medium truncate">
+                        {book.name}
+                      </p>
                       <a
                         href={book.link}
                         target="_blank"

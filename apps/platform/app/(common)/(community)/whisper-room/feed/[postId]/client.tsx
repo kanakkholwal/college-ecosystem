@@ -4,9 +4,11 @@ import { NexoEditor } from "nexo-editor";
 import "nexo-editor/index.css";
 
 export function RenderPostContent({ content }: { content: Content }) {
-    return <NexoEditor
-        content={content}
-        readOnly
-        className="w-full prose dark:prose-invert max-w-none"
-    />;
+  return (
+    <NexoEditor
+      content={content}
+      readOnly
+      className="w-full prose dark:prose-invert max-w-none"
+    />
+  );
 }

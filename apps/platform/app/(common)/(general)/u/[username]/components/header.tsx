@@ -3,14 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-    Award,
-    Calendar,
-    Edit3,
-    FolderOpen,
-    Mail,
-    MapPin,
-    Star,
-    Users,
+  Award,
+  Calendar,
+  Edit3,
+  FolderOpen,
+  Mail,
+  MapPin,
+  Star,
+  Users,
 } from "lucide-react";
 import { getAcademicYear, isValidRollNumber } from "~/constants";
 import { UserType } from "~/db/schema/auth-schema";

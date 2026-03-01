@@ -28,7 +28,6 @@ export function useParentOverflow<T extends HTMLElement>() {
   return { ref, isOverflowing };
 }
 
-
 export function useOverflow() {
   const ref = useRef<HTMLDivElement | null>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);

@@ -24,7 +24,9 @@ export default async function DashboardLayout({
   const { moderator } = await params;
   if (
     !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number]) ||
-    !ONLY_ALLOWED_ROLES.includes(moderator as (typeof ONLY_ALLOWED_ROLES)[number])
+    !ONLY_ALLOWED_ROLES.includes(
+      moderator as (typeof ONLY_ALLOWED_ROLES)[number]
+    )
   ) {
     return notFound();
   }

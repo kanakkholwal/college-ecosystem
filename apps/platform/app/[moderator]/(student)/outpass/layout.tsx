@@ -39,8 +39,12 @@ export default async function HostelPageLayout(props: {
 
         <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-2 shadow-sm grow-0 max-w-fit">
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-semibold uppercase text-muted-foreground">Room</span>
-            <span className="font-mono text-xl font-bold leading-none">{hosteler.roomNumber}</span>
+            <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+              Room
+            </span>
+            <span className="font-mono text-xl font-bold leading-none">
+              {hosteler.roomNumber}
+            </span>
           </div>
           <div className="h-8 w-px bg-border" />
           <DoorClosed className="text-muted-foreground" />
@@ -49,9 +53,7 @@ export default async function HostelPageLayout(props: {
 
       <Separator />
 
-      <div className="min-h-[60vh]">
-        {props.children}
-      </div>
+      <div className="min-h-[60vh]">{props.children}</div>
     </div>
   );
 }

@@ -4,14 +4,14 @@ import {
   BarChart2,
   Megaphone,
   MessageSquare,
-  MessagesSquare
+  MessagesSquare,
 } from "lucide-react";
 
 interface StatItem {
   label: string;
   value: string | number;
   // We can optionally map specific keys to icons if you want logic here
-  icon?: React.ReactNode; 
+  icon?: React.ReactNode;
 }
 
 interface AnalyticsGridProps {
@@ -44,10 +44,10 @@ export function AnalyticsGrid({ stats, className }: AnalyticsGridProps) {
               {getIconForLabel(stat.label)}
             </div>
           </div>
-          
+
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-bold tracking-tight text-foreground">
-               {stat.value}
+              {stat.value}
             </span>
           </div>
         </div>

@@ -9,28 +9,28 @@ import type { NextRequest } from "next/server";
 
 // @ts-ignore
 const CommentAPI = NextComment({
-    mention: { enabled: true },
-    auth: createBetterAuthAdapter(betterAuth),
-    storage: createDrizzleAdapter({
-        auth: "better-auth",
-        db,
-        schemas: {
-            comments,
-            rates,
-            roles,
-            user: users,
-        },
-    }),
+  mention: { enabled: true },
+  auth: createBetterAuthAdapter(betterAuth),
+  storage: createDrizzleAdapter({
+    auth: "better-auth",
+    db,
+    schemas: {
+      comments,
+      rates,
+      roles,
+      user: users,
+    },
+  }),
 });
 
 // Type wrapper for optional catch-all route params
 type OptionalCatchAllContext = { params: Promise<{ comment?: string[] }> };
 
 export const GET = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-    CommentAPI.GET(req, ctx as Parameters<typeof CommentAPI.GET>[1]);
+  CommentAPI.GET(req, ctx as Parameters<typeof CommentAPI.GET>[1]);
 export const DELETE = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-    CommentAPI.DELETE(req, ctx as Parameters<typeof CommentAPI.DELETE>[1]);
+  CommentAPI.DELETE(req, ctx as Parameters<typeof CommentAPI.DELETE>[1]);
 export const PATCH = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-    CommentAPI.PATCH(req, ctx as Parameters<typeof CommentAPI.PATCH>[1]);
+  CommentAPI.PATCH(req, ctx as Parameters<typeof CommentAPI.PATCH>[1]);
 export const POST = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-    CommentAPI.POST(req, ctx as Parameters<typeof CommentAPI.POST>[1]);
+  CommentAPI.POST(req, ctx as Parameters<typeof CommentAPI.POST>[1]);

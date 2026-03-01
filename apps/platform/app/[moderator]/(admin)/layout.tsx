@@ -7,7 +7,7 @@ import { ALLOWED_ROLES } from "~/constants";
 interface DashboardLayoutProps {
   children: React.ReactNode;
   params: Promise<{
-    moderator: typeof ALLOWED_ROLES[number];
+    moderator: (typeof ALLOWED_ROLES)[number];
   }>;
 }
 

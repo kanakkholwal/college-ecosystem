@@ -133,7 +133,7 @@ export function ChartBar<
               tickMargin={5}
               axisLine={false}
               tickFormatter={(value) => changeCase(value, "title")}
-            // hide
+              // hide
             />
             <XAxis dataKey={dataKey.toString()} type="number" hide />
             <ChartTooltip
@@ -332,8 +332,8 @@ interface PieBaseProps<
 interface PieDonutTextProps<
   TData extends Record<string, any>,
   TConfig extends ChartConfig,
-> extends BaseProps<TData, TConfig>,
-  PieBaseProps<TData, TConfig> {
+>
+  extends BaseProps<TData, TConfig>, PieBaseProps<TData, TConfig> {
   // Additional properties specific to Pie/Donut charts
   textLabel?: string;
   textValue: string | number;
@@ -497,7 +497,10 @@ export function ChartPie<
     </ChartContainer>
   );
 }
-export function   RoundedPieChart<TData extends Record<string, any>, TConfig extends ChartConfig>({
+export function RoundedPieChart<
+  TData extends Record<string, any>,
+  TConfig extends ChartConfig,
+>({
   data,
   config,
   dataKey,
@@ -511,12 +514,13 @@ export function   RoundedPieChart<TData extends Record<string, any>, TConfig ext
   showLegend = false,
   pieClassName,
 }: PieBaseProps<TData, TConfig>) {
-
   return (
     <ChartContainer config={config} className={className}>
       <PieChart>
         <ChartTooltip
-          content={<ChartTooltipContent nameKey={nameKey.toString()} hideLabel />}
+          content={
+            <ChartTooltipContent nameKey={nameKey.toString()} hideLabel />
+          }
           {...tooltipProps}
         />
         <Pie
@@ -541,7 +545,7 @@ export function   RoundedPieChart<TData extends Record<string, any>, TConfig ext
             />
           )}
         </Pie>
-         {showLegend && (
+        {showLegend && (
           <ChartLegend
             content={({ payload }) => (
               <ChartLegendContent

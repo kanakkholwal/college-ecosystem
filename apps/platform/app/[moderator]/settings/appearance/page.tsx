@@ -1,6 +1,9 @@
 "use client";
 
-import { brand_themes, BrandThemeType } from "@/components/common/theme-switcher";
+import {
+  brand_themes,
+  BrandThemeType,
+} from "@/components/common/theme-switcher";
 import { Separator } from "@/components/ui/separator";
 import useStorage from "@/hooks/use-storage";
 import { cn } from "@/lib/utils";
@@ -8,13 +11,12 @@ import { Check, Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-
-
 export default function AppearanceForm() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <div className="h-96 w-full animate-pulse rounded-xl bg-muted/20" />;
+  if (!mounted)
+    return <div className="h-96 w-full animate-pulse rounded-xl bg-muted/20" />;
 
   return (
     <div className="space-y-10 max-w-4xl">
@@ -24,18 +26,17 @@ export default function AppearanceForm() {
           Customize how the application looks and feels on your device.
         </p>
       </div>
-      
+
       <Separator className="my-6" />
-      
+
       <ThemeModeSelector />
-      
+
       <Separator className="my-8" />
-      
+
       <BrandThemeSelector />
     </div>
   );
 }
-
 
 const ThemeModeSelector = () => {
   const { theme, setTheme } = useTheme();
@@ -48,7 +49,7 @@ const ThemeModeSelector = () => {
           Select your preferred background mode.
         </p>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {/* Light Mode Card */}
         <ThemeCard
@@ -61,18 +62,18 @@ const ThemeModeSelector = () => {
             <div className="flex h-full gap-2">
               {/* Sidebar Wireframe */}
               <div className="w-1/4 h-full rounded-l-md bg-white border border-gray-200/50 shadow-sm flex flex-col gap-1.5 p-1.5">
-                 <div className="h-1.5 w-1/2 rounded-full bg-gray-200" />
-                 <div className="h-1.5 w-full rounded-full bg-gray-100 mt-2" />
-                 <div className="h-1.5 w-3/4 rounded-full bg-gray-100" />
-                 <div className="h-1.5 w-full rounded-full bg-gray-100" />
+                <div className="h-1.5 w-1/2 rounded-full bg-gray-200" />
+                <div className="h-1.5 w-full rounded-full bg-gray-100 mt-2" />
+                <div className="h-1.5 w-3/4 rounded-full bg-gray-100" />
+                <div className="h-1.5 w-full rounded-full bg-gray-100" />
               </div>
               {/* Content Wireframe */}
               <div className="flex-1 h-full rounded-r-md bg-white border border-gray-200/50 shadow-sm p-2 flex flex-col gap-2">
-                 <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-gray-200" />
-                    <div className="h-1.5 w-20 rounded-full bg-gray-200" />
-                 </div>
-                 <div className="h-16 w-full rounded-md bg-gray-50 border border-dashed border-gray-200" />
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 rounded-full bg-gray-200" />
+                  <div className="h-1.5 w-20 rounded-full bg-gray-200" />
+                </div>
+                <div className="h-16 w-full rounded-md bg-gray-50 border border-dashed border-gray-200" />
               </div>
             </div>
           </div>
@@ -89,18 +90,18 @@ const ThemeModeSelector = () => {
             <div className="flex h-full gap-2">
               {/* Sidebar Wireframe */}
               <div className="w-1/4 h-full rounded-l-md bg-slate-900 border border-slate-800 shadow-sm flex flex-col gap-1.5 p-1.5">
-                 <div className="h-1.5 w-1/2 rounded-full bg-slate-700" />
-                 <div className="h-1.5 w-full rounded-full bg-slate-800 mt-2" />
-                 <div className="h-1.5 w-3/4 rounded-full bg-slate-800" />
-                 <div className="h-1.5 w-full rounded-full bg-slate-800" />
+                <div className="h-1.5 w-1/2 rounded-full bg-slate-700" />
+                <div className="h-1.5 w-full rounded-full bg-slate-800 mt-2" />
+                <div className="h-1.5 w-3/4 rounded-full bg-slate-800" />
+                <div className="h-1.5 w-full rounded-full bg-slate-800" />
               </div>
               {/* Content Wireframe */}
               <div className="flex-1 h-full rounded-r-md bg-slate-900 border border-slate-800 shadow-sm p-2 flex flex-col gap-2">
-                 <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-slate-800" />
-                    <div className="h-1.5 w-20 rounded-full bg-slate-800" />
-                 </div>
-                 <div className="h-16 w-full rounded-md bg-slate-950 border border-dashed border-slate-800" />
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 rounded-full bg-slate-800" />
+                  <div className="h-1.5 w-20 rounded-full bg-slate-800" />
+                </div>
+                <div className="h-16 w-full rounded-md bg-slate-950 border border-dashed border-slate-800" />
               </div>
             </div>
           </div>
@@ -114,10 +115,13 @@ const ThemeModeSelector = () => {
           icon={<Laptop className="size-4" />}
         >
           <div className="flex h-full w-full items-center justify-center bg-muted/30">
-             <div className="relative">
-                 <div className="absolute -inset-4 rounded-full bg-primary/10 blur-xl" />
-                 <Laptop className="relative h-12 w-12 text-muted-foreground/40" strokeWidth={1} />
-             </div>
+            <div className="relative">
+              <div className="absolute -inset-4 rounded-full bg-primary/10 blur-xl" />
+              <Laptop
+                className="relative h-12 w-12 text-muted-foreground/40"
+                strokeWidth={1}
+              />
+            </div>
           </div>
         </ThemeCard>
       </div>
@@ -130,7 +134,7 @@ function ThemeCard({
   label,
   active,
   onClick,
-  icon
+  icon,
 }: {
   children: React.ReactNode;
   label: string;
@@ -142,36 +146,46 @@ function ThemeCard({
     <button
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col gap-2 text-left focus:outline-none",
+        "group relative flex flex-col gap-2 text-left focus:outline-none"
       )}
     >
       <div
         className={cn(
           "relative aspect-[16/10] w-full overflow-hidden rounded-xl border-2 transition-all duration-300",
-          active 
-            ? "border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background" 
+          active
+            ? "border-primary ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
             : "border-muted hover:border-foreground/20"
         )}
       >
         {children}
-        
+
         {/* Checkmark Badge */}
         {active && (
-            <div className="absolute right-2 top-2 z-10 rounded-full bg-primary p-1 text-primary-foreground shadow-sm animate-in zoom-in-50 duration-200">
-                <Check className="h-3 w-3" strokeWidth={3} />
-            </div>
+          <div className="absolute right-2 top-2 z-10 rounded-full bg-primary p-1 text-primary-foreground shadow-sm animate-in zoom-in-50 duration-200">
+            <Check className="h-3 w-3" strokeWidth={3} />
+          </div>
         )}
       </div>
       <div className="flex items-center gap-2 px-1">
-          {icon && <span className={cn("text-muted-foreground", active && "text-primary")}>{icon}</span>}
-          <span className={cn("text-sm font-medium", active ? "text-foreground" : "text-muted-foreground")}>
-            {label}
+        {icon && (
+          <span
+            className={cn("text-muted-foreground", active && "text-primary")}
+          >
+            {icon}
           </span>
+        )}
+        <span
+          className={cn(
+            "text-sm font-medium",
+            active ? "text-foreground" : "text-muted-foreground"
+          )}
+        >
+          {label}
+        </span>
       </div>
     </button>
   );
 }
-
 
 const BrandThemeSelector = () => {
   const [currentTheme, setCurrentTheme] = useStorage<BrandThemeType>(
@@ -181,8 +195,11 @@ const BrandThemeSelector = () => {
 
   React.useEffect(() => {
     // Safety check to ensure we match by ID or default to first
-    const selected = brand_themes.find((t) => t.id === currentTheme.id || t.color === currentTheme.color) || brand_themes[0];
-    
+    const selected =
+      brand_themes.find(
+        (t) => t.id === currentTheme.id || t.color === currentTheme.color
+      ) || brand_themes[0];
+
     if (selected) {
       const root = document.documentElement;
       root.style.setProperty("--primary", selected.color);
@@ -198,32 +215,32 @@ const BrandThemeSelector = () => {
           Choose the primary color for buttons, links, and highlights.
         </p>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
         {brand_themes.map((brandTheme) => {
           const isActive = currentTheme.id === brandTheme.id;
-          
+
           return (
             <button
               key={brandTheme.id}
               onClick={() => setCurrentTheme(brandTheme)}
               className={cn(
                 "group relative flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all hover:bg-muted/50 focus:outline-none",
-                isActive 
-                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs" 
-                    : "border-border hover:border-foreground/20"
+                isActive
+                  ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
+                  : "border-border hover:border-foreground/20"
               )}
             >
-              <div 
+              <div
                 className={cn(
-                    "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform group-hover:scale-105",
-                    isActive && "scale-105"
+                  "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm transition-transform group-hover:scale-105",
+                  isActive && "scale-105"
                 )}
                 style={{ backgroundColor: brandTheme.color }}
               >
-                  {isActive && <Check className="size-3 text-white stroke-[3]" />}
+                {isActive && <Check className="size-3 text-white stroke-[3]" />}
               </div>
-              
+
               <div className="flex-1 truncate text-xs font-medium text-foreground">
                 {brandTheme.label}
               </div>

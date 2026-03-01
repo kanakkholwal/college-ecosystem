@@ -28,8 +28,6 @@ export const useShare = (data: {
   url?: string;
   image?: string;
 }) => {
-  
-
   const share = async () => {
     if (navigator.share) {
       try {

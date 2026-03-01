@@ -1,19 +1,17 @@
-
 export const submitBenefitsLink = "https://forms.gle/aA8NzH31ByUommCg7";
 
 export type benefitsItem = {
-  id?: string
+  id?: string;
   resource: string;
   logo: string;
   value?: string;
   tags: string[];
   description: string;
   href: string;
-  category: string
-  isNew?: boolean,
-  country?: "worldwide" | "USA" | "India" | "United Kingdom" | string
+  category: string;
+  isNew?: boolean;
+  country?: "worldwide" | "USA" | "India" | "United Kingdom" | string;
 };
-
 
 const benefits: Record<string, benefitsItem[]> = {
   worldwide: [
@@ -21,9 +19,16 @@ const benefits: Record<string, benefitsItem[]> = {
       id: "comet-student-offer",
       resource: "Comet Browser ",
       value: "Free",
-      description: "Get early access to Comet Browser + free Perplexity Pro (1 month) with student email",
+      description:
+        "Get early access to Comet Browser + free Perplexity Pro (1 month) with student email",
       href: "https://perplexity.ai/browser/claim/W7FPUV05G7",
-      tags: ["AI", "Pro Membership", "Student Exclusive", "Upgrade", "Referral"],
+      tags: [
+        "AI",
+        "Pro Membership",
+        "Student Exclusive",
+        "Upgrade",
+        "Referral",
+      ],
       logo: "https://www.buildincollege.com/logos/perplexity.png",
       category: "free-stuff",
     },
@@ -37,8 +42,9 @@ const benefits: Record<string, benefitsItem[]> = {
       tags: ["AI", "Voice Generation"],
       category: "free-stuff",
       isNew: true,
-      country: "worldwide"
-    }, {
+      country: "worldwide",
+    },
+    {
       id: "2",
       resource: "v0",
       logo: "https://www.buildincollege.com/logos/vercel.png",
@@ -48,41 +54,48 @@ const benefits: Record<string, benefitsItem[]> = {
       tags: ["AI", "Code Generation", "Web Development"],
       category: "free-stuff",
       isNew: true,
-      country: "worldwide"
-    }, {
+      country: "worldwide",
+    },
+    {
       id: "3",
       resource: "Lovable",
       logo: "https://www.buildincollege.com/logos/lovable.png",
       value: "$150",
-      description: "50% off Pro plan for a year - via ElevenLabs AI Student Pack",
+      description:
+        "50% off Pro plan for a year - via ElevenLabs AI Student Pack",
       href: "https://aistudentpack.com/",
       tags: ["AI", "Code Generation", "Web Development"],
       category: "free-stuff",
       isNew: true,
-      country: "worldwide"
-    }, {
+      country: "worldwide",
+    },
+    {
       id: "4",
       resource: "ChatGPT Plus (2 Months Free)",
       logo: "https://www.buildincollege.com/logos/openai.webp",
       value: "$40",
-      description: "2 months free ChatGPT Plus for US/Canada students with GPT-4o, image generation, and advanced research tools",
+      description:
+        "2 months free ChatGPT Plus for US/Canada students with GPT-4o, image generation, and advanced research tools",
       href: "https://chatgpt.com/students",
       tags: ["AI", "Free for Students", "Research"],
       category: "free-stuff",
       isNew: true,
-      country: "USA"
-    }, {
+      country: "USA",
+    },
+    {
       id: "5",
       resource: "Firecrawl",
       logo: "https://www.buildincollege.com/logos/firecrawl.jpg",
       value: "$100+",
-      description: "20k free credits and full API access with educational email",
+      description:
+        "20k free credits and full API access with educational email",
       href: "https://www.firecrawl.dev/student-program",
       tags: ["API Credits", "AI", "Web Scraping"],
       category: "free-stuff",
       isNew: true,
-      country: "worldwide"
-    }, {
+      country: "worldwide",
+    },
+    {
       id: "6",
       resource: "Free Framer Pro",
       logo: "https://www.buildincollege.com/logos/framer.svg",
@@ -92,8 +105,9 @@ const benefits: Record<string, benefitsItem[]> = {
       tags: ["Design", "Web Development", "Productivity"],
       category: "free-stuff",
       isNew: !0,
-      country: "worldwide"
-    }, {
+      country: "worldwide",
+    },
+    {
       id: "7",
       resource: "Claude Credits",
       logo: "https://www.buildincollege.com/logos/anthropic-small.png",
@@ -102,8 +116,9 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://www.anthropic.com/contact-sales/for-student-builders",
       tags: ["API Credits", "AI"],
       category: "free-stuff",
-      country: "worldwide"
-    }, {
+      country: "worldwide",
+    },
+    {
       id: "8",
       resource: "Free Landing Page Builder",
       logo: "https://www.buildincollege.com/logos/rocketship-icon.png",
@@ -112,8 +127,9 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://www.landingbuilder.live/",
       tags: ["Web Infrastructure", "Startups"],
       category: "free-stuff",
-      isNew: !0
-    }, {
+      isNew: !0,
+    },
+    {
       id: "9",
       resource: "OpenAI Credits",
       logo: "https://www.buildincollege.com/logos/openai.webp",
@@ -121,8 +137,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Via Microsoft for Startups (Azure)",
       href: "https://www.microsoft.com/en-us/startups/ai",
       tags: ["API Credits", "AI"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "10",
       resource: "Free Cursor Pro (1 Year)",
       logo: "https://www.buildincollege.com/logos/cursor.jpeg",
@@ -130,8 +147,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Sign up with .edu email",
       href: "https://www.cursor.com/students",
       tags: ["AI"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "11",
       resource: "Google Colab (free compute)",
       logo: "https://www.buildincollege.com/logos/google.jpeg",
@@ -139,8 +157,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "free with student email",
       href: "https://colab.research.google.com/signup",
       tags: ["AI", "Compute", "Development"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "12",
       resource: "Screen Studio",
       logo: "https://www.buildincollege.com/logos/screenstudio.jpeg",
@@ -148,8 +167,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "40% off with student email",
       href: "https://screen.studio/license/request-educational-discount?aff=9mm0pn",
       tags: ["Productivity", "Video Creation"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "13",
       resource: "Free Notion Plus w/ AI",
       logo: "https://www.buildincollege.com/logos/notion.png",
@@ -157,8 +177,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Via Github Student Dev Pack",
       href: "https://education.github.com/pack",
       tags: ["Productivity", "AI"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "14",
       resource: "Free Figma Pro",
       logo: "https://www.buildincollege.com/logos/figma.avif",
@@ -166,8 +187,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Sign up with .edu email",
       href: "https://www.figma.com/education/",
       tags: ["Design", "AI"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "15",
       resource: "Free Domains (Name.com)",
       logo: "https://www.buildincollege.com/logos/name.webp",
@@ -175,8 +197,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: ".live, .software, .studio, etc.",
       href: "https://education.github.com/pack",
       tags: ["Startups", "Web Infrastructure"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "16",
       resource: "Free Domain (Namecheap)",
       logo: "https://www.buildincollege.com/logos/namecheap.svg",
@@ -185,8 +208,9 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://nc.me/landing/github",
       tags: ["Web Infrastructure", "Startups"],
       category: "free-stuff",
-      isNew: !0
-    }, {
+      isNew: !0,
+    },
+    {
       id: "17",
       resource: "Free Heroku Hosting (2 Years)",
       logo: "https://www.buildincollege.com/logos/heroku.webp",
@@ -194,8 +218,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "2 years of hosting via Github Student Dev Pack",
       href: "https://education.github.com/pack",
       tags: ["Web Infrastructure", "Startups"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "18",
       resource: "Free Perplexity Pro (1 Month)",
       logo: "https://www.buildincollege.com/logos/perplexity.png",
@@ -203,8 +228,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Sign up with .edu email",
       href: "https://perplexity.ai/pro?referral_code=OY49SK1W",
       tags: ["AI", "Productivity"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "19",
       resource: "Microsoft for Startups",
       logo: "https://www.buildincollege.com/logos/microsoft.webp",
@@ -212,8 +238,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "",
       href: "https://www.microsoft.com/en-us/startups",
       tags: ["API Credits", "AI", "Startups", "Web Infrastructure"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "20",
       resource: "Github Student Developer Pack",
       logo: "https://www.buildincollege.com/logos/github.png",
@@ -221,8 +248,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "",
       href: "https://education.github.com/pack",
       tags: ["API Credits", "AI", "Startups", "Web Infrastructure"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "21",
       resource: "Free GPU Credits",
       logo: "https://www.buildincollege.com/logos/digitalocean.png",
@@ -230,27 +258,31 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Sign up via Hatch program",
       href: "https://sammydigitalocean.typeform.com/to/tZXAmt?typeform-source=www.digitalocean.com",
       tags: ["GPU", "Web Infrastructure", "AI", "Startups"],
-      category: "free-stuff"
-    }, {
+      category: "free-stuff",
+    },
+    {
       id: "22",
       resource: "Amazon AWS Credits",
       logo: "https://www.buildincollege.com/logos/amazon-aws.png",
       value: "$10k+",
-      description: "$300 without a website, up to $100k if you have a website. Say you're 'self-funded'",
+      description:
+        "$300 without a website, up to $100k if you have a website. Say you're 'self-funded'",
       href: "https://aws.amazon.com/free/offers/",
       tags: ["API Credits", "Web Infrastructure", "Startups"],
       category: "free-stuff",
-      isNew: !0
-    }, {
+      isNew: !0,
+    },
+    {
       id: "23",
       resource: "Adobe Creative Cloud (Student)",
       logo: "https://www.buildincollege.com/logos/adobe-creative-cloud.png",
       value: "60% off",
-      description: "Get 20+ Adobe apps including Photoshop, Illustrator, Premiere Pro with 60% student discount",
+      description:
+        "Get 20+ Adobe apps including Photoshop, Illustrator, Premiere Pro with 60% student discount",
       href: "https://www.adobe.com/creativecloud/buy/students.html",
       tags: ["Design", "Student Discount", "Professional"],
       category: "free-stuff",
-      isNew: !0
+      isNew: !0,
     },
 
     // fellowship
@@ -262,8 +294,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "$10k grant & fellowship for young entrepreneurs",
       href: "https://www.zfellows.com/",
       tags: ["Fellowship", "Grant", "Mentorship"],
-      category: "fellowships"
-    }, {
+      category: "fellowships",
+    },
+    {
       id: "f2",
       resource: "Neo Scholars",
       logo: "https://www.buildincollege.com/logos/neo.svg",
@@ -271,8 +304,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Fellowship & grant for CS students",
       href: "https://neo.com/scholars",
       tags: ["Fellowship", "Grant", "Mentorship"],
-      category: "fellowships"
-    }, {
+      category: "fellowships",
+    },
+    {
       id: "f3",
       resource: "Afore Capital Grants",
       logo: "https://www.buildincollege.com/logos/afore.jpeg",
@@ -280,8 +314,9 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "$1,000 non-dilutive grant",
       href: "https://grants.afore.vc/",
       tags: ["Fellowship", "Grant", "Mentorship"],
-      category: "fellowships"
-    }, {
+      category: "fellowships",
+    },
+    {
       id: "f4",
       resource: "Superteam Crypto Grants",
       logo: "https://www.buildincollege.com/logos/superteam.jpg",
@@ -290,8 +325,8 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://earn.superteam.fun/grants",
       tags: ["Fellowship", "Grant", "Crypto", "Web3"],
       category: "fellowships",
-      isNew: !0
-    }
+      isNew: !0,
+    },
   ],
   in: [
     {
@@ -303,7 +338,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Student Pricing on a new Mac or iPad",
       href: "https://www.apple.com/in-edu/store",
       category: "Technology",
-      country: "India"
+      country: "India",
     },
     {
       id: "unidays-in",
@@ -314,7 +349,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Exclusive student deals and benefits",
       href: "https://www.myunidays.com/IN/en-IN",
       category: "free-stuff",
-      country: "India"
+      country: "India",
     },
     {
       id: "student-developer-pack",
@@ -325,7 +360,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Student Developer Pack",
       href: "https://education.github.com/pack",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "apple-music-student",
@@ -336,7 +371,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "50% Off Apple Music plus Free Apple TV+",
       href: "https://support.apple.com/en-us/106008",
       category: "Entertainment",
-      country: "India"
+      country: "India",
     },
     {
       id: "nordvpn-69pc",
@@ -347,7 +382,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "69% Off Secure VPN + 3 Months Free",
       href: "https://freeforstudents.org/go/nordvpn-69pc",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "jetbrains-edu",
@@ -358,7 +393,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Free Access to Professional Developer Software",
       href: "https://freeforstudents.org/go/jetbrains-edu",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "aws-educate",
@@ -369,7 +404,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Learn Cloud Skills with AWS Educate",
       href: "https://freeforstudents.org/go/aws-educate",
       category: "Education",
-      country: "India"
+      country: "India",
     },
     {
       id: "surfshark-80pc",
@@ -380,7 +415,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "80% Off Award-Winning Secure VPN",
       href: "https://freeforstudents.org/go/surfshark-80pc",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "ynab-college",
@@ -391,7 +426,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Free Wealth-Building Budgeting App",
       href: "https://freeforstudents.org/go/ynab-college",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "creative-cloud-60pc",
@@ -402,7 +437,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Get 60% Off Adobe Creative Cloud",
       href: "https://freeforstudents.org/go/creative-cloud-60pc",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "datacamp-student-50pc",
@@ -413,7 +448,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "50% Off Data Science & AI Courses",
       href: "https://freeforstudents.org/go/datacamp-student-50pc",
       category: "Education",
-      country: "India"
+      country: "India",
     },
     {
       id: "dashlane-premium",
@@ -424,7 +459,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Free Password Manager for 1 Year",
       href: "https://freeforstudents.org/go/dashlane-premium",
       category: "Software and Tools",
-      country: "India"
+      country: "India",
     },
     {
       id: "oneplus-education-program-in",
@@ -435,7 +470,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Exclusive Student Pricing on OnePlus Products",
       href: "https://freeforstudents.org/go/oneplus-education-program-in",
       category: "Technology",
-      country: "India"
+      country: "India",
     },
     {
       id: "samsung-stu-in",
@@ -446,8 +481,8 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Samsung Student Advantage Program",
       href: "https://freeforstudents.org/go/samsung-stu-in",
       category: "Technology",
-      country: "India"
-    }
+      country: "India",
+    },
   ],
   USA: [
     {
@@ -460,7 +495,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/prime-student-us",
       category: "Shopping",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "grubhub-prime",
@@ -472,7 +507,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/grubhub-prime",
       category: "Shopping",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "prime-video-us",
@@ -483,7 +518,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/prime-video-us",
       category: "Entertainment",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "apple-edu-us",
@@ -494,7 +529,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/apple-edu-us",
       category: "Technology",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "student-developer-pack",
@@ -505,7 +540,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/student-developer-pack",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "apple-music-student",
@@ -516,7 +551,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://support.apple.com/en-us/106008",
       category: "Entertainment",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "nordvpn-69pc",
@@ -527,7 +562,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://nordvpn.com/special/",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "fizz-app",
@@ -539,7 +574,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/fizz-app",
       category: "Software and Tools",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "calm-prime-student",
@@ -550,7 +585,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/calm-prime-student",
       category: "Health and Wellbeing",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "jetbrains-edu",
@@ -561,7 +596,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/jetbrains-edu",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "aws-educate",
@@ -572,7 +607,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/aws-educate",
       category: "Education",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "surfshark-80pc",
@@ -583,7 +618,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/surfshark-80pc",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "ynab-college",
@@ -594,7 +629,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/ynab-college",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "creative-cloud-60pc",
@@ -605,7 +640,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/creative-cloud-60pc",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "datacamp-student-50pc",
@@ -617,7 +652,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/datacamp-student-50pc",
       category: "Education",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "namecheap",
@@ -628,7 +663,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://freeforstudents.org/go/namecheap",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "dashlane-premium",
@@ -640,7 +675,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/dashlane-premium",
       category: "Software and Tools",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "skillshare-30pc-annual",
@@ -652,7 +687,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/skillshare-30pc-annual",
       category: "Education",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "squarespace-50pc",
@@ -664,7 +699,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/squarespace-50pc",
       category: "Software and Tools",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "airalo-15pc",
@@ -676,7 +711,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://freeforstudents.org/go/airalo-15pc",
       category: "Technology",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "kayak-student",
@@ -688,7 +723,7 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://www.kayak.com/c/students/",
       category: "Shopping",
       isNew: true,
-      country: "USA"
+      country: "USA",
     },
     {
       id: "autodesk-edu-access",
@@ -699,7 +734,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United States",
       href: "https://www.autodesk.com/education/edu-software/overview",
       category: "Software and Tools",
-      country: "USA"
+      country: "USA",
     },
     {
       id: "hulu-199",
@@ -711,8 +746,8 @@ const benefits: Record<string, benefitsItem[]> = {
       href: "https://www.hulu.com/student",
       category: "Entertainment",
       isNew: true,
-      country: "USA"
-    }
+      country: "USA",
+    },
   ],
   uk: [
     {
@@ -724,7 +759,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/prime-student-uk",
       category: "Shopping",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "prime-video-uk",
@@ -735,7 +770,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/prime-video-uk",
       category: "Entertainment",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "apple-edu-uk",
@@ -746,7 +781,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/apple-edu-uk",
       category: "Technology",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "student-developer-pack",
@@ -757,7 +792,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/student-developer-pack",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "apple-music-student",
@@ -768,7 +803,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/apple-music-student",
       category: "Entertainment",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "nordvpn-69pc",
@@ -779,7 +814,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/nordvpn-69pc",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "jetbrains-edu",
@@ -790,7 +825,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/jetbrains-edu",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "aws-educate",
@@ -801,7 +836,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/aws-educate",
       category: "Education",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "surfshark-80pc",
@@ -812,7 +847,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/surfshark-80pc",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "ynab-college",
@@ -823,7 +858,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/ynab-college",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "creative-cloud-60pc",
@@ -834,7 +869,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/creative-cloud-60pc",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "datacamp-student-50pc",
@@ -845,7 +880,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/datacamp-student-50pc",
       category: "Education",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "namecheap",
@@ -856,7 +891,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/namecheap",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "dashlane-premium",
@@ -867,7 +902,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/dashlane-premium",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "skillshare-30pc-annual",
@@ -878,7 +913,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/skillshare-30pc-annual",
       category: "Education",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "squarespace-50pc",
@@ -889,7 +924,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/squarespace-50pc",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "airalo-15pc",
@@ -900,7 +935,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/airalo-15pc",
       category: "Technology",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "kayak-student",
@@ -911,7 +946,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/kayak-student",
       category: "Shopping",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "autodesk-edu-access",
@@ -922,7 +957,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/autodesk-edu-access",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "intel-software-tools",
@@ -933,7 +968,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/intel-software-tools",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "figma-education-plan",
@@ -944,7 +979,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/figma-education-plan",
       category: "Software and Tools",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "samsung-stu-youth-uk",
@@ -955,7 +990,7 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://freeforstudents.org/go/samsung-stu-youth-uk",
       category: "Technology",
-      country: "United Kingdom"
+      country: "United Kingdom",
     },
     {
       id: "youtube-student-plan",
@@ -966,12 +1001,20 @@ const benefits: Record<string, benefitsItem[]> = {
       description: "Available in United Kingdom",
       href: "https://www.youtube.com/premium/student",
       category: "Entertainment",
-      country: "worldwide"
-    }
+      country: "worldwide",
+    },
   ],
-
-}
+};
 // map benefits into array
-export const benefitsList: benefitsItem[] = [...new Set(Object.values(benefits).flat())]
-export const benefitsCategories = ["all", ...new Set(benefitsList.map((elem) => elem.category))]
-export const benefitsRegions = [...new Set(benefitsList.map((elem) => elem.country ? elem.country : "worldwide"))]
+export const benefitsList: benefitsItem[] = [
+  ...new Set(Object.values(benefits).flat()),
+];
+export const benefitsCategories = [
+  "all",
+  ...new Set(benefitsList.map((elem) => elem.category)),
+];
+export const benefitsRegions = [
+  ...new Set(
+    benefitsList.map((elem) => (elem.country ? elem.country : "worldwide"))
+  ),
+];

@@ -34,7 +34,10 @@ export default async function HostelRoomAllotmentPage({
       {/* Header with Navigation */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/admin/hostels" className="hover:text-foreground transition-colors">
+          <Link
+            href="/admin/hostels"
+            className="hover:text-foreground transition-colors"
+          >
             Hostels
           </Link>
           <span>/</span>
@@ -45,9 +48,15 @@ export default async function HostelRoomAllotmentPage({
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Import Rooms</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Import Rooms
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Bulk upload room inventory for <span className="font-semibold text-foreground">{hostel.name}</span> ({hostel.gender}) via Excel/CSV.
+              Bulk upload room inventory for{" "}
+              <span className="font-semibold text-foreground">
+                {hostel.name}
+              </span>{" "}
+              ({hostel.gender}) via Excel/CSV.
             </p>
           </div>
           <Button variant="outline" asChild>

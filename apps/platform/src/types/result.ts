@@ -19,7 +19,6 @@ const semesterSchema = z.object({
   cgpi_total: z.number(),
 });
 
-
 export const rawResultSchema = z.object({
   name: z.string(),
   rollNo: z.string(),

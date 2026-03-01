@@ -21,8 +21,8 @@ interface BannerActionPropsBase {
 
 interface BannerActionWithBtnProps extends BannerActionPropsBase {
   btnProps:
-  | React.ComponentProps<typeof Button>
-  | React.ComponentProps<typeof ButtonLink>;
+    | React.ComponentProps<typeof Button>
+    | React.ComponentProps<typeof ButtonLink>;
   actionComponent?: never;
 }
 
@@ -52,7 +52,7 @@ export function BannerPanel({
   );
 
   return (
-    <AnimatePresence >
+    <AnimatePresence>
       {!isBannerPanelClosed && (
         <motion.div
           initial={{ opacity: 0, y: 100 }}
@@ -89,10 +89,10 @@ export function BannerPanel({
                 </div>
                 {typeof description === "string"
                   ? description.length > 0 && (
-                    <p className="text-xs text-muted-foreground text-pretty truncate line-clamp-2">
-                      {description}
-                    </p>
-                  )
+                      <p className="text-xs text-muted-foreground text-pretty truncate line-clamp-2">
+                        {description}
+                      </p>
+                    )
                   : description}
               </motion.div>
             </div>
@@ -161,13 +161,15 @@ export function BannerPanel({
   );
 }
 
-
 interface RotatingBannerProps {
   banners: BannerPanelProps[]; // array of props
   interval?: number; // ms
 }
 
-export function RotatingBanner({ banners, interval = 5000 }: RotatingBannerProps) {
+export function RotatingBanner({
+  banners,
+  interval = 5000,
+}: RotatingBannerProps) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -179,7 +181,10 @@ export function RotatingBanner({ banners, interval = 5000 }: RotatingBannerProps
   }, [banners, interval]);
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50" suppressHydrationWarning>
+    <div
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+      suppressHydrationWarning
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={index} // important for re-mount animation

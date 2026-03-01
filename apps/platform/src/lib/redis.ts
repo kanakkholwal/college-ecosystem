@@ -1,4 +1,3 @@
-
 import Redis from "ioredis";
 
 const REDIS_URL = process.env.REDIS_URL;
@@ -9,25 +8,25 @@ if (!REDIS_URL) {
 
 // ---- Redis instance (lazy-safe) ----
 const redis = new Redis(REDIS_URL, {
-      lazyConnect: true,
-      maxRetriesPerRequest: 1, // fail fast
-      // enableOfflineQueue: false, // don't pile up commands
-      reconnectOnError(err) {
-        // reconnect on READONLY / connection resets / max clients
-        const msg = err.message || "";
-        return (
-          msg.includes("READONLY") ||
-          msg.includes("ECONNRESET") ||
-          msg.includes("ETIMEDOUT") ||
-          msg.includes("max number of clients") ||
-          msg.includes("LOADING")
-        );
-      },
-      retryStrategy(times) {
-        // exponential backoff, cap at 5s
-        return Math.min(times * 200, 5000);
-      },
-    })
+  lazyConnect: true,
+  maxRetriesPerRequest: 1, // fail fast
+  // enableOfflineQueue: false, // don't pile up commands
+  reconnectOnError(err) {
+    // reconnect on READONLY / connection resets / max clients
+    const msg = err.message || "";
+    return (
+      msg.includes("READONLY") ||
+      msg.includes("ECONNRESET") ||
+      msg.includes("ETIMEDOUT") ||
+      msg.includes("max number of clients") ||
+      msg.includes("LOADING")
+    );
+  },
+  retryStrategy(times) {
+    // exponential backoff, cap at 5s
+    return Math.min(times * 200, 5000);
+  },
+});
 
 // ---- Connection guards ----
 async function ensureRedisReady(): Promise<boolean> {
@@ -47,7 +46,7 @@ async function ensureRedisReady(): Promise<boolean> {
 
 // ---- Flush ALL keys (safe wrapper) ----
 export async function flushAllRedisKeys(): Promise<boolean> {
-    "use server";
+  "use server";
   if (!(await ensureRedisReady())) {
     console.warn("[redis] flush skipped – redis not ready");
     return false;

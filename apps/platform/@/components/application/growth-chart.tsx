@@ -1,21 +1,33 @@
 "use client";
-import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer } from 'recharts';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+} from "recharts";
 import { GraphDataPoint } from "~/utils/process";
 
-
-
 interface MiniChartProps {
-    data:GraphDataPoint[];
-    type?: 'line' | 'area' | 'bar';
-    color?: string;
-    trend?: -1 | 0 | 1;
+  data: GraphDataPoint[];
+  type?: "line" | "area" | "bar";
+  color?: string;
+  trend?: -1 | 0 | 1;
 }
 // Mini Chart Component
-export const MiniChart = ({ data, type = 'area', color = '#8b5cf6', trend = 1 }: MiniChartProps) => {
-  const strokeColor = trend === 1 ? '#10b981' : trend === -1 ? '#ef4444' : color;
-  const fillColor = trend === 1 ? '#10b981' : trend === -1 ? '#ef4444' : color;
+export const MiniChart = ({
+  data,
+  type = "area",
+  color = "#8b5cf6",
+  trend = 1,
+}: MiniChartProps) => {
+  const strokeColor =
+    trend === 1 ? "#10b981" : trend === -1 ? "#ef4444" : color;
+  const fillColor = trend === 1 ? "#10b981" : trend === -1 ? "#ef4444" : color;
 
-  if (type === 'line') {
+  if (type === "line") {
     return (
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
@@ -32,7 +44,7 @@ export const MiniChart = ({ data, type = 'area', color = '#8b5cf6', trend = 1 }:
     );
   }
 
-  if (type === 'bar') {
+  if (type === "bar") {
     return (
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
@@ -70,4 +82,3 @@ export const MiniChart = ({ data, type = 'area', color = '#8b5cf6', trend = 1 }:
     </ResponsiveContainer>
   );
 };
-

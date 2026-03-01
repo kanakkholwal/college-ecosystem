@@ -26,9 +26,9 @@ export default async function CommunityPostEditPage(props: Props) {
   if (!post) return notFound();
 
   const headersList = await headers();
-  const session = await auth.api.getSession({
+  const session = (await auth.api.getSession({
     headers: headersList,
-  }) as Session;
+  })) as Session;
   if (session.user.id !== post.author.id || session.user.role !== "admin") {
     return (
       <EmptyArea
@@ -47,7 +47,6 @@ export default async function CommunityPostEditPage(props: Props) {
   // console.log(post);
   return (
     <main className="md:col-span-3 space-y-4 pr-2">
-
       <EditPostForm postId={post._id} post={post} />
     </main>
   );

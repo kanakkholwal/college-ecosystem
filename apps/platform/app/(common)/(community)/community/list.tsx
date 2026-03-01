@@ -6,7 +6,12 @@ import EmptyArea from "@/components/common/empty-area";
 import ShareButton from "@/components/common/share-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { BarChart2, MessageSquare, MessageSquareText, Share2 } from "lucide-react";
+import {
+  BarChart2,
+  MessageSquare,
+  MessageSquareText,
+  Share2,
+} from "lucide-react";
 import Link from "next/link";
 import Markdown from "react-markdown";
 import type { CommunityPostTypeWithId } from "src/models/community";
@@ -22,7 +27,6 @@ export default function CommunityPostList({
   posts: CommunityPostTypeWithId[];
   user?: Session["user"];
 }) {
-
   if (posts.length === 0) {
     return (
       <div className="py-20 border border-dashed rounded-xl bg-muted/20">
@@ -44,10 +48,16 @@ export default function CommunityPostList({
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <Link href={`/community?c=${post.category}`} className="shrink-0 z-20">
+              <Link
+                href={`/community?c=${post.category}`}
+                className="shrink-0 z-20"
+              >
                 <Avatar className="size-8 rounded-lg border border-border/50">
                   <AvatarImage
-                    src={CATEGORY_IMAGES[post.category] || `https://api.dicebear.com/5.x/initials/svg?seed=${post.category}`}
+                    src={
+                      CATEGORY_IMAGES[post.category] ||
+                      `https://api.dicebear.com/5.x/initials/svg?seed=${post.category}`
+                    }
                     alt={post.category}
                   />
                   <AvatarFallback className="rounded-lg text-xs">
@@ -58,7 +68,10 @@ export default function CommunityPostList({
 
               <div className="flex flex-col text-xs">
                 <div className="flex items-center gap-1.5 font-medium">
-                  <Link href={`/community?c=${post.category}`} className="hover:underline text-foreground z-20">
+                  <Link
+                    href={`/community?c=${post.category}`}
+                    className="hover:underline text-foreground z-20"
+                  >
                     c/{post.category}
                   </Link>
                   <span className="text-muted-foreground">•</span>
@@ -69,7 +82,9 @@ export default function CommunityPostList({
                   </UserPreview>
                 </div>
                 <span className="text-muted-foreground/60">
-                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(post.createdAt), {
+                    addSuffix: true,
+                  })}
                 </span>
               </div>
             </div>
@@ -86,7 +101,14 @@ export default function CommunityPostList({
             <div className="text-sm text-muted-foreground/80 line-clamp-3 leading-relaxed prose-p:my-0 prose-headings:text-sm">
               <Markdown
                 components={{
-                  img: ({ alt, src, ...props }) => <img alt={alt} src={src} className="rounded-lg max-h-40 object-cover" {...props} />,
+                  img: ({ alt, src, ...props }) => (
+                    <img
+                      alt={alt}
+                      src={src}
+                      className="rounded-lg max-h-40 object-cover"
+                      {...props}
+                    />
+                  ),
                   h1: ({ children }) => <p className="font-bold">{children}</p>,
                   h2: ({ children }) => <p className="font-bold">{children}</p>,
                 }}
@@ -97,9 +119,12 @@ export default function CommunityPostList({
           </Link>
 
           <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/40 z-20">
-
             <div className="flex items-center gap-4">
-              <OptimisticFooterActionBar post={post} user={user} className="h-8" />
+              <OptimisticFooterActionBar
+                post={post}
+                user={user}
+                className="h-8"
+              />
 
               <Link
                 href={`/community/posts/${post._id}#comments`}
@@ -111,9 +136,14 @@ export default function CommunityPostList({
             </div>
 
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5" title={`${post.views} Views`}>
+              <div
+                className="flex items-center gap-1.5"
+                title={`${post.views} Views`}
+              >
                 <BarChart2 className="size-3.5" />
-                <span className="font-medium tabular-nums">{formatNumber(post.views)}</span>
+                <span className="font-medium tabular-nums">
+                  {formatNumber(post.views)}
+                </span>
               </div>
 
               <ShareButton
@@ -130,7 +160,6 @@ export default function CommunityPostList({
               </ShareButton>
             </div>
           </div>
-
         </article>
       ))}
     </div>

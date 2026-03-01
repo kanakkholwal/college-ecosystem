@@ -1,4 +1,7 @@
-import { HostelCard, HostelGridSkeleton } from "@/components/application/hostel/hostel-card";
+import {
+  HostelCard,
+  HostelGridSkeleton,
+} from "@/components/application/hostel/hostel-card";
 import { ResponsiveContainer } from "@/components/common/container";
 import EmptyArea from "@/components/common/empty-area";
 import { Badge } from "@/components/ui/badge";
@@ -7,13 +10,7 @@ import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Separator } from "@/components/ui/separator";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { cn } from "@/lib/utils";
-import {
-  Building2,
-  Plus,
-  ShieldCheck,
-  Users,
-  WalletCards
-} from "lucide-react";
+import { Building2, Plus, ShieldCheck, Users, WalletCards } from "lucide-react";
 import { getHostelsStats } from "~/actions/hostel.core";
 import { CreateHostelForm, ImportFromSiteButton } from "../hostels/client";
 
@@ -25,17 +22,22 @@ export default async function ChiefWardenPage({ role }: { role: string }) {
   // --- Derived Stats ---
   const totalHostels = hostels.length;
   // Assuming admins are stored in an array inside hostel object
-  const totalStaff = hostels.reduce((acc, h) => acc + (h.administrators?.length || 0) + 1, 0);
-  const boysHostels = hostels.filter(h => h.gender === "male").length;
-  const girlsHostels = hostels.filter(h => h.gender === "female").length;
+  const totalStaff = hostels.reduce(
+    (acc, h) => acc + (h.administrators?.length || 0) + 1,
+    0
+  );
+  const boysHostels = hostels.filter((h) => h.gender === "male").length;
+  const girlsHostels = hostels.filter((h) => h.gender === "female").length;
 
   return (
     <div className="w-full space-y-8 pb-20">
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="uppercase tracking-wider font-bold text-[10px] text-primary border-primary/20 bg-primary/5">
+            <Badge
+              variant="outline"
+              className="uppercase tracking-wider font-bold text-[10px] text-primary border-primary/20 bg-primary/5"
+            >
               Campus Administration
             </Badge>
           </div>
@@ -43,7 +45,8 @@ export default async function ChiefWardenPage({ role }: { role: string }) {
             Chief Warden Console
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage infrastructure, appoint wardens, and oversee campus residency.
+            Manage infrastructure, appoint wardens, and oversee campus
+            residency.
           </p>
         </div>
 
@@ -104,9 +107,7 @@ export default async function ChiefWardenPage({ role }: { role: string }) {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Infrastructure Directory
           </h2>
-          <div className="flex gap-2">
-            {/* Filter buttons could go here */}
-          </div>
+          <div className="flex gap-2">{/* Filter buttons could go here */}</div>
         </div>
 
         <ErrorBoundaryWithSuspense
@@ -125,7 +126,8 @@ export default async function ChiefWardenPage({ role }: { role: string }) {
                 <HostelCard
                   key={hostel.slug}
                   hostel={hostel}
-                  href={`/${role}/hostels/${hostel.slug}`} disabled={false}
+                  href={`/${role}/hostels/${hostel.slug}`}
+                  disabled={false}
                 />
               ))}
             </ResponsiveContainer>
@@ -138,8 +140,8 @@ export default async function ChiefWardenPage({ role }: { role: string }) {
                 actionProps={{
                   children: "Import Default Hostels",
                   // Mock action for now, likely triggers the import button logic
-                  onClick: () => { },
-                  variant: "outline"
+                  onClick: () => {},
+                  variant: "outline",
                 }}
               />
             </div>
@@ -159,19 +161,32 @@ interface StatCardProps {
   bg: string;
 }
 
-function StatCard({ label, value, icon: Icon, subtext, color, bg }: StatCardProps) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  subtext,
+  color,
+  bg,
+}: StatCardProps) {
   return (
     <Card className="border-border/50 shadow-sm bg-card/50">
       <CardContent className="p-5 flex items-start justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">{label}</p>
-          <h3 className="text-3xl font-bold mt-2 tabular-nums tracking-tight">{value}</h3>
-          <p className="text-xs text-muted-foreground mt-1 font-medium">{subtext}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
+            {label}
+          </p>
+          <h3 className="text-3xl font-bold mt-2 tabular-nums tracking-tight">
+            {value}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1 font-medium">
+            {subtext}
+          </p>
         </div>
         <div className={cn("p-3 rounded-xl border shadow-sm", bg, color)}>
           <Icon className="size-5" />
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

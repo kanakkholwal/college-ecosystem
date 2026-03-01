@@ -1,12 +1,7 @@
 import { PollOptions } from "@/components/application/poll/poll-component";
 import Polling from "@/components/application/poll/polling";
 import { Badge } from "@/components/ui/badge";
-import {
-  Calendar,
-  CheckCircle2,
-  Info,
-  MessageSquareText
-} from "lucide-react";
+import { Calendar, CheckCircle2, Info, MessageSquareText } from "lucide-react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPollById, updateVotes } from "~/actions/common.poll";
@@ -70,64 +65,68 @@ export default async function PollPage({ params }: Props) {
   return (
     <div className="mx-auto w-full px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <ButtonLink
-          href="/polls"
-          icon="arrow-left"
-          variant="glass"
-          size="sm"
-        >
+        <ButtonLink href="/polls" icon="arrow-left" variant="glass" size="sm">
           Back to all polls
         </ButtonLink>
-
       </div>
       <HeaderBar
         titleNode={poll.question}
-        descriptionNode={<div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-border/50 pt-4">
-              
-
-          {closesAlready ? (
-            <Badge variant="destructive_soft">
-              <Icon name="clock" className="size-3.5" />
-              Closed</Badge>
-          ) : (
-            <Badge variant="info_soft" className="text-sm inline-flex items-center gap-1.5">
-              <Icon name="clock" className="size-3.5" />
-              <ClosingBadge poll={poll} />
-            </Badge>
-          )} 
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            <span>{poll.multipleChoice ? "Multiple Choice" : "Single Choice"}</span>
+        descriptionNode={
+          <div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-border/50 pt-4">
+            {closesAlready ? (
+              <Badge variant="destructive_soft">
+                <Icon name="clock" className="size-3.5" />
+                Closed
+              </Badge>
+            ) : (
+              <Badge
+                variant="info_soft"
+                className="text-sm inline-flex items-center gap-1.5"
+              >
+                <Icon name="clock" className="size-3.5" />
+                <ClosingBadge poll={poll} />
+              </Badge>
+            )}
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              <span>
+                {poll.multipleChoice ? "Multiple Choice" : "Single Choice"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>
+                Created {new Date(poll.createdAt).toLocaleDateString()}
+              </span>
+            </div>
           </div>
+        }
+        actionNode={
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>Created {new Date(poll.createdAt).toLocaleDateString()}</span>
+            <DeletePoll
+              pollId={poll._id}
+              className="relative right-auto top-auto"
+            />
+            <ShareButton
+              data={{
+                title: "Share poll",
+                text: "Check out this poll!",
+                url: `${getBaseURL()}/polls/${poll._id}`,
+              }}
+              variant="ghost"
+              size="sm"
+              icon="share"
+            >
+              Share
+            </ShareButton>
           </div>
-        </div>}
-        actionNode={<div className="flex items-center gap-2">
-          <DeletePoll pollId={poll._id} className="relative right-auto top-auto" />
-          <ShareButton
-            data={{
-              title: "Share poll",
-              text: "Check out this poll!",
-              url: `${getBaseURL()}/polls/${poll._id}`,
-            }}
-            variant="ghost"
-            size="sm"
-            icon="share"
-          >
-            Share
-          </ShareButton>
-        </div>}
+        }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
         <main className="lg:col-span-7 space-y-8">
-
-          
           <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
-              {poll.description && (
+            {poll.description && (
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {poll.description}
               </p>
@@ -172,9 +171,11 @@ export default async function PollPage({ params }: Props) {
 
           {/* Ad Unit */}
           <div className="py-4">
-            <AdUnit adSlot="display-horizontal" key={`polls-page-ad-${poll._id}`} />
+            <AdUnit
+              adSlot="display-horizontal"
+              key={`polls-page-ad-${poll._id}`}
+            />
           </div>
-
         </main>
 
         <aside className="lg:col-span-5 space-y-6">
@@ -192,14 +193,15 @@ export default async function PollPage({ params }: Props) {
                     <h3 className="text-base font-semibold text-foreground">
                       Discussion
                     </h3>
-                    <p className="text-xs text-muted-foreground">Share your thoughts</p>
+                    <p className="text-xs text-muted-foreground">
+                      Share your thoughts
+                    </p>
                   </div>
                 </div>
               }
             />
           </div>
         </aside>
-
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export default function SignInForm() {
         onRequest: () => setIsLoading(true),
         onResponse: () => setIsLoading(false),
         onSuccess: () => {
-          toast.success("Welcome back!")
+          toast.success("Welcome back!");
         },
         onError: (ctx) => {
           if (ctx.error.status === 403) {
@@ -74,7 +74,6 @@ export default function SignInForm() {
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-
           <FormField
             control={form.control}
             name="email"
@@ -142,7 +141,9 @@ export default function SignInForm() {
           <span className="w-full border-t border-border/60" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground font-medium">Or continue with</span>
+          <span className="bg-background px-2 text-muted-foreground font-medium">
+            Or continue with
+          </span>
         </div>
       </div>
 

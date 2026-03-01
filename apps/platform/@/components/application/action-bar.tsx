@@ -67,7 +67,7 @@ type ActionButtonProps = ButtonProps & {
   action: () => Promise<any>;
   actionName?: string;
   loadingLabel?: string;
-}
+};
 export function ActionButton({
   loadingLabel = "Taking action...",
   actionName = "Talking action",

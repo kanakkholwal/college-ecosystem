@@ -170,15 +170,19 @@ export const appConfig = {
       role: "EducationalInstitution",
     },
   ],
-  githubRepo:
-    "https://github.com/kanakkholwal/college-ecosystem",
+  githubRepo: "https://github.com/kanakkholwal/college-ecosystem",
   githubUri: "kanakkholwal/college-ecosystem",
   socials: {
-    twitter: "https://twitter.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    linkedin: "https://linkedin.com/in/kanak-kholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    instagram: "https://instagram.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    github: "https://github.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    website: "https://kanak.eu.org/?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
+    twitter:
+      "https://twitter.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
+    linkedin:
+      "https://linkedin.com/in/kanak-kholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
+    instagram:
+      "https://instagram.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
+    github:
+      "https://github.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
+    website:
+      "https://kanak.eu.org/?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
   },
 
   verifications: {
@@ -219,7 +223,6 @@ export const appConfig = {
     enableOgImage: false, // Enable Open Graph image generation
   },
 };
-
 
 export const supportLinks = [
   {

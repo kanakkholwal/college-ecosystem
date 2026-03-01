@@ -7,38 +7,51 @@ import { BiSpreadsheet } from "react-icons/bi";
 import { getResults } from "~/actions/common.result";
 
 import { BaseHeroSection } from "@/components/application/base-hero";
-import { HeroLabel, HeroQuickFilters, HeroStats } from "@/components/application/result/hero";
+import {
+  HeroLabel,
+  HeroQuickFilters,
+  HeroStats,
+} from "@/components/application/result/hero";
 import AdUnit from "@/components/common/adsense";
 import EmptyArea from "@/components/common/empty-area";
 import { NoteSeparator } from "@/components/common/note-separator";
 import ConditionalRender from "@/components/utils/conditional-render";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import type { Metadata } from "next";
-import { type SearchParams } from 'nuqs/server';
+import { type SearchParams } from "nuqs/server";
 import { appConfig, orgConfig } from "~/project.config";
 import { getServerEnv } from "~/utils/env";
 import { searchParamsCache } from "./utils";
 
 import { getCachedLabels } from "~/actions/common.result";
 
-
-
 export default async function ResultPage(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
-  const { branches, batches, programmes } = await getCachedLabels(searchParams?.cache === "new");
+  const { branches, batches, programmes } = await getCachedLabels(
+    searchParams?.cache === "new"
+  );
   if (getServerEnv().isDev) {
-    console.log("[Branches]:", branches, "[Batches]:", batches, "[Programmes]:", programmes);
+    console.log(
+      "[Branches]:",
+      branches,
+      "[Batches]:",
+      batches,
+      "[Programmes]:",
+      programmes
+    );
   }
   // get shuffled filter combinations
   const filterCombinations = [];
-    for (const batch of batches) {
-      for (const programme of programmes) {
-        filterCombinations.push({ batch, programme });
-      }
+  for (const batch of batches) {
+    for (const programme of programmes) {
+      filterCombinations.push({ batch, programme });
     }
-  const shuffledFilterCombinations = filterCombinations.sort(() => Math.random() - 0.5).slice(0, 4);
+  }
+  const shuffledFilterCombinations = filterCombinations
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 4);
   const session = "Fall 2025";
   return (
     <div className="px-4 md:px-12 xl:px-6 @container">
@@ -52,9 +65,13 @@ export default async function ResultPage(props: {
           key={"key_search_bar"}
           fallback={<Skeleton className="h-12 w-full " />}
         >
-
           <HeroLabel session={session} />
-          <SearchBox new_cache={searchParams?.cache === "new"} branches={branches} batches={batches} programmes={programmes} />
+          <SearchBox
+            new_cache={searchParams?.cache === "new"}
+            branches={branches}
+            batches={batches}
+            programmes={programmes}
+          />
           <HeroQuickFilters filters={shuffledFilterCombinations} />
           <HeroStats totalCount={5000} totalSemesters={8} />
         </Suspense>
@@ -87,21 +104,20 @@ export default async function ResultPage(props: {
         }
       >
         <ResultDisplay searchParams={props.searchParams} />
-
       </ErrorBoundaryWithSuspense>
 
-      <AdUnit
-        adSlot="multiplex"
-        key={"results-page-ad"}
-      />
+      <AdUnit adSlot="multiplex" key={"results-page-ad"} />
     </div>
   );
 }
 
-async function ResultDisplay({ searchParams }: {
+async function ResultDisplay({
+  searchParams,
+}: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { query, page, batch, branch, programme, cache, freshers } = await searchParamsCache.parse(searchParams)
+  const { query, page, batch, branch, programme, cache, freshers } =
+    await searchParamsCache.parse(searchParams);
 
   const currentPage = Number(page) || 1;
   const filter = {
@@ -115,43 +131,51 @@ async function ResultDisplay({ searchParams }: {
   const resData = await getResults(query, currentPage, filter, new_cache);
   const { results, totalPages, totalCount } = resData;
   if (getServerEnv().isDev) {
-    console.log("[Results fetched]:", results.length, "[Total Pages]:", totalPages, "[Total Count]:", totalCount);
+    console.log(
+      "[Results fetched]:",
+      results.length,
+      "[Total Pages]:",
+      totalPages,
+      "[Total Count]:",
+      totalCount
+    );
   }
-  return <>
-    <NoteSeparator label={`${results.length} Results found`} />
+  return (
+    <>
+      <NoteSeparator label={`${results.length} Results found`} />
 
-    <ConditionalRender condition={results.length > 0}>
-      <div className="mx-auto max-w-7xl w-full xl:px-6 grid gap-3 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
-        {results.map((result, i) => {
-          return (
-            <ResultCard
-              key={result._id.toString()}
-              result={result}
-              style={{
-                animationDelay: `${i * 100}ms`,
-              }}
-            />
-
-          );
-        })}
-      </div>
-      <div className="max-w-7xl mx-auto p-4 empty:hidden">
-        <Suspense
-          key={"Pagination_key"}
-          fallback={<Skeleton className="h-12 w-full " />}
-        >
-          <Pagination totalPages={totalPages} />
-        </Suspense>
-      </div>
-    </ConditionalRender>
-    <ConditionalRender condition={results.length === 0}>
-      <EmptyArea
-        icons={[BiSpreadsheet]}
-        title="No Results Found"
-        description="Try adjusting your search filters."
-      />
-    </ConditionalRender>
-  </>
+      <ConditionalRender condition={results.length > 0}>
+        <div className="mx-auto max-w-7xl w-full xl:px-6 grid gap-3 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
+          {results.map((result, i) => {
+            return (
+              <ResultCard
+                key={result._id.toString()}
+                result={result}
+                style={{
+                  animationDelay: `${i * 100}ms`,
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="max-w-7xl mx-auto p-4 empty:hidden">
+          <Suspense
+            key={"Pagination_key"}
+            fallback={<Skeleton className="h-12 w-full " />}
+          >
+            <Pagination totalPages={totalPages} />
+          </Suspense>
+        </div>
+      </ConditionalRender>
+      <ConditionalRender condition={results.length === 0}>
+        <EmptyArea
+          icons={[BiSpreadsheet]}
+          title="No Results Found"
+          description="Try adjusting your search filters."
+        />
+      </ConditionalRender>
+    </>
+  );
 }
 export const metadata: Metadata = {
   title:

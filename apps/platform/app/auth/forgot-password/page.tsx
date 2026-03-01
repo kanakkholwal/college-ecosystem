@@ -11,13 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  KeyRound,
-  Loader2,
-  Mail
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -73,12 +67,16 @@ export default function ForgotPassword() {
         <div className="flex size-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
           <CheckCircle2 className="size-8" />
         </div>
-        
+
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">Check your inbox</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Check your inbox
+          </h2>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-            We{"'"}ve sent a password reset link to <br/>
-            <span className="font-medium text-foreground">{form.getValues("email")}</span>
+            We{"'"}ve sent a password reset link to <br />
+            <span className="font-medium text-foreground">
+              {form.getValues("email")}
+            </span>
           </p>
         </div>
 
@@ -86,7 +84,7 @@ export default function ForgotPassword() {
           <Button variant="outline" className="w-full" asChild>
             <Link href="/auth/sign-in">Back to Sign In</Link>
           </Button>
-          <button 
+          <button
             onClick={() => setIsSubmitted(false)}
             className="text-xs text-muted-foreground hover:text-primary hover:underline transition-all"
           >
@@ -101,9 +99,11 @@ export default function ForgotPassword() {
     <div className="space-y-6">
       <div className="flex flex-col items-center text-center space-y-2">
         <div className="p-3 rounded-xl bg-primary/5 text-primary mb-2 ring-1 ring-primary/10">
-            <KeyRound className="size-6" />
+          <KeyRound className="size-6" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Forgot password?</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Forgot password?
+        </h1>
         <p className="text-sm text-muted-foreground max-w-xs">
           No worries, we{"'"}ll send you reset instructions.
         </p>
@@ -143,7 +143,12 @@ export default function ForgotPassword() {
       </Form>
 
       <div className="flex justify-center">
-        <Button variant="link" size="sm" className="text-muted-foreground" asChild>
+        <Button
+          variant="link"
+          size="sm"
+          className="text-muted-foreground"
+          asChild
+        >
           <Link href="/auth/sign-in" className="gap-2">
             <ArrowLeft /> Back to Sign In
           </Link>

@@ -8,7 +8,7 @@ import dbConnect from "~/lib/dbConnect";
 import {
   HostelStudentModel,
   OutPassModel,
-  type OutPassType
+  type OutPassType,
 } from "~/models/hostel_n_outpass";
 
 /*
@@ -178,7 +178,9 @@ export async function allowEntryExit(
       return Promise.reject("This Outpass is still PENDING approval.");
     }
     if (outPass.status === "processed") {
-      return Promise.reject("This Outpass has already been used and processed.");
+      return Promise.reject(
+        "This Outpass has already been used and processed."
+      );
     }
 
     // 3. Handle EXIT Logic
@@ -200,7 +202,9 @@ export async function allowEntryExit(
     if (action_type === "entry") {
       // Security Check: Cannot enter if never exited
       if (!outPass.actualOutTime) {
-        return Promise.reject("Cannot verify Entry: Student has not scanned Exit yet.");
+        return Promise.reject(
+          "Cannot verify Entry: Student has not scanned Exit yet."
+        );
       }
 
       // Check if already entered
@@ -217,7 +221,6 @@ export async function allowEntryExit(
     }
 
     return Promise.reject("Invalid action type provided.");
-
   } catch (err: any) {
     console.error("Entry/Exit Error:", err);
     return Promise.reject(err?.message || "Internal Server Error");

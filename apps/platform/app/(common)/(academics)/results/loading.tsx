@@ -9,7 +9,8 @@ export default function LoadingResultPage() {
       <BaseHeroSection
         title={`${orgConfig.shortName} Semester Results Portal`}
         description="Access official exam results for National Institute of Technology Hamirpur. Check grades,
-and track academic performance" >
+and track academic performance"
+      >
         <Skeleton className="h-12 w-full " />
       </BaseHeroSection>
 

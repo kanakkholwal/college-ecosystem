@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { sendGAEvent } from '@next/third-parties/google';
+import { sendGAEvent } from "@next/third-parties/google";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
@@ -139,7 +139,8 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
             initial="hidden"
             animate="show"
             exit="hidden"
-            className="inline-flex space-x-[6px] items-center">
+            className="inline-flex space-x-[6px] items-center"
+          >
             {navLinks.map((navLink, index) => (
               <Link
                 href={navLink.href}
@@ -147,14 +148,13 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                 ref={(el) => {
                   tabRefs.current[index] = el;
                 }}
-
                 className={cn(
                   "px-3 py-2 cursor-pointer transition-colors duration-300 z-10 ",
                   "text-muted-foreground hover:text-foreground/80 bg-transparent",
-                  activeIndex === index
-                    ? "text-primary"
+                  activeIndex === index ? "text-primary" : "",
+                  hoveredIndex === index
+                    ? "text-primary hover:text-primary"
                     : "",
-                  hoveredIndex === index ? "text-primary hover:text-primary" : "",
                   triggerHeight
                 )}
                 onMouseEnter={() => setHoveredIndex(index)}
@@ -162,7 +162,7 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                 onClick={() => {
                   setActiveIndex(index);
                   // onTabChange?.(navLink.id)
-                  sendGAEvent("event","nav_link_click", {
+                  sendGAEvent("event", "nav_link_click", {
                     href: navLink.href,
                     id: navLink.id,
                     hasChildren: !!navLink.items?.length,
@@ -221,4 +221,3 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
 NavTabs.displayName = "NavTabs";
 
 export { NavTabs };
-

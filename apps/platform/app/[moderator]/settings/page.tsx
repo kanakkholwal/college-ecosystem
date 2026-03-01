@@ -38,10 +38,10 @@ export default async function SettingsPage({
       <div>
         <h2 className="text-lg font-medium">General</h2>
         <p className="text-sm text-muted-foreground">
-            Select a category to configure.
+          Select a category to configure.
         </p>
       </div>
-      
+
       <div className="grid gap-4 md:grid-cols-2">
         {settingsOptions.map((option, index) => (
           <Link
@@ -50,7 +50,9 @@ export default async function SettingsPage({
             className="group relative flex items-center justify-between overflow-hidden rounded-xl border bg-background p-4 hover:bg-muted/50 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className={`flex size-10 items-center justify-center rounded-full ${option.bgColor}`}>
+              <div
+                className={`flex size-10 items-center justify-center rounded-full ${option.bgColor}`}
+              >
                 <option.icon className={`size-5 ${option.color}`} />
               </div>
               <div className="space-y-1">
@@ -62,7 +64,7 @@ export default async function SettingsPage({
                 </p>
               </div>
             </div>
-            
+
             <ChevronRight className="size-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
           </Link>
         ))}

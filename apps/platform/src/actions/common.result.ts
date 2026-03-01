@@ -44,10 +44,7 @@ export async function getResults(
 
     // normalize batch ONCE
     let normalizedBatch: number | null = null;
-    if (
-      filter.batch &&
-      filter.batch !== "all"
-    ) {
+    if (filter.batch && filter.batch !== "all") {
       const parsed = Number.parseInt(filter.batch.trim(), 10);
       if (!Number.isNaN(parsed)) {
         normalizedBatch = parsed;
@@ -176,12 +173,7 @@ export async function getResults(
     const response = { results, totalPages, totalCount };
 
     try {
-      await redis?.set(
-        cacheKey,
-        JSON.stringify(response),
-        "EX",
-        60 * 60 * 24
-      );
+      await redis?.set(cacheKey, JSON.stringify(response), "EX", 60 * 60 * 24);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
@@ -198,41 +190,51 @@ type CachedLabels = {
   batches: string[];
   programmes: string[];
 };
-export const getCachedLabels = cache(async (new_cache?: boolean): Promise<CachedLabels> => {
-  const cacheKey = "result:cached_labels:v1";
-  if (!new_cache) {
-    try {
-      const cached = await redis?.get(cacheKey);
-      if (cached) return JSON.parse(cached);
-    } catch (e) {
-      console.log("Redis GET error:", e);
+export const getCachedLabels = cache(
+  async (new_cache?: boolean): Promise<CachedLabels> => {
+    const cacheKey = "result:cached_labels:v1";
+    if (!new_cache) {
+      try {
+        const cached = await redis?.get(cacheKey);
+        if (cached) return JSON.parse(cached);
+      } catch (e) {
+        console.log("Redis GET error:", e);
+      }
+    } else {
+      try {
+        await redis?.del(cacheKey);
+      } catch (e) {
+        console.log("Redis DEL error:", e);
+      }
     }
-  } else {
-    try { await redis?.del(cacheKey); } catch (e) { console.log("Redis DEL error:", e); }
-  }
 
-  try {
-    await dbConnect();
-    // distinct is fine for small label sets
-    const [branches, batches, programmes] = await Promise.all([
-      ResultModel.distinct("branch"),
-      ResultModel.distinct("batch"),
-      ResultModel.distinct("programme"),
-    ]);
-
-    const labels = { branches, batches, programmes };
     try {
-      await redis?.set(cacheKey, JSON.stringify(labels), "EX", 60 * 60 * 24 * 30 * 6); // 6 months
-    } catch (e) {
-      console.log("Redis SET error:", e);
-    }
-    return labels;
-  } catch (err) {
-    console.error("Error fetching labels:", err);
-    return { branches: [], batches: [], programmes: [] };
-  }
-});
+      await dbConnect();
+      // distinct is fine for small label sets
+      const [branches, batches, programmes] = await Promise.all([
+        ResultModel.distinct("branch"),
+        ResultModel.distinct("batch"),
+        ResultModel.distinct("programme"),
+      ]);
 
+      const labels = { branches, batches, programmes };
+      try {
+        await redis?.set(
+          cacheKey,
+          JSON.stringify(labels),
+          "EX",
+          60 * 60 * 24 * 30 * 6
+        ); // 6 months
+      } catch (e) {
+        console.log("Redis SET error:", e);
+      }
+      return labels;
+    } catch (err) {
+      console.error("Error fetching labels:", err);
+      return { branches: [], batches: [], programmes: [] };
+    }
+  }
+);
 
 /*
 /*  For admin
@@ -267,7 +269,9 @@ export async function getResultByRollNo(
   }
 
   await dbConnect();
-  const result = await ResultModel.findOne({ rollNo }).lean().exec() as ResultTypeWithId | null;
+  const result = (await ResultModel.findOne({ rollNo })
+    .lean()
+    .exec()) as ResultTypeWithId | null;
 
   if (result && update) {
     const response = await serverFetch<{
@@ -322,7 +326,6 @@ export async function getResultByRollNo(
   return JSON.parse(JSON.stringify(result)); // deep clone
 }
 
-
 export async function assignRanks() {
   const response = await serverFetch<{
     error: boolean;
@@ -347,9 +350,12 @@ const freshersDataSchema = z.array(
   })
 );
 
-export async function bulkUpdateGenders(data: z.infer<typeof freshersDataSchema>) {
+export async function bulkUpdateGenders(
+  data: z.infer<typeof freshersDataSchema>
+) {
   const parsed = freshersDataSchema.safeParse(data);
-  if (!parsed.success) return { error: true, message: "Invalid data", data: parsed.error };
+  if (!parsed.success)
+    return { error: true, message: "Invalid data", data: parsed.error };
 
   await dbConnect();
 

@@ -65,9 +65,6 @@ export const CATEGORIES: {
   },
 ];
 
-
-
-
 export const rawCommunityPostSchema = z.object({
   title: z.string().min(5, "Title must be atleast 5 characters long."),
   content: z.string().min(10, "Content must be atleast 10 characters long."), // markdown

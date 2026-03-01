@@ -9,7 +9,7 @@ import type {
 
 export type EventTypeWithID = RawEvent;
 
-export interface IEvent extends Document, Omit<RawEvent, "_id"> { }
+export interface IEvent extends Document, Omit<RawEvent, "_id"> {}
 
 export type TimeSlotWithID = RawTimeSlot & { _id: string };
 
@@ -18,7 +18,7 @@ export interface RawDaySchedule {
   timeSlots: RawTimeSlot[];
 }
 export type DayScheduleWithID = RawDaySchedule & { _id: string };
-export interface IDaySchedule extends Document, RawDaySchedule { }
+export interface IDaySchedule extends Document, RawDaySchedule {}
 
 export interface PublicTimetable extends RawTimetableType {
   author: string;
@@ -38,7 +38,7 @@ export interface TimeTableWithID {
   status: "draft" | "published" | "archived";
 }
 
-export interface ITimetable extends Document, PublicTimetable { }
+export interface ITimetable extends Document, PublicTimetable {}
 
 const timetableSchema = new Schema<ITimetable>(
   {
@@ -74,8 +74,8 @@ const timetableSchema = new Schema<ITimetable>(
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
-      default: "draft"
-    }
+      default: "draft",
+    },
   },
   {
     timestamps: true,

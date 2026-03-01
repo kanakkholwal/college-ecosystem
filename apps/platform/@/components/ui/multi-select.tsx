@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
-interface MultiSelectorProps
-  extends React.ComponentPropsWithoutRef<typeof CommandPrimitive> {
+interface MultiSelectorProps extends React.ComponentPropsWithoutRef<
+  typeof CommandPrimitive
+> {
   values: string[];
   onValuesChange: (value: string[]) => void;
   loop?: boolean;

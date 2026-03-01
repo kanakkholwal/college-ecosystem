@@ -11,7 +11,7 @@ import {
   DoorOpen,
   Edit3,
   Megaphone,
-  Users
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { getInfo } from "~/actions/dashboard.cr";
@@ -44,19 +44,24 @@ export default async function CRDashboard() {
 
   return (
     <>
-      
       {/* --- Header Section --- */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Class Representative</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Class Representative
+          </h1>
           <p className="text-muted-foreground mt-1">
-            Manage logistics for {studentInfo.departmentCode} • Year {studentInfo.currentYear}
+            Manage logistics for {studentInfo.departmentCode} • Year{" "}
+            {studentInfo.currentYear}
           </p>
         </div>
         <div className="flex gap-2">
-            <Badge variant="outline" className="px-3 py-1 border-primary/20 bg-primary/5 text-primary">
-                {stats.totalSchedules} Active Schedules
-            </Badge>
+          <Badge
+            variant="outline"
+            className="px-3 py-1 border-primary/20 bg-primary/5 text-primary"
+          >
+            {stats.totalSchedules} Active Schedules
+          </Badge>
         </div>
       </div>
 
@@ -65,7 +70,7 @@ export default async function CRDashboard() {
       {/* --- Quick Actions Grid (Bento Top) --- */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-            Quick Actions
+          Quick Actions
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {actionLinks.map((link, i) => (
@@ -81,14 +86,15 @@ export default async function CRDashboard() {
       {/* --- Managed Timetables Section --- */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Managed Timetables
-            </h2>
-             {stats.lastUpdated && (
-                <span className="text-xs text-muted-foreground">
-                    Last activity {formatDistanceToNow(new Date(stats.lastUpdated))} ago
-                </span>
-            )}
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Managed Timetables
+          </h2>
+          {stats.lastUpdated && (
+            <span className="text-xs text-muted-foreground">
+              Last activity {formatDistanceToNow(new Date(stats.lastUpdated))}{" "}
+              ago
+            </span>
+          )}
         </div>
 
         {timetables.length > 0 ? (
@@ -98,33 +104,38 @@ export default async function CRDashboard() {
             ))}
           </div>
         ) : (
-            // Empty State
+          // Empty State
           <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-xl bg-muted/20">
             <CalendarDays className="size-10 text-muted-foreground/50 mb-3" />
             <h3 className="font-semibold text-foreground">No Schedules Yet</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Start by creating a master timetable for your section.
             </p>
-            <Link 
-                href="/cr/schedules/create"
-                className="text-sm font-medium text-primary hover:underline"
+            <Link
+              href="/cr/schedules/create"
+              className="text-sm font-medium text-primary hover:underline"
             >
-                Create your first schedule &rarr;
+              Create your first schedule &rarr;
             </Link>
           </div>
         )}
       </section>
-
     </>
   );
 }
 
 // --- Sub-component: Specific Design for Timetables ---
-function TimetableCard({ timetable, index }: { timetable: TimeTableWithID; index: number }) {
+function TimetableCard({
+  timetable,
+  index,
+}: {
+  timetable: TimeTableWithID;
+  index: number;
+}) {
   return (
-    <div 
-        className="group relative flex flex-col justify-between p-5 rounded-xl border border-border/50 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-        style={{ animationDelay: `${index * 100}ms` }} // Stagger effect
+    <div
+      className="group relative flex flex-col justify-between p-5 rounded-xl border border-border/50 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+      style={{ animationDelay: `${index * 100}ms` }} // Stagger effect
     >
       <div>
         <div className="flex justify-between items-start mb-4">
@@ -138,20 +149,20 @@ function TimetableCard({ timetable, index }: { timetable: TimeTableWithID; index
 
         <h3 className="font-semibold text-lg">{timetable.sectionName}</h3>
         <p className="text-sm text-muted-foreground">
-           Sem {timetable.semester} • {timetable.department_code}
+          Sem {timetable.semester} • {timetable.department_code}
         </p>
       </div>
 
       <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-           <Users className="size-3" />
-           <span>Year {timetable.year}</span>
+          <Users className="size-3" />
+          <span>Year {timetable.year}</span>
         </div>
-        <Link 
-            href={`/cr/schedules/view/${timetable._id}`}
-            className="text-xs font-medium text-foreground group-hover:text-primary transition-colors"
+        <Link
+          href={`/cr/schedules/view/${timetable._id}`}
+          className="text-xs font-medium text-foreground group-hover:text-primary transition-colors"
         >
-            View Details &rarr;
+          View Details &rarr;
         </Link>
       </div>
     </div>

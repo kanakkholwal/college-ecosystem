@@ -26,10 +26,9 @@ const adsTypes = {
   },
 } as const;
 
-
 declare global {
   interface Window {
-    adsbygoogle: { [key: string]: unknown }[]
+    adsbygoogle: { [key: string]: unknown }[];
   }
 }
 interface AdUnitProps {
@@ -56,7 +55,10 @@ const AdUnit: React.FC<AdUnitProps> = ({ adSlot, className }) => {
   }, [pathname, adSlot]); // refresh ad when route or slot changes
 
   return (
-    <div className={cn("adsense-container empty:hidden", className)} id={`adsense-${id}`}>
+    <div
+      className={cn("adsense-container empty:hidden", className)}
+      id={`adsense-${id}`}
+    >
       <ins
         key={id}
         id={`adsbygoogle-${id}`}

@@ -56,8 +56,13 @@ export default async function CoursesPage(props: Props) {
         Icon={Library}
         titleNode={
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight">Academic Curriculum</h1>
-            <Badge variant="secondary" className="rounded-full px-2.5 bg-primary/10 text-primary border-primary/20">
+            <h1 className="text-xl font-bold tracking-tight">
+              Academic Curriculum
+            </h1>
+            <Badge
+              variant="secondary"
+              className="rounded-full px-2.5 bg-primary/10 text-primary border-primary/20"
+            >
               {courses.length} Active Courses
             </Badge>
           </div>
@@ -65,10 +70,21 @@ export default async function CoursesPage(props: Props) {
         descriptionNode="Manage syllabus, outcomes, and reference materials."
         actionNode={
           <div className="flex items-center gap-2">
-            <ButtonLink variant="outline" size="sm" className="hidden sm:flex" href="/syllabus" target="_blank">
+            <ButtonLink
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              href="/syllabus"
+              target="_blank"
+            >
               <BookOpen /> Public View
             </ButtonLink>
-            <ButtonLink size="sm" disabled className="gap-2 shadow-sm" href={`/${params.moderator}/courses/create`}>
+            <ButtonLink
+              size="sm"
+              disabled
+              className="gap-2 shadow-sm"
+              href={`/${params.moderator}/courses/create`}
+            >
               <Plus /> Create Course
             </ButtonLink>
           </div>
@@ -120,7 +136,10 @@ function CourseGridSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="h-[240px] rounded-xl border bg-card p-6 flex flex-col gap-4">
+        <div
+          key={i}
+          className="h-[240px] rounded-xl border bg-card p-6 flex flex-col gap-4"
+        >
           <div className="flex justify-between">
             <Skeleton className="h-10 w-10 rounded-lg" />
             <Skeleton className="h-6 w-20 rounded-full" />
@@ -134,5 +153,5 @@ function CourseGridSkeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }

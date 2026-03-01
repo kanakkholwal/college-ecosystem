@@ -13,7 +13,7 @@ import redis from "~/lib/redis";
 import {
   AllotmentSlotModel,
   HostelRoomModel,
-  RoomMemberModel
+  RoomMemberModel,
 } from "~/models/allotment";
 import { HostelModel, HostelStudentModel } from "~/models/hostel_n_outpass";
 
@@ -24,7 +24,7 @@ import { HostelModel, HostelStudentModel } from "~/models/hostel_n_outpass";
 async function acquireLock(roomId: string, ttlSeconds = 5): Promise<boolean> {
   const key = `lock:room:${roomId}`;
   // NX: Set only if Not Exists, EX: Expire after N seconds
-  const result = await redis.set(key, "locked",  "EX", ttlSeconds);
+  const result = await redis.set(key, "locked", "EX", ttlSeconds);
   return result === "OK";
 }
 
@@ -58,10 +58,21 @@ export async function updateAllotmentProcess(
 ) {
   const validatedPayload = allotmentProcessSchema.safeParse(payload);
   if (!validatedPayload.success) {
-    return { error: true, message: "Invalid payload", data: validatedPayload.error.format() };
+    return {
+      error: true,
+      message: "Invalid payload",
+      data: validatedPayload.error.format(),
+    };
   }
-  await redis.set(`allotment-process-${hostelId}`, JSON.stringify(validatedPayload.data));
-  return { error: false, message: "Allotment process updated", data: validatedPayload.data };
+  await redis.set(
+    `allotment-process-${hostelId}`,
+    JSON.stringify(validatedPayload.data)
+  );
+  return {
+    error: false,
+    message: "Allotment process updated",
+    data: validatedPayload.data,
+  };
 }
 
 export async function startAllotment(hostelId: string) {
@@ -84,20 +95,21 @@ export async function distributeSlots(hostelId: string) {
   try {
     await dbConnect();
     const hostelStudents = await getStudentsByHostelId(hostelId);
-    if (!hostelStudents) return { error: true, message: "Hostel Not Found", data: null };
+    if (!hostelStudents)
+      return { error: true, message: "Hostel Not Found", data: null };
 
     // Batch Processing to prevent timeout
     const allotmentSlotsData = [];
     const currentTime = new Date();
     // Round to next clean 30 min block
     currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 30) * 30);
-    
+
     let currentSlotStart = new Date(currentTime);
     const totalDuration = SLOT_DURATION + SLOT_TIME_GAP;
 
     for (let i = 0; i < hostelStudents.length; i += SLOT_CAPACITY) {
       const batch = hostelStudents.slice(i, i + SLOT_CAPACITY);
-      
+
       const endTime = new Date(currentSlotStart);
       endTime.setMinutes(currentSlotStart.getMinutes() + SLOT_DURATION);
 
@@ -109,12 +121,15 @@ export async function distributeSlots(hostelId: string) {
       });
 
       // Increment start time for next batch
-      currentSlotStart.setMinutes(currentSlotStart.getMinutes() + totalDuration);
+      currentSlotStart.setMinutes(
+        currentSlotStart.getMinutes() + totalDuration
+      );
     }
 
     // 🚀 SINGLE WRITE OPERATION (Much faster than loop)
     await AllotmentSlotModel.deleteMany({ hostelId }); // Clear old slots first? Optional.
-    const createdSlots = await AllotmentSlotModel.insertMany(allotmentSlotsData);
+    const createdSlots =
+      await AllotmentSlotModel.insertMany(allotmentSlotsData);
 
     return {
       error: false,
@@ -135,7 +150,11 @@ export async function getUpcomingSlots(hostelId: string) {
       startingTime: { $gte: new Date() },
     }).sort({ startingTime: 1 });
 
-    return { error: false, message: "Slots fetched", data: JSON.parse(JSON.stringify(upcomingSlots)) };
+    return {
+      error: false,
+      message: "Slots fetched",
+      data: JSON.parse(JSON.stringify(upcomingSlots)),
+    };
   } catch (err) {
     return { error: true, message: "Internal Server Error", data: [] };
   }
@@ -155,16 +174,24 @@ const hostelRoomSchema = z.object({
 });
 const roomsSchema = z.array(hostelRoomSchema);
 
-export async function addHostelRooms(hostelId: string, rooms: z.infer<typeof roomsSchema>) {
+export async function addHostelRooms(
+  hostelId: string,
+  rooms: z.infer<typeof roomsSchema>
+) {
   const validatedPayload = roomsSchema.safeParse(rooms);
   if (!validatedPayload.success) {
-    return { error: true, message: "Invalid payload", data: validatedPayload.error.format() };
+    return {
+      error: true,
+      message: "Invalid payload",
+      data: validatedPayload.error.format(),
+    };
   }
-  
+
   try {
     await dbConnect();
     const hostel = await HostelModel.findById(hostelId);
-    if (!hostel) return { error: true, message: "Hostel Not Found", data: null };
+    if (!hostel)
+      return { error: true, message: "Hostel Not Found", data: null };
 
     await HostelRoomModel.insertMany(validatedPayload.data);
     return { error: false, message: "Rooms added successfully", data: null };
@@ -182,7 +209,21 @@ export async function getHostelRooms(hostelId: string) {
         $addFields: {
           numericRoomNumber: {
             $toInt: {
-              $arrayElemAt: [{ $split: [{ $replaceAll: { input: "$roomNumber", find: "G-", replacement: "" } }, "-"] }, 0],
+              $arrayElemAt: [
+                {
+                  $split: [
+                    {
+                      $replaceAll: {
+                        input: "$roomNumber",
+                        find: "G-",
+                        replacement: "",
+                      },
+                    },
+                    "-",
+                  ],
+                },
+                0,
+              ],
             },
           },
         },
@@ -191,7 +232,11 @@ export async function getHostelRooms(hostelId: string) {
       { $project: { numericRoomNumber: 0 } },
     ]);
 
-    return { error: false, message: "Rooms fetched", data: JSON.parse(JSON.stringify(rooms)) };
+    return {
+      error: false,
+      message: "Rooms fetched",
+      data: JSON.parse(JSON.stringify(rooms)),
+    };
   } catch (error) {
     return { error: true, message: "Internal Server Error", data: [] };
   }
@@ -203,12 +248,16 @@ export async function getHostelRooms(hostelId: string) {
 
 export async function joinRoom(roomId: string, joinerId: string) {
   const session = await mongoose.startSession();
-  
+
   // 1. ACQUIRE REDIS LOCK
   const hasLock = await acquireLock(roomId);
   if (!hasLock) {
     session.endSession();
-    return { error: true, message: "Room is currently busy. Please try again in 3 seconds.", data: null };
+    return {
+      error: true,
+      message: "Room is currently busy. Please try again in 3 seconds.",
+      data: null,
+    };
   }
 
   try {
@@ -217,57 +266,72 @@ export async function joinRoom(roomId: string, joinerId: string) {
 
     // 2. FETCH DATA WITH SESSION
     const room = await HostelRoomModel.findById(roomId).session(session);
-    const joinerStudent = await HostelStudentModel.findById(joinerId).session(session);
+    const joinerStudent =
+      await HostelStudentModel.findById(joinerId).session(session);
 
     if (!room || !joinerStudent) throw new Error("Room or Student not found");
     if (room.isLocked) throw new Error("Room is Locked by Admin");
 
     // 3. CHECK FOR EXISTING MEMBERSHIP
-    const existingMember = await RoomMemberModel.findOne({ student: joinerId, room: roomId }).session(session);
+    const existingMember = await RoomMemberModel.findOne({
+      student: joinerId,
+      room: roomId,
+    }).session(session);
     if (existingMember) throw new Error("You are already in this room");
 
     // 4. CAPACITY & KICK LOGIC
     if (room.occupied_seats >= room.capacity) {
       // Fetch all current members to find the weakest link
-      const members = await RoomMemberModel.find({ room: roomId }).populate('student').session(session);
-      
+      const members = await RoomMemberModel.find({ room: roomId })
+        .populate("student")
+        .session(session);
+
       // Sort: Ascending CGPA (lowest first)
       // Note: Assuming 'cgpi' is the field. Handle nulls safely.
-      members.sort((a, b) => ((a.student as any).cgpi || 0) - ((b.student as any).cgpi || 0));
-      
+      members.sort(
+        (a, b) =>
+          ((a.student as any).cgpi || 0) - ((b.student as any).cgpi || 0)
+      );
+
       const weakestMember = members[0];
       const weakestStudent = weakestMember.student as any;
 
       if ((joinerStudent.cgpi || 0) > (weakestStudent.cgpi || 0)) {
         // ⚡ KICK ACTION
-        await RoomMemberModel.findByIdAndDelete(weakestMember._id).session(session);
-        
+        await RoomMemberModel.findByIdAndDelete(weakestMember._id).session(
+          session
+        );
+
         // Return kicked student to allotment pool
         await AllotmentSlotModel.updateMany(
-           { hostelId: room.hostel, startingTime: { $gte: new Date() } },
-           { $push: { allotedFor: weakestStudent.email } }
+          { hostelId: room.hostel, startingTime: { $gte: new Date() } },
+          { $push: { allotedFor: weakestStudent.email } }
         ).session(session);
 
         // Decrement temporarily so logic below proceeds correctly
-        room.occupied_seats -= 1; 
+        room.occupied_seats -= 1;
 
         // If kicked student was host, unset host temporarily
         if (room.hostStudent?.toString() === weakestStudent._id.toString()) {
-           room.hostStudent = null;
+          room.hostStudent = null;
         }
       } else {
-        throw new Error("Room is full and your CGPA is insufficient to displace existing members.");
+        throw new Error(
+          "Room is full and your CGPA is insufficient to displace existing members."
+        );
       }
     }
 
     // 5. DETERMINE HOST (Priority Logic)
     let isNewHost = false;
-    
+
     if (!room.hostStudent) {
       room.hostStudent = joinerStudent._id;
       isNewHost = true;
     } else {
-      const currentHost = await HostelStudentModel.findById(room.hostStudent).session(session);
+      const currentHost = await HostelStudentModel.findById(
+        room.hostStudent
+      ).session(session);
       if (currentHost && (joinerStudent.cgpi || 0) > (currentHost.cgpi || 0)) {
         room.hostStudent = joinerStudent._id;
         isNewHost = true;
@@ -278,11 +342,16 @@ export async function joinRoom(roomId: string, joinerId: string) {
     room.occupied_seats += 1;
     await room.save({ session });
 
-    await RoomMemberModel.create([{
-      student: joinerStudent._id,
-      room: roomId,
-      hostel: room.hostel
-    }], { session });
+    await RoomMemberModel.create(
+      [
+        {
+          student: joinerStudent._id,
+          room: roomId,
+          hostel: room.hostel,
+        },
+      ],
+      { session }
+    );
 
     // 7. REMOVE FROM ALLOTMENT SLOTS
     await AllotmentSlotModel.updateMany(
@@ -291,13 +360,14 @@ export async function joinRoom(roomId: string, joinerId: string) {
     ).session(session);
 
     await session.commitTransaction();
-    
+
     return {
       error: false,
-      message: isNewHost ? "Joined room and promoted to Host!" : "Joined room successfully",
+      message: isNewHost
+        ? "Joined room and promoted to Host!"
+        : "Joined room successfully",
       data: null,
     };
-
   } catch (err: any) {
     await session.abortTransaction();
     console.error("Join Error:", err);
@@ -308,7 +378,11 @@ export async function joinRoom(roomId: string, joinerId: string) {
   }
 }
 
-export async function addRoomMembers(roomId: string, hostId: string, members: string[]) {
+export async function addRoomMembers(
+  roomId: string,
+  hostId: string,
+  members: string[]
+) {
   const session = await mongoose.startSession();
   const hasLock = await acquireLock(roomId);
 
@@ -323,10 +397,11 @@ export async function addRoomMembers(roomId: string, hostId: string, members: st
 
     const room = await HostelRoomModel.findById(roomId).session(session);
     if (!room) throw new Error("Room not found");
-    if (room.hostStudent?.toString() !== hostId) throw new Error("Only the Room Host can add members");
+    if (room.hostStudent?.toString() !== hostId)
+      throw new Error("Only the Room Host can add members");
 
     const uniqueMembers = [...new Set(members.map((m) => m.toLowerCase()))];
-    
+
     // STRICT CAPACITY CHECK
     if (room.occupied_seats + uniqueMembers.length > room.capacity) {
       throw new Error("Adding these members would exceed room capacity");
@@ -335,23 +410,25 @@ export async function addRoomMembers(roomId: string, hostId: string, members: st
     // Validate Students
     const studentsToAdd = [];
     for (const email of uniqueMembers) {
-      const student = await HostelStudentModel.findOne({ email }).session(session);
+      const student = await HostelStudentModel.findOne({ email }).session(
+        session
+      );
       if (!student) throw new Error(`Student with email ${email} not found`);
-      
+
       // Check if already in a room
       const inRoom = await RoomMemberModel.exists({ student: student._id });
       if (inRoom) throw new Error(`${student.name} is already in a room`);
-      
+
       studentsToAdd.push(student);
     }
 
     // Insert Members
-    const memberDocs = studentsToAdd.map(s => ({
+    const memberDocs = studentsToAdd.map((s) => ({
       student: s._id,
       room: roomId,
-      hostel: room.hostel
+      hostel: room.hostel,
     }));
-    
+
     await RoomMemberModel.insertMany(memberDocs, { session });
 
     // Update Room
@@ -359,7 +436,7 @@ export async function addRoomMembers(roomId: string, hostId: string, members: st
     await room.save({ session });
 
     // Clear Slots for all added members
-    const emails = studentsToAdd.map(s => s.email);
+    const emails = studentsToAdd.map((s) => s.email);
     await AllotmentSlotModel.updateMany(
       { hostelId: room.hostel, startingTime: { $gte: new Date() } },
       { $pull: { allotedFor: { $in: emails } } }
@@ -367,7 +444,6 @@ export async function addRoomMembers(roomId: string, hostId: string, members: st
 
     await session.commitTransaction();
     return { error: false, message: "Members added successfully", data: null };
-
   } catch (err: any) {
     await session.abortTransaction();
     return { error: true, message: err.message, data: null };
@@ -386,10 +462,14 @@ export async function lockToggleRoom(roomId: string) {
     await dbConnect();
     const room = await HostelRoomModel.findById(roomId);
     if (!room) return { error: true, message: "Room Not Found", data: null };
-    
+
     room.isLocked = !room.isLocked;
     await room.save();
-    return { error: false, message: "Lock updated", data: JSON.parse(JSON.stringify(room)) };
+    return {
+      error: false,
+      message: "Lock updated",
+      data: JSON.parse(JSON.stringify(room)),
+    };
   } catch (err) {
     return { error: true, message: "Internal Server Error", data: null };
   }
@@ -398,13 +478,24 @@ export async function lockToggleRoom(roomId: string) {
 export async function getHostRoom(hostId: string) {
   await dbConnect();
   const room = await HostelRoomModel.findOne({ hostStudent: hostId });
-  if (!room) return { error: true, message: "Room Not Found", data: { room: null, member: null } };
-  
-  const roomMember = await RoomMemberModel.find({ room: room._id, student: hostId });
-  
+  if (!room)
+    return {
+      error: true,
+      message: "Room Not Found",
+      data: { room: null, member: null },
+    };
+
+  const roomMember = await RoomMemberModel.find({
+    room: room._id,
+    student: hostId,
+  });
+
   return {
     error: false,
     message: "Fetched",
-    data: { room: JSON.parse(JSON.stringify(room)), member: JSON.parse(JSON.stringify(roomMember)) },
+    data: {
+      room: JSON.parse(JSON.stringify(room)),
+      member: JSON.parse(JSON.stringify(roomMember)),
+    },
   };
 }

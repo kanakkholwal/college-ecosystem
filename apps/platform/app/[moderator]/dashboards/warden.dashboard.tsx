@@ -6,16 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getHostelRoutes } from "@/constants/links";
 import { cn } from "@/lib/utils";
-import {
-  Clock,
-  DoorOpen,
-  LogOut,
-  Users
-} from "lucide-react";
+import { Clock, DoorOpen, LogOut, Users } from "lucide-react";
 import { getHostelByUser } from "~/actions/hostel.core";
 import { getWardenDashboardStats } from "~/actions/warden.dashboard";
 import { HostelCookieSetter } from "./dashboard.client";
-
 
 export default async function WardenDashboard({ role }: { role: string }) {
   const { success, message, hostel, hosteler } = await getHostelByUser();
@@ -37,7 +31,7 @@ export default async function WardenDashboard({ role }: { role: string }) {
   const stats = statsRes.data || {
     pendingOutpasses: 0,
     activeOutpasses: 0,
-    totalStudents: 0
+    totalStudents: 0,
   };
 
   return (
@@ -46,7 +40,10 @@ export default async function WardenDashboard({ role }: { role: string }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="uppercase tracking-wider font-bold text-[10px] text-primary border-primary/20 bg-primary/5">
+            <Badge
+              variant="outline"
+              className="uppercase tracking-wider font-bold text-[10px] text-primary border-primary/20 bg-primary/5"
+            >
               {hostel.gender} Hostel
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">
@@ -111,12 +108,9 @@ export default async function WardenDashboard({ role }: { role: string }) {
           ))}
         </ResponsiveContainer>
       </section>
-
-
     </div>
   );
 }
-
 
 interface StatCardProps {
   label: string;
@@ -134,10 +128,15 @@ function StatCard({ label, value, icon: Icon, color, trend }: StatCardProps) {
           <h3 className="text-3xl font-bold mt-2 tabular-nums">{value}</h3>
           <p className="text-xs text-muted-foreground/60 mt-1">{trend}</p>
         </div>
-        <div className={cn("p-2.5 rounded-xl bg-background border shadow-sm", color)}>
+        <div
+          className={cn(
+            "p-2.5 rounded-xl bg-background border shadow-sm",
+            color
+          )}
+        >
           <Icon className="size-5" />
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

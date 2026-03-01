@@ -13,7 +13,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Trash2,
-  Trophy
+  Trophy,
 } from "lucide-react";
 import {
   assignBranchChange,
@@ -66,7 +66,6 @@ export default async function AdminResultPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-8">
-
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Batch Operations
@@ -122,7 +121,9 @@ export default async function AdminResultPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold">Fetch Results</h4>
-                    <p className="text-xs text-muted-foreground">Scrape or update from source.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Scrape or update from source.
+                    </p>
                   </div>
                 </div>
                 <div className="pt-2">
@@ -137,7 +138,9 @@ export default async function AdminResultPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold">Notifications</h4>
-                    <p className="text-xs text-muted-foreground">Notify students of updates.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Notify students of updates.
+                    </p>
                   </div>
                 </div>
                 <div className="pt-2">
@@ -158,8 +161,12 @@ export default async function AdminResultPage() {
                   <Trash2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-destructive">Delete Result Data</h4>
-                  <p className="text-sm text-muted-foreground">Permanently remove result records.</p>
+                  <h4 className="font-semibold text-destructive">
+                    Delete Result Data
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently remove result records.
+                  </p>
                 </div>
               </div>
               <div className="w-full sm:w-auto">
@@ -167,24 +174,28 @@ export default async function AdminResultPage() {
               </div>
             </div>
           </div>
-
         </div>
 
         {/* 3. Right Column: Data Integrity Monitor */}
         <div className="xl:col-span-1 space-y-6">
-
           {/* Section Header */}
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <ShieldCheck className="h-4 w-4" /> System Health
             </h3>
             {abnormalsResults.length > 0 ? (
-              <Badge variant="default_soft" className="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/20 gap-1.5">
+              <Badge
+                variant="default_soft"
+                className="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/20 gap-1.5"
+              >
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                 Attention Needed
               </Badge>
             ) : (
-              <Badge variant="default_soft" className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 gap-1.5">
+              <Badge
+                variant="default_soft"
+                className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 gap-1.5"
+              >
                 <CheckCircle2 className="h-3 w-3" />
                 Healthy
               </Badge>
@@ -193,23 +204,34 @@ export default async function AdminResultPage() {
 
           {/* Monitor Card */}
           <div className="rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col h-full max-h-[600px]">
-
             {/* Status Banner */}
-            <div className={cn(
-              "px-5 py-4 border-b flex items-start gap-3",
-              abnormalsResults.length > 0
-                ? "bg-amber-300/50 dark:bg-amber-950/10"
-                : "bg-muted/30"
-            )}>
-              <div className={cn(
-                "mt-0.5 shrink-0",
-                abnormalsResults.length > 0 ? "text-amber-600" : "text-muted-foreground"
-              )}>
-                {abnormalsResults.length > 0 ? <AlertTriangle className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
+            <div
+              className={cn(
+                "px-5 py-4 border-b flex items-start gap-3",
+                abnormalsResults.length > 0
+                  ? "bg-amber-300/50 dark:bg-amber-950/10"
+                  : "bg-muted/30"
+              )}
+            >
+              <div
+                className={cn(
+                  "mt-0.5 shrink-0",
+                  abnormalsResults.length > 0
+                    ? "text-amber-600"
+                    : "text-muted-foreground"
+                )}
+              >
+                {abnormalsResults.length > 0 ? (
+                  <AlertTriangle className="h-5 w-5" />
+                ) : (
+                  <Activity className="h-5 w-5" />
+                )}
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-semibold text-foreground">
-                  {abnormalsResults.length > 0 ? "Data Anomalies Detected" : "No Anomalies Found"}
+                  {abnormalsResults.length > 0
+                    ? "Data Anomalies Detected"
+                    : "No Anomalies Found"}
                 </h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {abnormalsResults.length > 0
@@ -230,13 +252,16 @@ export default async function AdminResultPage() {
             {/* Footer Action (Contextual) */}
             {abnormalsResults.length > 0 && (
               <div className="p-3 border-t bg-muted/20">
-                <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-xs text-muted-foreground hover:text-foreground"
+                >
                   View Detailed Report
                 </Button>
               </div>
             )}
           </div>
-
         </div>
       </div>
     </div>
@@ -263,7 +288,12 @@ function OperationCard({
   return (
     <div className="bg-card border rounded-xl p-5 flex flex-col justify-between h-full hover:border-primary/30 transition-colors">
       <div className="space-y-4 mb-6">
-        <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", color)}>
+        <div
+          className={cn(
+            "h-10 w-10 rounded-lg flex items-center justify-center",
+            color
+          )}
+        >
           <Icon className="h-5 w-5" />
         </div>
         <div>

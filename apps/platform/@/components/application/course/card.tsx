@@ -1,10 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardFooter,
-  CardHeader
-} from "@/components/ui/card";
+import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import { ArrowRight, BookOpen, Edit2, Hash, Layers } from "lucide-react";
@@ -84,19 +80,20 @@ export default function CourseCard({
               <Hash className="h-3 w-3 opacity-50" /> {course.code}
             </span>
             <span className="text-[10px] text-muted-foreground">•</span>
-            <span className="text-[11px] text-muted-foreground capitalize">{course.type} Course</span>
+            <span className="text-[11px] text-muted-foreground capitalize">
+              {course.type} Course
+            </span>
           </div>
         </div>
       </CardHeader>
-
-
 
       <CardFooter className="p-5 pt-0 mt-auto">
         <ButtonLink
           className="w-full justify-between group/btn bg-muted/40 hover:bg-primary hover:text-primary-foreground text-foreground border border-border/50 shadow-none transition-all duration-300"
           variant="outline"
-
-          href={`/syllabus/${course.code}`} prefetch={false}>
+          href={`/syllabus/${course.code}`}
+          prefetch={false}
+        >
           <span className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 opacity-70" />
             <span className="font-medium">View Syllabus</span>
@@ -114,17 +111,29 @@ function getDepartmentTheme(code: string = "GEN") {
 
   // Returning classes for the Badge background and text
   if (c.includes("CS") || c.includes("IT")) {
-    return { badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300" };
+    return {
+      badge: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+    };
   }
   if (c.includes("EC") || c.includes("EE")) {
-    return { badge: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300" };
+    return {
+      badge:
+        "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+    };
   }
   if (c.includes("ME") || c.includes("CV")) {
-    return { badge: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300" };
+    return {
+      badge:
+        "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+    };
   }
   if (c.includes("AS") || c.includes("HU")) {
-    return { badge: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" };
+    return {
+      badge: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+    };
   }
 
-  return { badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" };
+  return {
+    badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  };
 }

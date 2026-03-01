@@ -8,7 +8,6 @@ import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
 import { CategoryFilter, ResourcesList } from "./client";
 
-
 export const metadata: Metadata = {
   title: "Resources ",
   description:
@@ -67,9 +66,9 @@ export default async function Page() {
           datePublished: new Date(resource.date).toISOString(),
           image: resource.coverImage
             ? {
-              "@type": "ImageObject",
-              url: resource.coverImage,
-            }
+                "@type": "ImageObject",
+                url: resource.coverImage,
+              }
             : undefined,
           articleSection: resource.category,
           keywords: resource.tags?.join(", ") || "",

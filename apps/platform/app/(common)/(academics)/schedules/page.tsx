@@ -9,7 +9,7 @@ import {
   GraduationCap,
   Layers,
   LayoutGrid,
-  Search
+  Search,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -45,7 +45,10 @@ export default async function TimeTables() {
       <BaseHeroSection
         title={
           <div className="flex flex-col items-center gap-4">
-            <Badge variant="outline" className="rounded-full px-4 py-1 border-primary/20 bg-primary/5 text-primary text-xs font-medium uppercase tracking-wider">
+            <Badge
+              variant="outline"
+              className="rounded-full px-4 py-1 border-primary/20 bg-primary/5 text-primary text-xs font-medium uppercase tracking-wider"
+            >
               <CalendarRange className="mr-2 size-3" /> Academic Schedule
             </Badge>
             <span className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -64,7 +67,9 @@ export default async function TimeTables() {
         <div className="flex items-center justify-between py-6">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <LayoutGrid className="size-4" />
-            <span>Viewing <strong>{timeTables.length}</strong> active schedules</span>
+            <span>
+              Viewing <strong>{timeTables.length}</strong> active schedules
+            </span>
           </div>
           <Separator className="flex-1 ml-4 mr-2 max-w-25 opacity-50" />
         </div>
@@ -93,9 +98,13 @@ export default async function TimeTables() {
   );
 }
 
-
-
-function TimetableLinkCard({ timetable, index }: { timetable: Partial<TimeTableWithID>, index: number }) {
+function TimetableLinkCard({
+  timetable,
+  index,
+}: {
+  timetable: Partial<TimeTableWithID>;
+  index: number;
+}) {
   const deptShort = getDepartmentShort(timetable.department_code as string);
 
   return (
@@ -107,7 +116,10 @@ function TimetableLinkCard({ timetable, index }: { timetable: Partial<TimeTableW
     >
       {/* Top Row: Dept & Icon */}
       <div className="flex justify-between items-start mb-4">
-        <Badge variant="secondary" className="font-mono text-[10px] uppercase tracking-wider bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+        <Badge
+          variant="secondary"
+          className="font-mono text-[10px] uppercase tracking-wider bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors"
+        >
           {deptShort || timetable.department_code}
         </Badge>
 
@@ -130,15 +142,17 @@ function TimetableLinkCard({ timetable, index }: { timetable: Partial<TimeTableW
       <div className="grid grid-cols-2 gap-2 mt-auto">
         <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5 border border-transparent group-hover:border-border/50 transition-colors">
           <GraduationCap className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">Year {timetable.year}</span>
+          <span className="text-xs font-medium text-foreground">
+            Year {timetable.year}
+          </span>
         </div>
         <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5 border border-transparent group-hover:border-border/50 transition-colors">
           <Layers className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">Sem {timetable.semester}</span>
+          <span className="text-xs font-medium text-foreground">
+            Sem {timetable.semester}
+          </span>
         </div>
       </div>
-
-
     </Link>
-  )
+  );
 }

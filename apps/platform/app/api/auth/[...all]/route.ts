@@ -12,10 +12,13 @@ function isAllowedOrigin(origin: string | null) {
   try {
     const url = new URL(origin);
     if (getServerEnv().isDev) {
-      return origin.includes("localhost") || origin.includes("127.0.0.1")
+      return origin.includes("localhost") || origin.includes("127.0.0.1");
     }
 
-    return url.hostname.endsWith("." + appConfig.appDomain) || url.hostname === appConfig.appDomain;
+    return (
+      url.hostname.endsWith("." + appConfig.appDomain) ||
+      url.hostname === appConfig.appDomain
+    );
   } catch {
     return false;
   }
@@ -28,8 +31,14 @@ function withCors(handler: (request: NextRequest) => Promise<Response>) {
     const res = await handler(req);
     if (allowOrigin) {
       res.headers.set("Access-Control-Allow-Origin", allowOrigin);
-      res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS,DELETE");
-      res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      res.headers.set(
+        "Access-Control-Allow-Methods",
+        "GET, POST, OPTIONS,DELETE"
+      );
+      res.headers.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization"
+      );
       res.headers.set("Access-Control-Allow-Credentials", "true");
     }
     return res;
@@ -45,8 +54,14 @@ export async function OPTIONS(req: NextRequest) {
   const res = new Response(null, { status: 204 }); // no content
   if (allowOrigin) {
     res.headers.set("Access-Control-Allow-Origin", allowOrigin);
-    res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
-    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.headers.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, OPTIONS, DELETE"
+    );
+    res.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
     res.headers.set("Access-Control-Allow-Credentials", "true");
   }
   return res;

@@ -1,7 +1,20 @@
 import { Content } from "@tiptap/react";
-import { Drama, HatGlasses, Heart, Plus, ShowerHead, VenetianMask } from "lucide-react";
+import {
+  Drama,
+  HatGlasses,
+  Heart,
+  Plus,
+  ShowerHead,
+  VenetianMask,
+} from "lucide-react";
 import { nanoid } from "nanoid";
-import { FaEarListen, FaRegFaceLaughSquint, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa6";
+import {
+  FaEarListen,
+  FaRegFaceLaughSquint,
+  FaRegFlag,
+  FaRegThumbsDown,
+  FaRegThumbsUp,
+} from "react-icons/fa6";
 import { z } from "zod";
 
 // constants
@@ -27,19 +40,17 @@ export const VISIBILITY_OPTIONS = [
 
 export type VisibilityType = (typeof VISIBILITY_OPTIONS)[number]["value"];
 export const getCategory = (val: string) =>
-  CATEGORY_OPTIONS.find(c => c.value === val);
+  CATEGORY_OPTIONS.find((c) => c.value === val);
 
 export const getVisibility = (val: string) =>
-  VISIBILITY_OPTIONS.find(v => v.value === val);
-
+  VISIBILITY_OPTIONS.find((v) => v.value === val);
 
 type CategoryOption = {
   value: string;
   label: string;
   Icon: React.FC<React.SVGProps<SVGSVGElement>>;
   description: string;
-}
-
+};
 
 export const CATEGORY_OPTIONS: CategoryOption[] = [
   {
@@ -92,15 +103,16 @@ export const moderationStatuses: string[] = [
   "FLAGGED",
   "REVIEWED",
 ] as const;
-export const postVisibilities = VISIBILITY_OPTIONS.map(v => v.value);
-export const postCategories = CATEGORY_OPTIONS.map(c => c.value);
-export const postReactions = REACTION_OPTIONS.map(r => r.value);
+export const postVisibilities = VISIBILITY_OPTIONS.map((v) => v.value);
+export const postCategories = CATEGORY_OPTIONS.map((c) => c.value);
+export const postReactions = REACTION_OPTIONS.map((r) => r.value);
 // zod-schemas
-
 
 export const PostVisibility = z.enum(postVisibilities as [string, ...string[]]);
 export const PostCategory = z.enum(postCategories as [string, ...string[]]);
-export const ModerationStatus = z.enum(moderationStatuses as [string, ...string[]]);
+export const ModerationStatus = z.enum(
+  moderationStatuses as [string, ...string[]]
+);
 export const ReactionType = z.enum(postReactions as [string, ...string[]]);
 
 export const PseudoIdentitySchema = z.object({
@@ -123,25 +135,34 @@ export const ReportSchema = z.object({
 
 export const PollOptionSchema = z.object({
   id: z.string().default(() => nanoid()), // unique id for this option
-  text: z.string().min(1, {
-    message: "Poll option text must be at least 1 character long",
-  }).max(280, {
-    message: "Poll option text must be at most 280 characters long",
-  }),
+  text: z
+    .string()
+    .min(1, {
+      message: "Poll option text must be at least 1 character long",
+    })
+    .max(280, {
+      message: "Poll option text must be at most 280 characters long",
+    }),
   votes: z.array(z.string()).default([]), // array of userIds who voted for this option
 });
 
-export const PollSchema = z.object({
-  options: z.array(PollOptionSchema).min(2, {
-    message: "At least 2 options are required",
-  }).max(10, {
-    message: "A maximum of 10 options are allowed",
-  }),
-  anonymousVotes: z.boolean().optional().default(false),
-}, {
-  required_error: "Poll options are required",
-  invalid_type_error: "Invalid poll options",
-});
+export const PollSchema = z.object(
+  {
+    options: z
+      .array(PollOptionSchema)
+      .min(2, {
+        message: "At least 2 options are required",
+      })
+      .max(10, {
+        message: "A maximum of 10 options are allowed",
+      }),
+    anonymousVotes: z.boolean().optional().default(false),
+  },
+  {
+    required_error: "Poll options are required",
+    invalid_type_error: "Invalid poll options",
+  }
+);
 
 export const rawWhisperPostSchema = z.object({
   visibility: PostVisibility.default(postVisibilities[0]),
@@ -149,8 +170,8 @@ export const rawWhisperPostSchema = z.object({
   content_json: z.custom<Content>(),
 
   pseudo: PseudoIdentitySchema.optional(), // no null, just undefined if missing
-  poll: PollSchema.optional()
-})
+  poll: PollSchema.optional(),
+});
 
 export const WhisperPostSchema = z.object({
   _id: z.string(),
@@ -172,6 +193,3 @@ export type ReactionT = z.infer<typeof ReactionSchema>;
 export type ReportT = z.infer<typeof ReportSchema>;
 export type PseudoIdentityT = z.infer<typeof PseudoIdentitySchema>;
 export type PollT = z.infer<typeof PollSchema>;
-
-
-

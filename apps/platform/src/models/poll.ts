@@ -15,7 +15,7 @@ export const rawPollSchema = z.object({
 export type RawPollType = z.infer<typeof rawPollSchema>;
 
 export type PollType = Omit<RawPollType, "votes"> & {
-  votes: { option: string; userId: string, createdAt: Date }[];
+  votes: { option: string; userId: string; createdAt: Date }[];
   _id: string;
   createdAt: Date;
   updatedAt: Date;

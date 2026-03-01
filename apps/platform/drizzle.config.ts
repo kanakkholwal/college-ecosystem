@@ -2,17 +2,12 @@ import { defineConfig } from "drizzle-kit";
 
 import { loadEnvConfig } from "@next/env";
 
-
-
 // Determine environment
 const env = process.env.NODE_ENV || "development";
 console.log(`🚀 Running in ${env} mode`);
 
 // Load environment-specific .env file manually
-const envFile = env === "production"
-  ? ".env.production"
-  : ".env.development";
-
+const envFile = env === "production" ? ".env.production" : ".env.development";
 
 // Load and expand the specific env file
 const projectDir = process.cwd();
@@ -32,8 +27,11 @@ export default defineConfig({
   out: "./migrations",
   dbCredentials: {
     url: dbUrl,
-    ssl: env === "production" ? {
-      rejectUnauthorized: false,
-    } : false,
+    ssl:
+      env === "production"
+        ? {
+            rejectUnauthorized: false,
+          }
+        : false,
   },
 });

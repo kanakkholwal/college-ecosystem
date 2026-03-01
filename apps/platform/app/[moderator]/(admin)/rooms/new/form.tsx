@@ -130,7 +130,11 @@ export default function CreateRoomForm({
                       </FormControl>
                       <SelectContent>
                         {roomTypes.map((type) => (
-                          <SelectItem key={type} value={type} className="capitalize">
+                          <SelectItem
+                            key={type}
+                            value={type}
+                            className="capitalize"
+                          >
                             {type}
                           </SelectItem>
                         ))}
@@ -169,8 +173,8 @@ export default function CreateRoomForm({
           </CardContent>
 
           <CardFooter className="border-t border-border/40 bg-muted/10 pt-4 flex justify-end">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={form.formState.isSubmitting}
               className="min-w-[140px]"
             >

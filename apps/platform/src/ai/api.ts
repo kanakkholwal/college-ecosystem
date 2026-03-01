@@ -1,9 +1,9 @@
 import { google } from "@ai-sdk/google";
-import { mistral } from '@ai-sdk/mistral';
+import { mistral } from "@ai-sdk/mistral";
 import { generateObject, ModelMessage, NoObjectGeneratedError } from "ai";
 import { PromptMaps, PromptMapsType } from "./prompts";
 
-const docScannerModel = mistral('mistral-small-latest');
+const docScannerModel = mistral("mistral-small-latest");
 
 export const safetySettings = [
   { category: "HARM_CATEGORY_UNSPECIFIED", threshold: "BLOCK_LOW_AND_ABOVE" },
@@ -16,10 +16,16 @@ export const modelId = "gemini-2.5-flash-lite";
 
 export async function generateJsonFromDocument(
   files: (string | ArrayBuffer)[],
-  schemaName: keyof PromptMapsType["documentToJson"],
+  schemaName: keyof PromptMapsType["documentToJson"]
 ) {
-  const prompt: Array<ModelMessage> = PromptMaps.documentToJson[schemaName].mapPromptToMessage(files);
-  const { system, schemaName: sName, schemaDescription, schema } = PromptMaps.documentToJson[schemaName];
+  const prompt: Array<ModelMessage> =
+    PromptMaps.documentToJson[schemaName].mapPromptToMessage(files);
+  const {
+    system,
+    schemaName: sName,
+    schemaDescription,
+    schema,
+  } = PromptMaps.documentToJson[schemaName];
   try {
     const response = await generateObject({
       model: model,
@@ -33,7 +39,6 @@ export async function generateJsonFromDocument(
           documentImageLimit: 0,
           // documentPageLimit: 64,
         },
-
       },
     });
     return Promise.resolve({

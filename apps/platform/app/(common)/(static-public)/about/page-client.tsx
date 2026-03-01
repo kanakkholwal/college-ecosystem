@@ -23,7 +23,7 @@ import {
   ShieldCheck,
   Star,
   Users,
-  Zap
+  Zap,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
@@ -43,8 +43,18 @@ const stagger: Variants = {
 
 // --- TYPES ---
 interface AboutPageProps {
-  contributors: { name: string; username: string; avatar: string; contributions: number }[];
-  stats: { visitors: number; stars: number; forks: number; contributors: number };
+  contributors: {
+    name: string;
+    username: string;
+    avatar: string;
+    contributions: number;
+  }[];
+  stats: {
+    visitors: number;
+    stars: number;
+    forks: number;
+    contributors: number;
+  };
 }
 
 export default function AboutPage({ contributors, stats }: AboutPageProps) {
@@ -60,10 +70,26 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
   const faqIn = useInView(faqRef, { once: true });
 
   const techStack = [
-    { name: "Next.js Core", icon: Globe, desc: "Server-side rendering & app router." },
-    { name: "TypeScript", icon: Code2, desc: "Strict type safety across the stack." },
-    { name: "Tailwind CSS", icon: Cpu, desc: "Atomic, utility-first styling engine." },
-    { name: "Postgres & Mongo", icon: Database, desc: "Hybrid relational & document storage." },
+    {
+      name: "Next.js Core",
+      icon: Globe,
+      desc: "Server-side rendering & app router.",
+    },
+    {
+      name: "TypeScript",
+      icon: Code2,
+      desc: "Strict type safety across the stack.",
+    },
+    {
+      name: "Tailwind CSS",
+      icon: Cpu,
+      desc: "Atomic, utility-first styling engine.",
+    },
+    {
+      name: "Postgres & Mongo",
+      icon: Database,
+      desc: "Hybrid relational & document storage.",
+    },
   ];
 
   return (
@@ -107,12 +133,16 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
               variants={fadeInUp}
               className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed text-balance"
             >
-              An open-source ecosystem integrating academic results, real-time resource management,
-              and student utilities into one unified operating system.
+              An open-source ecosystem integrating academic results, real-time
+              resource management, and student utilities into one unified
+              operating system.
             </motion.p>
 
             {/* Buttons */}
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <motion.div
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
+            >
               <ButtonLink
                 href={appConfig.githubRepo}
                 variant="rainbow"
@@ -138,10 +168,26 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
               variants={fadeInUp}
               className="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-border/40 pt-12 mt-12"
             >
-              <StatItem label="Total Impressions" value={stats.visitors.toLocaleString()} icon={Eye} />
-              <StatItem label="GitHub Stars" value={stats.stars.toString()} icon={Star} />
-              <StatItem label="Contributors" value={stats.contributors.toString()} icon={Users} />
-              <StatItem label="Forks" value={stats.forks.toString()} icon={GitFork} />
+              <StatItem
+                label="Total Impressions"
+                value={stats.visitors.toLocaleString()}
+                icon={Eye}
+              />
+              <StatItem
+                label="GitHub Stars"
+                value={stats.stars.toString()}
+                icon={Star}
+              />
+              <StatItem
+                label="Contributors"
+                value={stats.contributors.toString()}
+                icon={Users}
+              />
+              <StatItem
+                label="Forks"
+                value={stats.forks.toString()}
+                icon={GitFork}
+              />
             </motion.div>
           </motion.div>
         </div>
@@ -156,8 +202,12 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
           className="space-y-6"
         >
           <div className="flex flex-col items-center text-center space-y-2 mb-10">
-            <h2 className="text-3xl font-semibold tracking-tight">Core Principles</h2>
-            <p className="text-muted-foreground">Built on a foundation of transparency and utility.</p>
+            <h2 className="text-3xl font-semibold tracking-tight">
+              Core Principles
+            </h2>
+            <p className="text-muted-foreground">
+              Built on a foundation of transparency and utility.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -199,13 +249,21 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-4 space-y-6">
-              <h2 className="text-3xl font-semibold tracking-tight">Engineering <br /> Excellence</h2>
+              <h2 className="text-3xl font-semibold tracking-tight">
+                Engineering <br /> Excellence
+              </h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
                 We utilize a modern, type-safe stack designed for reliability.
-                The architecture prioritizes developer experience and maintainability.
+                The architecture prioritizes developer experience and
+                maintainability.
               </p>
-              <ButtonLink href={content.wiki_url} variant="link" className="px-0 text-primary">
-                View System Architecture <ArrowUpRight className="ml-1 size-4" />
+              <ButtonLink
+                href={content.wiki_url}
+                variant="link"
+                className="px-0 text-primary"
+              >
+                View System Architecture{" "}
+                <ArrowUpRight className="ml-1 size-4" />
               </ButtonLink>
             </div>
 
@@ -227,9 +285,13 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
 
                       {/* Tech-specific "Status" badges to make it feel like a system spec */}
                       <span className="inline-flex items-center rounded-md border border-border/40 bg-muted/50 px-2 py-1 text-[10px] font-medium text-muted-foreground font-mono uppercase tracking-wider">
-                        {i === 0 ? "APP_ROUTER" :
-                          i === 1 ? "STRICT_MODE" :
-                            i === 2 ? "JIT_ENGINE" : "CLUSTERED"}
+                        {i === 0
+                          ? "APP_ROUTER"
+                          : i === 1
+                            ? "STRICT_MODE"
+                            : i === 2
+                              ? "JIT_ENGINE"
+                              : "CLUSTERED"}
                       </span>
                     </div>
 
@@ -258,12 +320,10 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
       {/* --- CONTRIBUTORS SECTION --- */}
       <section className="container mx-auto px-4">
         <div className="group relative overflow-hidden rounded-3xl border border-border/40 bg-background/50 p-8 lg:p-12 transition-all hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
-
           {/* Decorative Background Pattern */}
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(#80808012_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_60%,transparent_100%)] opacity-50" />
 
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-
             {/* Left: Call to Action */}
             <div className="flex-1 text-center lg:text-left space-y-6">
               <div className="inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
@@ -272,12 +332,15 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
               </div>
 
               <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-                Built by <span className="text-primary">{stats.contributors}+</span> Maintainers
+                Built by{" "}
+                <span className="text-primary">{stats.contributors}+</span>{" "}
+                Maintainers
               </h2>
 
               <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
                 We are building the operating system for our campus, together.
-                Every line of code is transparent, auditable, and crafted by students like you.
+                Every line of code is transparent, auditable, and crafted by
+                students like you.
               </p>
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-2">
@@ -293,7 +356,8 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
                   variant="ghost"
                   className="rounded-full h-11 px-6 text-muted-foreground hover:text-foreground"
                 >
-                  View All Contributors <ArrowUpRight className="ml-2 size-3.5" />
+                  View All Contributors{" "}
+                  <ArrowUpRight className="ml-2 size-3.5" />
                 </ButtonLink>
               </div>
             </div>
@@ -331,7 +395,6 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
                 </a>
               </div>
             </div>
-
           </div>
         </div>
       </section>
@@ -342,10 +405,16 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
           animate={faqIn ? "visible" : "hidden"}
           variants={stagger}
         >
-          <h2 className="text-2xl font-semibold mb-8 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-semibold mb-8 text-center">
+            Frequently Asked Questions
+          </h2>
           <Accordion type="single" collapsible className="w-full">
             {faqItems.map((item, i) => (
-              <AccordionItem key={i} value={`item-${i}`} className="border-border/40">
+              <AccordionItem
+                key={i}
+                value={`item-${i}`}
+                className="border-border/40"
+              >
                 <AccordionTrigger className="text-base font-medium text-foreground/80 hover:text-foreground hover:no-underline py-4">
                   {item.q}
                 </AccordionTrigger>
@@ -363,7 +432,15 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
 
 // --- HELPER COMPONENTS ---
 
-function StatItem({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
+function StatItem({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: any;
+}) {
   return (
     <div className="flex flex-col items-center space-y-2">
       <div className="flex items-center gap-2 text-2xl lg:text-3xl font-bold tabular-nums tracking-tight">
@@ -376,9 +453,24 @@ function StatItem({ label, value, icon: Icon }: { label: string; value: string; 
   );
 }
 
-function BentoCard({ title, desc, icon: Icon, className }: { title: string; desc: string; icon: any; className?: string }) {
+function BentoCard({
+  title,
+  desc,
+  icon: Icon,
+  className,
+}: {
+  title: string;
+  desc: string;
+  icon: any;
+  className?: string;
+}) {
   return (
-    <div className={cn("group relative overflow-hidden rounded-xl border border-border/40 bg-card p-6 lg:p-8 hover:border-primary/40 transition-colors", className)}>
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-xl border border-border/40 bg-card p-6 lg:p-8 hover:border-primary/40 transition-colors",
+        className
+      )}
+    >
       <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-primary/10 p-2 text-primary">
         <Icon className="size-5" />
       </div>
@@ -393,24 +485,26 @@ function BentoCard({ title, desc, icon: Icon, className }: { title: string; desc
 const faqItems = [
   {
     q: "What is the mission of this project?",
-    a: "To democratize campus technology. We provide a free, open-source alternative to expensive proprietary ERP systems, built specifically for the needs of our university."
+    a: "To democratize campus technology. We provide a free, open-source alternative to expensive proprietary ERP systems, built specifically for the needs of our university.",
   },
   {
     q: "Is the student data secure?",
-    a: "Yes. We strictly follow data privacy guidelines. Personal data is encrypted, and as an open-source project, our security protocols are open for audit by the community."
+    a: "Yes. We strictly follow data privacy guidelines. Personal data is encrypted, and as an open-source project, our security protocols are open for audit by the community.",
   },
   {
     q: "How can I request a new feature?",
-    a: "Feature requests are managed via GitHub Issues. You can submit a proposal, and the community will vote and discuss the implementation details."
+    a: "Feature requests are managed via GitHub Issues. You can submit a proposal, and the community will vote and discuss the implementation details.",
   },
   {
     q: "Is this platform officially endorsed?",
-    a: "This is a student-run initiative built to supplement existing college infrastructure. While we work closely with student bodies, we operate independently."
-  }
+    a: "This is a student-run initiative built to supplement existing college infrastructure. While we work closely with student bodies, we operate independently.",
+  },
 ];
 
 export const content = {
   headline: "The Digital Infrastructure for Modern Campuses",
-  wiki_url: "https://github.com/kanakkholwal/college-ecosystem/wiki/Introduction",
-  contributing_url: "https://github.com/kanakkholwal/college-ecosystem/blob/main/CONTRIBUTING.md",
+  wiki_url:
+    "https://github.com/kanakkholwal/college-ecosystem/wiki/Introduction",
+  contributing_url:
+    "https://github.com/kanakkholwal/college-ecosystem/blob/main/CONTRIBUTING.md",
 };

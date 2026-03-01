@@ -48,7 +48,7 @@ type Props = {
   searchParams?: Promise<{ update?: string; new?: string }>;
 };
 
-// Helpers 
+// Helpers
 const getRankColor = (rank: number) => {
   if (rank === 1) return "bg-pink-500/10 text-pink-600 border-pink-500/20";
   if (rank === 2) return "bg-rose-400/10 text-rose-600 border-rose-400/20";
@@ -62,18 +62,14 @@ const getGradeColor = (grade: string | undefined) => {
     return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"; // Excellent
   if (g === "AB" || g === "B+")
     return "bg-cyan-500/10 text-cyan-600 border-cyan-500/20"; // Very Good
-  if (g === "B")
-    return "bg-blue-500/10 text-blue-600 border-blue-500/20"; // Good
+  if (g === "B") return "bg-blue-500/10 text-blue-600 border-blue-500/20"; // Good
   if (g === "BC" || g === "C+")
     return "bg-indigo-500/10 text-indigo-600 border-indigo-500/20"; // Fair
-  if (g === "C")
-    return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"; // Average
+  if (g === "C") return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"; // Average
   if (g === "CD" || g === "D+")
     return "bg-orange-500/10 text-orange-600 border-orange-500/20"; // Below Average
-  if (g === "D")
-    return "bg-red-400/10 text-red-500 border-red-400/20"; // Marginal
-  if (g === "F")
-    return "bg-red-600/10 text-red-700 border-red-600/20"; // Fail
+  if (g === "D") return "bg-red-400/10 text-red-500 border-red-400/20"; // Marginal
+  if (g === "F") return "bg-red-600/10 text-red-700 border-red-600/20"; // Fail
   return "bg-muted text-muted-foreground"; // Unknown
 };
 
@@ -124,8 +120,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       googleBot: {
         index: false,
         follow: false,
-      }
-    }
+      },
+    },
   };
 }
 
@@ -161,7 +157,6 @@ export default async function ResultsPage(props: Props) {
 
   return (
     <div className="min-h-screen pb-20">
-
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(#80808012_1px,transparent_1px)] bg-size-[24px_24px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6">
@@ -201,9 +196,7 @@ export default async function ResultsPage(props: Props) {
                   className="h-7 text-xs gap-1.5"
                   asChild
                 >
-                  <Link
-                    href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}
-                  >
+                  <Link href={`mailto:${result.rollNo}${orgConfig.mailSuffix}`}>
                     <PiEnvelopeDuotone className="size-3" /> Email Student
                   </Link>
                 </Button>
@@ -346,9 +339,11 @@ export default async function ResultsPage(props: Props) {
                 <TabsTrigger value="table" className="text-xs gap-1.5">
                   <PiBookOpenDuotone className="size-3.5" /> Detail
                 </TabsTrigger>
-                {hasNewCreditSchema && (<TabsTrigger value="tabular" className="text-xs gap-1.5">
-                  <PiTableDuotone className="size-3.5" /> Transcript
-                </TabsTrigger>)}
+                {hasNewCreditSchema && (
+                  <TabsTrigger value="tabular" className="text-xs gap-1.5">
+                    <PiTableDuotone className="size-3.5" /> Transcript
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="graph" className="text-xs gap-1.5">
                   <PiChartLineUpDuotone className="size-3.5" /> Graph
                 </TabsTrigger>
@@ -361,9 +356,7 @@ export default async function ResultsPage(props: Props) {
                   type="single"
                   collapsible
                   key={sem.semester}
-                  defaultValue={
-                    idx === 0 ? sem.semester.toString() : undefined
-                  }
+                  defaultValue={idx === 0 ? sem.semester.toString() : undefined}
                 >
                   <AccordionItem
                     value={sem.semester.toString()}
@@ -471,97 +464,99 @@ export default async function ResultsPage(props: Props) {
               ))}
             </TabsContent>
 
-            {hasNewCreditSchema && (<TabsContent value="tabular" className="space-y-6">
-              {result.semesters.map((sem) => (
-                <Card
-                  key={sem.semester}
-                  className="overflow-hidden border-border/50 shadow-sm"
-                >
-                  <CardHeader className="py-3 px-5 bg-muted/20 border-b border-border/40 flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className="h-6 min-w-6 w-auto px-2 py-0 rounded-md flex items-center justify-center bg-background"
-                      >
-                        {sem.semester}
-                      </Badge>
-                      <span className="font-semibold text-sm">
-                        Semester {sem.semester}
-                      </span>
-                    </div>
-                    <div className="text-xs flex gap-3 font-mono">
-                      <span>
-                        SGPI: <span className="font-bold">{sem.sgpi}</span>
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="hover:bg-transparent bg-muted/5">
-                            <TableHead className="w-[100px] text-xs h-9">
-                              Code
-                            </TableHead>
-                            <TableHead className="text-xs h-9">
-                              Subject Name
-                            </TableHead>
-                            <TableHead className="text-xs text-right h-9 w-[60px]">
-                              Credits
-                            </TableHead>
-                            <TableHead className="text-xs text-center h-9 w-[60px]">
-                              Grade
-                            </TableHead>
-                            <TableHead className="text-xs text-right h-9 w-[60px]">
-                              Points
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {sem.courses.map((course) => (
-                            <TableRow
-                              key={course.code}
-                              className="hover:bg-muted/10 border-border/40"
-                            >
-                              <TableCell className="text-xs font-mono text-muted-foreground py-2 whitespace-nowrap">
-                                {course.code}
-                              </TableCell>
-                              <TableCell className="text-xs font-medium py-2 whitespace-nowrap">
-                                {course.name.replace(/&amp;/g, "&")}
-                              </TableCell>
-                              <TableCell className="text-xs text-right py-2 whitespace-nowrap">
-                                {course.credits ?? "-"}
-                              </TableCell>
-                              <TableCell className="text-center py-2 whitespace-nowrap">
-                                {course.grade ? (
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "text-[10px] font-bold px-1 py-0 h-5 border",
-                                      getGradeColor(course.grade)
-                                    )}
-                                  >
-                                    {course.grade}
-                                  </Badge>
-                                ) : (
-                                  "-"
-                                )}
-                              </TableCell>
-                              <TableCell className="text-xs text-right font-mono py-2">
-                                {course.sub_points ??
-                                  (course.credits && course.cgpi
-                                    ? course.credits * course.cgpi
-                                    : "-")}
-                              </TableCell>
+            {hasNewCreditSchema && (
+              <TabsContent value="tabular" className="space-y-6">
+                {result.semesters.map((sem) => (
+                  <Card
+                    key={sem.semester}
+                    className="overflow-hidden border-border/50 shadow-sm"
+                  >
+                    <CardHeader className="py-3 px-5 bg-muted/20 border-b border-border/40 flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="h-6 min-w-6 w-auto px-2 py-0 rounded-md flex items-center justify-center bg-background"
+                        >
+                          {sem.semester}
+                        </Badge>
+                        <span className="font-semibold text-sm">
+                          Semester {sem.semester}
+                        </span>
+                      </div>
+                      <div className="text-xs flex gap-3 font-mono">
+                        <span>
+                          SGPI: <span className="font-bold">{sem.sgpi}</span>
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="hover:bg-transparent bg-muted/5">
+                              <TableHead className="w-[100px] text-xs h-9">
+                                Code
+                              </TableHead>
+                              <TableHead className="text-xs h-9">
+                                Subject Name
+                              </TableHead>
+                              <TableHead className="text-xs text-right h-9 w-[60px]">
+                                Credits
+                              </TableHead>
+                              <TableHead className="text-xs text-center h-9 w-[60px]">
+                                Grade
+                              </TableHead>
+                              <TableHead className="text-xs text-right h-9 w-[60px]">
+                                Points
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>)}
+                          </TableHeader>
+                          <TableBody>
+                            {sem.courses.map((course) => (
+                              <TableRow
+                                key={course.code}
+                                className="hover:bg-muted/10 border-border/40"
+                              >
+                                <TableCell className="text-xs font-mono text-muted-foreground py-2 whitespace-nowrap">
+                                  {course.code}
+                                </TableCell>
+                                <TableCell className="text-xs font-medium py-2 whitespace-nowrap">
+                                  {course.name.replace(/&amp;/g, "&")}
+                                </TableCell>
+                                <TableCell className="text-xs text-right py-2 whitespace-nowrap">
+                                  {course.credits ?? "-"}
+                                </TableCell>
+                                <TableCell className="text-center py-2 whitespace-nowrap">
+                                  {course.grade ? (
+                                    <Badge
+                                      variant="outline"
+                                      className={cn(
+                                        "text-[10px] font-bold px-1 py-0 h-5 border",
+                                        getGradeColor(course.grade)
+                                      )}
+                                    >
+                                      {course.grade}
+                                    </Badge>
+                                  ) : (
+                                    "-"
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-xs text-right font-mono py-2">
+                                  {course.sub_points ??
+                                    (course.credits && course.cgpi
+                                      ? course.credits * course.cgpi
+                                      : "-")}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </TabsContent>
+            )}
 
             <TabsContent
               value="graph"

@@ -9,7 +9,9 @@ interface MdxRendererProps {
 }
 
 export default function MdxRenderer({ mdxContent }: MdxRendererProps) {
-  const [compiled, setCompiled] = useState<MDXRemoteSerializeResult | null>(null);
+  const [compiled, setCompiled] = useState<MDXRemoteSerializeResult | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

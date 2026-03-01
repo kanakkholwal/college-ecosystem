@@ -6,7 +6,7 @@ import { SettingsNav } from "./settings-nav"; // Import the new wrapper
 interface SettingsLayoutProps {
   children: React.ReactNode;
   params: Promise<{
-    moderator: typeof ALLOWED_ROLES[number];
+    moderator: (typeof ALLOWED_ROLES)[number];
   }>;
 }
 

@@ -1,4 +1,3 @@
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { PreviousPageLink } from "@/components/utils/link";
 
@@ -7,7 +6,7 @@ export default function Loading() {
     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 animate-pulse">
       {/* Hero section */}
       <section id="hero" className="w-full py-6 md:py-10 space-y-6">
-          <PreviousPageLink size="sm" variant="ghost" />
+        <PreviousPageLink size="sm" variant="ghost" />
 
         <div className="rounded-2xl bg-card/20 border border-border p-6 md:p-8 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

@@ -3,12 +3,12 @@
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import useStorage from "@/hooks/use-storage";
 // import confetti from "canvas-confetti";

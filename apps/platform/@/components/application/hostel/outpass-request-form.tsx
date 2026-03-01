@@ -69,17 +69,21 @@ export default function RequestOutPassForm<T>({
       if (hours > 20 || (hours === 20 && minutes > 30)) {
         form.setError("expectedInTime", {
           type: "manual",
-          message: "Curfew exceeded. You must return by 8:30 PM for local outings.",
+          message:
+            "Curfew exceeded. You must return by 8:30 PM for local outings.",
         });
 
-        toast.error("Local outings (Market/Outing) are not allowed past 8:30 PM.", {
-          icon: "🚫",
-          style: {
-            borderRadius: '10px',
-            background: '#333',
-            color: '#fff',
-          },
-        });
+        toast.error(
+          "Local outings (Market/Outing) are not allowed past 8:30 PM.",
+          {
+            icon: "🚫",
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        );
 
         // Stop execution here so the request isn't sent
         return;
@@ -119,10 +123,15 @@ export default function RequestOutPassForm<T>({
               <Building className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Room Details</p>
+              <p className="text-sm font-medium text-foreground">
+                Room Details
+              </p>
               <p className="text-xs text-muted-foreground">
-                {student.roomNumber !== "UNKNOWN" ? `Room ${student.roomNumber}` : "Room Not Assigned"}
-                {" • "}{student.hostelSlug?.toUpperCase()}
+                {student.roomNumber !== "UNKNOWN"
+                  ? `Room ${student.roomNumber}`
+                  : "Room Not Assigned"}
+                {" • "}
+                {student.hostelSlug?.toUpperCase()}
               </p>
             </div>
           </div>
@@ -143,7 +152,10 @@ export default function RequestOutPassForm<T>({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Purpose</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <div className="flex items-center gap-2">
@@ -154,7 +166,11 @@ export default function RequestOutPassForm<T>({
                     </FormControl>
                     <SelectContent>
                       {REASONS.map((reason) => (
-                        <SelectItem key={reason} value={reason} className="capitalize">
+                        <SelectItem
+                          key={reason}
+                          value={reason}
+                          className="capitalize"
+                        >
                           {reason}
                         </SelectItem>
                       ))}
@@ -174,7 +190,11 @@ export default function RequestOutPassForm<T>({
                   <FormControl>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="e.g. City Center Mall" className="pl-9" {...field} />
+                      <Input
+                        placeholder="e.g. City Center Mall"
+                        className="pl-9"
+                        {...field}
+                      />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -211,7 +231,9 @@ export default function RequestOutPassForm<T>({
                 name="expectedOutTime"
                 render={({ field }) => (
                   <FormItem className="flex-1 w-full">
-                    <FormDescription className="text-xs mb-1">Leaving at</FormDescription>
+                    <FormDescription className="text-xs mb-1">
+                      Leaving at
+                    </FormDescription>
                     <FormControl>
                       <DateTimePicker {...field} />
                     </FormControl>
@@ -227,7 +249,9 @@ export default function RequestOutPassForm<T>({
                 name="expectedInTime"
                 render={({ field }) => (
                   <FormItem className="flex-1 w-full">
-                    <FormDescription className="text-xs mb-1">Returning by</FormDescription>
+                    <FormDescription className="text-xs mb-1">
+                      Returning by
+                    </FormDescription>
                     <FormControl>
                       <DateTimePicker {...field} />
                     </FormControl>

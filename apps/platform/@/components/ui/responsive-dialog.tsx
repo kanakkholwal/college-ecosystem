@@ -52,7 +52,7 @@ const ResponsiveDialog = React.memo(
     const handleOpenChange = (value: boolean) => {
       setOpen(value);
       onOpenChange?.(value);
-    }
+    };
 
     const dialog = useMemo(() => {
       if (isDesktop) {
@@ -88,7 +88,13 @@ const ResponsiveDialog = React.memo(
                 {description}
               </DrawerDescription>
             </DrawerHeader>
-            <div className={cn("px-4 w-full @container/dialog space-y-3", className, showCloseButton ? " " : "pb-4")}>
+            <div
+              className={cn(
+                "px-4 w-full @container/dialog space-y-3",
+                className,
+                showCloseButton ? " " : "pb-4"
+              )}
+            >
               {children}
             </div>
             {showCloseButton && (
@@ -170,13 +176,9 @@ export function ControlledResponsiveDialog({
       <DrawerContent>
         <DrawerHeader className="text-left">
           <DrawerTitle>{title}</DrawerTitle>
-          {description && (
-            <DrawerDescription>{description}</DrawerDescription>
-          )}
+          {description && <DrawerDescription>{description}</DrawerDescription>}
         </DrawerHeader>
-        <div className={cn("px-4", className)}>
-          {children}
-        </div>
+        <div className={cn("px-4", className)}>{children}</div>
         {!hideClose && (
           <DrawerFooter className="pt-2">
             <DrawerClose asChild>

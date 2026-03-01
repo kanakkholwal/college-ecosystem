@@ -27,9 +27,8 @@ export async function GET(request: NextRequest) {
     ...staticRoutes.map((route) => ({
       ...route,
       date: LASTMOD,
-      priority: route.path === '/' ? 1 : 0.8,
-      changefreq: 'daily',
-
+      priority: route.path === "/" ? 1 : 0.8,
+      changefreq: "daily",
     })),
     // ...dynamicRoutes
   ]);
@@ -68,15 +67,15 @@ function generateSiteMap(
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 ${pages
-      .map(
-        (page) => `
+  .map(
+    (page) => `
     <url>
         <loc>${APP_URL}${escapeXml(page.path)}</loc>
         <lastmod>${escapeXml(page.date)}</lastmod>
         <changefreq>${page.changefreq}</changefreq>
         <priority>${page.priority}</priority>
     </url>`
-      )
-      .join("")}
+  )
+  .join("")}
 </urlset>`;
 }

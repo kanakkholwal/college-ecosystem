@@ -4,11 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import {
-  Flame,
-  LayoutGrid,
-  TrendingUp
-} from "lucide-react";
+import { Flame, LayoutGrid, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -30,10 +26,8 @@ export default async function Layout({
   return (
     <div className="container mx-auto max-w-(--max-app-width) px-4 md:px-6 lg:px-8 py-6 md:py-8">
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] gap-6 lg:gap-8">
-
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-6">
-
             <div className="space-y-3">
               <h2 className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Feeds
@@ -101,7 +95,6 @@ export default async function Layout({
                 <AdUnit adSlot="display-square" key="communities-sidebar-ad" />
               </div>
             </div>
-
           </div>
         </aside>
 
@@ -142,15 +135,22 @@ export default async function Layout({
                 </Link>
               </Button>
               <Separator orientation="vertical" className="h-8 mx-1" />
-              {CATEGORIES.slice(0, 5).map(cat => (
+              {CATEGORIES.slice(0, 5).map((cat) => (
                 <ButtonLink
                   key={cat.value}
                   variant="ghost"
                   size="sm"
                   className="shrink-0 rounded-full gap-2 bg-muted font-medium"
-                  href={`/community?c=${cat.value}`}>
+                  href={`/community?c=${cat.value}`}
+                >
                   <div className="size-5 rounded-md overflow-hidden relative ring-1 ring-border">
-                    <Image src={cat.image} alt={cat.value} width={40} height={40} className="object-cover rounded-2xl" />
+                    <Image
+                      src={cat.image}
+                      alt={cat.value}
+                      width={40}
+                      height={40}
+                      className="object-cover rounded-2xl"
+                    />
                   </div>
                   {cat.name}
                 </ButtonLink>
@@ -160,7 +160,6 @@ export default async function Layout({
 
           {children}
         </main>
-
       </div>
     </div>
   );
@@ -170,7 +169,7 @@ function SidebarLink({
   href,
   icon: Icon,
   label,
-  iconColor
+  iconColor,
 }: {
   href: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -181,7 +180,8 @@ function SidebarLink({
     <ButtonLink
       variant="ghost"
       className="w-full justify-start gap-3 px-4 h-10 font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
-      href={href}>
+      href={href}
+    >
       <Icon className={cn("size-4.5 shrink-0", iconColor)} />
       {label}
     </ButtonLink>

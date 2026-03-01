@@ -37,7 +37,7 @@ export const ALLOWED_ROLES = [
   ROLES_ENUMS.GUARD,
   ROLES_ENUMS.LIBRARIAN,
   ROLES_ENUMS.STUDENT,
-  "dashboard"
+  "dashboard",
 ];
 
 // export const DASHBOARD_ROLES = [
