@@ -21,14 +21,12 @@
     "db:migrate:dev": "cross-env NODE_ENV=development drizzle-kit migrate",
     "db:migrate:prod": "cross-env NODE_ENV=production drizzle-kit migrate",
     "format": "npx prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
-    "build:no-warn": "next build --experimental-build-mode compile",
     "build:isolated": "docker build -t platform .",
     "build:prod": "npx opennext:build && wrangler deploy --dry-run --outdir=dist",
     "opennext:build": "opennextjs-cloudflare build",
     "opennext:deploy": "opennextjs-cloudflare deploy -- --keep-vars",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.52",

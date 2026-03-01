@@ -105,7 +105,7 @@ export default async function HomePage() {
             </ButtonLink>
           </div>
 
-          <div className="min-h-[200px]">
+          <div className="min-h-50">
             <Suspense fallback={<SkeletonCardArea count={3} />}>
               {/* Ensure ResourcesList has a grid layout inside or pass className */}
               <ResourcesList resources={resources} showImage={false} />

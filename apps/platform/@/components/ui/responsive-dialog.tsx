@@ -152,7 +152,7 @@ export function ControlledResponsiveDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={cn("sm:max-w-[425px]", className)}>
+        <DialogContent className={cn("sm:max-w-106.25", className)}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description && (

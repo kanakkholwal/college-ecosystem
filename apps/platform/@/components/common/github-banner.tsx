@@ -18,10 +18,10 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
   } catch (error) {
     console.warn("Error fetching GitHub repository stats:", error);
     stats = {
-      stars: 12,
-      forks: 2,
+      stars: 18,
+      forks: 3,
       contributors: 1,
-      visitors: 10_40_000,
+      visitors: 14_000_000,
     };
   }
 
@@ -29,7 +29,6 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
     <section className={cn("py-20 lg:py-28 overflow-hidden", className)}>
       <StaggerChildrenContainer className="container mx-auto px-4 max-w-5xl">
 
-        {/* --- HEADER --- */}
         <div className="text-center space-y-4 mb-12">
           <div className="inline-flex items-center rounded-full border border-border/40 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
             <Github className="mr-2 size-3" /> Open Source
@@ -43,7 +42,6 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
           </p>
         </div>
 
-        {/* --- REPO PREVIEW CARD --- */}
         <StaggerChildrenItem>
           <div className="group relative w-full overflow-hidden rounded-3xl border border-border/40 bg-card/60 backdrop-blur-sm shadow-xl transition-all hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5">
 

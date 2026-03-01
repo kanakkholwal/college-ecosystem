@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
+  CornerDownLeftIcon,
   LayoutDashboard,
   LogIn,
   Search,
@@ -31,7 +32,7 @@ import {
   User
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import type { Session } from "~/auth";
 import { twUtility } from "../utils/tailwind-classes";
@@ -165,13 +166,52 @@ interface QuickLinksProps extends NavbarProps {
 }
 
 export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
+  const { push } = useRouter();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = React.useState("");
+  const [selectedType, setSelectedType] = React.useState<"page" | "account" | null>(null);
   const isLoggedIn = !!user;
 
-  // Handle Ctrl/Cmd + K
+  // Filter links based on search
+  const filteredPublicLinks = useMemo(() => {
+    if (!search) return publicLinks;
+    const query = search.toLowerCase();
+    return publicLinks.filter(
+      (link) =>
+        link.title.toLowerCase().includes(query) ||
+        link.description?.toLowerCase().includes(query) ||
+        link.category?.toLowerCase().includes(query)
+    );
+  }, [search, publicLinks]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearch("");
+      setSelectedType(null);
+    }
+  };
+
+  const runCommand = React.useCallback(
+    (command: () => unknown) => {
+      handleOpenChange(false);
+      command();
+    },
+    []
+  );
+
+  // Handle Ctrl/Cmd + K and /
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
+        if (
+          (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement
+        ) {
+          return;
+        }
         e.preventDefault();
         setOpen((open) => !open);
       }
@@ -180,8 +220,90 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const pagesSection = useMemo(() => {
+    if (filteredPublicLinks.length === 0) return null;
+
+    return (
+      <CommandGroup heading="Pages" className="p-0! **:[[cmdk-group-heading]]:scroll-mt-16 **:[[cmdk-group-heading]]:p-3! **:[[cmdk-group-heading]]:pb-1!">
+        {filteredPublicLinks.map((item, index) => (
+          <CommandMenuItemComponent
+            key={`page-${index}`}
+            value={`${item.title} ${item.category || ""}`}
+            keywords={item.category ? [item.category] : []}
+            onHighlight={() => setSelectedType("page")}
+            onSelect={() => {
+              runCommand(() => push(item.href));
+            }}
+          >
+            {item.Icon ? <item.Icon className="size-5 opacity-70" /> : <ArrowUpRight className="size-5 opacity-70" />}
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-sm font-medium">{item.title}</span>
+              {item.description && (
+                <span className="text-xs text-muted-foreground font-normal line-clamp-1">
+                  {item.description}
+                </span>
+              )}
+            </div>
+          </CommandMenuItemComponent>
+        ))}
+      </CommandGroup>
+    );
+  }, [filteredPublicLinks, runCommand, push]);
+
+  const accountSection = useMemo(() => {
+    if (!isLoggedIn) {
+      return (
+        <CommandGroup heading="Authentication" className="p-0! **:[[cmdk-group-heading]]:p-3!">
+          <CommandMenuItemComponent
+            value="Sign In"
+            keywords={["auth", "login"]}
+            onHighlight={() => setSelectedType("account")}
+            onSelect={() => {
+              runCommand(() => push("/auth/sign-in"));
+            }}
+          >
+            <LogIn className="size-4" />
+            <span>Sign In</span>
+          </CommandMenuItemComponent>
+        </CommandGroup>
+      );
+    }
+
+    return (
+      <CommandGroup heading="Account" className="p-0! **:[[cmdk-group-heading]]:p-3!">
+        <CommandMenuItemComponent
+          value={`Profile ${user.username}`}
+          keywords={["profile", "user"]}
+          onHighlight={() => setSelectedType("account")}
+          onSelect={() => {
+            runCommand(() => push(`/u/${user.username}`));
+          }}
+        >
+          <User className="size-4" />
+          <span>View Profile</span>
+        </CommandMenuItemComponent>
+
+        {loggedInList.map((item) => (
+          <CommandMenuItemComponent
+            key={item.path}
+            value={item.title}
+            keywords={["account", "settings"]}
+            onHighlight={() => setSelectedType("account")}
+            onSelect={() => {
+              runCommand(() => push(item.path));
+            }}
+          >
+            <item.icon className="size-4" />
+            <span>{item.title}</span>
+          </CommandMenuItemComponent>
+        ))}
+      </CommandGroup>
+    );
+  }, [isLoggedIn, user, runCommand, push]);
+
   return (
     <>
+      {/* Desktop Search Button */}
       <button
         onClick={() => setOpen(true)}
         className="hidden md:flex items-center w-56 h-9 px-3 rounded-lg border border-border/80 bg-card/80 hover:bg-card hover:border-border transition-all text-sm text-muted-foreground group"
@@ -193,6 +315,7 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
         </kbd>
       </button>
 
+      {/* Mobile Search Button */}
       <Button
         onClick={() => setOpen(true)}
         size="icon_sm"
@@ -202,65 +325,121 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
         <Search className="size-5" />
       </Button>
 
-      <CommandDialog open={open} onOpenChange={setOpen} title="Search Ecosystem" description="Search through the college ecosystem">
-        <CommandInput placeholder="Type to search ecosystem..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+      {/* Command Dialog */}
+      <CommandDialog 
+        open={open} 
+        onOpenChange={handleOpenChange} 
+        title="Search Ecosystem" 
+        description="Search pages, navigate settings, and more" 
+        showCloseButton={false}
+      >
+        <CommandInput
+          placeholder="Search ecosystem..."
+          value={search}
+          onValueChange={setSearch}
+        />
+        <CommandList className="no-scrollbar min-h-64">
+          <CommandEmpty>
+            <div className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {search ? `No results found for "${search}"` : "Start typing to search"}
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Search for pages, commands, and more
+              </p>
+            </div>
+          </CommandEmpty>
 
-          <CommandGroup heading="Suggestions">
-            {publicLinks.map((item, index) => (
-              <CommandItem key={`cmd-${index}`} asChild>
-                <Link
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    {item.Icon ? <item.Icon className="mr-3 size-4 text-muted-foreground group-hover:text-primary transition-colors" /> : <ArrowUpRight className="mr-3 size-4" />}
-                    <div className="flex flex-col">
-                      <span className="font-medium">{item.title}</span>
-                      {item.description && <span className="text-xs text-muted-foreground font-normal line-clamp-1">{item.description}</span>}
-                    </div>
-                  </div>
-                  <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-50 -translate-x-2 group-hover:translate-x-0 transition-all" />
-                </Link>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+          {pagesSection}
 
-          <CommandSeparator className="my-2" />
+          {pagesSection && accountSection && <CommandSeparator className="my-2" />}
 
-          {isLoggedIn ? (
-            <CommandGroup heading="Account">
-              <CommandItem onSelect={() => setOpen(false)}>
-                <Link href={`/u/${user.username}`} className="flex items-center w-full">
-                  <User className="mr-2 size-4" /> Profile
-                </Link>
-              </CommandItem>
-              {loggedInList.map((item, i) => (
-                <CommandItem key={i} onSelect={() => setOpen(false)}>
-                  <Link href={item.path} className="flex items-center w-full">
-                    <item.icon className="mr-2 size-4" /> {item.title}
-                  </Link>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          ) : (
-            <CommandGroup heading="Authentication">
-              <CommandItem onSelect={() => setOpen(false)}>
-                <Link href="/auth/sign-in" className="flex items-center w-full">
-                  <LogIn className="mr-2 size-4" /> Sign In
-                </Link>
-              </CommandItem>
-            </CommandGroup>
-          )}
+          {accountSection}
         </CommandList>
+
+        {/* Footer with Keyboard Hints */}
+        <div className="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-10 items-center gap-3 rounded-b-lg border-t border-border/40 bg-muted/30 px-4 text-xs font-medium">
+          <div className="flex items-center gap-2">
+            <CommandMenuKbd>
+              <CornerDownLeftIcon className="size-3" />
+            </CommandMenuKbd>
+            <span>Select</span>
+          </div>
+          <div className="h-4 w-px bg-border/50" />
+          <div className="flex items-center gap-2">
+            <CommandMenuKbd>↑↓</CommandMenuKbd>
+            <span>Navigate</span>
+          </div>
+          <div className="h-4 w-px bg-border/50" />
+          <div className="flex items-center gap-2">
+            <CommandMenuKbd>Esc</CommandMenuKbd>
+            <span>Close</span>
+          </div>
+        </div>
       </CommandDialog>
     </>
   );
 }
 
-// --- UTILITY COMPONENTS ---
+// Custom Command Menu Item with highlight callback
+function CommandMenuItemComponent({
+  children,
+  className,
+  onHighlight,
+  ...props
+}: React.ComponentProps<typeof CommandItem> & {
+  onHighlight?: () => void;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "aria-selected" &&
+          ref.current?.getAttribute("aria-selected") === "true"
+        ) {
+          onHighlight?.();
+        }
+      });
+    });
+
+    if (ref.current) {
+      observer.observe(ref.current, { attributes: true });
+    }
+
+    return () => observer.disconnect();
+  }, [onHighlight]);
+
+  return (
+    <CommandItem
+      ref={ref}
+      className={cn(
+        "data-[selected=true]:border-input data-[selected=true]:bg-input/50 h-11 rounded-md border border-transparent px-3 font-medium flex items-center gap-3",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </CommandItem>
+  );
+}
+
+// Keyboard hint component
+function CommandMenuKbd({ className, ...props }: React.ComponentProps<"kbd">) {
+  return (
+    <kbd
+      className={cn(
+        "bg-background text-muted-foreground pointer-events-none inline-flex h-5 items-center justify-center gap-1 rounded border border-border/50 px-1.5 font-mono text-[10px] font-medium select-none",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+//  UTILITY COMPONENTS 
 
 export function SocialBar({ className }: { className?: string }) {
   if (socials.length === 0) return null;

@@ -3,11 +3,11 @@
 import { StaggerChildrenItem } from "@/components/animation/motion";
 import { Icon, IconType } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog"; // Your abstract component
 import useStorage from "@/hooks/use-storage"; // Your custom hook
 import { useEffect, useState } from "react";
 import { PiGithubLogoDuotone } from "react-icons/pi";
 import { appConfig } from "~/project.config";
+import { Drawer, DrawerContent } from "../ui/drawer";
 
 // CONFIG
 const REPO_URL = appConfig.githubRepo
@@ -49,27 +49,19 @@ export default function GithubStarPopup() {
             setIsOpen(false);
         }
     };
+    return (<Drawer open={isOpen} onOpenChange={handleDismiss}>
+        <DrawerContent className="max-w-2xl mx-auto">
+            <div className="relative w-full bg-card overflow-hidden rounded-2xl -mt-4">
 
-    return (
-        <ControlledResponsiveDialog
-            open={isOpen}
-            onOpenChange={handleDismiss}
-            className="p-0 sm:p-0 overflow-hidden bg-card border-none shadow-2xl rounded-xl"
-            title={<span className="sr-only">Star our GitHub Repo</span>}
-            hideClose={true}
-        >
-            <div className="relative w-full bg-card overflow-hidden rounded-2xl">
-
-
-                <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-orange-50 to-white z-0 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-48 bg-linear-to-b from-orange-50 to-white z-0 pointer-events-none">
                     {/* Abstract Orange Blobs */}
-                    <div className="absolute top-[-20px] left-[-20px] w-32 h-32 bg-orange-200/50 rounded-3xl rotate-12" />
+                    <div className="absolute -top-5 -left-5 w-32 h-32 bg-orange-200/50 rounded-3xl rotate-12" />
                     <div className="absolute top-10 left-12 w-16 h-16 bg-orange-300/30 rounded-2xl -rotate-6" />
                     <div className="absolute top-4 right-20 w-12 h-12 bg-orange-200/40 rounded-xl rotate-45" />
-                    <div className="absolute top-[-40px] right-[-20px] w-40 h-40 bg-orange-300/20 rounded-full" />
+                    <div className="absolute -top-10 -right-5 w-40 h-40 bg-orange-300/20 rounded-full" />
                 </div>
 
-                <div className="absolute top-16 right-[-10px] z-20 w-32 h-32 animate-bounce-slow pointer-events-none">
+                <div className="absolute top-16 -right-2.5 z-20 w-32 h-32 animate-bounce-slow pointer-events-none">
                     <CuteOctopus />
                 </div>
 
@@ -87,63 +79,54 @@ export default function GithubStarPopup() {
                     </h2>
 
                     {/* Description */}
-                    <p className="text-muted-foreground mb-8 font-medium leading-relaxed">
+                    <p className="text-muted-foreground mb-8 font-medium leading-relaxed text-left">
                         Building this platform takes time and effort. A star on GitHub costs you nothing, but it helps us grow and stay motivated!
                     </p>
                     {/* Actions */}
-                    <div className="w-full space-y-3">
+                    <div className="w-full space-y-3 flex items-center justify-center">
                         {/* Star Button */}
                         <Button
                             onClick={handleStarAction}
                             size="lg"
                             shadow="default"
-                            width="full"
                             transition="scale"
                             className="group"
                         >
                             <PiGithubLogoDuotone className="group-hover:rotate-12 transition-transform duration-500" />
                             Star our GitHub repo
                         </Button>
-                        <Button
-                            onClick={() => handleDismiss(false)}
-                            size="lg"
-                            shadow="default"
-                            width="full"
-                            variant="ghost"
-                        >
-                            Maybe Later
-                        </Button>
-
 
                     </div>
 
-                    
 
-                        <StaggerChildrenItem className="mt-4 inline-flex items-center justify-center p-1.5 rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
-                            {(Object.entries(appConfig.socials) as [IconType, string][]).map(([key, value]) => (
-                                <a
-                                    key={key}
-                                    href={value}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group relative flex items-center justify-center size-10 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all active:scale-95"
-                                    aria-label={`Visit our ${key}`}
-                                >
-                                    <Icon name={key} className="size-5 transition-transform group-hover:-translate-y-0.5 group-hover:text-primary" />
 
-                                    {/* Tooltip */}
-                                    <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary/10 text-primary text-xs font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none capitalize whitespace-nowrap backdrop-blur-xl font-mono">
-                                        {key}
-                                    </span>
-                                </a>
-                            ))}
-                        </StaggerChildrenItem>
+                    <StaggerChildrenItem className="mt-4 inline-flex items-center justify-center p-1.5 rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
+                        {(Object.entries(appConfig.socials) as [IconType, string][]).map(([key, value]) => (
+                            <a
+                                key={key}
+                                href={value}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative flex items-center justify-center size-10 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all active:scale-95"
+                                aria-label={`Visit our ${key}`}
+                            >
+                                <Icon name={key} className="size-5 transition-transform group-hover:-translate-y-0.5 group-hover:text-primary" />
+
+                                {/* Tooltip */}
+                                <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-primary/10 text-primary text-xs font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none capitalize whitespace-nowrap backdrop-blur-xl font-mono">
+                                    {key}
+                                </span>
+                            </a>
+                        ))}
+                    </StaggerChildrenItem>
                 </div>
-
-
             </div>
-        </ControlledResponsiveDialog>
-    );
+
+        </DrawerContent>
+
+    </Drawer>)
+
+
 }
 
 // --- The Original Cute Octopus SVG ---
