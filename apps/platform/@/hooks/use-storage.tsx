@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 type StorageType = "localStorage" | "sessionStorage";
 
@@ -9,30 +9,48 @@ function useStorage<T>(
   initialValue: T,
   storageType: StorageType = "localStorage"
 ) {
-  // keep cached snapshot across calls
-  let cached: T = initialValue;
+  const cachedRef = useRef<T>(initialValue);
 
-  // subscribe never changes
-  const subscribe = (callback: () => void) => {
-    if (typeof window === "undefined") return () => {};
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (typeof window === "undefined") return () => {};
 
-    const onStorageChange = (event: StorageEvent) => {
-      if (event.key === key && event.storageArea === window[storageType]) {
-        callback();
-      }
-    };
-    window.addEventListener("storage", onStorageChange);
-    return () => window.removeEventListener("storage", onStorageChange);
-  };
+      const onStorageChange = (event: StorageEvent) => {
+        if (event.key === key && event.storageArea === window[storageType]) {
+          const item = window[storageType].getItem(key);
+          if (item !== null) {
+            try {
+              let next: T;
+              if (typeof initialValue === "string") next = item as T;
+              else if (typeof initialValue === "number") {
+                const parsed = Number(item);
+                next = (isNaN(parsed) ? initialValue : parsed) as T;
+              } else if (typeof initialValue === "boolean") {
+                next = (item === "true") as T;
+              } else {
+                next = JSON.parse(item) as T;
+              }
+              cachedRef.current = next;
+            } catch {
+              // keep current cached value
+            }
+          }
+          callback();
+        }
+      };
+      window.addEventListener("storage", onStorageChange);
+      return () => window.removeEventListener("storage", onStorageChange);
+    },
+    [key, storageType, initialValue]
+  );
 
-  // stable snapshot getter with caching
-  const getSnapshot = (): T => {
-    if (typeof window === "undefined") return cached;
+  const getSnapshot = useCallback((): T => {
+    if (typeof window === "undefined") return cachedRef.current;
 
     try {
       const storage = window[storageType];
       const item = storage.getItem(key);
-      if (item === null) return cached;
+      if (item === null) return cachedRef.current;
 
       let next: T;
 
@@ -46,16 +64,15 @@ function useStorage<T>(
         next = JSON.parse(item) as T;
       }
 
-      // ✅ only update cached ref if actually different
-      if (JSON.stringify(next) !== JSON.stringify(cached)) {
-        cached = next;
+      if (JSON.stringify(next) !== JSON.stringify(cachedRef.current)) {
+        cachedRef.current = next;
       }
 
-      return cached;
+      return cachedRef.current;
     } catch {
-      return cached;
+      return cachedRef.current;
     }
-  };
+  }, [key, storageType, initialValue]);
 
   const value = useSyncExternalStore(
     subscribe,
@@ -63,42 +80,43 @@ function useStorage<T>(
     () => initialValue
   );
 
-  const setValue = (newValue: T | ((prev: T) => T)) => {
-    if (typeof window === "undefined") return;
+  const setValue = useCallback(
+    (newValue: T | ((prev: T) => T)) => {
+      if (typeof window === "undefined") return;
 
-    try {
-      const storage = window[storageType];
-      const valueToStore =
-        typeof newValue === "function"
-          ? (newValue as (prev: T) => T)(value)
-          : newValue;
+      try {
+        const storage = window[storageType];
+        const valueToStore =
+          typeof newValue === "function"
+            ? (newValue as (prev: T) => T)(cachedRef.current)
+            : newValue;
 
-      let serialized: string;
-      if (typeof valueToStore === "string") serialized = valueToStore;
-      else if (
-        typeof valueToStore === "number" ||
-        typeof valueToStore === "boolean"
-      )
-        serialized = String(valueToStore);
-      else serialized = JSON.stringify(valueToStore);
+        let serialized: string;
+        if (typeof valueToStore === "string") serialized = valueToStore;
+        else if (
+          typeof valueToStore === "number" ||
+          typeof valueToStore === "boolean"
+        )
+          serialized = String(valueToStore);
+        else serialized = JSON.stringify(valueToStore);
 
-      storage.setItem(key, serialized);
+        storage.setItem(key, serialized);
 
-      // update cache immediately
-      cached = valueToStore;
+        cachedRef.current = valueToStore;
 
-      // trigger update for this tab
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key,
-          newValue: serialized,
-          storageArea: storage,
-        })
-      );
-    } catch (e) {
-      console.error(`Error storing value for key "${key}":`, e);
-    }
-  };
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key,
+            newValue: serialized,
+            storageArea: storage,
+          })
+        );
+      } catch (e) {
+        console.error(`Error storing value for key "${key}":`, e);
+      }
+    },
+    [key, storageType]
+  );
 
   return [value, setValue] as const;
 }
