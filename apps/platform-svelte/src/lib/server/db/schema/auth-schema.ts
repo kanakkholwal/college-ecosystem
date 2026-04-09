@@ -1,7 +1,7 @@
-import { InferSelectModel } from 'drizzle-orm';
-import { boolean, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { nanoid } from 'nanoid';
 import { DEPARTMENTS } from '$lib/constants/core.departments';
+import { boolean, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
 
 export const departmentNameEnum = pgEnum('department_name_enum', ['Staff', ...DEPARTMENTS] as [
 	string,

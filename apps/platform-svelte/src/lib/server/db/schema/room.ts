@@ -1,6 +1,6 @@
 import { integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { users } from './auth-schema';
-import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 
 // Sub-schema for Usage History
 export const roomUsageHistory = pgTable('room_usage_history', {
