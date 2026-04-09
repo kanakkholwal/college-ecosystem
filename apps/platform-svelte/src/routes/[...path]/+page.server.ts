@@ -25,7 +25,7 @@ const PARITY_ROUTE_PATTERNS: RegExp[] = [
 	/^\/programs\/builder-club(?:\/apply-now)?$/,
 	/^\/unauthorized$/,
 	/^\/design$/,
-	/^\/(about|contact|privacy-policy|terms)$/,
+	/^\/about$/,
 	/^\/academic-calendar$/,
 	/^\/classroom-availability$/,
 	/^\/results(?:\/[^/]+)?$/,
