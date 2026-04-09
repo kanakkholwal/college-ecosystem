@@ -1,13 +1,14 @@
+import type { auth } from '$lib/server/auth';
 import {
 	adminClient,
 	inferAdditionalFields,
 	usernameClient
 } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/svelte';
-import type { auth } from '$lib/server/auth';
+import { getBaseURL } from './env/url';
 
 export const authClient = createAuthClient({
-	baseURL: window.location.origin,
+	baseURL: getBaseURL(),
 	plugins: [usernameClient(), adminClient(), inferAdditionalFields<typeof auth>()]
 });
 
