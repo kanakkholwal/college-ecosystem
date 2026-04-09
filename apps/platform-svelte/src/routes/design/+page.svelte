@@ -17,7 +17,7 @@
 			case 'dark':
 				return 'bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900';
 			case 'rainbow':
-				return 'bg-linear-to-r from-purple-500 via-sky-500 to-emerald-500 text-white';
+				return 'bg-gradient-to-r from-purple-500 via-sky-500 to-emerald-500 text-white';
 			case 'destructive':
 				return 'bg-destructive text-destructive-foreground';
 			default:
