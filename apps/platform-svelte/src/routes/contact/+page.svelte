@@ -1,5 +1,5 @@
 <main
-	class="mx-auto flex min-h-screen w-full max-w-(--max-app-width) flex-col gap-10 px-4 pt-8 pb-10 md:px-6 xl:px-12"
+	class="mx-auto flex min-h-screen w-full max-w-[var(--max-app-width)] flex-col gap-10 px-4 pt-8 pb-10 md:px-6 xl:px-12"
 >
 	<section class="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
 		<p

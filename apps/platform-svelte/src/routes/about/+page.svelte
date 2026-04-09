@@ -31,7 +31,7 @@
 </script>
 
 <main
-	class="mx-auto flex min-h-screen w-full max-w-(--max-app-width) flex-col gap-16 px-4 pt-10 pb-12 md:px-6 xl:px-12"
+	class="mx-auto flex min-h-screen w-full max-w-[var(--max-app-width)] flex-col gap-16 px-4 pt-10 pb-12 md:px-6 xl:px-12"
 >
 	<section class="relative overflow-hidden rounded-3xl border border-border/50 px-6 py-12 md:px-10">
 		<div
@@ -46,7 +46,7 @@
 			<h1 class="text-4xl font-bold tracking-tight text-balance md:text-6xl">
 				The Digital Infrastructure for
 				<span
-					class="bg-linear-to-l from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90% bg-clip-text text-transparent"
+					class="bg-gradient-to-l from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90% bg-clip-text text-transparent"
 				>
 					Modern Campuses
 				</span>

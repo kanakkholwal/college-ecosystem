@@ -17,7 +17,6 @@ type Stats = {
 type RepoResponse = {
 	stargazers_count?: number;
 	forks_count?: number;
-	subscribers_count?: number;
 };
 
 type GithubContributor = {
@@ -78,7 +77,7 @@ const getRepoStats = async (fetchFn: typeof fetch): Promise<Stats> => {
 			visitors,
 			stars: data.stargazers_count ?? FALLBACK_STATS.stars,
 			forks: data.forks_count ?? FALLBACK_STATS.forks,
-			contributors: data.subscribers_count ?? FALLBACK_STATS.contributors
+			contributors: FALLBACK_STATS.contributors
 		};
 	} catch {
 		return FALLBACK_STATS;
@@ -112,8 +111,13 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		getRepoContributors(fetch)
 	]);
 
+	const contributorCount = contributors.length || FALLBACK_STATS.contributors;
+
 	return {
-		stats,
+		stats: {
+			...stats,
+			contributors: contributorCount
+		},
 		contributors
 	};
 };
