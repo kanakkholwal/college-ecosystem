@@ -23,8 +23,6 @@ const DASHBOARD_PREFIX_REGEX = new RegExp(`^/(${DASHBOARD_ROLE_PREFIXES.join('|'
 const PARITY_ROUTE_PATTERNS: RegExp[] = [
 	/^\/auth\/(sign-in|forgot-password|reset-password|verify-mail)$/,
 	/^\/programs\/builder-club(?:\/apply-now)?$/,
-	/^\/unauthorized$/,
-	/^\/design$/,
 	/^\/academic-calendar$/,
 	/^\/classroom-availability$/,
 	/^\/results(?:\/[^/]+)?$/,
