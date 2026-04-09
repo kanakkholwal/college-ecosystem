@@ -1,30 +1,21 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { appConfig } from '$lib/config/project';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	const greeting = $derived(data.userName ? `Welcome back, ${data.userName}` : 'Welcome to the ecosystem');
+	const greeting = $derived(
+		data.userName ? `Welcome back, ${data.userName}` : 'Welcome to the ecosystem'
+	);
 </script>
-
-<svelte:head>
-	<script type="application/ld+json">
-		{JSON.stringify({
-			'@context': 'https://schema.org',
-			'@type': 'WebApplication',
-			name: appConfig.name,
-			description: appConfig.description,
-			applicationCategory: 'Education'
-		})}
-	</script>
-</svelte:head>
 
 <main
 	class="mx-auto flex min-h-screen w-full max-w-(--max-app-width) flex-col gap-10 px-4 pt-6 pb-10 md:px-6 xl:px-12"
 >
 	<section class="space-y-4">
-		<p class="inline-flex rounded-full border border-border/50 bg-muted/40 px-3 py-1 text-xs font-medium">
+		<p
+			class="inline-flex rounded-full border border-border/50 bg-muted/40 px-3 py-1 text-xs font-medium"
+		>
 			Phase 4 migration started
 		</p>
 		<h1 class="text-3xl font-semibold tracking-tight lg:text-5xl">{greeting}</h1>

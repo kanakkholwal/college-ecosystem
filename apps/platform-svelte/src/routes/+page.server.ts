@@ -99,16 +99,22 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const [sessionResult, userResult] = await Promise.allSettled([
-		db.select({ count: sql<number>`COUNT(*)` }).from(sessions).execute(),
-		db.select({ count: sql<number>`COUNT(*)` }).from(users).execute()
+		db
+			.select({ count: sql<number>`COUNT(*)` })
+			.from(sessions)
+			.execute(),
+		db
+			.select({ count: sql<number>`COUNT(*)` })
+			.from(users)
+			.execute()
 	]);
 
 	return {
 		userName: user?.name ?? null,
 		quickLinks: quickLinks.filter((link) => hasRoleAccess(role, link.allowedRoles)),
 		publicStats: {
-			sessionCount: sessionResult.status === 'fulfilled' ? sessionResult.value[0]?.count ?? 0 : 0,
-			userCount: userResult.status === 'fulfilled' ? userResult.value[0]?.count ?? 0 : 0
+			sessionCount: sessionResult.status === 'fulfilled' ? (sessionResult.value[0]?.count ?? 0) : 0,
+			userCount: userResult.status === 'fulfilled' ? (userResult.value[0]?.count ?? 0) : 0
 		}
 	};
 };
