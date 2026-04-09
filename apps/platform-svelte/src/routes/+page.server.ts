@@ -7,8 +7,12 @@ import type { PageServerLoad } from './$types';
 const ROLES_ENUMS = {
 	ADMIN: 'admin',
 	STUDENT: 'student',
-	GUARD: 'guard'
+	GUARD: 'guard',
+	GUEST: 'guest'
 } as const;
+
+const GUARD_ROUTE = '/guard';
+const STATS_CACHE_TTL_MS = 60_000;
 
 type QuickLink = {
 	href: string;
@@ -90,16 +94,14 @@ const quickLinks: QuickLink[] = [
 const hasRoleAccess = (role: string, allowedRoles: string[]): boolean =>
 	allowedRoles.includes('*') || allowedRoles.includes(role);
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const user = locals.user;
-	const role = user?.role ?? user?.other_roles?.[0] ?? ROLES_ENUMS.STUDENT;
-	const isGuard =
-		user?.role === ROLES_ENUMS.GUARD || user?.other_roles?.includes(ROLES_ENUMS.GUARD) === true;
-	const isAdmin =
-		user?.role === ROLES_ENUMS.ADMIN || user?.other_roles?.includes(ROLES_ENUMS.ADMIN) === true;
+let cachedStats: { sessionCount: number; userCount: number } | null = null;
+let cachedStatsAt = 0;
 
-	if (isGuard && !isAdmin) {
-		redirect(303, `/${ROLES_ENUMS.GUARD}`);
+const getPublicStats = async () => {
+	const now = Date.now();
+
+	if (cachedStats && now - cachedStatsAt < STATS_CACHE_TTL_MS) {
+		return cachedStats;
 	}
 
 	const [sessionResult, userResult] = await Promise.allSettled([
@@ -121,12 +123,32 @@ export const load: PageServerLoad = async ({ locals }) => {
 		console.error('Failed to load user count for home page stats', userResult.reason);
 	}
 
+	cachedStats = {
+		sessionCount: sessionResult.status === 'fulfilled' ? (sessionResult.value[0]?.count ?? 0) : 0,
+		userCount: userResult.status === 'fulfilled' ? (userResult.value[0]?.count ?? 0) : 0
+	};
+	cachedStatsAt = now;
+
+	return cachedStats;
+};
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const user = locals.user;
+	const role = user?.role ?? user?.other_roles?.[0] ?? ROLES_ENUMS.GUEST;
+	const isGuard =
+		user?.role === ROLES_ENUMS.GUARD || user?.other_roles?.includes(ROLES_ENUMS.GUARD) === true;
+	const isAdmin =
+		user?.role === ROLES_ENUMS.ADMIN || user?.other_roles?.includes(ROLES_ENUMS.ADMIN) === true;
+
+	if (isGuard && !isAdmin) {
+		redirect(303, GUARD_ROUTE);
+	}
+
+	const publicStats = await getPublicStats();
+
 	return {
 		userName: user?.name ?? null,
 		quickLinks: quickLinks.filter((link) => hasRoleAccess(role, link.allowedRoles)),
-		publicStats: {
-			sessionCount: sessionResult.status === 'fulfilled' ? (sessionResult.value[0]?.count ?? 0) : 0,
-			userCount: userResult.status === 'fulfilled' ? (userResult.value[0]?.count ?? 0) : 0
-		}
+		publicStats
 	};
 };
