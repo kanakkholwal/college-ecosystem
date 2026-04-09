@@ -92,9 +92,13 @@ const hasRoleAccess = (role: string, allowedRoles: string[]): boolean =>
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user;
-	const role = user?.other_roles?.[0] ?? ROLES_ENUMS.STUDENT;
+	const role = user?.role ?? user?.other_roles?.[0] ?? ROLES_ENUMS.STUDENT;
+	const isGuard =
+		user?.role === ROLES_ENUMS.GUARD || user?.other_roles?.includes(ROLES_ENUMS.GUARD) === true;
+	const isAdmin =
+		user?.role === ROLES_ENUMS.ADMIN || user?.other_roles?.includes(ROLES_ENUMS.ADMIN) === true;
 
-	if (user?.other_roles?.includes(ROLES_ENUMS.GUARD) && user.role !== ROLES_ENUMS.ADMIN) {
+	if (isGuard && !isAdmin) {
 		redirect(307, `/${ROLES_ENUMS.GUARD}`);
 	}
 
