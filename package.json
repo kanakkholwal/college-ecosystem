@@ -13,7 +13,9 @@
     "dev:mail": "cd apps/mail-server && turbo run dev",
     "build:mail": "cd apps/mail-server && turbo run build",
     "dev:website": "cd apps/website && turbo run dev",
-    "build:website": "cd apps/website && turbo run build"
+    "build:website": "cd apps/website && turbo run build",
+    "dev:platform-svelte": "cd apps/platform-svelte && turbo run dev",
+    "build:platform-svelte": "cd apps/platform-svelte && turbo run build"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

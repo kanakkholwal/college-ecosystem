@@ -3,7 +3,12 @@
   "tasks": {
     "build":{
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        ".svelte-kit/**",
+        "dist/**"
+      ],
       "dependsOn": ["^build"]
     },
     "lint": {
