@@ -96,6 +96,32 @@ const hasRoleAccess = (role: string, allowedRoles: string[]): boolean =>
 
 let cachedStats: { sessionCount: number; userCount: number } | null = null;
 let cachedStatsAt = 0;
+let inFlightStatsPromise: Promise<{ sessionCount: number; userCount: number }> | null = null;
+
+const parseCount = (value: unknown): number => {
+	if (typeof value === 'number') return value;
+	if (typeof value === 'string') {
+		const parsed = Number.parseInt(value, 10);
+		return Number.isNaN(parsed) ? 0 : parsed;
+	}
+	return 0;
+};
+
+const getTableCount = async (
+	table: typeof sessions | typeof users,
+	label: 'session' | 'user'
+): Promise<number> => {
+	try {
+		const result = await db
+			.select({ count: sql<string>`COUNT(*)` })
+			.from(table)
+			.execute();
+		return parseCount(result[0]?.count);
+	} catch (countError) {
+		console.error(`Failed to load ${label} count for home page stats`, countError);
+		return 0;
+	}
+};
 
 const getPublicStats = async () => {
 	const now = Date.now();
@@ -104,32 +130,25 @@ const getPublicStats = async () => {
 		return cachedStats;
 	}
 
-	const [sessionResult, userResult] = await Promise.allSettled([
-		db
-			.select({ count: sql<number>`COUNT(*)` })
-			.from(sessions)
-			.execute(),
-		db
-			.select({ count: sql<number>`COUNT(*)` })
-			.from(users)
-			.execute()
-	]);
-
-	if (sessionResult.status === 'rejected') {
-		console.error('Failed to load session count for home page stats', sessionResult.reason);
+	if (inFlightStatsPromise) {
+		return inFlightStatsPromise;
 	}
 
-	if (userResult.status === 'rejected') {
-		console.error('Failed to load user count for home page stats', userResult.reason);
-	}
+	inFlightStatsPromise = (async () => {
+		const [sessionCount, userCount] = await Promise.all([
+			getTableCount(sessions, 'session'),
+			getTableCount(users, 'user')
+		]);
 
-	cachedStats = {
-		sessionCount: sessionResult.status === 'fulfilled' ? (sessionResult.value[0]?.count ?? 0) : 0,
-		userCount: userResult.status === 'fulfilled' ? (userResult.value[0]?.count ?? 0) : 0
-	};
-	cachedStatsAt = now;
+		cachedStats = { sessionCount, userCount };
+		cachedStatsAt = Date.now();
 
-	return cachedStats;
+		return cachedStats;
+	})().finally(() => {
+		inFlightStatsPromise = null;
+	});
+
+	return inFlightStatsPromise;
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
