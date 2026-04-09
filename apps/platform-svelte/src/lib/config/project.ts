@@ -191,6 +191,7 @@ export const navLinks = [
 	{ href: '/schedules', title: 'Schedules' },
 	{ href: '/academic-calendar', title: 'Calendar' }
 ] as const;
+export type NavLink = typeof navLinks[number];
 
 export const supportLinks = [
 	{

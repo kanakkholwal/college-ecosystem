@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -44,7 +43,7 @@
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{#each data.quickLinks as link (link.href)}
 				<a
-					href={resolve(link.href)}
+					href={link.href}
 					class="group rounded-xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/50 hover:bg-muted/20"
 				>
 					<div class="flex items-start justify-between gap-3">

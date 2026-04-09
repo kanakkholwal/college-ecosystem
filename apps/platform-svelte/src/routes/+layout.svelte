@@ -2,8 +2,13 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import Footer from '$lib/components/common/footer.svelte';
 	import GithubBanner from '$lib/components/common/github-banner.svelte';
-	import Navbar from '$lib/components/common/navbar.svelte';
+	import Navbar from '$lib/components/common/navbar/navbar.svelte';
+	import '@fontsource-variable/inter/wght.css';
+	import '@fontsource/space-mono';
+
+
 	import './layout.css';
+
 
 	let { data, children } = $props();
 </script>

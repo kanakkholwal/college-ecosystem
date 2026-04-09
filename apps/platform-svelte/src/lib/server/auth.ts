@@ -1,18 +1,19 @@
 import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
 import { getRequestEvent } from '$app/server';
+import { env } from '$env/dynamic/private';
+import { appConfig } from '$lib/config/project';
+import { db } from '$lib/server/db/connect';
+import { accounts, sessions, users, verifications } from '$lib/server/db/schema';
 import { betterAuth, type BetterAuthOptions, type User } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { admin, haveIBeenPwned, username } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
-import { db } from '$lib/server/db/connect';
-import { accounts, sessions, users, verifications } from '$lib/server/db/schema';
-import { appConfig } from '$lib/config/project';
-import { emailSchema, ROLES_ENUMS } from '$lib/constants';
+
+import { emailSchema, ROLES_ENUMS } from '$constants';
 import { getDepartmentByRollNo, isValidRollNumber } from '$lib/constants/core.departments';
-import { getResultByRollNo } from '$lib/server/api/result';
 import { getHostelStudent } from '$lib/server/actions/hostel';
+import { getResultByRollNo } from '$lib/server/api/result';
 import { mailFetch, serverFetch } from '$lib/server/fetch';
 
 const VERIFY_EMAIL_PATH_PREFIX = '/auth/verify-mail';

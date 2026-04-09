@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     "og:locale:alternate": "hi_IN",
   },
 };
-
+ 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
