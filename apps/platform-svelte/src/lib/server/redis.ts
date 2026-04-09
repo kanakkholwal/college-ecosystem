@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 
-const REDIS_URL = process.env.REDIS_URL;
+import { env } from "$env/dynamic/private";
+const REDIS_URL = env.REDIS_URL;
 
 if (!REDIS_URL) {
   console.warn("[redis] REDIS_URL not set - caching disabled");

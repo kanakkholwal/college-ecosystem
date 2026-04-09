@@ -1,8 +1,12 @@
-import { Db, MongoClient, MongoClientOptions } from "mongodb";
+import { env } from "$env/dynamic/private";
+import { Db, MongoClient, type MongoClientOptions } from "mongodb";
 import mongoose, { type ConnectOptions, type Mongoose } from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
+const MONGODB_URI = env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.warn("Can't access MONGODB_URI in dbConnect.ts");
+  throw new Error("Please define the MONGODB_URI environment variable");
+}
 declare const global: {
   mongoose: { conn: Mongoose | null; promise: Promise<Mongoose> | null };
   mongoClient: {
@@ -11,13 +15,9 @@ declare const global: {
   };
 };
 
-if (!MONGODB_URI) {
-  console.warn("Can't access MONGODB_URI in dbConnect.ts");
-  throw new Error("Please define the MONGODB_URI environment variable");
-}
 
-const defaultDb =
-  process.env.NODE_ENV === "production" ? "production" : "testing";
+
+const defaultDb = env.NODE_ENV === "production" ? "production" : "testing";
 
 // Mongoose Connection Cache
 let mongooseCache = global.mongoose;
