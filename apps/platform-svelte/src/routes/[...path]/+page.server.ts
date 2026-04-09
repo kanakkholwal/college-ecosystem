@@ -20,31 +20,7 @@ const DASHBOARD_ROLE_PREFIXES = [
 
 const DASHBOARD_PREFIX_REGEX = new RegExp(`^/(${DASHBOARD_ROLE_PREFIXES.join('|')})(?:/.*)?$`);
 
-const PARITY_ROUTE_PATTERNS: RegExp[] = [
-	/^\/auth\/(sign-in|forgot-password|reset-password|verify-mail)$/,
-	/^\/programs\/builder-club(?:\/apply-now)?$/,
-	/^\/academic-calendar$/,
-	/^\/classroom-availability$/,
-	/^\/results(?:\/[^/]+)?$/,
-	/^\/schedules(?:\/.+)?$/,
-	/^\/syllabus(?:\/[^/]+)?$/,
-	/^\/community$/,
-	/^\/community\/(create|edit)$/,
-	/^\/community\/posts\/[^/]+$/,
-	/^\/polls(?:\/[^/]+)?$/,
-	/^\/whisper-room$/,
-	/^\/whisper-room\/feed(?:\/[^/]+(?:\/edit)?)?$/,
-	/^\/whisper-room\/whisper$/,
-	/^\/chat$/,
-	/^\/benefits$/,
-	/^\/u\/[^/]+$/,
-	/^\/resources$/,
-	/^\/resources\/stories\/share$/,
-	/^\/resources\/stories\/[^/]+$/,
-	/^\/resources\/[^/]+(?:\/[^/]+)?$/,
-	/^\/announcements(?:\/create)?$/,
-	DASHBOARD_PREFIX_REGEX
-];
+const PARITY_ROUTE_PATTERNS: RegExp[] = [DASHBOARD_PREFIX_REGEX];
 
 const isKnownParityRoute = (path: string): boolean =>
 	PARITY_ROUTE_PATTERNS.some((pattern) => pattern.test(path));
