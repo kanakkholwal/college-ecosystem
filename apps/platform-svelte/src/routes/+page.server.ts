@@ -99,7 +99,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		user?.role === ROLES_ENUMS.ADMIN || user?.other_roles?.includes(ROLES_ENUMS.ADMIN) === true;
 
 	if (isGuard && !isAdmin) {
-		redirect(307, `/${ROLES_ENUMS.GUARD}`);
+		redirect(303, `/${ROLES_ENUMS.GUARD}`);
 	}
 
 	const [sessionResult, userResult] = await Promise.allSettled([
@@ -112,6 +112,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.from(users)
 			.execute()
 	]);
+
+	if (sessionResult.status === 'rejected') {
+		console.error('Failed to load session count for home page stats', sessionResult.reason);
+	}
+
+	if (userResult.status === 'rejected') {
+		console.error('Failed to load user count for home page stats', userResult.reason);
+	}
 
 	return {
 		userName: user?.name ?? null,
