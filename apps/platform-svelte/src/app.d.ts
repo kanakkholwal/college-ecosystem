@@ -1,3 +1,5 @@
+import type { Session, SessionUser } from '$lib/server/auth';
+
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
@@ -10,7 +12,10 @@ declare global {
 		}
 
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			user: SessionUser | null;
+			session: Session['session'] | null;
+		}
 		// interface PageData {}
 		// interface PageState {}
 	}
