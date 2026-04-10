@@ -20,11 +20,12 @@ import {
   createBatchUsingPrevious,
   deleteAbNormalResults,
   deleteResult,
+  exportBatchResullts,
   getAbnormalResults,
   getResult,
   getResultByRollNoFromSite,
   importFreshers,
-  updateResult,
+  updateResult
 } from "../controllers/http-result";
 import { resultScrapingSSEHandler } from "../controllers/sse-scraping";
 
@@ -63,7 +64,7 @@ router.post(
   createBatchUsingPrevious as unknown as RequestHandler
 );
 // Endpoint to assign ranks to the results in the database
-router.post(
+router.get(
   "/results/assign-ranks",
   assignRankToResults
 );
@@ -79,6 +80,7 @@ router.post("/results/bulk/update", bulkUpdateResults);
 router.post("/results/bulk/delete", bulkDeleteResults);
 // Endpoint to get result by rollNo scraped from the website
 router.get("/results/scrape-sse", resultScrapingSSEHandler as unknown as RequestHandler);
+router.get("/results/export/:batch", exportBatchResullts);
 
 router.post("/results/:rollNo/scrape", getResultByRollNoFromSite);
 // Endpoint to [get,add,update] result by rollNo from the database

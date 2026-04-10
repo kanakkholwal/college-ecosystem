@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { rawClassRoomType } from "$lib/constants/student.classroom";
+import type { rawClassRoomType } from "$lib/constants/student.classroom";
 
 export interface IClassRoomType extends Document, rawClassRoomType {}
 

@@ -25,13 +25,6 @@ type QuickLink = {
 
 const quickLinks: QuickLink[] = [
 	{
-		href: '/resources',
-		title: 'Resources',
-		description: 'Explore articles, guides, and past archives.',
-		allowedRoles: ['*'],
-		category: 'general'
-	},
-	{
 		href: '/benefits',
 		title: 'Student Benefits',
 		description: 'Exclusive deals via your student ID.',
@@ -43,6 +36,20 @@ const quickLinks: QuickLink[] = [
 		href: '/results',
 		title: 'Academic Results',
 		description: 'Performance analytics and semester grades.',
+		allowedRoles: ['*'],
+		category: 'academic'
+	},
+	{
+		href: '/syllabus',
+		title: 'Syllabus',
+		description: 'Curriculum tracking and course structures.',
+		allowedRoles: ['*'],
+		category: 'academic'
+	},
+	{
+		href: '/classroom-availability',
+		title: 'Classroom Finder',
+		description: 'Live occupancy status of lecture halls.',
 		allowedRoles: ['*'],
 		category: 'academic'
 	},

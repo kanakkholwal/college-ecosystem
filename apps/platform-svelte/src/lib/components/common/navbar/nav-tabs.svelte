@@ -3,7 +3,7 @@
 	import { cn } from '$lib/utils';
 	import type { ComponentType } from 'svelte';
 
-	// ─── Types ─────────────────────────────────────────────────────────────────
+	//Types 
 
 	export interface NavTabLink {
 		href: string;
@@ -13,7 +13,7 @@
 		items?: { href: string; title: string }[];
 	}
 
-	// ─── Props ─────────────────────────────────────────────────────────────────
+	//Props 
 
 	interface Props {
 		navLinks: NavTabLink[];
@@ -21,13 +21,13 @@
 
 	let { navLinks }: Props = $props();
 
-	// ─── Active state ──────────────────────────────────────────────────────────
+	//Active state 
 
 	function isActive(href: string): boolean {
 		return page.url.pathname === href || page.url.pathname.startsWith(href + '/');
 	}
 
-	// ─── Dropdown ──────────────────────────────────────────────────────────────
+	//Dropdown 
 
 	let openDropdown = $state<string | null>(null);
 

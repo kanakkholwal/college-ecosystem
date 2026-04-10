@@ -178,7 +178,8 @@ const OutPassSchema = new Schema(
 HostelSchema.pre(
   "deleteOne",
   { document: true, query: false },
-  async function (next) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function (this: any, next: (err?: Error) => void) {
     await HostelStudentModel.updateMany(
       { hostelId: this._id },
       { hostelId: null }
@@ -197,7 +198,8 @@ HostelStudentSchema.index({ email: 1, hostelId: 1 }, { unique: true });
 HostelStudentSchema.index({ rollNumber: 1 }, { unique: true });
 
 // Pre-save hook: Ensure gender consistency with hostel
-HostelStudentSchema.pre("save", async function (next) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+HostelStudentSchema.pre("save", async function (this: any, next: (err?: Error) => void) {
   if (this.hostelId === null) return next();
 
   const hostel = await HostelModel.findById(this.hostelId);

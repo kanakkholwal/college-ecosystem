@@ -1,4 +1,4 @@
-import { FilePart, ImagePart, ModelMessage } from "ai";
+import type { FilePart, ImagePart, ModelMessage } from "ai";
 import { courseArraySchema, eventArraySchema } from "./schema";
 
 export const PromptMaps: PromptMapsType = {

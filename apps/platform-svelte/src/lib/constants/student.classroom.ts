@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailSchema } from ".";
+import { emailSchema } from "$constants";
 import { rollNoSchema } from "./core.departments";
 
 export const classRoomSchema = z.object({

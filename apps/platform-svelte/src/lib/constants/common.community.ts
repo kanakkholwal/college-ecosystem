@@ -1,5 +1,5 @@
 import { DEPARTMENT_CODES } from "$lib/constants/core.departments";
-import { Content } from "@tiptap/react";
+import type { Content } from "@tiptap/react";
 import z from "zod";
 
 export const CATEGORY_TYPES = [

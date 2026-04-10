@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { Content } from "@tiptap/react";
+import type { Content } from "@tiptap/react";
 
 export const RELATED_FOR_TYPES = [
   "academics",

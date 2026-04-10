@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { getDepartmentCoursePrefix, isValidRollNumber } from "../constants/departments";
+import { getDepartmentCoursePrefix, isValidBatch, isValidRollNumber } from "../constants/departments";
 import { pipelines } from "../constants/pipelines";
 import { scrapeAndSaveResult } from "../lib/result_utils";
 import { getInfoFromRollNo, scrapeResult } from "../lib/scrape";
@@ -189,7 +189,25 @@ export const deleteAbNormalResults = async (req: Request, res: Response) => {
     return res.status(500).json(safeErrorBody("An error occurred", (error as Error)?.message));
   }
 };
+export const exportBatchResullts = async (req: Request, res: Response) => {
+  const batch = req.params.batch as string;
+  if (!isValidBatch(batch)) {
+    return res.status(400).json({ message: "Invalid batch", error: true, data: null });
+  }
 
+  try {
+    await dbConnect();
+    const resultData = await ResultModel.find({ batch }).select("-semesters").lean();
+    if (!resultData || resultData.length === 0) {
+      return res.status(404).json({ message: "Results not found", error: true, data: null });
+    }
+    
+    return res.status(200).json({ data: resultData, message: "Results fetched successfully", error: false });
+  } catch (error) {
+    console.error("exportBatchResults error:", error);
+    return res.status(500).json(safeErrorBody("An error occurred", (error as Error)?.message));
+  }
+};
 export const bulkUpdateResults = async (req: Request, res: Response) => {
   try {
     const rollNos = (req.body.rollNos || []) as string[];

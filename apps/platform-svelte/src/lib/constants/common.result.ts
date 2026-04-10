@@ -1,4 +1,4 @@
-import type { ResultTypeWithId } from "src/models/result";
+import type { ResultTypeWithId } from "$lib/server/models/result";
 import { rollNoSchema } from "./core.departments";
 
 export function getYear(result: ResultTypeWithId): string | null {

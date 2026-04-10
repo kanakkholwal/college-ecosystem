@@ -3,6 +3,8 @@
 	import Footer from '$lib/components/common/footer.svelte';
 	import GithubBanner from '$lib/components/common/github-banner.svelte';
 	import Navbar from '$lib/components/common/navbar/navbar.svelte';
+	import { Toaster } from 'svelte-sonner';
+	import { ModeWatcher } from 'mode-watcher';
 	import '@fontsource-variable/inter/wght.css';
 	import '@fontsource/space-mono';
 
@@ -16,6 +18,9 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
+
+<ModeWatcher />
+<Toaster position="top-right" richColors closeButton />
 
 <div class="relative z-0 flex min-h-svh min-w-full flex-1 flex-col">
 	<Navbar user={data.user} />

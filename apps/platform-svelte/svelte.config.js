@@ -9,7 +9,8 @@ const config = {
 	kit: { 
 		adapter: adapter(),
 		alias:{
-			$constants: './src/constants'
+			$constants: './src/constants',
+			$utils: './src/utils'
 		}
 	 }
 };

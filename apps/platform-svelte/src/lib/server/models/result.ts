@@ -99,7 +99,8 @@ const ResultSchema = new Schema<IResultType>(
 );
 
 // Pre-save hook to update latestCgpi
-ResultSchema.pre("save", function (next) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ResultSchema.pre("save", function (this: any, next: (err?: Error) => void) {
   if (this.semesters && this.semesters?.length > 0) {
     this.latestCgpi = this.semesters[this.semesters.length - 1].cgpi || 0;
   }

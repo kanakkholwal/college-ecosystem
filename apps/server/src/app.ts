@@ -21,60 +21,60 @@ app.get("/", (req, res) => {
   });
 });
 
-const SERVER_IDENTITY = config.SERVER_IDENTITY;
-if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
+// const SERVER_IDENTITY = config.SERVER_IDENTITY;
+// if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
 
 
-// Middleware to handle custom CORS logic
-app.use((req: Request, res: Response, next: NextFunction): void => {
-  const origin = req.header("Origin") || req.header("Referrer") || "";
-  const identityKey = req.header("X-Identity-Key") || "";
-  const authorization = req.header("X-Authorization") || "";
+// // Middleware to handle custom CORS logic
+// app.use((req: Request, res: Response, next: NextFunction): void => {
+//   const origin = req.header("Origin") || req.header("Referrer") || "";
+//   const identityKey = req.header("X-Identity-Key") || "";
+//   const authorization = req.header("X-Authorization") || "";
 
-  // 1. Handle preflight requests first
-  if (req.method === "OPTIONS") {
-    const origin = req.headers.origin;
-    if (origin && checkCors(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type,X-Identity-Key,X-Authorization"
-      );
-      res.setHeader("Access-Control-Allow-Credentials", "true");
-    }
-    res.status(204).end(); // Respond to preflight
-    return;
-  }
+//   // 1. Handle preflight requests first
+//   if (req.method === "OPTIONS") {
+//     const origin = req.headers.origin;
+//     if (origin && checkCors(origin)) {
+//       res.setHeader("Access-Control-Allow-Origin", origin);
+//       res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
+//       res.setHeader(
+//         "Access-Control-Allow-Headers",
+//         "Content-Type,X-Identity-Key,X-Authorization"
+//       );
+//       res.setHeader("Access-Control-Allow-Credentials", "true");
+//     }
+//     res.status(204).end(); // Respond to preflight
+//     return;
+//   }
 
-  // 2. Handle regular requests
-  if (config.isDev)
-    console.log(`Origin: ${origin}, Identity Key: ${identityKey}, Authorization: ${authorization}`);
+//   // 2. Handle regular requests
+//   if (config.isDev)
+//     console.log(`Origin: ${origin}, Identity Key: ${identityKey}, Authorization: ${authorization}`);
 
-  if (!origin) {
-    console.warn("Request without origin");
-    if (authorization === SERVER_IDENTITY) {
-      next();
-    } else {
-      res.status(403).json({ error: "Missing or invalid authorization", data: null });
-    }
-    return;
-  }
+//   if (!origin) {
+//     console.warn("Request without origin");
+//     if (authorization === SERVER_IDENTITY) {
+//       next();
+//     } else {
+//       res.status(403).json({ error: "Missing or invalid authorization", data: null });
+//     }
+//     return;
+//   }
 
-  if (authorization === SERVER_IDENTITY) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type,X-Identity-Key,X-Authorization"
-    );
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    next();
-  } else {
-    console.warn(`CORS request from disallowed origin: ${origin}`);
-    res.status(403).json({ error: "CORS policy: Invalid credentials", data: null });
-  }
-});
+//   if (authorization === SERVER_IDENTITY) {
+//     res.setHeader("Access-Control-Allow-Origin", origin);
+//     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
+//     res.setHeader(
+//       "Access-Control-Allow-Headers",
+//       "Content-Type,X-Identity-Key,X-Authorization"
+//     );
+//     res.setHeader("Access-Control-Allow-Credentials", "true");
+//     next();
+//   } else {
+//     console.warn(`CORS request from disallowed origin: ${origin}`);
+//     res.status(403).json({ error: "CORS policy: Invalid credentials", data: null });
+//   }
+// });
 // Routes
 app.use("/api", httpRoutes);
 

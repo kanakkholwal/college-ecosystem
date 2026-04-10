@@ -1,9 +1,9 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
+import mongoose, { type Document, Schema, type Types } from "mongoose";
 import * as z from "zod";
 import {
   CATEGORY_TYPES,
   SUB_CATEGORY_TYPES,
-  RawCommunityPostType,
+  type RawCommunityPostType,
 } from "$lib/constants/common.community";
 
 export type CommunityPostTypeWithId = RawCommunityPostType & {

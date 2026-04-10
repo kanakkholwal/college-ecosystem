@@ -158,3 +158,7 @@ export function isValidRollNumber(rollNo: string): boolean {
     return false;
   }
 }
+
+export function isValidBatch(batch: string): boolean {
+  return /^\d{4}$/.test(batch);
+}

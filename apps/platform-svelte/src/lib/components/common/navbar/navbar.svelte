@@ -11,11 +11,12 @@
   import ProfileDropdown from '$lib/components/common/profile-dropdown.svelte';
   import ThemePopover from '$lib/components/common/theme-popover.svelte';
   import ThemeSwitcher from '$lib/components/common/theme-switcher.svelte';
+  import { getNavLinks } from '$utils/nav';
+  import Icon from '@iconify/svelte';
   import NavTabs from './nav-tabs.svelte';
 
-  import { getNavLinks } from '$lib/config/nav';
 
-  let { user } = $props();
+  let { user, logo = null } = $props();
 
   let open = $state(false);
   let search = $state('');
@@ -66,7 +67,9 @@
 	<div class="mx-auto flex h-16 max-w-[--max-app-width] items-center justify-between px-4 py-3">
 		<!-- Brand -->
 		<a href="/" class="flex items-center gap-2 hover:opacity-80">
-			<slot name="logo" />
+			{#if logo}
+				{@render logo()}
+			{/if}
 		</a>
 
 		<!-- Actions -->
@@ -75,7 +78,7 @@
 			<Button
 				variant="outline"
 				class="hidden w-56 justify-start text-muted-foreground md:flex"
-				on:click={() => (open = true)}
+				onclick={() => (open = true)}
 			>
 				<Search class="mr-2 size-4" />
 				Search...
@@ -88,7 +91,7 @@
 			{#if user}
 				<ProfileDropdown {user} />
 			{:else}
-				<Button on:click={() => goto('/auth/sign-in')}>
+				<Button onclick={() => goto('/auth/sign-in')}>
 					<LogIn class="mr-2 size-4" />
 					Log In
 				</Button>
@@ -103,7 +106,7 @@
 				<Button
 					size="sm"
 					variant={activeCategory === category ? 'default' : 'ghost'}
-					on:click={() => (activeCategory = category)}
+					onclick={() => (activeCategory = category)}
 					class="capitalize"
 				>
 					{category}
@@ -114,7 +117,7 @@
 
 	<!-- Tabs -->
 	<div class="px-4 py-2">
-		<NavTabs {filteredLinks} />
+		<NavTabs navLinks={filteredLinks} />
 	</div>
 </header>
 
@@ -131,8 +134,8 @@
 				<Command.Group heading="Pages">
 					{#each filteredSearch as item}
 						<Command.Item value={item.title} onSelect={() => navigate(item.href)}>
-							{#if item.Icon}
-								<svelte:component this={item.Icon} class="mr-2 size-4" />
+							{#if item.icon}
+								<Icon icon={item.icon} class="mr-2 size-4" />
 							{/if}
 
 							<div class="flex flex-col">

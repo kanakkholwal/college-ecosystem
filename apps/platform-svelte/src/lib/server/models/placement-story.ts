@@ -1,5 +1,5 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
-import { PlacementStoryInput } from "$lib/constants/placement-story";
+import type { PlacementStoryInput } from "$lib/constants/placement-story";
 
 // --- 2. Mongoose Interface & Schema ---
 export interface IPlacementStory extends Document, PlacementStoryInput {
