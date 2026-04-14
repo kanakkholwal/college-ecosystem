@@ -518,6 +518,67 @@ export const importFreshers = async (req: Request, res: Response) => {
   }
 };
 
+export const getResultsByBatch = async (req: Request, res: Response) => {
+  try {
+    await dbConnect();
+    const batch = Number(req.params.batch);
+    if (!Number.isFinite(batch) || batch <= 0) {
+      return res.status(400).json({ message: "Invalid batch", error: true, data: null });
+    }
+
+    const sortBy = (req.query.sortBy as string) === "latestCgpi" ? "latestCgpi" : "rank.batch";
+
+    const results = await ResultModel.aggregate([
+      { $match: { batch } },
+      {
+        $set: {
+          latestCgpi: {
+            $ifNull: [
+              { $arrayElemAt: ["$semesters.cgpi", -1] },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $merge: {
+          into: "results",
+          on: "_id",
+          whenMatched: "merge",
+          whenNotMatched: "discard",
+        },
+      },
+    ]);
+
+    const sortStage: Record<string, 1 | -1> =
+      sortBy === "latestCgpi"
+        ? { latestCgpi: -1 }
+        : { "rank.batch": 1 };
+
+    const docs = await ResultModel.find({ batch })
+      .sort(sortStage)
+      .select({ rollNo: 1, name: 1, latestCgpi: 1, "rank.batch": 1, _id: 0 })
+      .lean();
+
+    const escape = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = "rollNo,name,cgpi,rank.batch";
+    const rows = docs.map((d: any) =>
+      [d.rollNo, d.name, d.latestCgpi ?? 0, d.rank?.batch ?? 0].map(escape).join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="results-batch-${batch}.csv"`);
+    return res.status(200).send(csv);
+  } catch (err) {
+    console.error("getResultsByBatch error:", err);
+    return res.status(500).json(safeErrorBody("An error occurred", (err as Error)?.message));
+  }
+};
+
 export const createBatchUsingPrevious = async (req: Request, res: Response) => {
   try {
     await dbConnect();

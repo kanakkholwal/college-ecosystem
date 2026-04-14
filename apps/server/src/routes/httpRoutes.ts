@@ -23,6 +23,7 @@ import {
   getAbnormalResults,
   getResult,
   getResultByRollNoFromSite,
+  getResultsByBatch,
   importFreshers,
   updateResult,
 } from "../controllers/http-result";
@@ -79,6 +80,9 @@ router.post("/results/bulk/update", bulkUpdateResults);
 router.post("/results/bulk/delete", bulkDeleteResults);
 // Endpoint to get result by rollNo scraped from the website
 router.get("/results/scrape-sse", resultScrapingSSEHandler as unknown as RequestHandler);
+
+// Endpoint to get results by batch (updates latestCgpi, returns CSV)
+router.get("/results/batch/:batch", getResultsByBatch);
 
 router.post("/results/:rollNo/scrape", getResultByRollNoFromSite);
 // Endpoint to [get,add,update] result by rollNo from the database
