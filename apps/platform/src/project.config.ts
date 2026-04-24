@@ -186,7 +186,7 @@ export const appConfig = {
   },
 
   verifications: {
-    google_adsense: "ca-pub-6988693445063744",
+    google_adsense: "ca-pub-2219281381026289",
     google_analytics: "G-SC4TQQ5PCW",
   },
   // SEO-specific enhancements
