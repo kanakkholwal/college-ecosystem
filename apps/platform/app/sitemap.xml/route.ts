@@ -1,5 +1,6 @@
-import { NextRequest } from "next/server";
 import { appConfig } from "~/project.config";
+
+export const dynamic = "force-static";
 
 const APP_URL = appConfig.url;
 
@@ -19,7 +20,7 @@ const staticRoutes = [
 // Use a consistent lastmod date (e.g., build time)
 const LASTMOD = new Date().toISOString();
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   // Optionally, fetch dynamic routes here (e.g., blog posts)
   // const dynamicRoutes = await fetchDynamicRoutes();
 

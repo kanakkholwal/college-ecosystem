@@ -1,6 +1,8 @@
 import { getAllResources } from "~/lib/markdown/mdx";
 import { appConfig } from "~/project.config";
 
+export const dynamic = "force-static";
+
 export async function GET() {
   const rssXml = await generateRssXml();
   return new Response(rssXml, {

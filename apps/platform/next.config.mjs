@@ -10,6 +10,8 @@
 
 // });
 
+const isStaticExport = process.env.NEXT_STATIC_EXPORT === "true";
+
 const nextConfig = {
   reactStrictMode: true,
   crossOrigin: 'anonymous',
@@ -56,7 +58,8 @@ const nextConfig = {
     // Disable image optimization since Azure SWA does not support it natively
     unoptimized: true,
   },
-  output: 'export',
+  // Static export cannot include runtime API routes; enable only when explicitly requested.
+  output: isStaticExport ? 'export' : 'standalone',
   // Trailing slashes help with Azure SWA routing
   trailingSlash: true,
   poweredByHeader: false,
