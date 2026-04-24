@@ -27,9 +27,6 @@ export default function GlobalError({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="google-adsense-account" content="ca-pub-6988693445063744" />
-      </head>
       <body
         className={`${font.className} min-h-screen bg-background antialiased selection:bg-primary/20`}
       >
