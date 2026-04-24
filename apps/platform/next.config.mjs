@@ -53,7 +53,12 @@ const nextConfig = {
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 31536000, // 1 year
+    // Disable image optimization since Azure SWA does not support it natively
+    unoptimized: true,
   },
+  output: 'export',
+  // Trailing slashes help with Azure SWA routing
+  trailingSlash: true,
   poweredByHeader: false,
   // Webpack optimizations
   // webpack: (config, { dev, isServer }) => {
