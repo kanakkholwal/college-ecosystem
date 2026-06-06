@@ -1,21 +1,27 @@
 {
   "name": "college-ecosystem",
   "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
-    "dev:server": "cd apps/server && turbo run dev",
-    "build:server": "cd apps/server && turbo run build",
-    "dev:platform": "cd apps/platform && turbo run dev",
-    "build:platform": "cd apps/platform && turbo run build",
-    "dev:mail": "cd apps/mail-server && turbo run dev",
-    "build:mail": "cd apps/mail-server && turbo run build",
-    "dev:website": "cd apps/website && turbo run dev",
-    "build:website": "cd apps/website && turbo run build",
-    "dev:platform-svelte": "cd apps/platform-svelte && turbo run dev",
-    "build:platform-svelte": "cd apps/platform-svelte && turbo run build"
+    "dev:server": "turbo run dev --filter=server",
+    "build:server": "turbo run build --filter=server",
+    "start:server": "turbo run start --filter=server",
+    "lint:server": "turbo run lint --filter=server",
+    "dev:platform": "turbo run dev --filter=platform",
+    "build:platform": "turbo run build --filter=platform",
+    "start:platform": "turbo run start --filter=platform",
+    "dev:mail": "turbo run dev --filter=mail-server",
+    "build:mail": "turbo run build --filter=mail-server",
+    "start:mail": "turbo run start --filter=mail-server",
+    "dev:website": "turbo run dev --filter=website",
+    "build:website": "turbo run build --filter=website",
+    "start:website": "turbo run start --filter=website"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

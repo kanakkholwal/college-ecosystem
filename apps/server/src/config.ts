@@ -10,9 +10,9 @@ export const config = {
     appVersion: "1.0.0",
     // The identity key for the server
     SERVER_IDENTITY: process.env.SERVER_IDENTITY as string || "",
-    
+
     // The port on which the server will run
-        PORT: Number.parseInt(process.env.PORT || "8080"),
+    PORT: Number.parseInt(process.env.PORT || "8080"),
 
     // The URL of the database
     MONGODB_URI: process.env.MONGODB_URI || "mongodb://localhost:27017/nith",
@@ -22,9 +22,9 @@ export const config = {
 
     // The apex entry also matches every subdomain (see checkCors in utils/cors.ts),
     // so any *.nith.eu.org host is allowed without listing each one.
-    corsOrigins: ["https://nith.eu.org"],
+    corsOrigins: ["https://nith.eu.org", "https://app.nith.eu.org", "https://platform.nith.eu.org", "https://server.nith.eu.org"],
     corsEnabled: process.env.CORS_ENABLED === "true",
-    isDev : process.env.NODE_ENV !== "production",
+    isDev: process.env.NODE_ENV !== "production",
 } as const;
 
 export type Config = typeof config;

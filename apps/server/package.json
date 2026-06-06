@@ -2,9 +2,9 @@
     "name": "server",
     "version": "1.0.0",
     "description": "Node.js TypeScript Express and WebSocket application",
-    "main": "dist/index.js",
+    "main": "dist/src/index.js",
     "scripts": {
-        "start": "node dist/index.js --host 0.0.0.0 --port ${PORT:-8080}",
+        "start": "node dist/src/index.js",
         "build": "tsc",
         "dev": "tsx watch src/index.ts",
         "lint": "eslint src/** ",
