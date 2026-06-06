@@ -61,7 +61,10 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
     return;
   }
 
-  if (authorization === SERVER_IDENTITY) {
+  // Allow either a trusted browser origin (e.g. app.nith.eu.org -> server.nith.eu.org)
+  // or a server-to-server caller presenting the identity key. The origin check is
+  // essential for SSE/EventSource requests, which cannot send the X-Authorization header.
+  if (checkCors(origin) || authorization === SERVER_IDENTITY) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
     res.setHeader(

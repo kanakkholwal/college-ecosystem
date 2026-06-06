@@ -22,20 +22,16 @@ const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password";
 const baseUrl = new URL(getBaseURL());
 
 export const trustedOrigins = new Set<string>([
-  "nith.eu.org", // Trust all subdomains of nith.eu.org
-  "auth.nith.eu.org", // Trust all subdomains of nith.eu.org
-  "app.nith.eu.org", // Trust all subdomains of nith.eu.org
-  "platform.nith.eu.org", // Trust all subdomains of nith.eu.org
-  "https://nith.eu.org", // Trust only HTTPS subdomains
-  "https://auth.nith.eu.org", // Trust only HTTPS subdomains
-  "https://app.nith.eu.org", // Trust only HTTPS subdomains
-  "https://platform.nith.eu.org", // Trust only HTTPS subdomains
-  "*.nith.eu.org", // Trust all subdomains of nith.eu.org
-  "https://*.nith.eu.org", // Trust only HTTPS subdomains
-  "https://*.dev.nith.eu.org", // Trust HTTPS subdomains of dev.nith.eu.org
+  // Apex domain + every subdomain of nith.eu.org, so the platform can run on
+  // any *.nith.eu.org host (app, platform, auth, os, dev, …) without edits here.
+  "nith.eu.org",
+  "app.nith.eu.org",
+  "*.nith.eu.org",
+  "https://nith.eu.org",
+  "https://app.nith.eu.org",
+  "https://*.nith.eu.org",
   appConfig.url,
   `https://${appConfig.appDomain}`,
-  `https://*.nith.eu.org`,
 ]);
 
 export const betterAuthOptions = {

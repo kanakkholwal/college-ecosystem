@@ -20,7 +20,9 @@ export const config = {
     REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
 
 
-    corsOrigins: ["https://nith.eu.org", "https://app.nith.eu.org"],
+    // The apex entry also matches every subdomain (see checkCors in utils/cors.ts),
+    // so any *.nith.eu.org host is allowed without listing each one.
+    corsOrigins: ["https://nith.eu.org"],
     corsEnabled: process.env.CORS_ENABLED === "true",
     isDev : process.env.NODE_ENV !== "production",
 } as const;
