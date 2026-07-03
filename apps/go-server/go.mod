@@ -1,6 +1,6 @@
 module github.com/kanakkholwal/go-server
 
-go 1.24.2
+go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.11
@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
-	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 )
 
 require (
@@ -23,5 +23,5 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.60.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 )
