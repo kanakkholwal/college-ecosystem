@@ -21,6 +21,7 @@ import {
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
+  ChartPayloadItem,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
@@ -490,10 +491,10 @@ export function ChartPie<
             content={({ payload }) => (
               <ChartLegendContent
                 nameKey={nameKey.toString()}
-                payload={payload}
+                payload={payload as unknown as ChartPayloadItem[]}
+                className="-translate-y-2 flex-wrap gap-2 basis-4/5 lg:*:basis-1/4 *:justify-center"
               />
             )}
-            className="-translate-y-2 flex-wrap gap-2 basis-4/5 lg:*:basis-1/4 *:justify-center"
           />
         )}
       </PieChart>
@@ -544,7 +545,7 @@ export function RoundedPieChart<
               fontSize={12}
               fontWeight={500}
               fill="currentColor"
-              formatter={(value: number) => value.toString()}
+              formatter={(value: React.ReactNode) => String(value)}
             />
           )}
         </Pie>
@@ -553,10 +554,10 @@ export function RoundedPieChart<
             content={({ payload }) => (
               <ChartLegendContent
                 nameKey={nameKey.toString()}
-                payload={payload}
+                payload={payload as unknown as ChartPayloadItem[]}
+                className="-translate-y-2 flex-wrap gap-2 basis-4/5 lg:*:basis-1/4 *:justify-center"
               />
             )}
-            className="-translate-y-2 flex-wrap gap-2 basis-4/5 lg:*:basis-1/4 *:justify-center"
           />
         )}
       </PieChart>

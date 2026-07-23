@@ -27,10 +27,22 @@ const CommentAPI = NextComment({
 type OptionalCatchAllContext = { params: Promise<{ comment?: string[] }> };
 
 export const GET = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-  CommentAPI.GET(req, ctx as Parameters<typeof CommentAPI.GET>[1]);
+  CommentAPI.GET(
+    req as unknown as Parameters<typeof CommentAPI.GET>[0],
+    ctx as Parameters<typeof CommentAPI.GET>[1]
+  );
 export const DELETE = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-  CommentAPI.DELETE(req, ctx as Parameters<typeof CommentAPI.DELETE>[1]);
+  CommentAPI.DELETE(
+    req as unknown as Parameters<typeof CommentAPI.DELETE>[0],
+    ctx as Parameters<typeof CommentAPI.DELETE>[1]
+  );
 export const PATCH = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-  CommentAPI.PATCH(req, ctx as Parameters<typeof CommentAPI.PATCH>[1]);
+  CommentAPI.PATCH(
+    req as unknown as Parameters<typeof CommentAPI.PATCH>[0],
+    ctx as Parameters<typeof CommentAPI.PATCH>[1]
+  );
 export const POST = (req: NextRequest, ctx: OptionalCatchAllContext) =>
-  CommentAPI.POST(req, ctx as Parameters<typeof CommentAPI.POST>[1]);
+  CommentAPI.POST(
+    req as unknown as Parameters<typeof CommentAPI.POST>[0],
+    ctx as Parameters<typeof CommentAPI.POST>[1]
+  );

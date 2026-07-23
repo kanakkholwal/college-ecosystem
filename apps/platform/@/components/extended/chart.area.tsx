@@ -324,7 +324,7 @@ export function GenericAreaChart({
                 <ChartTooltipContent
                   labelFormatter={(value) => {
                     const formatter = xAxisFormatter || defaultXAxisFormatter;
-                    return formatter(new Date(value));
+                    return formatter(new Date(value as string | number));
                   }}
                   // formatter={(value: string | number) => {
                   //     if (typeof value === 'number') {

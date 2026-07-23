@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import readXlsxFile from "read-excel-file/browser";
+import { readSheet as readXlsxFile } from "read-excel-file/browser";
 
 // UI Components
 import { Badge } from "@/components/ui/badge";

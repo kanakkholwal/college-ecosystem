@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import readXlsxFile from "read-excel-file/browser";
+import { readSheet as readXlsxFile } from "read-excel-file/browser";
 
 type importStudentsPayload = {
   rollNo: string;

@@ -104,11 +104,10 @@ const ResultSchema = new Schema<IResultType>(
 // ResultSchema.index({ batch: 1, branch: 1, latestCgpi: -1 });
 
 // Pre-save hook to update latestCgpi
-ResultSchema.pre("save", function (next) {
+ResultSchema.pre("save", function () {
   if (this.semesters && this.semesters?.length > 0) {
     this.latestCgpi = this.semesters[this.semesters.length - 1].cgpi || 0;
   }
-  next();
 });
 const ResultModel =
   mongoose.models?.Result ||

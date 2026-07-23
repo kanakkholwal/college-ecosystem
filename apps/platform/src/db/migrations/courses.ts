@@ -8,6 +8,18 @@ import {
 } from "src/db/schema";
 import dbConnect from "src/lib/dbConnect";
 
+type CourseMongo = {
+  name: string;
+  code: string;
+  type: string;
+  credits: number;
+  department: string;
+  outcomes?: string[];
+  chapters: { title: string; topics?: string[]; lectures?: number | null }[];
+  books_and_references: { name: string; link: string; type: string }[];
+  prev_papers: { year: number; exam: string; link: string }[];
+};
+
 export async function mongoToPgDatabase(
   ENV: "production" | "testing" = "production"
 ) {
@@ -16,7 +28,10 @@ export async function mongoToPgDatabase(
     await dbConnect(ENV);
 
     // Fetch courses from MongoDB
-    const coursesFromMongo = await mongoose.model("Course").find().lean();
+    const coursesFromMongo = await mongoose
+      .model("Course")
+      .find()
+      .lean<CourseMongo[]>();
 
     // Start a transaction
     await db.transaction(async (trx) => {

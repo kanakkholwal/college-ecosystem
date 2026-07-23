@@ -178,12 +178,11 @@ const OutPassSchema = new Schema(
 HostelSchema.pre(
   "deleteOne",
   { document: true, query: false },
-  async function (next) {
+  async function () {
     await HostelStudentModel.updateMany(
       { hostelId: this._id },
       { hostelId: null }
     );
-    next();
   }
 );
 
@@ -197,19 +196,17 @@ HostelStudentSchema.index({ email: 1, hostelId: 1 }, { unique: true });
 HostelStudentSchema.index({ rollNumber: 1 }, { unique: true });
 
 // 🟢 Pre-save hook: Ensure gender consistency with hostel
-HostelStudentSchema.pre("save", async function (next) {
-  if (this.hostelId === null) return next();
+HostelStudentSchema.pre("save", async function () {
+  if (this.hostelId === null) return;
 
   const hostel = await HostelModel.findById(this.hostelId);
   if (!hostel) {
-    return next(new Error("Hostel does not exist"));
+    throw new Error("Hostel does not exist");
   }
 
   // if (this.gender !== hostel.gender) {
-  //   return next(new Error("Student gender does not match hostel gender"));
+  //   throw new Error("Student gender does not match hostel gender");
   // }
-
-  next();
 });
 // 🟢 Pre-save hook: Ensure userId is updated
 

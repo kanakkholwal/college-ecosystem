@@ -119,7 +119,7 @@ export function DateTimePicker({
               mode="single"
               selected={date}
               onSelect={handleDateSelect}
-              initialFocus
+              autoFocus
               className="p-0"
             />
           </div>
