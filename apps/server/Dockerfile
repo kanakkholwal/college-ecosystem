@@ -11,7 +11,6 @@ COPY package.json bun.lock ./
 COPY apps/platform/package.json ./apps/platform/
 COPY apps/server/package.json ./apps/server/
 COPY apps/mail-server/package.json ./apps/mail-server/
-COPY apps/website/package.json ./apps/website/
 RUN bun install --frozen-lockfile --filter server
 
 FROM oven/bun:1-alpine AS builder

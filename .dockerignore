@@ -15,13 +15,10 @@
 **/.env.*
 !**/.env.example
 
-# Not a workspace member (no package.json), so nothing needs it.
+# Go rewrite of apps/server, not deployed yet. It has no package.json so it is
+# not a bun workspace member either — nothing in these images references it.
+# When it does ship it needs its own Dockerfile and workflow, not this context.
 apps/go-server
-
-# website is never containerised (85M of source), but bun still needs its
-# manifest to resolve the `apps/*` workspace graph.
-apps/website/*
-!apps/website/package.json
 
 **/coverage
 **/*.log
