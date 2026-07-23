@@ -1,7 +1,9 @@
+"use client";
+
 import { AuthActionButton } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import { Comments, CommentsProps } from "@fuma-comment/react";
-import { Session } from "~/auth";
+import type { Session } from "~/auth";
 import { ButtonProps } from "../ui/button";
 
 interface CommentSectionProps extends Omit<CommentsProps, "auth"> {
