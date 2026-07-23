@@ -477,7 +477,10 @@ export function ChartPie<
               fontSize={12}
               formatter={(label: React.ReactNode) => {
                 const key = label as keyof typeof config;
-                return config[key]?.label;
+                const value = config[key]?.label;
+                return typeof value === "string" || typeof value === "number"
+                  ? value
+                  : String(label);
               }}
             />
           )}
