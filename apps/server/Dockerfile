@@ -15,14 +15,17 @@ RUN bun install --frozen-lockfile --filter server
 
 FROM oven/bun:1-alpine AS builder
 WORKDIR /repo
-COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/apps/server/node_modules ./apps/server/node_modules
-COPY package.json bun.lock ./
+# The deps stage holds nothing but manifests and the installed tree, so copy it
+# wholesale: bun hoists to the root, and apps/*/node_modules only exists when a
+# version conflict forces it.
+COPY --from=deps /repo ./
 COPY apps/server ./apps/server
 WORKDIR /repo/apps/server
 RUN bun run build
 
-FROM oven/bun:1-alpine AS runner
+# Node, not bun: the start script shells out to `node`, which the bun images do
+# not ship, and socket.io is better exercised on Node.
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \
@@ -37,4 +40,6 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 EXPOSE 8080
-CMD ["bun", "run", "start"]
+# Called directly rather than via `bun run start` so there is no package-manager
+# process sitting between the container and the signal handlers.
+CMD ["node", "dist/src/index.js"]

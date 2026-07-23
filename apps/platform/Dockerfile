@@ -16,9 +16,10 @@ RUN bun install --frozen-lockfile --filter platform
 
 FROM oven/bun:1 AS builder
 WORKDIR /repo
-COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/apps/platform/node_modules ./apps/platform/node_modules
-COPY package.json bun.lock ./
+# The deps stage holds nothing but manifests and the installed tree, so copy it
+# wholesale: bun hoists to the root, and apps/*/node_modules only exists when a
+# version conflict forces it.
+COPY --from=deps /repo ./
 COPY apps/platform ./apps/platform
 
 # NEXT_PUBLIC_* is inlined into the client bundle, so it has to be real here.
