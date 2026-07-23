@@ -50,7 +50,9 @@ export const extractVisitorCount = cache(async (): Promise<number> => {
     "https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge";
 
   try {
-    const response = await fetch(url);
+    // react `cache` only dedupes within one request; without revalidate this
+    // fetch defaults to no-store and hits the badge service on every render.
+    const response = await fetch(url, { next: { revalidate: 3600 } });
     const svgText = await response.text();
 
     // Looks for text elements containing only digits, ignoring attributes
