@@ -11,8 +11,14 @@ import {
   isValidRollNumber,
 } from "~/constants/core.departments";
 import { db } from "~/db/connect";
-import { accounts, sessions, users, verifications } from "~/db/schema";
-import { appConfig, AUTH_COOKIE_PREFIX } from "~/project.config";
+import {
+  accounts,
+  rateLimits,
+  sessions,
+  users,
+  verifications,
+} from "~/db/schema";
+import { appConfig, AUTH_COOKIE_PREFIX, orgConfig } from "~/project.config";
 import { getBaseURL } from "~/utils/env";
 import { mailFetch, serverFetch } from "../lib/fetch-server";
 
@@ -27,6 +33,19 @@ if (isProd && !process.env.BETTER_AUTH_SECRET) {
   // Better Auth silently falls back to a dev secret, which invalidates every
   // session on the next deploy. Fail the boot instead.
   throw new Error("BETTER_AUTH_SECRET is required in production");
+}
+
+export const ORG_EMAIL_REQUIRED = `Use your ${orgConfig.mailSuffix} account to sign in`;
+
+/** Case-insensitive: Google may return the address with different casing than we store. */
+export function isOrgEmail(email: string): boolean {
+  return emailSchema.safeParse(email.trim().toLowerCase()).success;
+}
+
+function assertOrgEmail(email: string): void {
+  if (!isOrgEmail(email)) {
+    throw new APIError("NOT_ACCEPTABLE", { message: ORG_EMAIL_REQUIRED });
+  }
 }
 
 export const trustedOrigins = new Set<string>([
@@ -52,19 +71,31 @@ export const betterAuthOptions = {
       sessions,
       accounts,
       verifications,
+      rateLimits,
     },
     //if all of them are just using plural form, you can just pass the option below
     usePlural: true,
   }),
   databaseHooks: {
+    session: {
+      create: {
+        // create.before on users only guards new accounts; this closes the door
+        // on anything already in the table with a non-org email. Reads the user
+        // rather than ctx.context.session, which is still null while signing in.
+        before: async (session, ctx) => {
+          const user = await ctx?.context.internalAdapter.findUserById(
+            session.userId
+          );
+          if (user && !isOrgEmail(user.email)) {
+            throw new APIError("FORBIDDEN", { message: ORG_EMAIL_REQUIRED });
+          }
+        },
+      },
+    },
     user: {
       create: {
         before: async (user) => {
-          if (!emailSchema.safeParse(user.email).success) {
-            throw new APIError("NOT_ACCEPTABLE", {
-              message: "Invalid email format",
-            });
-          }
+          assertOrgEmail(user.email);
           const info = await getUserInfo(user);
           console.log("[CREATING_USER]:", info);
           return {
@@ -191,7 +222,16 @@ export const betterAuthOptions = {
     google: {
       clientId: process.env.GOOGLE_ID,
       clientSecret: process.env.GOOGLE_SECRET,
+      // Filters Google's account chooser to the college domain. It is only a
+      // hint — the profile is still verified below.
+      hd: orgConfig.domain,
       mapProfileToUser: async (profile) => {
+        assertOrgEmail(profile.email);
+        if (!profile.email_verified) {
+          throw new APIError("NOT_ACCEPTABLE", {
+            message: "Your Google account email is not verified",
+          });
+        }
         return {
           image: profile.picture,
         };

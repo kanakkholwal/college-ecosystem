@@ -1,6 +1,7 @@
 export {
   accounts,
   departmentNameEnum,
+  rateLimits,
   sessions,
   userGenderEnum,
   userRolesEnum,

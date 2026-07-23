@@ -1,5 +1,13 @@
 import { InferSelectModel } from "drizzle-orm";
-import { boolean, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 import { DEPARTMENTS } from "~/constants/core.departments";
 
@@ -107,4 +115,12 @@ export const emailVerifications = pgTable("email_verifications", {
   token: text("token").notNull().unique(),
   // The token is a unique identifier for the email verification process
   createdAt: timestamp("createdAt").notNull(),
+});
+
+/** Backs `rateLimit.storage: "database"` — memory storage is per-lambda and does nothing on serverless. */
+export const rateLimits = pgTable("rateLimits", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("lastRequest", { mode: "number" }).notNull(),
 });

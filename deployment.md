@@ -82,11 +82,11 @@ Build Step** command and treats **exit 1 as "build"** and **exit 0 as "skip"**.
 In Vercel → Project → *Settings* → *Git*, set **Root Directory** and
 **Ignored Build Step** (choose "Run my Bash script"):
 
-| Project       | Root Directory      | Ignored Build Step                            |
-| ------------- | ------------------- | --------------------------------------------- |
-| platform      | `apps/platform`     | `bash ../../scripts/vercel/ignore-platform.sh` |
-| server        | `apps/server`       | `bash ../../scripts/vercel/ignore-server.sh`   |
-| mail-server   | `apps/mail-server`  | `bash ../../scripts/vercel/ignore-mail-server.sh` |
+| Project     | Root Directory     | Ignored Build Step                                |
+| ----------- | ------------------ | ------------------------------------------------- |
+| platform    | `apps/platform`    | `bash ../../scripts/vercel/ignore-platform.sh`    |
+| server      | `apps/server`      | `bash ../../scripts/vercel/ignore-server.sh`      |
+| mail-server | `apps/mail-server` | `bash ../../scripts/vercel/ignore-mail-server.sh` |
 
 Also enable *Include source files outside of the Root Directory* so the scripts
 and the root lockfile are present in the build container.
@@ -119,6 +119,11 @@ breaks twice over: `dist/` is gitignored so it isn't in the clone, and a
 It now uses `apps/server/api/index.ts`, a one-line re-export of the Express app.
 `@vercel/node` compiles that from TypeScript source, and `rewrites` sends every
 path to it. `bun run build` still runs as a typecheck gate.
+
+`outputDirectory` points at an intentionally empty `public/`. Vercel demands the
+directory exist once a Build Command is set, and it must **not** be `dist/`:
+static files are matched before `rewrites`, so the compiled server and its
+sourcemaps would be downloadable at `/src/app.js`.
 
 Required Vercel project settings for `ce-server`:
 

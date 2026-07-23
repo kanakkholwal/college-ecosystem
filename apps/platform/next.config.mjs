@@ -22,22 +22,7 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Reduce bundle size
 
-  // optimizePackageImports: [
-  //   '@radix-ui/react-icons',
-  //   'lucide-react',
-  //   'react-icons',
-  //   'framer-motion'
-  // ],
-  // turbo: {
-  //   rules: {
-  //     '*.svg': {
-  //       loaders: ['@svgr/webpack'],
-  //       as: '*.js',
-  //     },
-  //   },
-  // },
 
   logging: process.env.NODE_ENV !== "production"
     ? false
@@ -63,43 +48,21 @@ const nextConfig = {
   // Trailing slashes help with Azure SWA routing
   trailingSlash: true,
   poweredByHeader: false,
-  // Webpack optimizations
-  // webpack: (config, { dev, isServer }) => {
-  //   if (!dev && !isServer) {
-  //     config.optimization.splitChunks = {
-  //       chunks: 'all',
-  //       cacheGroups: {
-  //         vendor: {
-  //           test: /[\\/]node_modules[\\/]/,
-  //           name: 'vendors',
-  //           chunks: 'all',
-  //         },
-  //         common: {
-  //           name: 'common',
-  //           minChunks: 2,
-  //           chunks: 'all',
-  //           enforce: true,
-  //         },
-  //       },
-  //     };
-  //   }
-  //   return config;
-  // },
-  // async rewrites() {
-  //   return [
-  //     {
-  //       source: "/ingest/static/:path*",
-  //       destination: "https://us-assets.i.posthog.com/static/:path*",
+  // Reduce bundle size
+
+  // optimizePackageImports: [
+  //   '@radix-ui/react-icons',
+  //   'lucide-react',
+  //   'react-icons',
+  //   'framer-motion'
+  // ],
+  // turbo: {
+  //   rules: {
+  //     '*.svg': {
+  //       loaders: ['@svgr/webpack'],
+  //       as: '*.js',
   //     },
-  //     {
-  //       source: "/ingest/:path*",
-  //       destination: "https://us.i.posthog.com/:path*",
-  //     },
-  //     {
-  //       source: "/ingest/decide",
-  //       destination: "https://us.i.posthog.com/decide",
-  //     },
-  //   ];
+  //   },
   // },
 };
 

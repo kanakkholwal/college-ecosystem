@@ -73,6 +73,15 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     description: `Only ${orgConfig.mailSuffix} addresses can be used here.`,
     field: "email",
   },
+  USE_YOUR_NITHACIN_ACCOUNT_TO_SIGN_IN: {
+    title: `Use your ${orgConfig.shortName} email`,
+    description: `Only ${orgConfig.mailSuffix} addresses can be used here. Pick that account on the Google screen.`,
+    field: "email",
+  },
+  YOUR_GOOGLE_ACCOUNT_EMAIL_IS_NOT_VERIFIED: {
+    title: "Your Google account email isn't verified",
+    description: "Verify it with Google, then try again.",
+  },
   EMAIL_MISMATCH: {
     title: "This link was issued for a different email",
     description: "Request a new link from the account you're signing in with.",
