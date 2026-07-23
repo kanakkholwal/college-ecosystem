@@ -4,8 +4,12 @@
 # bun walks up to the workspace root on install, so the root bun.lock is the only
 # lockfile it keeps current; the per-app ones drift and fail --frozen-lockfile.
 
-FROM oven/bun:1 AS deps
+# Node base (not oven/bun): `next build` must run on the Node runtime. Under Bun,
+# mongoose v9 calls node:v8 isBuildingSnapshot, which Bun doesn't implement, and
+# the page-data workers crash. Bun is installed for the workspace install only.
+FROM node:22-slim AS deps
 WORKDIR /repo
+RUN npm install -g bun@1
 # Manifests only, so this layer is cached until a dependency actually changes.
 # Every workspace member is needed for bun to resolve the `apps/*` graph.
 COPY package.json bun.lock ./
@@ -14,7 +18,7 @@ COPY apps/server/package.json ./apps/server/
 COPY apps/mail-server/package.json ./apps/mail-server/
 RUN bun install --frozen-lockfile --filter platform
 
-FROM oven/bun:1 AS builder
+FROM node:22-slim AS builder
 WORKDIR /repo
 # The deps stage holds nothing but manifests and the installed tree, so copy it
 # wholesale: bun hoists to the root, and apps/*/node_modules only exists when a
@@ -43,7 +47,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_STATIC_EXPORT=false
 ENV NODE_ENV=production
 WORKDIR /repo/apps/platform
-RUN bun run build
+# npm run (not bun run) so the next binary's `#!/usr/bin/env node` shebang runs
+# on Node, not Bun. Deps are already installed; the builder never needs Bun.
+RUN npm run build
 
 FROM node:22-slim AS runner
 WORKDIR /app
