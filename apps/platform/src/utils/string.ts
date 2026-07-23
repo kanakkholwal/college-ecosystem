@@ -54,9 +54,9 @@ export function marketwiseLink(link: string, options: UTMParams = {}) {
 
   const {
     utm_medium = "app",
-    utm_campaign = "/resources",
+    utm_campaign = "/",
     utm_source = appUrl.hostname,
-    utm_path = "/resources",
+    utm_path = "/",
   } = options;
 
   const campaignPath = new URL(utm_path, appUrl).toString();

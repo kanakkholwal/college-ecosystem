@@ -1,7 +1,6 @@
 import {
   PiBankDuotone,
   PiBedDuotone,
-  PiBookOpenTextDuotone,
   PiBooksDuotone,
   PiBuildingsDuotone,
   PiCalendarCheckDuotone,
@@ -69,14 +68,6 @@ export type rawLinkType = {
 };
 // --- Quick Links (Dashboard Home) ---
 export const quick_links: RouterCardLink[] = [
-  {
-    href: "/resources",
-    title: "Resources",
-    description: "Explore articles, guides, and past archives.",
-    allowed_roles: ["*"],
-    Icon: PiBookOpenTextDuotone,
-    category: "general",
-  },
   {
     href: "/benefits",
     title: "Student Benefits",

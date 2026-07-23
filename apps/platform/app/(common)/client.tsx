@@ -19,7 +19,6 @@ import {
   BarChart2,
   BarChart3,
   Bell,
-  BookOpen,
   CalendarDays,
   CheckCircle2,
   FileText,
@@ -53,7 +52,6 @@ const itemVariants = {
 // --- DATA ---
 const popular_features = [
   { name: "Results", icon: FileText, href: "/results" },
-  { name: "Resources", icon: BookOpen, href: "/resources" },
   { name: "Community", icon: Users, href: "/community" },
 ];
 
