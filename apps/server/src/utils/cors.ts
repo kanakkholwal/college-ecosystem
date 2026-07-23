@@ -1,9 +1,10 @@
 import { config } from "../config";
 
 export function checkCors(origin: string | undefined): boolean {
+    // return true;
+    if (config.isDev) return true;
     if (!origin) return false;
-    if(config.isDev) return true;
-
+    
     for (const allowedOrigin of config.corsOrigins) {
         // Exact match
         if (origin === allowedOrigin) return true;

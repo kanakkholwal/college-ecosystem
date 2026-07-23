@@ -111,7 +111,7 @@ export function IntroSection({
           <StaggerChildrenItem>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground text-balance">
               The{" "}
-              <span className="bg-linear-to-l from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90% bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-sky-400 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
                 Operating System
               </span>{" "}
               <br className="hidden lg:block" />
@@ -313,7 +313,7 @@ export function FeatureSection() {
           <div className="text-center max-w-2xl mx-auto space-y-4">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
               Built for your entire <br />
-              <span className="bg-linear-to-l from-indigo-500 from-10% via-sky-500 via-30% to-emerald-500 to-90% bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-sky-400 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
                 campus life.
               </span>
             </h2>

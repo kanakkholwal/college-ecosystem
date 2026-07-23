@@ -4,10 +4,15 @@ import Navbar from "@/components/common/app-navbar";
 import { AppSidebar } from "@/components/common/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Metadata, ResolvingMetadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Session } from "~/auth";
 import { getSession } from "~/auth/server";
 import { ALLOWED_ROLES } from "~/constants";
+import {
+  checkAuthorization,
+  SIGN_IN_PATH,
+  type DashboardRoute,
+} from "~/middleware.setting";
 import { changeCase } from "~/utils/string";
 
 interface DashboardLayoutProps {
@@ -39,7 +44,23 @@ export default async function DashboardLayout({
     return notFound();
   }
 
-  const session = (await getSession()) as Session;
+  const session = (await getSession()) as Session | null;
+  // Authoritative check: the proxy lets requests through when it cannot read the session.
+  if (!session) {
+    redirect(`${SIGN_IN_PATH}?next=${encodeURIComponent(`/${moderator}`)}`);
+  }
+  const authCheck = checkAuthorization(moderator as DashboardRoute, session);
+  if (!authCheck.authorized) {
+    // checkAuthorization can hand back a bare role name ("student"), so normalise it.
+    const destination = authCheck.redirect?.destination;
+    redirect(
+      destination
+        ? destination.startsWith("/")
+          ? destination
+          : `/${destination}`
+        : `/unauthorized?target=${encodeURIComponent(`/${moderator}`)}`
+    );
+  }
 
   return (
     <SidebarProvider>

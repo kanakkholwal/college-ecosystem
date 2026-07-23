@@ -1,5 +1,8 @@
 import { getBaseURL } from "./utils/env";
 
+/** Lives here so the edge proxy can read auth cookies without importing the auth (and DB) module. */
+export const AUTH_COOKIE_PREFIX = "nith";
+
 // Project configuration for the College Ecosystem platform
 export const orgConfig = {
   name: "National Institute of Technology, Hamirpur",

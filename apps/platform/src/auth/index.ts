@@ -12,7 +12,7 @@ import {
 } from "~/constants/core.departments";
 import { db } from "~/db/connect";
 import { accounts, sessions, users, verifications } from "~/db/schema";
-import { appConfig } from "~/project.config";
+import { appConfig, AUTH_COOKIE_PREFIX } from "~/project.config";
 import { getBaseURL } from "~/utils/env";
 import { mailFetch, serverFetch } from "../lib/fetch-server";
 
@@ -181,7 +181,7 @@ export const betterAuthOptions = {
       enabled: process.env.NODE_ENV === "production",
       domain: appConfig.appDomain,
     },
-    cookiePrefix: "nith",
+    cookiePrefix: AUTH_COOKIE_PREFIX,
   },
   trustedOrigins: Array.from(trustedOrigins),
   user: {
@@ -228,6 +228,12 @@ export const betterAuthOptions = {
   },
   session: {
     expiresIn: 604800, // 7 days
+    // Lets the edge proxy read the session from a signed cookie; without it the
+    // proxy has to self-fetch this app's own origin, which fails behind the CDN.
+    cookieCache: {
+      enabled: true,
+      maxAge: 60,
+    },
   },
   account: {
     encryptOAuthTokens: true, // Encrypt OAuth tokens before storing them in the database

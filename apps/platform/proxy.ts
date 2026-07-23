@@ -1,7 +1,8 @@
 import { betterFetch } from "@better-fetch/fetch";
+import { getCookieCache, getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { Session } from "~/auth";
+import type { Session } from "~/auth";
 import { IN_CHARGES_EMAILS } from "~/constants/hostel_n_outpass";
 import {
   auth_SUBDOMAIN_TO_PATH_REWRITES_Map,
@@ -15,13 +16,48 @@ import {
   SUBDOMAIN_TO_PATH_REWRITES_Map,
   UN_PROTECTED_API_ROUTES,
 } from "~/middleware.setting";
-import { appConfig } from "~/project.config";
+import { AUTH_COOKIE_PREFIX } from "~/project.config";
 
 // Middleware to handle authentication and authorization for the platform
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [/^https?:\/\/(.+\.)?nith\.eu.org$/] // Regex for subdomains of nith.eu.org
     : ["http://localhost:3000", "http://localhost:3001"]; // Adjust for local development
+
+type ResolvedSession = { session: Session | null; unresolved: boolean };
+
+/**
+ * Reads the session at the edge without assuming the lookup can succeed.
+ * `unresolved: true` means "we could not tell" — never treat it as signed out.
+ */
+async function resolveSession(request: NextRequest): Promise<ResolvedSession> {
+  const sessionToken = getSessionCookie(request, {
+    cookiePrefix: AUTH_COOKIE_PREFIX,
+  });
+  // No session cookie at all is the only proof of a signed-out visitor.
+  if (!sessionToken) return { session: null, unresolved: false };
+
+  const cached = await getCookieCache<Session & { updatedAt: number }>(request, {
+    cookiePrefix: AUTH_COOKIE_PREFIX,
+    secret: process.env.BETTER_AUTH_SECRET,
+    isSecure: request.nextUrl.protocol === "https:",
+  }).catch(() => null);
+  if (cached?.user) return { session: cached, unresolved: false };
+
+  const { data, error } = await betterFetch<Session>("/api/auth/get-session", {
+    baseURL: request.nextUrl.origin,
+    headers: {
+      //get the cookie from the request
+      cookie: request.headers.get("cookie") || "",
+    },
+  });
+  if (error) {
+    // Self-fetching our own origin fails behind the CDN in front of the app.
+    console.error("[proxy] session lookup failed", error.status, error.message);
+    return { session: null, unresolved: true };
+  }
+  return { session: data, unresolved: false };
+}
 
 export async function proxy(request: NextRequest) {
   const url = new URL(request.url);
@@ -57,17 +93,8 @@ export async function proxy(request: NextRequest) {
     isRouteAllowed(pathname, route.pattern)
   );
 
-  // if the request is for the sign-in page, allow it to pass through
-  const { data: session } = await betterFetch<Session>(
-    "/api/auth/get-session",
-    {
-      baseURL: request.nextUrl.origin,
-      headers: {
-        //get the cookie from the request
-        cookie: request.headers.get("cookie") || "",
-      },
-    }
-  );
+  const { session, unresolved: sessionUnresolved } =
+    await resolveSession(request);
   if (subdomainRestricted && session) {
     if (
       subdomainRestricted &&
@@ -198,9 +225,14 @@ export async function proxy(request: NextRequest) {
       }
       return NextResponse.next();
     }
+    if (sessionUnresolved) {
+      // Cookie says signed in but we could not read the session here — let the
+      // server component make the authoritative call instead of bouncing to login.
+      return NextResponse.next();
+    }
     // if the user is not authenticated and tries to access a private route, redirect them to the sign-in page
     url.pathname = SIGN_IN_PATH;
-    url.searchParams.set("next", request.url);
+    url.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
   if (session) {
@@ -221,8 +253,12 @@ export async function proxy(request: NextRequest) {
     const nextRedirect = request.nextUrl.searchParams.get("redirect");
 
     if (targetUrl && nextRedirect !== "false" && session) {
-      const targetUrlObj = new URL(targetUrl, appConfig.url);
-      return NextResponse.redirect(targetUrlObj);
+      // Resolve against the host being browsed, not appConfig.url — the app is
+      // served from several domains and `next` is attacker-controllable.
+      const targetUrlObj = new URL(targetUrl, request.nextUrl.origin);
+      if (targetUrlObj.origin === request.nextUrl.origin) {
+        return NextResponse.redirect(targetUrlObj);
+      }
     }
   }
 
