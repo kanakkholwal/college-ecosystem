@@ -107,3 +107,27 @@ clone with no parent commit), they build rather than silently skip.
 
 > The `cd-*-vercel.yml` GitHub Actions workflows also deploy via the Vercel CLI.
 > Disable them once Git Integration is live, or the same commit deploys twice.
+
+### The Express server (`apps/server`) on Git Integration
+
+The old `apps/server/vercel.json` used a legacy `builds` array pointing at
+`dist/src/index.js`. That only worked from GitHub Actions, which ran
+`bun run build` *before* `vercel build --prebuilt`. Under Git Integration it
+breaks twice over: `dist/` is gitignored so it isn't in the clone, and a
+`builds` array makes Vercel **ignore the Build Command** that would recreate it.
+
+It now uses `apps/server/api/index.ts`, a one-line re-export of the Express app.
+`@vercel/node` compiles that from TypeScript source, and `rewrites` sends every
+path to it. `bun run build` still runs as a typecheck gate.
+
+Required Vercel project settings for `ce-server`:
+
+- Root Directory: `apps/server`
+- Framework Preset: **Other** (leave Build/Install Command blank — `vercel.json` sets them)
+- Every var the server reads must exist in Vercel, `SERVER_IDENTITY` especially:
+  `apps/server/src/app.ts` throws at import time without it, which surfaces as a
+  function crash rather than a build failure.
+
+> `src/index.ts` (`createServer` + `listen`) is the container/Cloud Run entrypoint
+> and is unused on Vercel. Serverless functions can't hold WebSocket connections —
+> keep the Docker/Cloud Run deploy for anything that needs them.

@@ -21,17 +21,24 @@ const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password";
 
 const baseUrl = new URL(getBaseURL());
 
+const isProd = process.env.NODE_ENV === "production";
+
+if (isProd && !process.env.BETTER_AUTH_SECRET) {
+  // Better Auth silently falls back to a dev secret, which invalidates every
+  // session on the next deploy. Fail the boot instead.
+  throw new Error("BETTER_AUTH_SECRET is required in production");
+}
+
 export const trustedOrigins = new Set<string>([
-  // Apex domain + every subdomain of nith.eu.org, so the platform can run on
-  // any *.nith.eu.org host (app, platform, auth, os, dev, …) without edits here.
-  "nith.eu.org",
-  "app.nith.eu.org",
-  "*.nith.eu.org",
+  // Apex + every subdomain of nith.eu.org, so the platform can run on any
+  // *.nith.eu.org host (app, platform, auth, os, dev, …) without edits here.
+  // Scheme-qualified on purpose: bare hostnames are not a documented form, and
+  // the https:// prefix stops the pattern from matching plaintext origins.
   "https://nith.eu.org",
-  "https://app.nith.eu.org",
   "https://*.nith.eu.org",
   appConfig.url,
   `https://${appConfig.appDomain}`,
+  ...(isProd ? [] : ["http://localhost:3000", "http://localhost:3001"]),
 ]);
 
 export const betterAuthOptions = {
@@ -80,13 +87,23 @@ export const betterAuthOptions = {
       // }
     },
   },
+  // throw:false lets OAuth callback failures land on errorURL instead of
+  // surfacing as a raw 500 — the create-user hook below throws for students
+  // with no result record, and that has to be a readable page.
   onAPIError: {
-    throw: true,
-    onError: (error, ctx) => {
-      console.log("[AUTH_ERROR]:", error);
-      console.log("[AUTH_ERROR_CONTEXT]:", ctx);
+    throw: false,
+    errorURL: "/auth/error",
+    onError: (error) => {
+      console.error("[AUTH_ERROR]:", error);
     },
-    // errorURL: "/auth/error",
+  },
+  // Memory storage is per-instance, so it does nothing on serverless; the
+  // database store is shared across every lambda.
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    storage: "database",
   },
   emailAndPassword: {
     enabled: true,
@@ -129,6 +146,11 @@ export const betterAuthOptions = {
   },
   emailVerification: {
     sendOnSignUp: true,
+    // requireEmailVerification blocks sign-in until verified, so a user who lost
+    // the first mail needs sign-in to reissue one, and the link itself to log
+    // them in — otherwise verifying just dumps them back on the login form.
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       const verification_url = new URL(getBaseURL());
       verification_url.pathname = VERIFY_EMAIL_PATH_PREFIX;
@@ -147,7 +169,7 @@ export const betterAuthOptions = {
               platform_name: appConfig.name,
               name: user.name,
               email: user.email,
-              verification_url: baseUrl.toString(),
+              verification_url: verification_url.toString(),
             },
           }),
         });
@@ -240,7 +262,10 @@ export const betterAuthOptions = {
 
     accountLinking: {
       enabled: true,
-      trustedProviders: ["google", "github", "email-password"],
+      // Trusted providers link without confirming email ownership, so only
+      // Google is listed — it is the sole configured provider, and adding
+      // email-password here would make it an account-takeover path.
+      trustedProviders: ["google"],
       allowDifferentEmails: false,
     },
   },

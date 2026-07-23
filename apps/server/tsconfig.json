@@ -13,6 +13,7 @@
   },
   "include": [
     "./src/**/*",
+    "./api/**/*",
     "tsconfig.json",
     "package.json"
   ],

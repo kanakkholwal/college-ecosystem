@@ -1,15 +1,16 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "dist/src/index.js",
-            "use": "@vercel/node"
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "installCommand": "bun install",
+    "buildCommand": "bun run build",
+    "functions": {
+        "api/index.ts": {
+            "maxDuration": 30
         }
-    ],
-    "routes": [
+    },
+    "rewrites": [
         {
-            "src": "/(.*)",
-            "dest": "dist/src/index.js"
+            "source": "/(.*)",
+            "destination": "/api"
         }
     ]
 }
