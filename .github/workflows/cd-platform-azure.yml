@@ -1,0 +1,76 @@
+name: Azure CD - Platform
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/platform/**"
+      - ".github/workflows/cd-platform-azure.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: azure-platform
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}/platform
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # required for Azure OIDC login
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/platform
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          # Without this every run rebuilds node_modules and next from scratch.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_BASE_SERVER_URL=${{ vars.NEXT_PUBLIC_BASE_SERVER_URL }}
+            NEXT_PUBLIC_BASE_MAIL_SERVER_URL=${{ vars.NEXT_PUBLIC_BASE_MAIL_SERVER_URL }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Image only. Env vars and secrets are configured once on the container app
+      # itself (see deployment.md) so a deploy can never blank them.
+      - name: Roll out new revision
+        run: |
+          az containerapp update \
+            --name ce-platform \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Verify revision is healthy
+        run: |
+          az containerapp revision list \
+            --name ce-platform \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --query "[?properties.active].{name:name,state:properties.runningState}" \
+            --output table

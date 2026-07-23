@@ -1,50 +1,35 @@
-# Stage 1: Build
+# syntax=docker/dockerfile:1
+# Build context is apps/server.
+
 FROM oven/bun:1-alpine AS builder
-
-# Set working directory
 WORKDIR /ce-server
-
-# Install dependencies first for caching
-COPY package.json ./
-RUN bun install
-# Copy source files and build TypeScript
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 COPY . .
 RUN bun run build
 
-# Stage 2: Production
-FROM oven/bun:1-alpine
+# Reinstall without dev dependencies so tsc/eslint/tsx don't ship to production.
+FROM oven/bun:1-alpine AS prod-deps
+WORKDIR /ce-server
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
 
-# Set working directory
+FROM oven/bun:1-alpine AS runner
 WORKDIR /ce-server
 
-# Copy only necessary files for production
+ENV NODE_ENV=production \
+    PORT=8080 \
+    HOST=0.0.0.0
+
 COPY package.json ./
-COPY --from=builder /ce-server/node_modules ./node_modules
+COPY --from=prod-deps /ce-server/node_modules ./node_modules
 COPY --from=builder /ce-server/dist ./dist
 
-# Set environment to production
-ENV NODE_ENV=production
-ENV PORT=8080
-ENV HOST=0.0.0.0
-# ENV REDIS_URL=${REDIS_URL}
-# ENV MONGODB_URI=${MONGODB_URI}
-# ENV IDENTITY_KEY=${IDENTITY_KEY}
-
-# Expose port (match your app's port)
-EXPOSE 8080 
-
-# Non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
-# Health check
-# HEALTHCHECK --interval=30s --timeout=5s --start-period=5s \
-#   CMD curl --fail http://localhost:8080 || exit 1
-
-# Command to run the application
+EXPOSE 8080
 CMD ["bun", "run", "start"]
 
-# Build command
-#  docker build --tag college-ecosystem-server:latest .
-# Run command
-#  docker run -p 8080:8080 college-ecosystem-server:latest
+# docker build -t ce-server .
+# docker run -p 8080:8080 --env-file .env ce-server

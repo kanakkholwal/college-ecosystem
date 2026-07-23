@@ -5,3 +5,10 @@ npm-debug.log
 README.md
 .next
 .git
+.turbo
+.vercel
+# Keep host .env out of the image: Container Apps injects real values at runtime,
+# and .env.production would otherwise force NEXT_STATIC_EXPORT=true.
+.env
+.env.*
+!.env.example
