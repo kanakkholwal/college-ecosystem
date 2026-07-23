@@ -1,35 +1,41 @@
 # syntax=docker/dockerfile:1
-# Build context is apps/server.
+# Build context is the REPO ROOT, not apps/server.
+#   docker build -f apps/server/Dockerfile -t ce-server .
+# bun walks up to the workspace root on install, so the root bun.lock is the only
+# lockfile it keeps current; the per-app ones drift and fail --frozen-lockfile.
+
+FROM oven/bun:1-alpine AS deps
+WORKDIR /repo
+# Every workspace member is needed for bun to resolve the `apps/*` graph.
+COPY package.json bun.lock ./
+COPY apps/platform/package.json ./apps/platform/
+COPY apps/server/package.json ./apps/server/
+COPY apps/mail-server/package.json ./apps/mail-server/
+COPY apps/website/package.json ./apps/website/
+RUN bun install --frozen-lockfile --filter server
 
 FROM oven/bun:1-alpine AS builder
-WORKDIR /ce-server
+WORKDIR /repo
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/apps/server/node_modules ./apps/server/node_modules
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-COPY . .
+COPY apps/server ./apps/server
+WORKDIR /repo/apps/server
 RUN bun run build
 
-# Reinstall without dev dependencies so tsc/eslint/tsx don't ship to production.
-FROM oven/bun:1-alpine AS prod-deps
-WORKDIR /ce-server
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
-
 FROM oven/bun:1-alpine AS runner
-WORKDIR /ce-server
+WORKDIR /app
 
 ENV NODE_ENV=production \
     PORT=8080 \
     HOST=0.0.0.0
 
-COPY package.json ./
-COPY --from=prod-deps /ce-server/node_modules ./node_modules
-COPY --from=builder /ce-server/dist ./dist
+COPY --from=builder /repo/apps/server/package.json ./
+COPY --from=builder /repo/node_modules ./node_modules
+COPY --from=builder /repo/apps/server/dist ./dist
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 EXPOSE 8080
 CMD ["bun", "run", "start"]
-
-# docker build -t ce-server .
-# docker run -p 8080:8080 --env-file .env ce-server

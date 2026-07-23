@@ -1,62 +1,45 @@
 # syntax=docker/dockerfile:1
+# Build context is the REPO ROOT, not apps/mail-server.
+#   docker build -f apps/mail-server/Dockerfile -t ce-mail .
+# bun walks up to the workspace root on install, so the root bun.lock is the only
+# lockfile it keeps current; the per-app ones drift and fail --frozen-lockfile.
 
-FROM node:22-alpine AS base
+FROM oven/bun:1 AS deps
+WORKDIR /repo
+# Every workspace member is needed for bun to resolve the `apps/*` graph.
+COPY package.json bun.lock ./
+COPY apps/platform/package.json ./apps/platform/
+COPY apps/server/package.json ./apps/server/
+COPY apps/mail-server/package.json ./apps/mail-server/
+COPY apps/website/package.json ./apps/website/
+RUN bun install --frozen-lockfile --filter mail-server
 
-# Install pnpm
-# RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM oven/bun:1 AS builder
+WORKDIR /repo
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/apps/mail-server/node_modules ./apps/mail-server/node_modules
+COPY package.json bun.lock ./
+COPY apps/mail-server ./apps/mail-server
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-# Install dependencies based on the preferred package manager
-COPY package.json ./
-RUN npm install
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+# SMTP credentials are read at runtime; nothing secret belongs in a layer.
 ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN npm run build
-
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
 ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-ENV NEXT_TELEMETRY_DISABLED=1
+WORKDIR /repo/apps/mail-server
+RUN bun run build
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+FROM node:22-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
 
-COPY --from=builder /app/public ./public
+RUN groupadd --system --gid 1001 nodejs \
+ && useradd --system --uid 1001 --gid nodejs nextjs
 
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/mail-server/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/mail-server/.next/static ./apps/mail-server/.next/static
 
 USER nextjs
-
 EXPOSE 3000
-
-ENV PORT=3000
-# set hostname to localhost
-ENV HOSTNAME="0.0.0.0"
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD ["node", "server.js"]
+CMD ["node", "apps/mail-server/server.js"]

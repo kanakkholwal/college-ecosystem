@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 /** @type {import('next').NextConfig} */
 
 // import withSerWistInit from '@serwist/next';
@@ -45,6 +47,10 @@ const nextConfig = {
   },
   // Static export cannot include runtime API routes; enable only when explicitly requested.
   output: isStaticExport ? 'export' : 'standalone',
+  // Pin the trace root to the monorepo root. Without it Next guesses from the
+  // nearest lockfile, and the standalone layout shifts depending on where the
+  // build ran — which changes the path the Docker CMD has to point at.
+  outputFileTracingRoot: path.join(import.meta.dirname, '../../'),
   // Trailing slashes help with Azure SWA routing
   trailingSlash: true,
   poweredByHeader: false,

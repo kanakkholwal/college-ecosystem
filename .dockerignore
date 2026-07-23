@@ -1,0 +1,30 @@
+# Build context is the repo root for every app image, so this decides how much
+# gets shipped to the daemon. Keep it tight.
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.vercel
+.git
+.github
+**/*.md
+
+# Never bake host env into an image; Container Apps injects real values at
+# runtime, and apps/platform/.env.production forces NEXT_STATIC_EXPORT=true.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Not a workspace member (no package.json), so nothing needs it.
+apps/go-server
+
+# website is never containerised (85M of source), but bun still needs its
+# manifest to resolve the `apps/*` workspace graph.
+apps/website/*
+!apps/website/package.json
+
+**/coverage
+**/*.log
+.vscode
+.idea
+.DS_Store

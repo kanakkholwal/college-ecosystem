@@ -1,15 +1,26 @@
 # syntax=docker/dockerfile:1
-# Build context is apps/platform (no workspace:* deps, so the app is self-contained).
+# Build context is the REPO ROOT, not apps/platform.
+#   docker build -f apps/platform/Dockerfile -t ce-platform .
+# bun walks up to the workspace root on install, so the root bun.lock is the only
+# lockfile it keeps current; the per-app ones drift and fail --frozen-lockfile.
 
 FROM oven/bun:1 AS deps
-WORKDIR /app
+WORKDIR /repo
+# Manifests only, so this layer is cached until a dependency actually changes.
+# Every workspace member is needed for bun to resolve the `apps/*` graph.
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+COPY apps/platform/package.json ./apps/platform/
+COPY apps/server/package.json ./apps/server/
+COPY apps/mail-server/package.json ./apps/mail-server/
+COPY apps/website/package.json ./apps/website/
+RUN bun install --frozen-lockfile --filter platform
 
 FROM oven/bun:1 AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+WORKDIR /repo
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/apps/platform/node_modules ./apps/platform/node_modules
+COPY package.json bun.lock ./
+COPY apps/platform ./apps/platform
 
 # NEXT_PUBLIC_* is inlined into the client bundle, so it has to be real here.
 ARG NEXT_PUBLIC_BASE_SERVER_URL
@@ -36,6 +47,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # the proxy entirely.
 ENV NEXT_STATIC_EXPORT=false
 ENV NODE_ENV=production
+WORKDIR /repo/apps/platform
 RUN bun run build
 
 FROM node:22-slim AS runner
@@ -48,10 +60,12 @@ ENV NODE_ENV=production \
 RUN groupadd --system --gid 1001 nodejs \
  && useradd --system --uid 1001 --gid nodejs nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# outputFileTracingRoot is the repo root, so standalone mirrors the monorepo
+# tree and the entrypoint lands at apps/platform/server.js.
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/platform/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/platform/.next/static ./apps/platform/.next/static
+COPY --from=builder --chown=nextjs:nodejs /repo/apps/platform/public ./apps/platform/public
 
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "apps/platform/server.js"]

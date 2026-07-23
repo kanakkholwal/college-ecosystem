@@ -199,6 +199,21 @@ static and cacheable responses never wake the container at all.
 
 ## One-time bootstrap
 
+First-time only — the CLI ships without the containerapp commands, and a fresh
+subscription has the resource providers switched off:
+
+```bash
+az login
+az account set --subscription <subscription-id>
+az extension add --name containerapp --upgrade
+az provider register --namespace Microsoft.App --wait
+az provider register --namespace Microsoft.OperationalInsights --wait
+```
+
+Then the environment. It is the shared boundary: apps inside it share a network,
+a Log Analytics workspace and internal DNS, so `ce-platform` can reach
+`ce-server` without going out to the internet. Put both apps in one.
+
 ```bash
 RG=college-ecosystem
 LOC=centralindia

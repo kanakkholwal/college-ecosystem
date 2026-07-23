@@ -1,8 +1,14 @@
+import path from "node:path";
+
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
   reactStrictMode: true,
   crossOrigin: "anonymous",
+  output: "standalone",
+  // Pin the trace root to the monorepo root so the standalone layout is stable
+  // regardless of where the build runs.
+  outputFileTracingRoot: path.join(import.meta.dirname, "../../"),
   async headers() {
     return [
       {

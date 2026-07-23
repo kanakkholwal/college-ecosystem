@@ -1,21 +1,21 @@
-name: Azure CD - Server
+name: Azure CD - Mail Server
 
 on:
   push:
     branches: [main]
     paths:
-      - "apps/server/**"
+      - "apps/mail-server/**"
       - "bun.lock"
       - "package.json"
-      - ".github/workflows/cd-server-azure.yml"
+      - ".github/workflows/cd-mail-azure.yml"
   workflow_dispatch:
 
 concurrency:
-  group: azure-server
+  group: azure-mail
   cancel-in-progress: true
 
 env:
-  IMAGE: ghcr.io/${{ github.repository }}/server
+  IMAGE: ghcr.io/${{ github.repository }}/mail-server
 
 jobs:
   deploy:
@@ -42,7 +42,7 @@ jobs:
         with:
           # Root context: bun resolves the workspace from the root lockfile.
           context: .
-          file: apps/server/Dockerfile
+          file: apps/mail-server/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
@@ -59,14 +59,14 @@ jobs:
       - name: Roll out new revision
         run: |
           az containerapp update \
-            --name ce-server \
+            --name ce-mail \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --image ${{ env.IMAGE }}:${{ github.sha }}
 
       - name: Verify revision is healthy
         run: |
           az containerapp revision list \
-            --name ce-server \
+            --name ce-mail \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --query "[?properties.active].{name:name,state:properties.runningState}" \
             --output table
