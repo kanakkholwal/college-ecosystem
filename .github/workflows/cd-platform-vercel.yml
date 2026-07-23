@@ -1,16 +1,16 @@
 name: Deploy to Vercel - Platform
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'apps/platform/**'  # Only trigger if changes in this directory
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'apps/platform/**'  # Only trigger if changes in this directory
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'apps/platform/**'  # Only trigger if changes in this directory
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'apps/platform/**'  # Only trigger if changes in this directory
   workflow_dispatch: 
 
 env:

@@ -111,7 +111,7 @@ export function IntroSection({
           <StaggerChildrenItem>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground text-balance">
               The{" "}
-              <span className="bg-linear-to-r from-sky-400 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
+              <span className="bg-primary bg-clip-text text-transparent">
                 Operating System
               </span>{" "}
               <br className="hidden lg:block" />

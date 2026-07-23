@@ -1,10 +1,20 @@
 import { config } from "../config";
 
+const LOCAL_HOSTNAMES = ["localhost", "127.0.0.1", "[::1]"];
+
 export function checkCors(origin: string | undefined): boolean {
-    // return true;
-    if (config.isDev) return true;
     if (!origin) return false;
-    
+
+    // Dev runs the apps on assorted localhost ports; everything else still goes
+    // through the same checks below, so local behaviour matches production.
+    if (config.isDev) {
+        try {
+            if (LOCAL_HOSTNAMES.includes(new URL(origin).hostname)) return true;
+        } catch {
+            return false;
+        }
+    }
+
     for (const allowedOrigin of config.corsOrigins) {
         // Exact match
         if (origin === allowedOrigin) return true;

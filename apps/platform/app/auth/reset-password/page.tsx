@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { authClient } from "~/auth/client";
+import { getAuthErrorMessage } from "~/auth/errors";
 
 const ResetSchema = z
   .object({
@@ -58,7 +59,7 @@ export default function ResetPassword() {
       );
 
       if (res.error) {
-        toast.error(res.error.message || "Failed to reset password");
+        toast.error(getAuthErrorMessage(res.error));
         return;
       }
 

@@ -18,7 +18,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { AuthErrorAlert } from "app/auth/auth-error-alert";
 import { authClient } from "~/auth/client";
+import { getAuthError, type AuthErrorInfo } from "~/auth/errors";
 import { getDepartmentName } from "~/constants/core.departments";
 import { orgConfig } from "~/project.config";
 
@@ -42,6 +44,7 @@ export default function SignUpForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("next") || "/";
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<AuthErrorInfo | null>(null);
 
   const form = useForm<z.infer<typeof SignUpSchema>>({
     resolver: zodResolver(SignUpSchema),
@@ -49,9 +52,16 @@ export default function SignUpForm() {
   });
 
   async function onSubmit(data: z.infer<typeof SignUpSchema>) {
+    setFormError(null);
     // Example Batch Restriction
     if (data.email.startsWith("25")) {
-      toast.error("Batch 2025: Please use Google Sign In.");
+      const batchError = {
+        title: "Batch 2025 must use Google Sign In",
+        description: "Your account is created automatically on first Google sign in.",
+        action: { label: "Back to sign in", href: "/auth/sign-in" },
+      };
+      setFormError(batchError);
+      toast.error(batchError.title);
       return;
     }
 
@@ -74,7 +84,12 @@ export default function SignUpForm() {
           router.push("/auth/verify-email"); // Or handle redirection
         },
         onError: (ctx) => {
-          toast.error(ctx.error.message);
+          const authError = getAuthError(ctx.error);
+          setFormError(authError);
+          if (authError.field) {
+            form.setError(authError.field, { message: authError.title });
+          }
+          toast.error(authError.title);
         },
       }
     );
@@ -84,6 +99,7 @@ export default function SignUpForm() {
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <AuthErrorAlert error={formError} />
           <FormField
             control={form.control}
             name="name"

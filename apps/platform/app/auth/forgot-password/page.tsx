@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { authClient } from "~/auth/client";
+import { getAuthErrorMessage } from "~/auth/errors";
 import { emailSchema } from "~/constants";
 import { orgConfig } from "~/project.config";
 
@@ -49,7 +50,7 @@ export default function ForgotPassword() {
         }
       );
       if (res.error) {
-        toast.error(res.error?.message || "An error occurred.");
+        toast.error(getAuthErrorMessage(res.error));
         return;
       }
       toast.success("Reset link sent!");

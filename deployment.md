@@ -70,3 +70,40 @@ Note: API activation can take a minute. Ensure the project selected matches your
 - Set the service name to `college-ecosystem-server` (as set in the `SERVICE_NAME_SERVER` variable).
 - Choose the region you set in the `GCP_SERVING_REGION` variable.
 - Click on `Create` to create the service.
+
+## Vercel Git Integration — selective deploys
+
+Each Vercel project watches the whole monorepo, so every push to `main` would
+rebuild all of them. `scripts/vercel/` gates that: Vercel runs the **Ignored
+Build Step** command and treats **exit 1 as "build"** and **exit 0 as "skip"**.
+
+### Per-project settings
+
+In Vercel → Project → *Settings* → *Git*, set **Root Directory** and
+**Ignored Build Step** (choose "Run my Bash script"):
+
+| Project       | Root Directory      | Ignored Build Step                            |
+| ------------- | ------------------- | --------------------------------------------- |
+| platform      | `apps/platform`     | `bash ../../scripts/vercel/ignore-platform.sh` |
+| server        | `apps/server`       | `bash ../../scripts/vercel/ignore-server.sh`   |
+| mail-server   | `apps/mail-server`  | `bash ../../scripts/vercel/ignore-mail-server.sh` |
+
+Also enable *Include source files outside of the Root Directory* so the scripts
+and the root lockfile are present in the build container.
+
+### What triggers a build
+
+A project builds when the pushed commit touches its own `apps/<name>/**`, or any
+shared root file (`package.json`, `bun.lock`, `turbo.json`, `scripts/vercel/**`).
+Otherwise the build is skipped and the previous deployment stays live.
+
+### Commit-message overrides
+
+- `[force deploy]` / `[vercel deploy]` — build every project regardless of paths.
+- `[skip deploy]` / `[vercel skip]` — skip every project.
+
+The scripts **fail open**: if git metadata is missing (manual redeploy, shallow
+clone with no parent commit), they build rather than silently skip.
+
+> The `cd-*-vercel.yml` GitHub Actions workflows also deploy via the Vercel CLI.
+> Disable them once Git Integration is live, or the same commit deploys twice.

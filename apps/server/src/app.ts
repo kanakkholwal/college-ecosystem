@@ -25,23 +25,45 @@ const SERVER_IDENTITY = config.SERVER_IDENTITY;
 if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
 
 
+/** Referer carries a full URL, not an origin, so it can never be echoed back as-is. */
+function resolveOrigin(req: Request): string {
+  const origin = req.header("Origin");
+  if (origin) return origin;
+  const referer = req.header("Referer");
+  if (!referer) return "";
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return "";
+  }
+}
+
+function applyCorsHeaders(req: Request, res: Response, origin: string): void {
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    req.header("Access-Control-Request-Headers") ||
+      "Content-Type,X-Identity-Key,X-Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "86400");
+}
+
 // Middleware to handle custom CORS logic
 app.use((req: Request, res: Response, next: NextFunction): void => {
-  const origin = req.header("Origin") || req.header("Referrer") || "";
+  // Allow-Origin is echoed per caller, so a shared cache must not reuse one
+  // domain's response for another. Set before every branch, including rejections.
+  res.setHeader("Vary", "Origin");
+
+  const origin = resolveOrigin(req);
   const identityKey = req.header("X-Identity-Key") || "";
   const authorization = req.header("X-Authorization") || "";
 
   // 1. Handle preflight requests first
   if (req.method === "OPTIONS") {
-    const origin = req.headers.origin;
     if (origin && checkCors(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
-      res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type,X-Identity-Key,X-Authorization"
-      );
-      res.setHeader("Access-Control-Allow-Credentials", "true");
+      applyCorsHeaders(req, res, origin);
     }
     res.status(204).end(); // Respond to preflight
     return;
@@ -65,13 +87,7 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
   // or a server-to-server caller presenting the identity key. The origin check is
   // essential for SSE/EventSource requests, which cannot send the X-Authorization header.
   if (checkCors(origin) || authorization === SERVER_IDENTITY) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type,X-Identity-Key,X-Authorization"
-    );
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+    applyCorsHeaders(req, res, origin);
     next();
   } else {
     console.warn(`CORS request from disallowed origin: ${origin}`);

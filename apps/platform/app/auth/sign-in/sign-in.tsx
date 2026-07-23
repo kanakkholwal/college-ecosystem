@@ -19,7 +19,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { AuthErrorAlert } from "app/auth/auth-error-alert";
 import { authClient } from "~/auth/client";
+import { getAuthError, type AuthErrorInfo } from "~/auth/errors";
 import { orgConfig } from "~/project.config";
 
 const SignInSchema = z.object({
@@ -39,6 +41,7 @@ export default function SignInForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams?.get("next") || "/";
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<AuthErrorInfo | null>(null);
 
   const form = useForm<z.infer<typeof SignInSchema>>({
     resolver: zodResolver(SignInSchema),
@@ -46,6 +49,7 @@ export default function SignInForm() {
   });
 
   async function onSubmit(data: z.infer<typeof SignInSchema>) {
+    setFormError(null);
     await authClient.signIn.email(
       {
         email: data.email,
@@ -60,11 +64,12 @@ export default function SignInForm() {
           toast.success("Welcome back!");
         },
         onError: (ctx) => {
-          if (ctx.error.status === 403) {
-            toast.error("Please verify your email address first.");
-          } else {
-            toast.error(ctx.error.message || "Invalid credentials");
+          const authError = getAuthError(ctx.error);
+          setFormError(authError);
+          if (authError.field === "email" || authError.field === "password") {
+            form.setError(authError.field, { message: authError.title });
           }
+          toast.error(authError.title);
         },
       }
     );
@@ -74,6 +79,7 @@ export default function SignInForm() {
     <div className="grid gap-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <AuthErrorAlert error={formError} />
           <FormField
             control={form.control}
             name="email"
@@ -153,10 +159,17 @@ export default function SignInForm() {
         disabled={isLoading}
         onClick={async () => {
           setIsLoading(true);
-          await authClient.signIn.social({
-            provider: "google",
-            callbackURL: redirect,
-          });
+          setFormError(null);
+          await authClient.signIn.social(
+            { provider: "google", callbackURL: redirect },
+            {
+              onError: (ctx) => {
+                const authError = getAuthError(ctx.error);
+                setFormError(authError);
+                toast.error(authError.title);
+              },
+            }
+          );
           setIsLoading(false);
         }}
       >

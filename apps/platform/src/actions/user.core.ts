@@ -145,16 +145,22 @@ export async function getUserPlatformActivities(
     await dbConnect();
     const activitiesPromise = [
       PollModel.countDocuments({ createdBy: userId }),
-      Announcement.countDocuments({ createdBy: userId }),
+      Announcement.countDocuments({ "createdBy.id": userId }),
       CommunityPost.countDocuments({ "author.id": userId }),
       CommunityComment.countDocuments({ "author.id": userId }),
     ];
+    // allSettled, not all: one failing count must not zero out the other three.
+    const results = await Promise.allSettled(activitiesPromise);
     const [
       pollsCount,
       announcementsCount,
       communityPostsCount,
       communityCommentsCount,
-    ] = await Promise.all(activitiesPromise);
+    ] = results.map((result, index) => {
+      if (result.status === "fulfilled") return result.value;
+      console.error(`Activity count ${index} failed:`, result.reason);
+      return 0;
+    });
     return {
       pollsCount,
       announcementsCount,

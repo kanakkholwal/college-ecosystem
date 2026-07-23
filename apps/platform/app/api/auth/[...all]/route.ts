@@ -26,9 +26,11 @@ function isAllowedOrigin(origin: string | null) {
 
 function withCors(handler: (request: NextRequest) => Promise<Response>) {
   return async (req: NextRequest) => {
-    const origin = req.headers.get("origin") || req.url;
-    const allowOrigin = isAllowedOrigin(origin) ? origin : "";
+    // Only the Origin header is a valid Allow-Origin value; req.url carries a path.
+    const origin = req.headers.get("origin");
+    const allowOrigin = origin && isAllowedOrigin(origin) ? origin : "";
     const res = await handler(req);
+    res.headers.append("Vary", "Origin");
     if (allowOrigin) {
       res.headers.set("Access-Control-Allow-Origin", allowOrigin);
       res.headers.set(
@@ -49,9 +51,10 @@ export const GET = withCors(authHandler.GET);
 export const POST = withCors(authHandler.POST);
 
 export async function OPTIONS(req: NextRequest) {
-  const origin = req.headers.get("origin") || req.url;
-  const allowOrigin = isAllowedOrigin(origin) ? origin : "";
+  const origin = req.headers.get("origin");
+  const allowOrigin = origin && isAllowedOrigin(origin) ? origin : "";
   const res = new Response(null, { status: 204 }); // no content
+  res.headers.append("Vary", "Origin");
   if (allowOrigin) {
     res.headers.set("Access-Control-Allow-Origin", allowOrigin);
     res.headers.set(

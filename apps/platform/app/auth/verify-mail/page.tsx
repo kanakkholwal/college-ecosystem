@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { authClient } from "~/auth/client";
+import { getAuthErrorMessage } from "~/auth/errors";
 
 export default function VerifyEmail() {
   const searchParams = useSearchParams();
@@ -39,9 +40,10 @@ export default function VerifyEmail() {
         );
 
         if (res.error) {
+          const message = getAuthErrorMessage(res.error);
           setStatus("error");
-          setErrorMessage(res.error.message || "Verification failed.");
-          toast.error(res.error.message || "Verification failed.");
+          setErrorMessage(message);
+          toast.error(message);
         } else {
           setStatus("success");
           toast.success("Email verified successfully!");
