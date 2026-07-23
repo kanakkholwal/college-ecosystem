@@ -1,4 +1,4 @@
-import type { Row } from "read-excel-file";
+import type { Row } from "read-excel-file/browser";
 
 export type CellValue = string | number | boolean | null;
 export type RowType = CellValue[];

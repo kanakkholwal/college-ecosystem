@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import readXlsxFile from "read-excel-file";
+import readXlsxFile from "read-excel-file/browser";
 import { toast } from "sonner";
 import z from "zod";
 
