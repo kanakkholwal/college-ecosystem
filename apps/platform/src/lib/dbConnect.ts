@@ -1,8 +1,6 @@
 import { Db, MongoClient, MongoClientOptions } from "mongodb";
 import mongoose, { type ConnectOptions, type Mongoose } from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
 declare const global: {
   mongoose: { conn: Mongoose | null; promise: Promise<Mongoose> | null };
   mongoClient: {
@@ -11,9 +9,12 @@ declare const global: {
   };
 };
 
-if (!MONGODB_URI) {
-  console.warn("Can't access MONGODB_URI in dbConnect.ts");
-  throw new Error("Please define the MONGODB_URI environment variable");
+// Checked on connect, not on import, so Next's build-time page-data collection
+// doesn't need a database URI to load modules that merely reference one.
+function requireMongoUri(): string {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error("Please define the MONGODB_URI environment variable");
+  return uri;
 }
 
 const defaultDb =
@@ -52,7 +53,7 @@ async function dbConnect(dbName: string = defaultDb): Promise<Mongoose> {
     try {
       mongoose.set("strictQuery", false);
       mongooseCache.promise = mongoose
-        .connect(MONGODB_URI, opts)
+        .connect(requireMongoUri(), opts)
         .then((mongoose) => {
           console.log("Connected to MongoDB to database:", dbName);
           return mongoose;
@@ -84,7 +85,7 @@ async function getMongoClient(
 
   if (!mongoClientCache.promise) {
     try {
-      const client = new MongoClient(MONGODB_URI, mongoClientOptions);
+      const client = new MongoClient(requireMongoUri(), mongoClientOptions);
       mongoClientCache.promise = client.connect().then((connectedClient) => {
         console.log("Connected to MongoDB via native client");
         return connectedClient;

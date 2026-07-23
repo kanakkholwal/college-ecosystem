@@ -136,3 +136,36 @@ Required Vercel project settings for `ce-server`:
 > `src/index.ts` (`createServer` + `listen`) is the container/Cloud Run entrypoint
 > and is unused on Vercel. Serverless functions can't hold WebSocket connections —
 > keep the Docker/Cloud Run deploy for anything that needs them.
+
+### The platform app (`apps/platform`) on Git Integration
+
+`apps/platform/.env.production` is **not** tracked by git, so a Vercel clone has
+none of it. This used to fail the build outright:
+
+```
+Error: Failed to collect page data for /results/[rollNo]
+```
+
+That route reads straight from Mongo and never calls `apps/server` on its read
+path — it only imports `~/actions/common.result`, whose *other* functions use
+`serverFetch`. Because `fetch-server.ts` validated env at module scope, merely
+importing the chain threw, and Next reported it against the first page that
+pulled it in.
+
+`fetch-server.ts` and `dbConnect.ts` now validate on **call**, not on import, so
+a page pays only for the services it actually uses. Env is still required at
+runtime by whatever touches it:
+
+| Variable               | Needed by                                       |
+| ---------------------- | ----------------------------------------------- |
+| `MONGODB_URI`          | anything hitting the database                   |
+| `SERVER_IDENTITY`      | any `serverFetch` / `mailFetch` call            |
+| `BASE_SERVER_URL`      | `serverFetch` — result refresh, rank assignment |
+| `BASE_MAIL_SERVER_URL` | `mailFetch` — outbound mail                     |
+
+`BASE_SERVER_URL` and `BASE_MAIL_SERVER_URL` are easy to miss: `.env.example`
+only lists their `NEXT_PUBLIC_`-prefixed siblings, which are *different vars* and
+do not satisfy these checks.
+
+`REDIS_URL` only warns, and `ioredis` is constructed with `lazyConnect`, so it
+never blocked the build — but set it or caching silently points at localhost.
