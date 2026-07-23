@@ -83,10 +83,8 @@ export async function proxy(request: NextRequest) {
         new URL(`/${subDomainPath}${pathname}`, request.url)
       );
     }
-    // dynamically handle the root path for clubs
-    if (pathname === "/") {
-      return NextResponse.rewrite(new URL(`/clubs/${subdomain}`, request.url));
-    }
+    // Unmapped subdomains fall through and serve the main app. Nothing is
+    // rewritten per-subdomain, so the set of hosts is fixed and bindable.
   }
   const searchParams = request.nextUrl.searchParams;
   const isPrivateRoute = PRIVATE_ROUTES.some((route) =>

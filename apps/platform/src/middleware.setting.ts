@@ -179,7 +179,6 @@ export function checkAuthorization(
 }
 
 export const SUBDOMAIN_TO_PATH_REWRITES_Map = new Map<string, string>([
-  ["clubs", "clubs-and-societies"],
   ["resources", "resources"],
   ["community", "community"],
   ["auth", "auth"],

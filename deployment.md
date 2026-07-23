@@ -305,26 +305,31 @@ which is why the one-time grey-cloud dance is worth it.
 
 Repeat for `server.nith.eu.org` against `ce-server`.
 
-## Open issue: wildcard subdomains
+## Hostnames to bind
 
-`proxy.ts` treats *any* unrecognised subdomain as a club:
+The dynamic club-subdomain rewrite was removed (the routes it pointed at no
+longer existed), so `proxy.ts` no longer derives behaviour from arbitrary
+subdomains. Unmapped subdomains just fall through and serve the main app, which
+makes the host list finite and bindable — no wildcard needed.
 
-```ts
-if (pathname === "/") return NextResponse.rewrite(new URL(`/clubs/${subdomain}`, request.url));
-```
+Bind these to `ce-platform`:
 
-Azure routes by `Host` header and only serves hostnames that are explicitly
-bound, so a club subdomain that was never bound returns a 404 at the ingress
-before the app is ever reached. The fixed subdomains (`clubs`, `guard`, `admin`,
-`auth`, `resources`, `community`, `os`, `platform`, `dev`, `staging`) can each be
-bound once, but dynamically created club subdomains cannot.
+| Host                       | Why                                  |
+| -------------------------- | ------------------------------------ |
+| `nith.eu.org`              | apex                                 |
+| `app.nith.eu.org`          | canonical, matches `BETTER_AUTH_URL` |
+| `auth.nith.eu.org`         | `SUBDOMAIN_TO_PATH_REWRITES_Map`     |
+| `resources.nith.eu.org`    | `SUBDOMAIN_TO_PATH_REWRITES_Map`     |
+| `community.nith.eu.org`    | `SUBDOMAIN_TO_PATH_REWRITES_Map`     |
+| `admin.nith.eu.org`        | `auth_SUBDOMAIN_TO_PATH_REWRITES_Map`|
+| `guard.nith.eu.org`        | `auth_SUBDOMAIN_TO_PATH_REWRITES_Map`|
 
-**This needs resolving before platform traffic is cut over.** Either confirm
-Container Apps supports a bound wildcard host, or put a small Cloudflare Worker
-in front that forwards every `*.nith.eu.org` request to the bound
-`app.nith.eu.org` origin and passes the original host in a header for
-`extractSubdomain` to read. `apps/server` has no wildcard requirement, which is
-another reason to migrate it first.
+`platform`, `os`, `dev` and `staging` are listed in `POSSIBLE_SUB_ALIAS` /
+`otherAppDomains` and rewrite to nothing; bind them only if they are actually in
+use. Any host that is not bound returns 404 at the Azure ingress before the app
+runs, so adding a new subdomain later means binding it then.
+
+Bind `server.nith.eu.org` to `ce-server`.
 
 ## Behind a proxy
 
@@ -337,3 +342,94 @@ Sockets also matter here: `apps/server` runs `socket.io` and SSE, which is
 exactly what serverless could not host. Long-lived connections die when a
 scale-to-zero replica is reclaimed, so if either is load-bearing this app needs
 `--min-replicas 1` and the always-on cost that comes with it.
+
+## Deploy runbook
+
+Everything below is one-time except step 8. Run it for `ce-server` first — it
+has no subdomain fan-out, so it is the cheaper mistake to make.
+
+### 1. Verify the images build locally
+
+Nothing else works if this fails, and it fails fast.
+
+```bash
+cd apps/server && docker build -t ce-server .
+docker run --rm -p 8080:8080 --env-file .env ce-server
+# expect the welcome JSON on http://localhost:8080
+
+cd ../platform && docker build -t ce-platform \
+  --build-arg NEXT_PUBLIC_BASE_SERVER_URL=https://server.nith.eu.org .
+docker run --rm -p 3000:3000 --env-file .env.production ce-platform
+```
+
+### 2. Claim the student subscription
+
+`education.github.com/pack` → Azure for Students. Academic email, no card. Then
+`az login` and confirm the subscription id:
+
+```bash
+az account show --query id -o tsv
+```
+
+### 3. Create the environment and apps
+
+Run the bootstrap block above (`az group create` … `az containerapp create`).
+Both apps come up on their generated `*.azurecontainerapps.io` FQDN. Hit those
+directly and confirm they serve before touching DNS.
+
+### 4. Set secrets and env vars
+
+The `az containerapp secret set` / `--set-env-vars` block above. Redeploying
+never touches these again.
+
+### 5. Wire up GitHub OIDC
+
+```bash
+az ad app create --display-name college-ecosystem-cd
+# note the appId, then add a federated credential for:
+#   subject: repo:kanakkholwal/college-ecosystem:ref:refs/heads/main
+#   issuer:  https://token.actions.githubusercontent.com
+az role assignment create --role Contributor \
+  --assignee <appId> \
+  --scope /subscriptions/<sub-id>/resourceGroups/college-ecosystem
+```
+
+Add the four repo secrets and four repo variables from the table above.
+
+### 6. Make the GHCR packages public
+
+After the first workflow run, the packages appear under the repo. Set both to
+public, otherwise Container Apps needs registry credentials to pull.
+
+### 7. Bind the domains
+
+Per hostname, in this order — the grey-cloud step is the one people miss:
+
+1. Add `TXT asuid.<sub>` = verification id in Cloudflare.
+2. Add `CNAME <sub>` → app FQDN, **DNS-only / grey cloud**.
+3. `az containerapp hostname bind` with the Origin CA certificate.
+4. Flip the CNAME back to proxied, SSL/TLS mode **Full (strict)**.
+
+### 8. Deploy
+
+Push to `main`. Path filters mean only the changed app rebuilds. Watch it with:
+
+```bash
+az containerapp logs show -n ce-platform -g $RG --follow
+```
+
+### 9. Cut over and keep a way back
+
+Lower the Cloudflare TTL to 60s a day before, so a rollback is fast. Keep the
+Vercel projects deployed but undomained until Azure has held real traffic for a
+week — reverting is then a DNS change, not a redeploy.
+
+### Before you cut over
+
+- Run the `rateLimits` migration (`bun run db:push:prod`) — `rateLimit.storage`
+  is `"database"` and the table has to exist or every auth request errors.
+- Set `BETTER_AUTH_URL`. Off Vercel, `getBaseURL()` has no `VERCEL_*` to read and
+  silently falls back to `http://localhost:3000`.
+- Add `app.set("trust proxy", 1)` to `apps/server` before adding rate limiting.
+- Decide `--min-replicas` for `ce-server`: `socket.io` and SSE connections do not
+  survive a scale-to-zero reclaim.
