@@ -38,7 +38,7 @@
     },
     "apps/platform": {
       "name": "platform",
-      "version": "0.8.0",
+      "version": "0.0.8",
       "dependencies": {
         "@ai-sdk/google": "^2.0.52",
         "@ai-sdk/mistral": "^2.0.27",
