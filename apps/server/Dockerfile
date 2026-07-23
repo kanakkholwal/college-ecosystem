@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build context is the REPO ROOT, not apps/server.
-#   docker build -f apps/server/Dockerfile -t ce-server .
+#   docker build -f apps/server/Dockerfile -t college-ecosystem-server .
 # bun walks up to the workspace root on install, so the root bun.lock is the only
 # lockfile it keeps current; the per-app ones drift and fail --frozen-lockfile.
 

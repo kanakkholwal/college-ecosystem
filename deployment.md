@@ -125,7 +125,7 @@ directory exist once a Build Command is set, and it must **not** be `dist/`:
 static files are matched before `rewrites`, so the compiled server and its
 sourcemaps would be downloadable at `/src/app.js`.
 
-Required Vercel project settings for `ce-server`:
+Required Vercel project settings for `college-ecosystem-server`:
 
 - Root Directory: `apps/server`
 - Framework Preset: **Other** (leave Build/Install Command blank — `vercel.json` sets them)
@@ -178,10 +178,19 @@ Both apps run as containers in **one Container Apps environment**. One
 environment means one shared ingress and one certificate store; the apps still
 scale and deploy independently.
 
-| App             | Container app | Port | Domain                 |
-| --------------- | ------------- | ---- | ---------------------- |
-| `apps/platform` | `ce-platform` | 3000 | `app.nith.eu.org`      |
-| `apps/server`   | `ce-server`   | 8080 | `server.nith.eu.org`   |
+| App                | Container app                   | Port | Domain               |
+| ------------------ | ------------------------------- | ---- | -------------------- |
+| `apps/platform`    | `college-ecosystem-platform`    | 3000 | `app.nith.eu.org`    |
+| `apps/server`      | `college-ecosystem-server`      | 8080 | `server.nith.eu.org` |
+| `apps/mail-server` | `college-ecosystem-mail-server` | 3000 | internal only        |
+
+`apps/go-server` is the eventual replacement for `apps/server` and is not
+deployed; it has no `package.json`, so it is not a bun workspace member and no
+image references it. It will need its own Dockerfile and workflow.
+
+The mail server has no public hostname — the platform reaches it over the
+environment's internal DNS, so leave its ingress set to **internal** and it
+never needs a certificate or a Cloudflare record.
 
 Images are built by GitHub Actions and pushed to GHCR. The workflows only ever
 run `az containerapp update --image` — env vars and secrets live on the
@@ -211,24 +220,24 @@ az provider register --namespace Microsoft.OperationalInsights --wait
 ```
 
 Then the environment. It is the shared boundary: apps inside it share a network,
-a Log Analytics workspace and internal DNS, so `ce-platform` can reach
-`ce-server` without going out to the internet. Put both apps in one.
+a Log Analytics workspace and internal DNS, so `college-ecosystem-platform` can reach
+`college-ecosystem-server` without going out to the internet. Put both apps in one.
 
 ```bash
 RG=college-ecosystem
 LOC=centralindia
 
 az group create -n $RG -l $LOC
-az containerapp env create -n ce-env -g $RG -l $LOC
+az containerapp env create -n college-ecosystem-env -g $RG -l $LOC
 
 # Platform
-az containerapp create -n ce-platform -g $RG --environment ce-env \
+az containerapp create -n college-ecosystem-platform -g $RG --environment college-ecosystem-env \
   --image ghcr.io/kanakkholwal/college-ecosystem/platform:latest \
   --target-port 3000 --ingress external \
   --min-replicas 0 --max-replicas 3 --cpu 0.5 --memory 1Gi
 
 # Server — needs a warm replica, see the SSE note below
-az containerapp create -n ce-server -g $RG --environment ce-env \
+az containerapp create -n college-ecosystem-server -g $RG --environment college-ecosystem-env \
   --image ghcr.io/kanakkholwal/college-ecosystem/server:latest \
   --target-port 8080 --ingress external \
   --min-replicas 0 --max-replicas 2 --cpu 0.25 --memory 0.5Gi
@@ -237,11 +246,11 @@ az containerapp create -n ce-server -g $RG --environment ce-env \
 Secrets are set once, then referenced by env vars:
 
 ```bash
-az containerapp secret set -n ce-platform -g $RG --secrets \
+az containerapp secret set -n college-ecosystem-platform -g $RG --secrets \
   better-auth-secret=... mongodb-uri=... database-url=... \
   server-identity=... google-secret=... redis-url=...
 
-az containerapp update -n ce-platform -g $RG --set-env-vars \
+az containerapp update -n college-ecosystem-platform -g $RG --set-env-vars \
   BETTER_AUTH_SECRET=secretref:better-auth-secret \
   MONGODB_URI=secretref:mongodb-uri \
   DATABASE_URL=secretref:database-url \
@@ -282,10 +291,10 @@ hostname must be bound explicitly. The verification id is per-subscription —
 the same value works for both apps.
 
 ```bash
-az containerapp show -n ce-platform -g $RG \
+az containerapp show -n college-ecosystem-platform -g $RG \
   --query properties.customDomainVerificationId -o tsv
 
-az containerapp show -n ce-platform -g $RG \
+az containerapp show -n college-ecosystem-platform -g $RG \
   --query properties.configuration.ingress.fqdn -o tsv
 ```
 
@@ -306,9 +315,9 @@ Azure managed one:
 1. Cloudflare → SSL/TLS → Origin Server → Create Certificate, for `nith.eu.org`
    and `*.nith.eu.org`, 15 year validity.
 2. `openssl pkcs12 -export -out origin.pfx -inkey origin.key -in origin.pem`
-3. `az containerapp env certificate upload -n ce-env -g $RG \
+3. `az containerapp env certificate upload -n college-ecosystem-env -g $RG \
       --certificate-file origin.pfx --password <pfx-password>`
-4. `az containerapp hostname bind -n ce-platform -g $RG \
+4. `az containerapp hostname bind -n college-ecosystem-platform -g $RG \
       --hostname app.nith.eu.org --certificate <cert-name>`
 5. Re-enable the Cloudflare proxy (orange cloud) and set SSL/TLS mode to
    **Full (strict)** — Cloudflare trusts its own Origin CA.
@@ -318,7 +327,7 @@ every renewal, which means grey-clouding the record twice a year forever. The
 Origin CA certificate lasts 15 years and only has to survive the initial bind,
 which is why the one-time grey-cloud dance is worth it.
 
-Repeat for `server.nith.eu.org` against `ce-server`.
+Repeat for `server.nith.eu.org` against `college-ecosystem-server`.
 
 ## Hostnames to bind
 
@@ -327,7 +336,7 @@ longer existed), so `proxy.ts` no longer derives behaviour from arbitrary
 subdomains. Unmapped subdomains just fall through and serve the main app, which
 makes the host list finite and bindable — no wildcard needed.
 
-Bind these to `ce-platform`:
+Bind these to `college-ecosystem-platform`:
 
 | Host                       | Why                                  |
 | -------------------------- | ------------------------------------ |
@@ -344,7 +353,7 @@ Bind these to `ce-platform`:
 use. Any host that is not bound returns 404 at the Azure ingress before the app
 runs, so adding a new subdomain later means binding it then.
 
-Bind `server.nith.eu.org` to `ce-server`.
+Bind `server.nith.eu.org` to `college-ecosystem-server`.
 
 ## Behind a proxy
 
@@ -360,7 +369,7 @@ scale-to-zero replica is reclaimed, so if either is load-bearing this app needs
 
 ## Deploy runbook
 
-Everything below is one-time except step 8. Run it for `ce-server` first — it
+Everything below is one-time except step 8. Run it for `college-ecosystem-server` first — it
 has no subdomain fan-out, so it is the cheaper mistake to make.
 
 ### 1. Verify the images build locally
@@ -368,13 +377,13 @@ has no subdomain fan-out, so it is the cheaper mistake to make.
 Nothing else works if this fails, and it fails fast.
 
 ```bash
-cd apps/server && docker build -t ce-server .
-docker run --rm -p 8080:8080 --env-file .env ce-server
+cd apps/server && docker build -t college-ecosystem-server .
+docker run --rm -p 8080:8080 --env-file .env college-ecosystem-server
 # expect the welcome JSON on http://localhost:8080
 
-cd ../platform && docker build -t ce-platform \
+cd ../platform && docker build -t college-ecosystem-platform \
   --build-arg NEXT_PUBLIC_BASE_SERVER_URL=https://server.nith.eu.org .
-docker run --rm -p 3000:3000 --env-file .env.production ce-platform
+docker run --rm -p 3000:3000 --env-file .env.production college-ecosystem-platform
 ```
 
 ### 2. Claim the student subscription
@@ -430,7 +439,7 @@ Per hostname, in this order — the grey-cloud step is the one people miss:
 Push to `main`. Path filters mean only the changed app rebuilds. Watch it with:
 
 ```bash
-az containerapp logs show -n ce-platform -g $RG --follow
+az containerapp logs show -n college-ecosystem-platform -g $RG --follow
 ```
 
 ### 9. Cut over and keep a way back
@@ -446,5 +455,5 @@ week — reverting is then a DNS change, not a redeploy.
 - Set `BETTER_AUTH_URL`. Off Vercel, `getBaseURL()` has no `VERCEL_*` to read and
   silently falls back to `http://localhost:3000`.
 - Add `app.set("trust proxy", 1)` to `apps/server` before adding rate limiting.
-- Decide `--min-replicas` for `ce-server`: `socket.io` and SSE connections do not
+- Decide `--min-replicas` for `college-ecosystem-server`: `socket.io` and SSE connections do not
   survive a scale-to-zero reclaim.

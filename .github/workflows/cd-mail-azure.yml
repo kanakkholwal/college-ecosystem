@@ -59,14 +59,14 @@ jobs:
       - name: Roll out new revision
         run: |
           az containerapp update \
-            --name ce-mail \
+            --name college-ecosystem-mail-server \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --image ${{ env.IMAGE }}:${{ github.sha }}
 
       - name: Verify revision is healthy
         run: |
           az containerapp revision list \
-            --name ce-mail \
+            --name college-ecosystem-mail-server \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --query "[?properties.active].{name:name,state:properties.runningState}" \
             --output table

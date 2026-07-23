@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build context is the REPO ROOT, not apps/platform.
-#   docker build -f apps/platform/Dockerfile -t ce-platform .
+#   docker build -f apps/platform/Dockerfile -t college-ecosystem-platform .
 # bun walks up to the workspace root on install, so the root bun.lock is the only
 # lockfile it keeps current; the per-app ones drift and fail --frozen-lockfile.
 
