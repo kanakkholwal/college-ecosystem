@@ -181,7 +181,7 @@ scale and deploy independently.
 | App                | Container app                   | Port | Domain               |
 | ------------------ | ------------------------------- | ---- | -------------------- |
 | `apps/platform`    | `college-ecosystem-platform`    | 3000 | `app.nith.eu.org`    |
-| `apps/server`      | `college-ecosystem-server`      | 8080 | `server.nith.eu.org` |
+| `apps/server`      | `college-ecosystem-server`      | 8080 | `api.nith.eu.org` |
 | `apps/mail-server` | `college-ecosystem-mail-server` | 3000 | internal only        |
 
 `apps/go-server` is the eventual replacement for `apps/server` and is not
@@ -223,11 +223,15 @@ Then the environment. It is the shared boundary: apps inside it share a network,
 a Log Analytics workspace and internal DNS, so `college-ecosystem-platform` can reach
 `college-ecosystem-server` without going out to the internet. Put both apps in one.
 
+`personal-projects` is a shared resource group — see the scoping note under
+GitHub Actions authentication before assigning roles against it.
+
 ```bash
-RG=college-ecosystem
+RG=personal-projects
 LOC=centralindia
 
-az group create -n $RG -l $LOC
+# The group already exists; recreate only if starting clean.
+# az group create -n $RG -l $LOC
 az containerapp env create -n college-ecosystem-env -g $RG -l $LOC
 
 # Platform
@@ -258,7 +262,7 @@ az containerapp update -n college-ecosystem-platform -g $RG --set-env-vars \
   GOOGLE_SECRET=secretref:google-secret \
   REDIS_URL=secretref:redis-url \
   BETTER_AUTH_URL=https://app.nith.eu.org \
-  BASE_SERVER_URL=https://server.nith.eu.org \
+  BASE_SERVER_URL=https://api.nith.eu.org \
   NODE_ENV=production
 ```
 
@@ -268,15 +272,26 @@ and without it auth silently targets `http://localhost:3000`.
 ## GitHub Actions authentication
 
 Login uses OIDC, so there is no long-lived Azure credential in the repo. Create
-an app registration with a federated credential scoped to this repo, grant it
-Contributor on the resource group, then set these repo **secrets**:
+an app registration with a federated credential scoped to this repo, then set
+these repo **secrets**:
 
 | Secret                  | Value                          |
 | ----------------------- | ------------------------------ |
 | `AZURE_CLIENT_ID`       | app registration client id     |
 | `AZURE_TENANT_ID`       | directory (tenant) id          |
 | `AZURE_SUBSCRIPTION_ID` | subscription id                |
-| `AZURE_RESOURCE_GROUP`  | `college-ecosystem`            |
+| `AZURE_RESOURCE_GROUP`  | `personal-projects`            |
+
+`personal-projects` holds unrelated work, so granting Contributor over the whole
+group hands this workflow write access to all of it. Prefer three assignments
+scoped to the container apps themselves — the workflow only ever calls
+`containerapp update` and `containerapp revision list`:
+
+Container app → Access control (IAM) → Add role assignment → **Contributor** →
+User, group, or service principal → `college-ecosystem-cd`. Repeat per app.
+
+Group-level Contributor works and is quicker, but a leaked workflow token then
+reaches every other project in the group.
 
 And these repo **variables** (they are inlined into the client bundle at build
 time, so they are public by definition):
@@ -327,7 +342,7 @@ every renewal, which means grey-clouding the record twice a year forever. The
 Origin CA certificate lasts 15 years and only has to survive the initial bind,
 which is why the one-time grey-cloud dance is worth it.
 
-Repeat for `server.nith.eu.org` against `college-ecosystem-server`.
+Repeat for `api.nith.eu.org` against `college-ecosystem-server`.
 
 ## Hostnames to bind
 
@@ -353,7 +368,7 @@ Bind these to `college-ecosystem-platform`:
 use. Any host that is not bound returns 404 at the Azure ingress before the app
 runs, so adding a new subdomain later means binding it then.
 
-Bind `server.nith.eu.org` to `college-ecosystem-server`.
+Bind `api.nith.eu.org` to `college-ecosystem-server`.
 
 ## Behind a proxy
 
@@ -382,7 +397,7 @@ docker run --rm -p 8080:8080 --env-file .env college-ecosystem-server
 # expect the welcome JSON on http://localhost:8080
 
 cd ../platform && docker build -t college-ecosystem-platform \
-  --build-arg NEXT_PUBLIC_BASE_SERVER_URL=https://server.nith.eu.org .
+  --build-arg NEXT_PUBLIC_BASE_SERVER_URL=https://api.nith.eu.org .
 docker run --rm -p 3000:3000 --env-file .env.production college-ecosystem-platform
 ```
 
@@ -415,7 +430,7 @@ az ad app create --display-name college-ecosystem-cd
 #   issuer:  https://token.actions.githubusercontent.com
 az role assignment create --role Contributor \
   --assignee <appId> \
-  --scope /subscriptions/<sub-id>/resourceGroups/college-ecosystem
+  --scope /subscriptions/<sub-id>/resourceGroups/personal-projects
 ```
 
 Add the four repo secrets and four repo variables from the table above.
