@@ -32,15 +32,10 @@ ENV NEXT_PUBLIC_BASE_MAIL_SERVER_URL=$NEXT_PUBLIC_BASE_MAIL_SERVER_URL
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# Server-only vars are read at runtime by the standalone server; these
-# placeholders only satisfy the module-scope guards during build, so no real
-# secret is ever baked into a layer.
-ENV BASE_SERVER_URL=http://build.invalid \
-    BASE_MAIL_SERVER_URL=http://build.invalid \
-    SERVER_IDENTITY=build-placeholder \
-    BETTER_AUTH_SECRET=build-placeholder \
-    MONGODB_URI=mongodb://build.invalid/build
-
+# No server-only secrets here on purpose. They are injected at runtime by the
+# container app; anything named like a secret in ARG/ENV lands in image history
+# and trips SecretsUsedInArgOrEnv. Module-scope code must tolerate their absence
+# during `next build` (see NEXT_PHASE handling in src/auth/index.ts).
 ENV NEXT_TELEMETRY_DISABLED=1
 # .env.production sets this true for the Static Web Apps target; a container
 # needs the standalone server, and `output: export` drops the API routes and

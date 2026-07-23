@@ -28,8 +28,11 @@ const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password";
 const baseUrl = new URL(getBaseURL());
 
 const isProd = process.env.NODE_ENV === "production";
+// `next build` evaluates this module while collecting page data, and the image
+// is built without secrets on purpose — so only enforce this when serving.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
-if (isProd && !process.env.BETTER_AUTH_SECRET) {
+if (isProd && !isBuildPhase && !process.env.BETTER_AUTH_SECRET) {
   // Better Auth silently falls back to a dev secret, which invalidates every
   // session on the next deploy. Fail the boot instead.
   throw new Error("BETTER_AUTH_SECRET is required in production");

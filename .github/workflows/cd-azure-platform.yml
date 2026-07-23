@@ -7,7 +7,7 @@ on:
       - "apps/platform/**"
       - "bun.lock"
       - "package.json"
-      - ".github/workflows/cd-platform-azure.yml"
+      - ".github/workflows/cd-azure-platform.yml"
   workflow_dispatch:
 
 concurrency:
