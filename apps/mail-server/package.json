@@ -14,7 +14,7 @@
   "dependencies": {
     "@react-email/components": "0.0.36",
     "@react-email/tailwind": "1.0.4",
-    "next": "latest",
+    "next": "^15.3.1",
     "nodemailer": "^6.10.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
