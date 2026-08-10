@@ -1,5 +1,5 @@
 "use client";
-
+import {EncryptedText} from "@/components/animation/encrypted-text"
 import { AnimatedGradientText } from "@/components/animation/animated-shiny-text";
 import { FloatingElements } from "@/components/animation/floating-elements";
 import {
@@ -309,13 +309,10 @@ export function FeatureSection() {
         >
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto space-y-4">
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
-              Built for your entire <br />
-              <span className="bg-linear-to-r from-sky-400 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
-                campus life.
-              </span>
+            <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
+              <EncryptedText text="Built for your entire campus life."/>
             </h2>
-            <p className="text-lg text-muted-foreground text-balance">
+            <p className="text-base text-muted-foreground text-balance">
               From checking results to finding hostel rooms, we{"'"}ve digitized
               the friction points of college life.
             </p>

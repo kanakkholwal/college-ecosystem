@@ -60,7 +60,7 @@ export default async function HomePage() {
       <div className="w-full max-w-(--max-app-width) mx-auto flex flex-col gap-24 py-16">
         {/* Purpose: Immediate utility access. Clean, grid-based layout. */}
         <StaggerChildrenContainer id="quick-links" className="space-y-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-l-4 border-primary pl-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pl-4">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-foreground">
                 Your Ecosystem
