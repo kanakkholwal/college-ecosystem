@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 import { DEPARTMENTS } from "~/constants/core.departments";
@@ -77,23 +78,35 @@ export const sessions = pgTable("sessions", {
   impersonatedBy: text("impersonatedBy"),
 });
 
-export const accounts = pgTable("accounts", {
-  id: text("id").primaryKey(),
-  accountId: text("accountId").notNull(),
-  providerId: text("providerId").notNull(),
-  userId: text("userId")
-    .notNull()
-    .references(() => users.id),
-  accessToken: text("accessToken"),
-  refreshToken: text("refreshToken"),
-  idToken: text("idToken"),
-  accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
-  refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
-  scope: text("scope"),
-  password: text("password"),
-  createdAt: timestamp("createdAt").notNull(),
-  updatedAt: timestamp("updatedAt").notNull(),
-});
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: text("id").primaryKey(),
+    // Better Auth 1.7 scopes account identity by issuer: "local:credential" for
+    // email/password, "https://accounts.google.com" for Google.
+    issuer: text("issuer").notNull(),
+    accountId: text("accountId").notNull(),
+    providerId: text("providerId").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id),
+    accessToken: text("accessToken"),
+    refreshToken: text("refreshToken"),
+    idToken: text("idToken"),
+    accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
+    refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: timestamp("createdAt").notNull(),
+    updatedAt: timestamp("updatedAt").notNull(),
+  },
+  (table) => [
+    uniqueIndex("accounts_issuer_accountId_uidx").on(
+      table.issuer,
+      table.accountId
+    ),
+  ]
+);
 
 export const verifications = pgTable("verifications", {
   id: text("id").primaryKey(),
