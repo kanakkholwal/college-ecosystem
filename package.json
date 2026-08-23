@@ -8,7 +8,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
+    "format": "biome format --write .",
     "audit": "bun audit",
     "dev:server": "turbo run dev --filter=server",
     "build:server": "turbo run build --filter=server",
@@ -24,10 +24,12 @@
     "lint:mail": "turbo run lint --filter=mail-server",
     "dev:website": "turbo run dev --filter=website",
     "build:website": "turbo run build --filter=website",
-    "start:website": "turbo run start --filter=website"
+    "start:website": "turbo run start --filter=website",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
   },
   "devDependencies": {
-    "prettier": "^3.9.6",
+    "@biomejs/biome": "2.5.10",
     "turbo": "^2.10.11",
     "typescript": "^5.9.3"
   },

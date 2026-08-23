@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* biome-ignore-all lint/suspicious/noExplicitAny: sheet rows are untyped spreadsheet data */
 import ExcelJS from "exceljs";
 import type { Request, Response } from "express";
 import { allotRooms } from '../services/allotment.service';

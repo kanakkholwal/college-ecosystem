@@ -12,31 +12,32 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
+// Fails closed when SERVER_IDENTITY is unset, so a misconfigured deploy cannot
+// leave /api/send open as an unauthenticated relay.
+function isAuthorized(request: NextRequest) {
+  const expected = process.env.SERVER_IDENTITY;
+  if (!expected) return false;
+  return request.headers.get("X-Authorization") === expected;
+}
+
 export async function proxy(request: NextRequest) {
 
 
   if (request.nextUrl.pathname.startsWith("/api")) {
-    const newHeaders = new Headers(request.headers)
-    // Set CORS headers for all non-API requests
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      newHeaders.set(key, value);
-    });
-    const headers = request.headers.get("X-Authorization") || "";
-    if (headers !== process.env.SERVER_IDENTITY) {
+    // Preflight never carries X-Authorization, so it has to bypass the check.
+    if (request.method === "OPTIONS") {
+      return new NextResponse(null, { status: 204, headers: corsHeaders });
+    }
+    if (!isAuthorized(request)) {
       return NextResponse.json(
         {
           error: "Missing or invalid SERVER_IDENTITY",
           data: null,
         },
-        { status: 403, headers: newHeaders }
+        { status: 403, headers: corsHeaders }
       );
     }
-    return NextResponse.next({
-      request: {
-        // New request headers
-        headers: newHeaders,
-      },
-    })
+    return NextResponse.next();
   }
 
   return NextResponse.json({
@@ -54,14 +55,7 @@ export async function proxy(request: NextRequest) {
 // Matcher syntax: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - manifest.manifest (manifest file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|.next/static).*)",
+    // /api is deliberately NOT excluded: the SERVER_IDENTITY check above runs on it.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.next/static).*)",
   ],
 };

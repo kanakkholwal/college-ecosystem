@@ -233,8 +233,7 @@ college-ecosystem/
 | [Vercel](https://vercel.com/) | Hosting for Platform and Server apps |
 | [Cloudflare Workers](https://workers.cloudflare.com/) | Edge deployment for Mail Server (via OpenNext) |
 | [Google Cloud Run](https://cloud.google.com/run) | Container hosting for server microservices |
-| [ESLint](https://eslint.org/) 9 | Code linting |
-| [Prettier](https://prettier.io/) | Code formatting |
+| [Biome](https://biomejs.dev/) 2 | Code linting and formatting |
 | [Drizzle Kit](https://orm.drizzle.team/kit-docs/overview) | Database migration tooling |
 
 ---

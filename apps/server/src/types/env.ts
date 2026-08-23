@@ -9,9 +9,9 @@ const envVariables = z.object({
 envVariables.parse(process.env);
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
+  // biome-ignore lint/style/noNamespace: augmenting NodeJS.ProcessEnv requires a namespace
   namespace NodeJS {
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    // biome-ignore lint/complexity/noBannedTypes: interface merging target is intentionally empty
     interface ProcessEnv extends z.infer<typeof envVariables> {}
   }
 }

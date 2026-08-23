@@ -137,9 +137,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
               crossOrigin="anonymous"
             />
             <GoogleAnalytics gaId={appConfig.verifications.google_analytics} />
-            {/* eslint-disable @next/next/no-img-element */}
             <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
               <span>
+                {/* biome-ignore lint/performance/noImgElement: external visitor-badge image */}
                 <img
                   height={20}
                   width={80}

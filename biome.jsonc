@@ -1,0 +1,81 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/.next/**", "!**/public/**", "!**/.turbo/**", "!**/dist/**", "!**/migrations/**", "!**/next-env.d.ts", "!**/*.tsbuildinfo"]
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 80,
+    "attributePosition": "auto",
+    "bracketSameLine": false,
+    "bracketSpacing": true,
+    "expand": "auto",
+    "useEditorconfig": true
+  },
+  "linter": {
+    "enabled": true,
+    "domains": { "turborepo": "recommended" },
+    "rules": {
+      "preset": "recommended",
+      // Ratchet baseline: these fire only on code that predates Biome, so they
+      // are warnings to keep `lint` green. Promote back to "error" as they hit zero.
+      "a11y": {
+        "noLabelWithoutControl": "warn",
+        "noNoninteractiveTabindex": "warn",
+        "noStaticElementInteractions": "warn",
+        "noSvgWithoutTitle": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useButtonType": "warn",
+        "useFocusableInteractive": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useSemanticElements": "warn",
+        "useValidAriaRole": "warn"
+      },
+      "correctness": {
+        "noInvalidPositionAtImportRule": "warn",
+        "noUnknownPseudoClass": "warn",
+        "useExhaustiveDependencies": "warn"
+      },
+      "security": {
+        // Kept visible: each use needs its input proven sanitized before removal.
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn",
+        "noAssignInExpressions": "warn",
+        "noCommentText": "warn",
+        "noDuplicateCustomProperties": "warn",
+        "noDuplicateProperties": "warn",
+        "noImplicitAnyLet": "warn",
+        "noNonNullAssertedOptionalChain": "warn",
+        "noShadowRestrictedNames": "warn",
+        "noThenProperty": "warn",
+        "useIterableCallbackReturn": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "es5",
+      "semicolons": "always",
+      "arrowParentheses": "always",
+      "bracketSameLine": false,
+      "quoteStyle": "double",
+      "attributePosition": "auto",
+      "bracketSpacing": true
+    }
+  },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "assist": {
+    "enabled": true,
+    "actions": { "source": { "organizeImports": "on" } }
+  }
+}

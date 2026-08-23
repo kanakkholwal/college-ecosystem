@@ -51,7 +51,7 @@ export default function HeroSection() {
               className="relative flex shrink-0 overflow-hidden rounded-full size-14 border"
             >
               {src && (
-                /* eslint-disable @next/next/no-img-element */
+                // biome-ignore lint/performance/noImgElement: remote avatar URL, not a local asset
                 <img
                   src={src}
                   alt={`User ${i + 1}`}

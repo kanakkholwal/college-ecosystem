@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "biome lint .",
     "start": "next start",
     "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
@@ -19,7 +19,10 @@
     "db:generate:prod": "cross-env NODE_ENV=production drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:dev": "cross-env NODE_ENV=development drizzle-kit migrate",
-    "db:migrate:prod": "cross-env NODE_ENV=production drizzle-kit migrate"
+    "db:migrate:prod": "cross-env NODE_ENV=production drizzle-kit migrate",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check ."
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.89",
@@ -75,8 +78,6 @@
     "date-fns": "^4.1.0",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.2",
-    "eslint": "^10.9.0",
-    "eslint-config-next": "^16.3.2",
     "eventsource": "^4.1.1",
     "exceljs": "^4.4.0",
     "framer-motion": "^12.43.0",

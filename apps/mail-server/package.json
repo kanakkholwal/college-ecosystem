@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\"",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
     "opennext:build": "opennextjs-cloudflare build",
-    "opennext:deploy": "opennextjs-cloudflare deploy -- --keep-vars"
+    "opennext:deploy": "opennextjs-cloudflare deploy -- --keep-vars",
+    "lint:fix": "biome lint --write .",
+    "check": "biome check ."
   },
   "dependencies": {
     "@react-email/components": "0.0.36",
@@ -26,8 +28,6 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.2",
     "typescript": "^5.9.3",
     "wrangler": "^4.125.0"
   },

@@ -181,7 +181,8 @@ The root `package.json` file defines scripts for common tasks:
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,md}\""
+    "format": "biome format --write .",
+    "check": "biome check ."
   }
 }
 ```

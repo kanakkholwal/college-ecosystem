@@ -82,7 +82,7 @@ const MultiSelector = ({
         onValueChange([...value, val]);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional one-shot sync
     [value]
   );
 
@@ -185,7 +185,7 @@ const MultiSelector = ({
           break;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional one-shot sync
     [value, inputValue, activeIndex, loop]
   );
 

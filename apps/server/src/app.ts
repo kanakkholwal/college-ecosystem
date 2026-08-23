@@ -104,7 +104,7 @@ app.use(
     err: Error,
     req: express.Request,
     res: express.Response,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // biome-ignore lint/correctness/noUnusedFunctionParameters: express error handler needs the 4th arg
     _next: express.NextFunction
   ) => {
     console.error(err.stack);
