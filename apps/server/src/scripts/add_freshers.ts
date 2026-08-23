@@ -1,5 +1,5 @@
 import path from "node:path";
-import readXlsxFile from "read-excel-file/node";
+import { readSheet } from "read-excel-file/node";
 import { z } from "zod";
 import { getInfoFromRollNo } from "../lib/scrape";
 import ResultModel from "../models/result";
@@ -55,7 +55,7 @@ function getStudentData(rows: string[][], forceGender?: "male" | "female") {
 }
 
 async function getDataFromFile(filePath: string) {
-  const rows = await readXlsxFile(path.join(__dirname, filePath));
+  const rows = await readSheet(path.join(__dirname, filePath));
   // const sanitized_rows = rows
   //   .filter((row) => row.every((cell) => cell !== null))
   //   .map((row) => row.map((cell) => cell.toString())).slice(1);

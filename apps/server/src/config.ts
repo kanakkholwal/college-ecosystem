@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // This file contains the configuration for the server.
 // It includes the server identity, port, database URL, Redis URL, and CORS settings.

@@ -371,7 +371,7 @@ export default function AboutPage({ contributors, stats }: AboutPageProps) {
                     href={`https://github.com/${c.username}`}
                     target="_blank"
                     title={c.name}
-                    className="relative group"
+                    className="relative group" rel="noopener"
                   >
                     <div className="relative size-10 sm:size-12 rounded-xl overflow-hidden border border-border/40 transition-all duration-300 group-hover:scale-110 group-hover:shadow-md group-hover:border-primary/50 group-hover:z-10 bg-muted">
                       <Image

@@ -306,7 +306,7 @@
             transform: rotate(-3deg)
         }
 
-        50%: {
+        50% {
             transform: rotate(3deg)
         }
     }

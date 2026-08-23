@@ -135,7 +135,7 @@ export function ResourceManager({
                       <a
                         href={book.link}
                         target="_blank"
-                        className="text-xs text-muted-foreground hover:underline flex items-center gap-1"
+                        className="text-xs text-muted-foreground hover:underline flex items-center gap-1" rel="noopener"
                       >
                         <LinkIcon className="h-3 w-3" /> {book.link}
                       </a>
@@ -190,7 +190,7 @@ export function ResourceManager({
                       <a
                         href={paper.link}
                         target="_blank"
-                        className="text-xs text-muted-foreground hover:underline flex items-center gap-1"
+                        className="text-xs text-muted-foreground hover:underline flex items-center gap-1" rel="noopener"
                       >
                         View PDF <LinkIcon className="h-3 w-3" />
                       </a>

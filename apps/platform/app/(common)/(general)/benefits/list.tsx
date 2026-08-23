@@ -418,7 +418,7 @@ export function BenefitsGridMinimal({
           key={res.resource + i}
           href={res.href}
           target="_blank"
-          className="group flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/50 hover:border-primary/30 transition-all"
+          className="group flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/50 hover:border-primary/30 transition-all" rel="noopener"
         >
           <div className="size-8 rounded bg-background border flex items-center justify-center shrink-0 p-1">
             {res.logo && (

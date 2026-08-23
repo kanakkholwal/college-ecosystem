@@ -12,7 +12,7 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 
 
   if (request.nextUrl.pathname.startsWith("/api")) {
@@ -39,11 +39,19 @@ export async function middleware(request: NextRequest) {
     })
   }
 
-  return NextResponse.redirect(
-    appConfig.url + "?utm_source=mail-server-middleware"
-  )
+  return NextResponse.json({
+    message: "This is a proxy server for the mail server application.",
+    ok: true,
+  },{
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "Application-Name": appConfig.name,
+    },
+  },)
 }
-// the following code has been copied from https://nextjs.org/docs/advanced-features/middleware#matcher
+// Matcher syntax: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
 export const config = {
   matcher: [
     /*
