@@ -20,6 +20,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:dev": "cross-env NODE_ENV=development drizzle-kit migrate",
     "db:migrate:prod": "cross-env NODE_ENV=production drizzle-kit migrate",
+    "db:issuer:check": "bun run src/db/scripts/account-issuer.ts check",
+    "db:issuer:apply": "bun run src/db/scripts/account-issuer.ts apply",
+    "db:issuer:rollback": "bun run src/db/scripts/account-issuer.ts rollback",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "check": "biome check ."
@@ -117,6 +120,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.0",
     "@types/node": "^26.2.0",
     "cross-env": "^10.1.0",
     "serwist": "^9.5.0",
