@@ -1,139 +1,217 @@
-import CreatePoll from "@/components/application/poll/create-poll";
-import PollComponent from "@/components/application/poll/poll-component";
-import EmptyArea from "@/components/common/empty-area";
-import { Tabs, TabsContent, VercelTabsList } from "@/components/ui/tabs";
+import {
+  PollCard,
+  PollCardSkeleton,
+} from "@/components/application/poll/poll-card";
+import { PollTabs } from "@/components/application/poll/poll-tabs";
+import {
+  canManagePoll,
+  POLL_TABS,
+  type PollTab,
+  parsePollTab,
+  signInHref,
+  toPollView,
+} from "@/components/application/poll/utils";
+import AdUnit from "@/components/common/adsense";
+import { BallotBox } from "@/components/illustrations/ballot-box";
+import { TiltedChip } from "@/components/site/sections";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { ButtonLink } from "@/components/utils/link";
+import { Lock, LogIn, Plus, TriangleAlert, Vote } from "lucide-react";
+import type { Metadata } from "next";
 import {
   getClosedPolls,
   getOpenPolls,
   getPollsCreatedByLoggedInUser,
 } from "~/actions/common.poll";
-import type { PollType } from "~/models/poll";
-
-import AdUnit from "@/components/common/adsense";
-import { HeaderBar } from "@/components/common/header-bar";
-import { AuthButtonLink } from "@/components/utils/link";
-import { LogIn } from "lucide-react";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { CgPoll } from "react-icons/cg";
-import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
+import { orgConfig } from "~/project.config";
 
 export const metadata: Metadata = {
-  title: `Polls`,
-  description: "Check the latest polls here.",
+  title: { absolute: "Polls" },
+  description:
+    "Quick polls from students on campus. Vote and see where everyone stands.",
   alternates: {
     canonical: "/polls",
   },
-  keywords: [
-    "NITH",
-    "Polls",
-    "NITH Polls",
-    "NITH Polling",
-    "NITH Voting",
-    "NITH Community Polls",
-    "NITH Community Voting",
-    "NITH Student Polls",
-    "NITH Student Voting",
-  ],
+  keywords: ["NITH Polls", "NITH Voting", "NITH Community Polls"],
 };
 
-const tabs = [
-  { label: "Open Polls", id: "opened-polls" },
-  { label: "Closed Polls", id: "closed-polls" },
-  { label: "Your Polls", id: "your-polls" },
-];
+const loaders = {
+  open: getOpenPolls,
+  closed: getClosedPolls,
+  mine: getPollsCreatedByLoggedInUser,
+} as const;
 
 export default async function PollsPage(props: {
-  searchParams: Promise<{
-    tab?: string;
-  }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
-  const searchParams = await props.searchParams;
-  const activeTab = searchParams.tab || "opened-polls";
-
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-
-  const polls = await Promise.all([
-    getOpenPolls(),
-    getClosedPolls(),
-    session?.user ? getPollsCreatedByLoggedInUser() : Promise.resolve([]),
-  ]);
+  const { tab: rawTab } = await props.searchParams;
+  const tab = parsePollTab(rawTab);
+  const heading = POLL_TABS.find((t) => t.value === tab)?.heading;
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
-      <Tabs defaultValue={activeTab} className="w-full space-y-6">
-        <HeaderBar
-          titleNode="Polls"
-          descriptionNode="Check the latest polls here."
-          actionNode={<CreatePoll />}
-        />
-        <div className="sticky top-5 z-5 flex items-center justify-between h-12 px-4 bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80 border rounded-lg">
-          <div className="flex items-center gap-2">
-            <CgPoll className="size-4 text-muted-foreground" />
-            <VercelTabsList
-              tabs={tabs}
-              onTabChangeQuery="tab"
-              tabsListClassName="bg-transparent border-transparent"
-            />
-          </div>
+    <>
+      <header className="grid grid-cols-1 items-center gap-8 border-b border-border py-10 sm:py-12 lg:grid-cols-[minmax(0,1fr)_14rem]">
+        <div className="flex flex-col items-start">
+          <TiltedChip>{orgConfig.shortName} polls</TiltedChip>
+          <h1 className="mt-4 text-balance text-heading-lg font-medium text-foreground md:text-display">
+            Ask a question,
+            <br />
+            <span className="text-primary">let campus decide</span>
+          </h1>
+          <p className="mt-3 max-w-xl text-pretty text-body text-muted-foreground md:text-body-lg">
+            Quick polls from students. Pick an answer, vote, and see where
+            everyone stands.
+          </p>
+          <ButtonLink href="/polls/create" variant="primary" className="mt-6">
+            <Plus />
+            New poll
+          </ButtonLink>
         </div>
+        <BallotBox className="hidden lg:block" />
+      </header>
 
-        {tabs.map((tab, idx) => {
-          if (tab.id === "your-polls" && !session?.user) {
-            return (
-              <TabsContent value={tab.id} key={tab.id} className="mt-0">
-                <EmptyArea
-                  title="Your Polls"
-                  description="Sign in to create and manage your own polls."
-                  actionProps={{
-                    asChild: true,
-                    variant: "raw",
-                    children: (
-                      <AuthButtonLink
-                        authorized={!!session?.user}
-                        variant="rainbow"
-                        size="sm"
-                        href="/polls?tab=opened-polls"
-                      >
-                        <LogIn />
-                        Sign In
-                      </AuthButtonLink>
-                    ),
-                  }}
-                />
-              </TabsContent>
-            );
-          }
-
-          return (
-            <TabsContent value={tab.id} key={tab.id} className="mt-0 space-y-6">
-              {polls[idx].length === 0 ? (
-                <EmptyArea
-                  title={`No ${tab.label.toLowerCase()}`}
-                  description={`There are no ${tab.label.toLowerCase()} at the moment.`}
-                />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 @container">
-                  {polls[idx].map((poll: PollType) => (
-                    <PollComponent
-                      poll={poll}
-                      key={poll._id}
-                      user={session?.user}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          );
-        })}
-
-        <div className="pt-4">
-          <AdUnit adSlot="display-horizontal" key="polls-page-ad" />
+      <section aria-labelledby="polls-heading" className="mt-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2
+            id="polls-heading"
+            className="text-body-lg font-medium text-foreground"
+          >
+            {heading}
+          </h2>
+          <PollTabs active={tab} />
         </div>
-      </Tabs>
+        {tab === "closed" && (
+          <p className="mt-2 text-caption text-muted-foreground">
+            Closed polls are removed a week after they end.
+          </p>
+        )}
+
+        <div className="mt-4">
+          <ErrorBoundaryWithSuspense
+            key={tab}
+            fallback={
+              <EmptyState
+                icon={<TriangleAlert className="size-6" aria-hidden="true" />}
+                title="Polls couldn't load"
+                description="The polls service didn't respond. Refresh the page, or try again in a minute."
+              />
+            }
+            loadingFallback={<PollGridSkeleton />}
+          >
+            <PollFeed tab={tab} />
+          </ErrorBoundaryWithSuspense>
+        </div>
+      </section>
+
+      <div className="mt-10">
+        <AdUnit adSlot="display-horizontal" key="polls-page-ad" />
+      </div>
+    </>
+  );
+}
+
+async function PollFeed({ tab }: { tab: PollTab }) {
+  const [session, polls] = await Promise.all([getSession(), loaders[tab]()]);
+  const now = Date.now();
+
+  if (tab === "mine" && !session) {
+    return (
+      <EmptyState
+        icon={<LogIn className="size-6" aria-hidden="true" />}
+        title="Sign in to see your polls"
+        description="Polls you start show up here, open or closed."
+        action={
+          <ButtonLink href={signInHref("/polls?tab=mine")} variant="outline">
+            <LogIn />
+            Sign in
+          </ButtonLink>
+        }
+      />
+    );
+  }
+
+  if (polls.length === 0) {
+    const empty = {
+      open: {
+        icon: <Vote className="size-6" aria-hidden="true" />,
+        title: "No open polls right now",
+        description: "Start one and it shows up here for everyone to vote on.",
+      },
+      closed: {
+        icon: <Lock className="size-6" aria-hidden="true" />,
+        title: "No closed polls",
+        description: "Polls land here once they end, and stay for a week.",
+      },
+      mine: {
+        icon: <Vote className="size-6" aria-hidden="true" />,
+        title: "You haven't started a poll",
+        description: "Ask a question and see how campus votes.",
+      },
+    }[tab];
+    return (
+      <EmptyState
+        {...empty}
+        action={
+          tab === "closed" ? undefined : (
+            <ButtonLink href="/polls/create" variant="outline">
+              <Plus />
+              Start a poll
+            </ButtonLink>
+          )
+        }
+      />
+    );
+  }
+
+  const viewer = session?.user;
+  return (
+    <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {polls.map((poll) => (
+        <li key={String(poll._id)}>
+          <PollCard
+            poll={toPollView(poll, viewer?.id)}
+            now={now}
+            signedIn={!!viewer}
+            canManage={canManagePoll(viewer, poll.createdBy)}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PollGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {Array.from({ length: 4 }, (_, i) => (
+        <PollCardSkeleton key={`poll-skeleton-${i.toString()}`} />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex w-full flex-col items-center rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+      <span className="grid size-12 place-items-center rounded-xl border border-border bg-card text-foreground dark:bg-background">
+        {icon}
+      </span>
+      <h3 className="mt-4 text-body-lg font-medium text-foreground">{title}</h3>
+      <p className="mt-1 max-w-sm text-body text-muted-foreground">
+        {description}
+      </p>
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }

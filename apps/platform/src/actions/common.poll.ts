@@ -1,181 +1,170 @@
 "use server";
 
+import {
+  type PollInput,
+  pollInputSchema,
+} from "@/components/application/poll/schema";
+import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
+import { getSession } from "~/auth/server";
 import dbConnect from "~/lib/dbConnect";
-import Poll, { type PollType, type RawPollType } from "~/models/poll";
+import Poll, { type PollType } from "~/models/poll";
 
-export async function createPoll(pollData: RawPollType) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    return Promise.reject("You need to be logged in to create a poll");
+export type PollActionResult<T = null> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
+const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
+
+const fail = (error: string) => ({ ok: false, error }) as const;
+
+export async function createPoll(
+  input: PollInput
+): Promise<PollActionResult<{ id: string }>> {
+  const session = await getSession();
+  if (!session) return fail("Sign in to create a poll.");
+
+  const parsed = pollInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Check the poll details.");
   }
+
   try {
     await dbConnect();
-    // Validate the poll data
-    const poll = new Poll({
-      ...pollData,
+    const poll = await Poll.create({
+      ...parsed.data,
+      votes: [],
       createdBy: session.user.username,
     });
-    await poll.save();
     revalidatePath("/polls");
-    return Promise.resolve("Poll created successfully");
+    return { ok: true, data: { id: String(poll._id) } };
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to create poll");
+    return fail("Couldn't create the poll. Try again.");
   }
 }
+
 export async function getOpenPolls(): Promise<PollType[]> {
-  try {
-    await dbConnect();
-    const polls = await Poll.find({ closesAt: { $gte: new Date() } });
-    return Promise.resolve(JSON.parse(JSON.stringify(polls)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch polls");
-  }
+  await dbConnect();
+  const polls = await Poll.find({ closesAt: { $gt: new Date() } })
+    .sort({ closesAt: 1 })
+    .lean();
+  return serialize(polls);
 }
+
 export async function getClosedPolls(): Promise<PollType[]> {
-  try {
-    await dbConnect();
-    const polls = await Poll.find({ closesAt: { $lt: new Date() } });
-    return Promise.resolve(JSON.parse(JSON.stringify(polls)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch polls");
-  }
-}
-export async function getAllPolls(): Promise<PollType[]> {
-  try {
-    await dbConnect();
-    const polls = await Poll.find();
-    return Promise.resolve(JSON.parse(JSON.stringify(polls)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch polls");
-  }
+  await dbConnect();
+  const polls = await Poll.find({ closesAt: { $lte: new Date() } })
+    .sort({ closesAt: -1 })
+    .lean();
+  return serialize(polls);
 }
 
 export async function getPollById(id: string): Promise<PollType | null> {
-  try {
-    await dbConnect();
-    const poll = await Poll.findById(id);
-    return Promise.resolve(JSON.parse(JSON.stringify(poll)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch poll");
-  }
+  if (!mongoose.isObjectIdOrHexString(id)) return null;
+  await dbConnect();
+  const poll = await Poll.findById(id).lean();
+  return poll ? serialize(poll) : null;
 }
-export async function voteOnPoll(
+
+/** One ballot per user: the filter and the push run as a single atomic update. */
+export async function castVote(
   pollId: string,
-  optionId: string
-): Promise<PollType> {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    return Promise.reject("You need to be logged in to vote on a poll");
+  selected: string[]
+): Promise<PollActionResult> {
+  const session = await getSession();
+  if (!session) return fail("Sign in to vote.");
+  if (!mongoose.isObjectIdOrHexString(pollId)) {
+    return fail("This poll doesn't exist.");
   }
+
+  const choices = Array.isArray(selected)
+    ? [...new Set(selected.filter((c) => typeof c === "string"))]
+    : [];
+  if (choices.length === 0) return fail("Pick an option first.");
+
+  const userId = session.user.id;
+  const now = new Date();
+
   try {
     await dbConnect();
-    const poll = await Poll.findById(pollId);
-    if (!poll) {
-      return Promise.reject("Poll not found");
-    }
-    if (poll.votes.includes(session.user.id)) {
-      return Promise.reject("You have already voted on this poll");
-    }
-    poll.votes.push(session.user.id);
-    await poll.save();
-    return Promise.resolve(JSON.parse(JSON.stringify(poll)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to vote on poll");
-  }
-}
-export async function updateVotes(
-  pollId: string,
-  voteData: PollType["votes"]
-): Promise<PollType> {
-  try {
-    await dbConnect();
-    const poll = await Poll.findById(pollId);
-    if (!poll) {
-      return Promise.reject("Poll not found");
-    }
-    poll.votes = voteData;
-    await poll.save();
-    revalidatePath("/polls");
-    return Promise.resolve(JSON.parse(JSON.stringify(poll)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to update votes");
-  }
-}
-export async function deletePoll(pollId: string): Promise<void> {
-  try {
-    await dbConnect();
-    await Poll.findByIdAndDelete(pollId);
-    revalidatePath("/polls");
-    return Promise.resolve();
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to delete poll");
-  }
-}
-// For user
-export async function getPollsVotedByUser(userId: string): Promise<PollType[]> {
-  try {
-    await dbConnect();
-    const polls = await Poll.find({
-      votes: {
-        $in: [
-          {
-            $elemMatch: {
-              userId: userId,
-            },
-          },
-        ],
+    const updated = await Poll.findOneAndUpdate(
+      {
+        _id: pollId,
+        closesAt: { $gt: now },
+        "votes.userId": { $ne: userId },
+        options: { $all: choices },
+        ...(choices.length > 1 ? { multipleChoice: true } : {}),
       },
-    });
-    return Promise.resolve(JSON.parse(JSON.stringify(polls)));
+      {
+        $push: {
+          votes: {
+            $each: choices.map((option) => ({
+              option,
+              userId,
+              createdAt: now,
+            })),
+          },
+        },
+      },
+      { returnDocument: "after", timestamps: false, projection: { _id: 1 } }
+    ).lean();
+
+    if (!updated) {
+      const poll = await Poll.findById(pollId)
+        .select("closesAt votes.userId")
+        .lean<Pick<PollType, "closesAt" | "votes">>();
+      if (!poll) return fail("This poll doesn't exist.");
+      if (new Date(poll.closesAt) <= now) return fail("This poll has closed.");
+      if (poll.votes.some((v) => v.userId === userId)) {
+        return fail("You've already voted on this poll.");
+      }
+      return fail("That choice isn't part of this poll.");
+    }
+
+    revalidatePath("/polls");
+    revalidatePath(`/polls/${pollId}`);
+    return { ok: true, data: null };
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch polls");
+    return fail("Couldn't record your vote. Try again.");
+  }
+}
+
+export async function deletePoll(pollId: string): Promise<PollActionResult> {
+  const session = await getSession();
+  if (!session) return fail("Sign in to delete a poll.");
+  if (!mongoose.isObjectIdOrHexString(pollId)) {
+    return fail("This poll doesn't exist.");
+  }
+
+  try {
+    await dbConnect();
+    const poll = await Poll.findById(pollId)
+      .select("createdBy")
+      .lean<Pick<PollType, "createdBy">>();
+    if (!poll) return fail("This poll doesn't exist.");
+    if (
+      poll.createdBy !== session.user.username &&
+      session.user.role !== "admin"
+    ) {
+      return fail("Only the author or an admin can delete this poll.");
+    }
+    await Poll.deleteOne({ _id: pollId });
+    revalidatePath("/polls");
+    return { ok: true, data: null };
+  } catch (err) {
+    console.error(err);
+    return fail("Couldn't delete the poll. Try again.");
   }
 }
 
 export async function getPollsCreatedByLoggedInUser(): Promise<PollType[]> {
-  try {
-    const headersList = await headers();
-    const session = await auth.api.getSession({
-      headers: headersList,
-    });
-    if (!session) {
-      return Promise.reject("You need to be logged in to view your polls");
-    }
-    await dbConnect();
-    const polls = await Poll.find({ createdBy: session.user.username });
-    return Promise.resolve(JSON.parse(JSON.stringify(polls)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch polls");
-  }
-}
-export async function getPollsCreatedByUser(
-  userId: string
-): Promise<PollType[]> {
-  try {
-    await dbConnect();
-    const polls = await Poll.find({ createdBy: userId });
-    return Promise.resolve(JSON.parse(JSON.stringify(polls)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch polls");
-  }
+  const session = await getSession();
+  if (!session) return [];
+  await dbConnect();
+  const polls = await Poll.find({ createdBy: session.user.username })
+    .sort({ createdAt: -1 })
+    .lean();
+  return serialize(polls);
 }

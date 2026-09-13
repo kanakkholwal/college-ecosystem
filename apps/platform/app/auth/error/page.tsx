@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { ButtonLink } from "@/components/utils/link";
 import { getAuthError } from "~/auth/errors";
+import { AuthHeader } from "../auth-header";
 
 export const metadata: Metadata = {
   title: "Sign in failed",
@@ -22,27 +22,24 @@ export default async function AuthErrorPage({ searchParams }: Props) {
   );
 
   return (
-    <div className="flex flex-col items-center text-center space-y-6">
-      <div className="p-4 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 ring-1 ring-red-500/20">
-        <ShieldAlert className="size-8" />
-      </div>
-      <div className="space-y-2">
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto text-balance">
-            {description}
-          </p>
-        )}
-      </div>
-      <div className="flex gap-4 w-full flex-wrap">
-        <Button variant="outline" className="w-full" asChild>
-          <Link href="/">Home</Link>
-        </Button>
-        <Button className="w-full" asChild>
-          <Link href={action?.href ?? "/auth/sign-in"}>
-            {action?.label ?? "Back to Sign In"}
-          </Link>
-        </Button>
+    <div className="flex flex-col gap-6">
+      <AuthHeader
+        icon={<ShieldAlert />}
+        tone="destructive"
+        title={title}
+        description={description}
+      />
+      <div className="flex flex-col gap-2">
+        <ButtonLink
+          href={action?.href ?? "/auth/sign-in"}
+          variant="primary"
+          className="w-full"
+        >
+          {action?.label ?? "Back to sign in"}
+        </ButtonLink>
+        <ButtonLink href="/" variant="ghost" size="sm" className="mx-auto">
+          Go to home
+        </ButtonLink>
       </div>
     </div>
   );

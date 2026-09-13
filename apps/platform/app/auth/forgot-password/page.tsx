@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, KeyRound, MailCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,39 +15,64 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Mail } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import * as z from "zod";
+import { ButtonLink } from "@/components/utils/link";
 import { authClient } from "~/auth/client";
-import { getAuthErrorMessage } from "~/auth/errors";
+import { type AuthErrorInfo, getAuthError } from "~/auth/errors";
 import { emailSchema } from "~/constants";
 import { orgConfig } from "~/project.config";
+import { AuthErrorAlert } from "../auth-error-alert";
+import {
+  authInputClass,
+  authLabelClass,
+  ErrorSummary,
+  SubmitButton,
+} from "../auth-form-ui";
+import { AuthHeader } from "../auth-header";
 
 const FormSchema = z.object({
   email: emailSchema,
 });
 
+type ForgotValues = z.infer<typeof FormSchema>;
+
+const LABELS = { email: "College email" } as const;
+const RESEND_COOLDOWN_S = 60;
+
 export default function ForgotPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [formError, setFormError] = useState<AuthErrorInfo | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [resent, setResent] = useState(false);
+  const successRef = useRef<HTMLDivElement>(null);
 
-  const form = useForm<z.infer<typeof FormSchema>>({
+  const form = useForm<ForgotValues>({
     resolver: zodResolver(FormSchema),
+    mode: "onTouched",
     defaultValues: {
       email: "",
     },
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setTimeout(() => setCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [cooldown]);
+
+  useEffect(() => {
+    if (sentTo) successRef.current?.focus();
+  }, [sentTo]);
+
+  async function requestLink(email: string) {
+    if (isSubmitting) return false;
     setIsSubmitting(true);
+    setFormError(null);
     try {
       const res = await authClient.requestPasswordReset(
         {
-          email: data.email,
+          email,
           redirectTo: "/auth/sign-in?tab=reset-password",
         },
         {
@@ -50,111 +80,160 @@ export default function ForgotPassword() {
         }
       );
       if (res.error) {
-        toast.error(getAuthErrorMessage(res.error));
-        return;
+        setFormError(getAuthError(res.error));
+        return false;
       }
-      toast.success("Reset link sent!");
-      setIsSubmitted(true);
-    } catch (err) {
-      toast.error("Something went wrong. Please try again.");
+      setCooldown(RESEND_COOLDOWN_S);
+      return true;
+    } catch {
+      setFormError(getAuthError(null));
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  if (isSubmitted) {
+  async function onSubmit(data: ForgotValues) {
+    setShowSummary(false);
+    if (await requestLink(data.email)) {
+      setResent(false);
+      setSentTo(data.email);
+    }
+  }
+
+  if (sentTo) {
     return (
-      <div className="flex flex-col items-center text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="flex size-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
-          <CheckCircle2 className="size-8" />
-        </div>
+      <div
+        ref={successRef}
+        tabIndex={-1}
+        className="flex flex-col gap-6 outline-none"
+      >
+        <AuthHeader
+          icon={<MailCheck />}
+          tone="success"
+          title="Check your inbox"
+          description={
+            <>
+              If an account exists for{" "}
+              <span className="font-medium text-foreground">{sentTo}</span>, a
+              password reset link is on its way.
+            </>
+          }
+        />
+        <ol className="list-decimal space-y-1 pl-5 text-body text-muted-foreground">
+          <li>Open the email from us in your college inbox.</li>
+          <li>Follow the link to choose a new password.</li>
+          <li>Sign in with the new password.</li>
+        </ol>
 
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">
-            Check your inbox
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-            We{"'"}ve sent a password reset link to <br />
-            <span className="font-medium text-foreground">
-              {form.getValues("email")}
-            </span>
+        <AuthErrorAlert error={formError} />
+
+        <div className="flex flex-col gap-3">
+          <ButtonLink href="/auth/sign-in" variant="primary" className="w-full">
+            Back to sign in
+          </ButtonLink>
+          <p className="text-center text-caption text-muted-foreground">
+            Nothing after a few minutes? Check Spam, then{" "}
+            <Button
+              variant="link"
+              className="h-auto p-0 text-caption underline"
+              disabled={cooldown > 0 || isSubmitting}
+              onClick={async () => {
+                if (await requestLink(sentTo)) setResent(true);
+              }}
+            >
+              {isSubmitting
+                ? "sending..."
+                : cooldown > 0
+                  ? `${resent ? "sent again, " : ""}resend in ${cooldown}s`
+                  : "resend the link"}
+            </Button>
+            .
           </p>
-        </div>
-
-        <div className="w-full space-y-2 pt-4">
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/auth/sign-in">Back to Sign In</Link>
-          </Button>
-          <button
-            onClick={() => setIsSubmitted(false)}
-            className="text-xs text-muted-foreground hover:text-primary hover:underline transition-all"
+          <p className="sr-only" aria-live="polite">
+            {resent ? "Link sent again." : ""}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mx-auto"
+            onClick={() => {
+              setSentTo(null);
+              setFormError(null);
+            }}
           >
-            Didnt receive it? Try again
-          </button>
+            Use a different email
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-center text-center space-y-2">
-        <div className="p-3 rounded-xl bg-primary/5 text-primary mb-2 ring-1 ring-primary/10">
-          <KeyRound className="size-6" />
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Forgot password?
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          No worries, we{"'"}ll send you reset instructions.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <AuthHeader
+        icon={<KeyRound />}
+        title="Reset your password"
+        description="Enter your college email and we'll send you a link to choose a new password."
+      />
+
+      <AuthErrorAlert error={formError} />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit, () => setShowSummary(true))}
+          className="flex flex-col gap-4"
+        >
+          <ErrorSummary
+            control={form.control}
+            labels={LABELS}
+            visible={showSummary}
+            onSelect={(name) => form.setFocus(name)}
+          />
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <FormControl>
-                    <Input
-                      placeholder={`user${orgConfig.mailSuffix}`}
-                      type="email"
-                      autoComplete="email"
-                      disabled={isSubmitting}
-                      className="pl-9"
-                      {...field}
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
+                <FormLabel className={authLabelClass}>{LABELS.email}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder={`you${orgConfig.mailSuffix}`}
+                    className={authInputClass}
+                  />
+                </FormControl>
+                <FormMessage aria-live="polite" />
               </FormItem>
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="animate-spin" />}
-            {isSubmitting ? "Sending Link..." : "Reset Password"}
-          </Button>
+          <SubmitButton
+            variant="primary"
+            pending={isSubmitting}
+            pendingLabel="Sending link..."
+          >
+            Send reset link
+          </SubmitButton>
         </form>
       </Form>
 
-      <div className="flex justify-center">
-        <Button
-          variant="link"
-          size="sm"
-          className="text-muted-foreground"
-          asChild
-        >
-          <Link href="/auth/sign-in" className="gap-2">
-            <ArrowLeft /> Back to Sign In
-          </Link>
-        </Button>
-      </div>
+      <ButtonLink
+        href="/auth/sign-in"
+        variant="ghost"
+        size="sm"
+        className="mx-auto"
+      >
+        <ArrowLeft />
+        Back to sign in
+      </ButtonLink>
     </div>
   );
 }

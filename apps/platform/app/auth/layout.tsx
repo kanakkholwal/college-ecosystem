@@ -1,9 +1,8 @@
-import { FlickeringGrid } from "@/components/animation/flikering-grid";
-import { ApplicationInfo } from "@/components/logo";
-import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { CampusGate } from "@/components/illustrations/campus-gate";
+import { ApplicationInfo } from "@/components/logo";
+import { TiltedChip } from "@/components/site/sections";
+import { appConfig, orgConfig } from "~/project.config";
 
 export const dynamic = "force-dynamic";
 
@@ -13,88 +12,65 @@ type LayoutProps = Readonly<{
 
 export default function AuthLayout({ children }: LayoutProps) {
   return (
-    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      {/* Mobile: Back Button (Visible only on small screens) */}
-      <div className="absolute left-4 top-4 md:left-8 md:top-8 z-50 lg:hidden">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <ApplicationInfo className="h-8" />
-        </Link>
-      </div>
-
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex overflow-hidden">
-        {/* Ambient Background */}
-        <div className="absolute inset-0 bg-zinc-900" />
-        <FlickeringGrid
-          className="absolute inset-0 z-0 size-full opacity-20"
-          squareSize={4}
-          gridGap={6}
-          color="#FFFFFF"
-          maxOpacity={0.2}
-          flickerChance={0.05}
-        />
-
-        {/* Content */}
+    <div className="flex min-h-dvh flex-col bg-canvas text-foreground">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-body focus:ring-2 focus:ring-ring"
+      >
+        Skip to content
+      </a>
+      <header className="mx-auto flex w-full max-w-6xl items-center px-4 py-4 md:px-6 md:py-6">
         <Link
           href="/"
-          className="relative z-20 flex items-center text-lg font-medium"
+          aria-label={`${appConfig.name} home`}
+          className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
         >
-          <ApplicationInfo className="h-10" />
+          <ApplicationInfo />
         </Link>
-        <div className="hidden lg:flex justify-center items-center w-full relative h-full">
-          <Image
-            src="/assets/images/illustration_dashboard.png"
-            alt="Application Illustration"
-            width={720}
-            height={600}
-            className="w-full object-cover max-w-md"
-          />
-        </div>
+      </header>
 
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              &ldquo;This platform has completely transformed how we manage
-              academic resources and campus life. It{"'"}s the operating system
-              our college needed.&rdquo;
-            </p>
-            <footer className="text-sm text-zinc-400">
-              NITH Student Community
-            </footer>
-          </blockquote>
-        </div>
-      </div>
-
-      {/* --- RIGHT PANEL: FORM --- */}
-      <div className="relative flex h-full items-center justify-center p-4 lg:p-8">
-        {/* Desktop: Back Button */}
-        <div className="absolute right-4 top-4 md:right-8 md:top-8">
-          <ButtonLink href="/" variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="size-4" /> Back to Home
-          </ButtonLink>
-        </div>
-
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[380px]">
-          {children}
-
-          <p className="px-8 text-center text-sm text-muted-foreground">
-            By clicking continue, you agree to our{" "}
+      <main
+        id="main"
+        className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pb-10 md:px-6 lg:grid-cols-2 lg:gap-16"
+      >
+        <div className="mx-auto w-full max-w-md">
+          <div className="panel-card p-5 sm:p-8">{children}</div>
+          <p className="mt-4 px-4 text-center text-caption text-muted-foreground">
+            By continuing you agree to the{" "}
             <Link
               href="/terms"
-              className="underline underline-offset-4 hover:text-primary"
+              className="text-foreground underline underline-offset-4 hover:text-primary"
             >
-              Terms of Service
+              Terms
             </Link>{" "}
             and{" "}
             <Link
               href="/privacy-policy"
-              className="underline underline-offset-4 hover:text-primary"
+              className="text-foreground underline underline-offset-4 hover:text-primary"
             >
               Privacy Policy
             </Link>
             .
           </p>
         </div>
-      </div>
+
+        <aside className="hidden flex-col gap-8 lg:flex">
+          <CampusGate className="mx-auto max-w-sm" />
+          <div className="flex flex-col items-start gap-4">
+            <TiltedChip>{orgConfig.mailSuffix} accounts</TiltedChip>
+            <p className="text-balance text-heading-sm font-medium text-foreground">
+              One college account for
+              <br />
+              <span className="text-primary">your whole campus day</span>
+            </p>
+            <p className="max-w-md text-pretty text-body text-muted-foreground">
+              Results, syllabus, timetables, free classrooms, announcements and
+              the community, behind the {orgConfig.shortName} email you already
+              have.
+            </p>
+          </div>
+        </aside>
+      </main>
     </div>
   );
 }
