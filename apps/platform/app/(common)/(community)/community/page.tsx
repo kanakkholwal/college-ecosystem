@@ -126,7 +126,10 @@ export default async function CommunitiesPage(props: {
                 <li>Pick the community that fits.</li>
               </ul>
             </div>
-            <AdUnit adSlot="display-vertical" key="communities-context-sidebar" />
+            <AdUnit
+              adSlot="display-vertical"
+              key="communities-context-sidebar"
+            />
           </div>
         </aside>
       </div>

@@ -55,7 +55,10 @@ export default function CommunityPostList({
   return (
     <div className="flex flex-col gap-6">
       {groups.map((group) => (
-        <section key={group.label} aria-label={`Posted ${group.label.toLowerCase()}`}>
+        <section
+          key={group.label}
+          aria-label={`Posted ${group.label.toLowerCase()}`}
+        >
           <p className="mb-2 flex items-center gap-3 text-caption font-medium text-muted-foreground">
             {group.label}
             <span aria-hidden="true" className="h-px flex-1 bg-border" />

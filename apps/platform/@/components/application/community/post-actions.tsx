@@ -46,7 +46,10 @@ export function PostActions({
         ? {
             ...current,
             liked: !current.liked,
-            likeCount: Math.max(0, current.likeCount + (current.liked ? -1 : 1)),
+            likeCount: Math.max(
+              0,
+              current.likeCount + (current.liked ? -1 : 1)
+            ),
           }
         : { ...current, saved: !current.saved }
   );

@@ -42,7 +42,12 @@ type PostMenuProps = {
 const itemClass = "min-h-10 gap-2.5 px-2.5 text-body [&_svg]:size-4";
 
 /** Secondary post actions (share, copy, edit, delete) kept out of the card to hold visible choices to three. */
-export function PostMenu({ postId, title, canManage, className }: PostMenuProps) {
+export function PostMenu({
+  postId,
+  title,
+  canManage,
+  className,
+}: PostMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -124,7 +129,10 @@ export function PostMenu({ postId, title, canManage, className }: PostMenuProps)
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
-                className={cn(itemClass, "text-destructive focus:text-destructive")}
+                className={cn(
+                  itemClass,
+                  "text-destructive focus:text-destructive"
+                )}
                 onSelect={() => setConfirmOpen(true)}
               >
                 <Trash2 aria-hidden="true" />
@@ -146,7 +154,9 @@ export function PostMenu({ postId, title, canManage, className }: PostMenuProps)
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>Keep post</AlertDialogCancel>
+              <AlertDialogCancel disabled={deleting}>
+                Keep post
+              </AlertDialogCancel>
               <Button
                 variant="destructive"
                 onClick={confirmDelete}

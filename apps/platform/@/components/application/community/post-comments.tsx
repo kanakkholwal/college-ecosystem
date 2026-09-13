@@ -22,7 +22,8 @@ export function CommentsSkeleton() {
 
 // Fuma bundles a Tiptap editor; load it after the post body instead of with it.
 const CommentSection = dynamic(
-  () => import("@/components/application/comments").then((m) => m.CommentSection),
+  () =>
+    import("@/components/application/comments").then((m) => m.CommentSection),
   { ssr: false, loading: () => <CommentsSkeleton /> }
 );
 

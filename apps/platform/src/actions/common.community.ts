@@ -40,7 +40,9 @@ export async function createPost(postData: RawCommunityPostType) {
   // Validated here too: a server action is a public endpoint, not just the form's submit handler.
   const parsed = rawCommunityPostSchema.safeParse(postData);
   if (!parsed.success) {
-    return Promise.reject("Check the title, body and community, then try again");
+    return Promise.reject(
+      "Check the title, body and community, then try again"
+    );
   }
 
   try {
@@ -148,7 +150,7 @@ export async function updatePost(id: string, action: UpdateAction) {
     case "toggleSave": {
       const field = action.type === "toggleLike" ? "likes" : "savedBy";
       const has = (post[field] as string[]).includes(session.user.id);
-      // $pull/$addToSet stay correct when two people react at once; save() rewrote the whole array.
+      // Atomic operators so concurrent reactions don't overwrite each other's array writes.
       updated = await CommunityPost.findByIdAndUpdate(
         id,
         has
@@ -163,7 +165,7 @@ export async function updatePost(id: string, action: UpdateAction) {
       if (post.author.id !== session.user.id && session.user.role !== "admin") {
         throw new Error("You are not authorized to edit this post");
       }
-      // Only content fields: the old Object.assign let a caller overwrite author, likes or views.
+      // Schema parse strips unknown keys, so callers can't overwrite author, likes or views.
       const parsed = rawCommunityPostSchema.partial().safeParse(action.data);
       if (!parsed.success) throw new Error("Invalid post data");
       post.set(normalisePost(parsed.data));
@@ -190,7 +192,8 @@ export async function deletePost(id: string) {
   if (!session) {
     return Promise.reject("You need to be logged in to update a post");
   }
-  if (!mongoose.isObjectIdOrHexString(id)) return Promise.reject("Post not found");
+  if (!mongoose.isObjectIdOrHexString(id))
+    return Promise.reject("Post not found");
 
   try {
     await dbConnect();

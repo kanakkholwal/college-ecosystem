@@ -45,7 +45,10 @@ export function signInHref(next: string) {
 type Viewer = { id: string; role?: string | null } | null | undefined;
 
 /** Authors manage their own posts; admins manage every post. Mirrors the checks in `updatePost` and `deletePost`. */
-export function canManagePost(viewer: Viewer, post: { author: { id: string } }) {
+export function canManagePost(
+  viewer: Viewer,
+  post: { author: { id: string } }
+) {
   return !!viewer && (viewer.id === post.author.id || viewer.role === "admin");
 }
 
@@ -79,6 +82,7 @@ export function toExcerpt(markdown: string, max = 240) {
 
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  const letters = parts.length > 1 ? [parts[0][0], parts.at(-1)?.[0]] : [parts[0]?.[0]];
+  const letters =
+    parts.length > 1 ? [parts[0][0], parts.at(-1)?.[0]] : [parts[0]?.[0]];
   return letters.join("").toUpperCase() || "?";
 }
