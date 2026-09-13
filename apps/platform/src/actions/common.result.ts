@@ -7,6 +7,7 @@ import dbConnect from "~/lib/dbConnect";
 import { serverFetch } from "~/lib/fetch-server";
 import redis from "~/lib/redis";
 import ResultModel from "~/models/result";
+import { consumeRateLimit, getClientIp } from "~/lib/rate-limit";
 import { z } from "zod/v3";
 
 /*
@@ -240,7 +241,7 @@ export const getCachedLabels = cache(
 /*  For admin
 */
 
-export async function getResultByRollNo(
+async function loadResult(
   rollNo: string,
   update?: boolean,
   is_new?: boolean
@@ -325,6 +326,74 @@ export async function getResultByRollNo(
   }
 
   return JSON.parse(JSON.stringify(result)); // deep clone
+}
+
+// A refresh scrapes the college site and re-ranks every result, so it is capped per visitor and per roll number.
+const REFRESH_LIMITS = {
+  perIp: { max: 5, windowSeconds: 10 * 60 },
+  perRollNo: { max: 3, windowSeconds: 60 * 60 },
+};
+
+export type ResultLookup = {
+  result: ResultTypeWithId | null;
+  refreshBlocked: boolean;
+  retryAfterSeconds: number;
+};
+
+export async function getResultWithRefresh(
+  rollNo: string,
+  refresh: { update?: boolean; isNew?: boolean } = {}
+): Promise<ResultLookup> {
+  const wantsRefresh = Boolean(refresh.update || refresh.isNew);
+  if (!wantsRefresh) {
+    return {
+      result: await loadResult(rollNo),
+      refreshBlocked: false,
+      retryAfterSeconds: 0,
+    };
+  }
+
+  let blocked = false;
+  let retryAfterSeconds = 0;
+  try {
+    const ip = await getClientIp();
+    const [byIp, byRoll] = await Promise.all([
+      consumeRateLimit({
+        key: `result-refresh:ip:${ip}`,
+        ...REFRESH_LIMITS.perIp,
+      }),
+      consumeRateLimit({
+        key: `result-refresh:roll:${rollNo.toLowerCase()}`,
+        ...REFRESH_LIMITS.perRollNo,
+      }),
+    ]);
+    blocked = !byIp.allowed || !byRoll.allowed;
+    retryAfterSeconds = Math.max(
+      byIp.retryAfterSeconds,
+      byRoll.retryAfterSeconds
+    );
+  } catch (e) {
+    // Fail closed: without a working limiter, serve the stored result instead of scraping.
+    console.error("Rate limit check failed:", e);
+    blocked = true;
+  }
+
+  const result = blocked
+    ? await loadResult(rollNo)
+    : await loadResult(rollNo, refresh.update, refresh.isNew);
+  return { result, refreshBlocked: blocked, retryAfterSeconds };
+}
+
+export async function getResultByRollNo(
+  rollNo: string,
+  update?: boolean,
+  is_new?: boolean
+): Promise<ResultTypeWithId | null> {
+  const { result } = await getResultWithRefresh(rollNo, {
+    update,
+    isNew: is_new,
+  });
+  return result;
 }
 
 // Not exported: exports of a "use server" file are publicly callable actions.

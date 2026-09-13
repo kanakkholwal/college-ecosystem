@@ -1,23 +1,34 @@
 "use server";
 
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
+import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { z } from "zod";
 import { auth } from "~/auth";
 import { getSession } from "~/auth/server";
-import { RawCommunityPostType } from "~/constants/common.community";
+import {
+  CATEGORY_TYPES,
+  type RawCommunityPostType,
+  rawCommunityPostSchema,
+} from "~/constants/common.community";
 import { db } from "~/db/connect";
-import { users } from "~/db/schema";
+import { comments, rates, users } from "~/db/schema";
 import dbConnect from "~/lib/dbConnect";
 import CommunityPost, {
   CommunityComment,
-  CommunityPostTypeWithId,
-  ICommunityPost,
-  rawCommunityCommentSchema,
+  type CommunityPostTypeWithId,
+  type ICommunityPost,
 } from "~/models/community";
 
-// Create a new post
+const MAX_PAGE_SIZE = 50;
+
+function normalisePost(data: Partial<RawCommunityPostType>) {
+  if (data.category && data.category !== "departmental") {
+    return { ...data, subCategory: null };
+  }
+  return data;
+}
+
 export async function createPost(postData: RawCommunityPostType) {
   const headersList = await headers();
   const session = await auth.api.getSession({
@@ -26,11 +37,16 @@ export async function createPost(postData: RawCommunityPostType) {
   if (!session) {
     return Promise.reject("You need to be logged in to create a post");
   }
+  // Validated here too: a server action is a public endpoint, not just the form's submit handler.
+  const parsed = rawCommunityPostSchema.safeParse(postData);
+  if (!parsed.success) {
+    return Promise.reject("Check the title, body and community, then try again");
+  }
 
   try {
     await dbConnect();
     const post = new CommunityPost({
-      ...postData,
+      ...normalisePost(parsed.data),
       author: {
         id: session.user.id,
         name: session.user.name,
@@ -49,96 +65,97 @@ export async function createPost(postData: RawCommunityPostType) {
   }
 }
 
-// Get posts by category and pagination
 export async function getPostsByCategory(
   category: string,
   page: number,
-  limit: number
+  limit: number,
+  sort: "recent" | "popular" = "recent"
 ): Promise<CommunityPostTypeWithId[]> {
+  const isAll = category === "all";
+  if (!isAll && !(CATEGORY_TYPES as readonly string[]).includes(category)) {
+    return [];
+  }
+  const safePage = Math.max(1, Math.floor(Number(page)) || 1);
+  const safeLimit = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Math.floor(Number(limit)) || 10)
+  );
+
   try {
     await dbConnect();
-    const posts = await CommunityPost.find({
-      category: category === "all" ? { $exists: true } : category,
-    })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("author", "name email rollNo");
-    return Promise.resolve(JSON.parse(JSON.stringify(posts)));
+    const posts = await CommunityPost.find(isAll ? {} : { category })
+      .select("-content_json")
+      .sort(
+        sort === "popular" ? { views: -1, createdAt: -1 } : { createdAt: -1 }
+      )
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .lean();
+    return JSON.parse(JSON.stringify(posts));
   } catch (err) {
     console.error(err);
     return Promise.reject("Failed to fetch posts");
   }
 }
 
-// Get a single post by ID
+/** Reads one post. `cached: false` also counts a view. Returns null for unknown or malformed ids. */
 export async function getPostById(
   id: string,
   cached: boolean
 ): Promise<CommunityPostTypeWithId | null> {
+  if (!mongoose.isObjectIdOrHexString(id)) return null;
   try {
     await dbConnect();
-    const postExists = await CommunityPost.findById(id);
-    if (!postExists) {
-      return Promise.resolve(null);
-    }
-    const post = await CommunityPost.findById(id).populate(
-      "author",
-      "name email rollNo"
-    );
-    if (!cached) {
-      post.views += 1;
-      await post.save();
-    }
-    return Promise.resolve(JSON.parse(JSON.stringify(post)));
+    const post = cached
+      ? await CommunityPost.findById(id).lean()
+      : await CommunityPost.findByIdAndUpdate(
+          id,
+          { $inc: { views: 1 } },
+          { returnDocument: "after", timestamps: false }
+        ).lean();
+    return post ? JSON.parse(JSON.stringify(post)) : null;
   } catch (err) {
     console.error(err);
     return Promise.reject("Failed to fetch post");
   }
 }
 
-// Update post (likes, saves, views)
+type EditablePostFields = Partial<
+  Pick<
+    CommunityPostTypeWithId,
+    "title" | "content" | "content_json" | "category" | "subCategory"
+  >
+>;
+
 type UpdateAction =
   | { type: "toggleLike" }
   | { type: "toggleSave" }
-  | { type: "incrementViews" }
-  | {
-      type: "edit";
-      data: Partial<Pick<CommunityPostTypeWithId, "title" | "content">>;
-    };
+  | { type: "edit"; data: EditablePostFields };
 
 export async function updatePost(id: string, action: UpdateAction) {
   const session = await getSession();
   if (!session) throw new Error("You need to be logged in to update a post");
+  if (!mongoose.isObjectIdOrHexString(id)) throw new Error("Post not found");
 
   await dbConnect();
 
   const post = await CommunityPost.findById(id);
   if (!post) throw new Error("Post not found");
 
+  let updated: unknown;
   switch (action.type) {
-    case "toggleLike": {
-      const idx = post.likes.indexOf(session.user.id);
-      if (idx === -1) {
-        post.likes.push(session.user.id);
-      } else {
-        post.likes.splice(idx, 1);
-      }
-      break;
-    }
-
+    case "toggleLike":
     case "toggleSave": {
-      const idx = post.savedBy.indexOf(session.user.id);
-      if (idx === -1) {
-        post.savedBy.push(session.user.id);
-      } else {
-        post.savedBy.splice(idx, 1);
-      }
-      break;
-    }
-
-    case "incrementViews": {
-      post.views += 1;
+      const field = action.type === "toggleLike" ? "likes" : "savedBy";
+      const has = (post[field] as string[]).includes(session.user.id);
+      // $pull/$addToSet stay correct when two people react at once; save() rewrote the whole array.
+      updated = await CommunityPost.findByIdAndUpdate(
+        id,
+        has
+          ? { $pull: { [field]: session.user.id } }
+          : { $addToSet: { [field]: session.user.id } },
+        { returnDocument: "after", timestamps: false }
+      ).lean();
       break;
     }
 
@@ -146,7 +163,12 @@ export async function updatePost(id: string, action: UpdateAction) {
       if (post.author.id !== session.user.id && session.user.role !== "admin") {
         throw new Error("You are not authorized to edit this post");
       }
-      Object.assign(post, action.data);
+      // Only content fields: the old Object.assign let a caller overwrite author, likes or views.
+      const parsed = rawCommunityPostSchema.partial().safeParse(action.data);
+      if (!parsed.success) throw new Error("Invalid post data");
+      post.set(normalisePost(parsed.data));
+      await post.save();
+      updated = post.toObject();
       break;
     }
 
@@ -154,13 +176,12 @@ export async function updatePost(id: string, action: UpdateAction) {
       throw new Error("Unknown update action");
   }
 
-  await post.save();
-
   revalidatePath(`/community/posts/${id}`);
   revalidatePath(`/community`);
 
-  return JSON.parse(JSON.stringify(post)) as CommunityPostTypeWithId;
+  return JSON.parse(JSON.stringify(updated)) as CommunityPostTypeWithId;
 }
+
 export async function deletePost(id: string) {
   const headersList = await headers();
   const session = await auth.api.getSession({
@@ -169,6 +190,7 @@ export async function deletePost(id: string) {
   if (!session) {
     return Promise.reject("You need to be logged in to update a post");
   }
+  if (!mongoose.isObjectIdOrHexString(id)) return Promise.reject("Post not found");
 
   try {
     await dbConnect();
@@ -177,14 +199,28 @@ export async function deletePost(id: string) {
       return Promise.reject("Post not found");
     }
 
-    // Check if the user is the author of the post
     if (post.author.id !== session.user.id && session.user.role !== "admin") {
       return Promise.reject("You are not authorized to delete this post");
     }
     await post.deleteOne();
-    // Also delete all comments related to this post
     await CommunityComment.deleteMany({ postId: id });
+    // Live comments are Fuma threads in Postgres, keyed by page id.
+    const page = `community.posts.${id}`;
+    const thread = await db
+      .select({ id: comments.id })
+      .from(comments)
+      .where(eq(comments.page, page));
+    if (thread.length > 0) {
+      await db.delete(rates).where(
+        inArray(
+          rates.commentId,
+          thread.map((c) => c.id)
+        )
+      );
+      await db.delete(comments).where(eq(comments.page, page));
+    }
     revalidatePath(`/community`);
+    revalidatePath(`/community/posts/${id}`);
     return Promise.resolve("Post deleted successfully");
   } catch (err) {
     console.error(err);
@@ -194,17 +230,12 @@ export async function deletePost(id: string) {
 
 export async function getPostActivity(id: string) {
   try {
-    // const session = await getSession()
-    // if (!(session && session?.user?.role === "admin")) {
-    //   throw new Error("You need to be logged in as ADMIN Privilege");
-    // }
     await dbConnect();
     const post = await CommunityPost.findById<ICommunityPost>(id);
     if (!post) {
       return Promise.reject("Post not found");
     }
 
-    // Empty fast-paths
     const likedBy =
       post.likes.length === 0
         ? []
@@ -237,53 +268,5 @@ export async function getPostActivity(id: string) {
   } catch (err) {
     console.error(err);
     return Promise.reject("Failed to fetch post stats");
-  }
-}
-
-// Create a new comment
-export async function createComment(
-  commentData: z.infer<typeof rawCommunityCommentSchema>
-) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    return Promise.reject("You need to be logged in to create a comment");
-  }
-
-  try {
-    await dbConnect();
-    const comment = new CommunityComment({
-      ...commentData,
-      author: session.user.id,
-    });
-    await comment.save();
-    revalidatePath(`/community/posts/${commentData.postId}`);
-    return Promise.resolve("Comment created successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to create comment");
-  }
-}
-
-// Get comments for a post (with pagination or lazy loading)
-export async function getCommentsForPost(
-  postId: string,
-  page: number,
-  limit: number
-) {
-  try {
-    await dbConnect();
-    const comments = await CommunityComment.find({ postId })
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("replies")
-      .populate("author", "name email");
-    return Promise.resolve(JSON.parse(JSON.stringify(comments)));
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch comments");
   }
 }

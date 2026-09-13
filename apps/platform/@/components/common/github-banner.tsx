@@ -5,10 +5,14 @@ import {
 import { Icon, type IconType } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { GitBranch, Github, Star, Users } from "lucide-react";
-import { getRepoStats, type StatsData } from "~/lib/third-party/github";
+import {
+  FALLBACK_STATS,
+  getRepoStats,
+  type StatsData,
+} from "~/lib/third-party/github";
 import { appConfig } from "~/project.config";
-import { marketwiseLink } from "~/utils/string";
 import { ButtonLink } from "../utils/link";
+import GithubRepoButtons from "./github";
 
 interface GithubBannerProps {
   className?: string;
@@ -20,12 +24,7 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
     stats = await getRepoStats(appConfig.githubUri);
   } catch (error) {
     console.warn("Error fetching GitHub repository stats:", error);
-    stats = {
-      stars: 18,
-      forks: 3,
-      contributors: 1,
-      visitors: 14_000_000,
-    };
+    stats = { ...FALLBACK_STATS };
   }
 
   return (
@@ -122,29 +121,16 @@ export default async function GithubBanner({ className }: GithubBannerProps) {
 
               {/* Right: Actions (Desktop) / Bottom (Mobile) */}
               <div className="relative flex flex-col justify-center gap-3 border-t border-border p-8 lg:w-72 lg:border-t-0 lg:border-l">
-                <ButtonLink
-                  href={marketwiseLink(appConfig.githubRepo, {
-                    utm_medium: "app",
-                    utm_campaign: "github-banner",
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  width="full"
-                  variant="primary"
-                  size="lg"
-                >
-                  <Star /> Star Repository
-                </ButtonLink>
-
+                <GithubRepoButtons />
                 <ButtonLink
                   href={`${appConfig.githubRepo}/issues`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  width="full"
-                  variant="outline"
-                  size="lg"
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
                 >
-                  <GitBranch /> Fork & Contribute
+                  Report an issue
                 </ButtonLink>
               </div>
             </div>

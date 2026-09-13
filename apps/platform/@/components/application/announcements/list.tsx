@@ -1,48 +1,63 @@
 import { UserPreview } from "@/components/application/user-preview";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   CalendarDays,
+  Cpu,
+  Droplet,
   GraduationCap,
   Info,
-  Megaphone,
-  Trophy,
+  type LucideIcon,
+  Music,
+  Wrench,
 } from "lucide-react";
-import Markdown from "react-markdown";
+import Markdown, { type Components } from "react-markdown";
 import type { AnnouncementTypeWithId } from "src/models/announcement";
-import { Session } from "~/auth/client";
+import type { Session } from "~/auth/client";
 import DeleteButton from "./delete-btn";
+import { type AnnouncementCategory as Category, CATEGORY_LABELS } from "./labels";
 
-// 1. Subtle Color Map (Background Tints + Text Colors)
-const CATEGORY_THEME: Record<string, string> = {
-  academic:
-    "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  event:
-    "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20",
-  cultural:
-    "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
-  sports:
-    "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
-  other: "bg-zinc-500/10 text-zinc-700 dark:text-zinc-400 border-zinc-500/20",
+const CATEGORY_ICONS: Record<Category, LucideIcon> = {
+  academics: GraduationCap,
+  events: CalendarDays,
+  culturalEvents: Music,
+  techEvents: Cpu,
+  workshops: Wrench,
+  bloodDonation: Droplet,
+  others: Info,
 };
 
-// 2. Icon Map
-const CATEGORY_ICONS: Record<string, any> = {
-  academic: GraduationCap,
-  event: CalendarDays,
-  cultural: Megaphone,
-  sports: Trophy,
-  other: Info,
-};
+const heading: Components["h1"] = ({ children }) => (
+  <p className="mb-1 font-medium text-foreground">{children}</p>
+);
 
-// 3. Dot Color Map (For the timeline)
-const DOT_COLORS: Record<string, string> = {
-  academic: "bg-blue-500",
-  event: "bg-orange-500",
-  cultural: "bg-purple-500",
-  sports: "bg-emerald-500",
-  other: "bg-zinc-500",
+const markdownComponents: Components = {
+  h1: heading,
+  h2: heading,
+  h3: heading,
+  h4: heading,
+  h5: heading,
+  h6: heading,
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }) => (
+    <ul className="my-2 list-disc space-y-1 pl-5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="my-2 list-decimal space-y-1 pl-5">{children}</ol>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-medium text-foreground">{children}</strong>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      className="font-medium text-primary underline-offset-4 hover:underline"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {children}
+    </a>
+  ),
 };
 
 export default function AnnouncementsList({
@@ -53,120 +68,105 @@ export default function AnnouncementsList({
   user?: Session["user"];
 }) {
   return (
-    <div className="space-y-6 relative">
-      {/* Timeline Line (Thin & Subtle) */}
-      <div className="absolute left-[19px] top-4 bottom-4 w-px bg-border/40 hidden md:block -z-10" />
-
+    <ul className="flex flex-col gap-3">
       {announcements.map((announcement) => {
-        const themeClass =
-          CATEGORY_THEME[announcement.relatedFor] || CATEGORY_THEME["other"];
-        const dotColor =
-          DOT_COLORS[announcement.relatedFor] || DOT_COLORS["other"];
-        const CatIcon = CATEGORY_ICONS[announcement.relatedFor] || Info;
-        const isOwner =
-          announcement.createdBy.id === user?.id || user?.role === "admin";
+        const category = announcement.relatedFor as Category;
+        const CategoryIcon = CATEGORY_ICONS[category] ?? Info;
+        const createdAt = new Date(announcement.createdAt);
+        const canDelete =
+          !!user &&
+          (announcement.createdBy.id === user.id || user.role === "admin");
 
         return (
-          <div key={announcement._id} className="relative pl-0 md:pl-12 group">
-            {/* Timeline Dot (Small & Colored) */}
-            <div className="hidden md:flex absolute left-3 top-5 size-4 rounded-full border border-border bg-background items-center justify-center z-10 transition-transform group-hover:scale-110">
-              <div className={cn("size-1.5 rounded-full", dotColor)} />
-            </div>
-
-            <div
-              className={cn(
-                "relative rounded-xl border border-border/50 bg-card p-5 transition-all duration-300",
-                "hover:shadow-sm hover:border-border/80"
-              )}
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    {/* The Badge carries the color now, not the card border */}
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-[10px] px-2 py-0.5 h-5 gap-1.5 uppercase tracking-wider font-semibold border",
-                        themeClass
-                      )}
-                    >
-                      <CatIcon className="size-3" />
-                      {announcement.relatedFor}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground/60 font-medium">
-                      {formatDistanceToNow(new Date(announcement.createdAt), {
-                        addSuffix: true,
-                      })}
+          <li key={announcement._id}>
+            <article className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <p className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
+                    <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-border px-2 font-medium text-foreground">
+                      <CategoryIcon className="size-3.5" aria-hidden="true" />
+                      {CATEGORY_LABELS[category] ?? announcement.relatedFor}
                     </span>
-                  </div>
-                  <h3 className="text-base md:text-lg font-semibold leading-snug text-foreground">
+                    <time
+                      dateTime={createdAt.toISOString()}
+                      title={format(createdAt, "d MMM yyyy, h:mm a")}
+                    >
+                      {formatDistanceToNow(createdAt, { addSuffix: true })}
+                    </time>
+                  </p>
+                  <h3 className="text-body-lg font-medium text-foreground">
                     {announcement.title}
                   </h3>
                 </div>
-
-                {isOwner && (
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-2">
-                    <DeleteButton announcementId={announcement._id} />
-                  </div>
+                {canDelete && (
+                  <DeleteButton announcementId={announcement._id} />
                 )}
               </div>
 
-              {/* Content */}
-              <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground/80 leading-relaxed text-sm">
-                <Markdown
-                  components={{
-                    h1: ({ children }) => (
-                      <p className="font-bold text-foreground text-sm mb-1">
-                        {children}
-                      </p>
-                    ),
-                    h2: ({ children }) => (
-                      <p className="font-semibold text-foreground text-sm mb-1">
-                        {children}
-                      </p>
-                    ),
-                    p: ({ children }) => (
-                      <p className="mb-2 last:mb-0">{children}</p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc pl-4 my-2 space-y-1">
-                        {children}
-                      </ul>
-                    ),
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        className="text-primary hover:underline font-medium"
-                        target="_blank"
-                        rel="noopener"
-                      >
-                        {children}
-                      </a>
-                    ),
-                  }}
-                >
+              <div className="wrap-break-word text-body leading-relaxed text-muted-foreground">
+                <Markdown components={markdownComponents}>
                   {announcement.content}
                 </Markdown>
               </div>
 
-              {/* Footer / Author */}
-              <div className="mt-4 pt-3 border-t border-border/30 flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 text-caption text-muted-foreground">
                 <UserPreview user={announcement.createdBy}>
-                  <button className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors group/author">
-                    <span className="size-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold text-muted-foreground group-hover/author:bg-foreground group-hover/author:text-background transition-colors">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-md font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="grid size-6 place-items-center rounded-full border border-border bg-muted text-caption font-medium"
+                    >
                       {announcement.createdBy.name.charAt(0)}
                     </span>
-                    <span className="font-medium">
-                      {announcement.createdBy.name}
-                    </span>
+                    {announcement.createdBy.name}
                   </button>
                 </UserPreview>
+                {announcement.expiresAt && (
+                  <span>
+                    Up until{" "}
+                    <time dateTime={new Date(announcement.expiresAt).toISOString()}>
+                      {format(new Date(announcement.expiresAt), "d MMM yyyy")}
+                    </time>
+                  </span>
+                )}
               </div>
-            </div>
-          </div>
+            </article>
+          </li>
         );
       })}
+    </ul>
+  );
+}
+
+export function AnnouncementsListSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-hidden="true">
+      <Skeleton className="h-7 w-40" />
+      {Array.from({ length: 3 }, (_, i) => (
+        <div
+          key={`announcement-skeleton-${i.toString()}`}
+          className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <Skeleton className="h-6 w-3/4" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+          <div className="flex justify-between border-t border-border pt-4">
+            <Skeleton className="h-6 w-28" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

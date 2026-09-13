@@ -1,158 +1,226 @@
 import { BaseHeroSection } from "@/components/application/base-hero";
-import ScheduleSearchBox from "@/components/application/schedule/search";
-import { ResponsiveContainer } from "@/components/common/container";
-import EmptyArea from "@/components/common/empty-area";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  CalendarRange,
-  GraduationCap,
-  Layers,
-  LayoutGrid,
-  Search,
-} from "lucide-react";
+  TimetableCard,
+  TimetableCardSkeleton,
+} from "@/components/application/schedule/card";
+import ScheduleSearchBox from "@/components/application/schedule/search";
+import { StackedSlabs } from "@/components/illustrations/stacked-slabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { ButtonLink } from "@/components/utils/link";
+import { SearchX, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { cache, Suspense } from "react";
 import { getAllTimeTables } from "~/actions/common.time-table";
-import { getDepartmentShort } from "~/constants/core.departments";
-import type { TimeTableWithID } from "~/models/time-table";
+import { DEPARTMENTS_LIST } from "~/constants/core.departments";
 
 export const metadata: Metadata = {
   title: "Timetables",
-  description: "Browse and access academic schedules across departments.",
+  description:
+    "Weekly class timetables for every department, year and semester.",
   alternates: {
     canonical: "/schedules",
   },
 };
 
-export default async function TimeTables() {
-  const timeTables = await getAllTimeTables();
+type Filters = { query: string; branch: string; year: string };
 
-  // Extract Filters
-  const years = Array.from(
-    new Set(timeTables.map((timetable) => timetable.year?.toString() || ""))
-  );
-  const branches = Array.from(
-    new Set(timeTables.map((timetable) => timetable.department_code || ""))
-  ).filter((branch) => branch !== "");
+// Search box and list read the same rows; cache() dedupes the query per request.
+const loadTimetables = cache(getAllTimeTables);
+
+const first = (v: string | string[] | undefined) =>
+  (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
+
+export default async function TimeTables(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await props.searchParams;
+  const filters: Filters = {
+    query: first(sp.query).toLowerCase(),
+    branch: first(sp.branch),
+    year: first(sp.year),
+  };
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Background Decor */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-
-      {/* --- HERO SECTION --- */}
+    <div className="@container mx-auto flex w-full max-w-(--max-app-width) flex-col px-4 pb-12 md:px-6">
       <BaseHeroSection
-        title={
-          <div className="flex flex-col items-center gap-4">
-            <Badge
-              variant="outline"
-              className="rounded-full px-4 py-1 border-primary/20 bg-primary/5 text-primary text-xs font-medium uppercase tracking-wider"
-            >
-              <CalendarRange className="mr-2 size-3" /> Academic Schedule
-            </Badge>
-            <span className="text-4xl md:text-5xl font-bold tracking-tight">
-              Find Your <span className="text-primary">Timetable</span>
-            </span>
-          </div>
-        }
-        description="Access the latest academic schedules. Filter by department, year, or semester to find your section."
-        className="pt-20 pb-12"
+        className="px-0"
+        badge="Every department, every semester"
+        title="Find your class"
+        accent="timetable"
+        description="Pick your department and year, then open your section's week. Today's classes come first."
       >
-        <ScheduleSearchBox branches={branches} years={years} />
+        <div className="w-full rounded-3xl border border-border bg-card/85 p-2 backdrop-blur-xl dark:bg-background/85">
+          <Suspense fallback={<Skeleton className="h-14 w-full rounded-2xl" />}>
+            <SearchWithFilters />
+          </Suspense>
+        </div>
       </BaseHeroSection>
 
-      {/* --- RESULTS SECTION --- */}
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="flex items-center justify-between py-6">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <LayoutGrid className="size-4" />
-            <span>
-              Viewing <strong>{timeTables.length}</strong> active schedules
+      <ErrorBoundaryWithSuspense
+        fallback={
+          <EmptyState
+            icon={<TriangleAlert className="size-6" aria-hidden="true" />}
+            title="Timetables couldn't load"
+            description="The schedule service didn't respond. Refresh the page, or try again in a minute."
+          />
+        }
+        loadingFallback={<ListSkeleton />}
+      >
+        <TimetableList filters={filters} />
+      </ErrorBoundaryWithSuspense>
+    </div>
+  );
+}
+
+async function SearchWithFilters() {
+  // The list below owns the error state; the search still renders without filters.
+  const timetables = await loadTimetables().catch(() => []);
+  const codes = new Set(timetables.map((t) => t.department_code));
+  const departments = DEPARTMENTS_LIST.filter((d) => codes.has(d.code));
+  const years = Array.from(
+    new Set(timetables.map((t) => t.year).filter((y) => typeof y === "number"))
+  )
+    .sort((a, b) => a - b)
+    .map(String);
+
+  return (
+    <ScheduleSearchBox
+      branches={departments.map((d) => d.code)}
+      branchLabels={Object.fromEntries(
+        departments.map((d) => [d.code, d.name])
+      )}
+      years={years}
+    />
+  );
+}
+
+async function TimetableList({ filters }: { filters: Filters }) {
+  const timetables = await loadTimetables();
+
+  if (timetables.length === 0) {
+    return (
+      <EmptyState
+        icon={<StackedSlabs className="w-20" />}
+        title="No timetables published yet"
+        description="Class representatives add their section's timetable here. Check back soon."
+        bare
+      />
+    );
+  }
+
+  const matches = timetables.filter((t) => {
+    if (filters.branch && t.department_code !== filters.branch) return false;
+    if (filters.year && String(t.year) !== filters.year) return false;
+    if (!filters.query) return true;
+    const dept = DEPARTMENTS_LIST.find((d) => d.code === t.department_code);
+    return [t.sectionName, dept?.short, dept?.name].some((field) =>
+      field?.toLowerCase().includes(filters.query)
+    );
+  });
+
+  if (matches.length === 0) {
+    return (
+      <EmptyState
+        icon={<SearchX className="size-6" aria-hidden="true" />}
+        title="No timetables match"
+        description="Check the section name, or clear a filter to see every department."
+        action={
+          <ButtonLink href="/schedules" variant="outline" size="sm">
+            Clear search
+          </ButtonLink>
+        }
+      />
+    );
+  }
+
+  const groups = DEPARTMENTS_LIST.map((dept) => ({
+    dept,
+    items: matches.filter((t) => t.department_code === dept.code),
+  })).filter((g) => g.items.length > 0);
+  const filtered = matches.length !== timetables.length;
+
+  return (
+    <div className="flex flex-col gap-10">
+      <div className="flex items-baseline justify-between gap-4 border-b border-border pb-3">
+        <p className="text-body-lg font-medium text-foreground tabular-nums">
+          {matches.length} {matches.length === 1 ? "timetable" : "timetables"}
+        </p>
+        {filtered && (
+          <p className="text-caption text-muted-foreground tabular-nums">
+            of {timetables.length} published
+          </p>
+        )}
+      </div>
+
+      {groups.map(({ dept, items }) => (
+        <section
+          key={dept.code}
+          aria-labelledby={`dept-${dept.code}`}
+          className="flex flex-col gap-3"
+        >
+          <div className="flex items-baseline gap-3">
+            <h2
+              id={`dept-${dept.code}`}
+              className="text-subheading font-medium text-foreground"
+            >
+              {dept.name}
+            </h2>
+            <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-caption text-foreground">
+              {dept.short}
             </span>
           </div>
-          <Separator className="flex-1 ml-4 mr-2 max-w-25 opacity-50" />
-        </div>
-
-        {timeTables.length === 0 ? (
-          <div className="py-20 border border-dashed rounded-xl bg-muted/20">
-            <EmptyArea
-              icons={[CalendarRange, Search]}
-              title="No Timetables Found"
-              description="There are no active timetables matching your criteria at the moment."
-            />
-          </div>
-        ) : (
-          <ResponsiveContainer className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {timeTables.map((timetable, i) => (
-              <TimetableLinkCard
-                key={timetable._id}
-                timetable={timetable}
-                index={i}
-              />
+          <ul className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4">
+            {items.map((timetable) => (
+              <li key={timetable._id}>
+                <TimetableCard timetable={timetable} />
+              </li>
             ))}
-          </ResponsiveContainer>
-        )}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function ListSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <Skeleton className="h-7 w-40" />
+      <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <TimetableCardSkeleton key={`skeleton-${i.toString()}`} />
+        ))}
       </div>
     </div>
   );
 }
 
-function TimetableLinkCard({
-  timetable,
-  index,
+function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  bare = false,
 }: {
-  timetable: Partial<TimeTableWithID>;
-  index: number;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+  bare?: boolean;
 }) {
-  const deptShort = getDepartmentShort(timetable.department_code as string);
-
   return (
-    <Link
-      href={`/schedules/${timetable.department_code}/${timetable.year}/${timetable.semester}`}
-      prefetch={false}
-      className="group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
-      style={{ animationDelay: `${index * 50}ms` }}
-    >
-      {/* Top Row: Dept & Icon */}
-      <div className="flex justify-between items-start mb-4">
-        <Badge
-          variant="secondary"
-          className="font-mono text-[10px] uppercase tracking-wider bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors"
-        >
-          {deptShort || timetable.department_code}
-        </Badge>
-
-        <div className="size-8 flex items-center justify-center rounded-lg bg-background border border-border shadow-sm text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-all">
-          <CalendarRange className="size-4" />
-        </div>
-      </div>
-
-      {/* Main Title */}
-      <div className="mb-6">
-        <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1">
-          {timetable.sectionName}
-        </h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          {timetable.department_code} Department
-        </p>
-      </div>
-
-      {/* Footer: Metadata Grid */}
-      <div className="grid grid-cols-2 gap-2 mt-auto">
-        <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5 border border-transparent group-hover:border-border/50 transition-colors">
-          <GraduationCap className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">
-            Year {timetable.year}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 rounded-md bg-muted/40 px-2 py-1.5 border border-transparent group-hover:border-border/50 transition-colors">
-          <Layers className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">
-            Sem {timetable.semester}
-          </span>
-        </div>
-      </div>
-    </Link>
+    <div className="mx-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+      {bare ? (
+        icon
+      ) : (
+        <span className="grid size-12 place-items-center rounded-xl border border-border bg-card text-foreground">
+          {icon}
+        </span>
+      )}
+      <h2 className="mt-4 text-body-lg font-medium text-foreground">{title}</h2>
+      <p className="mt-1 text-body text-muted-foreground">{description}</p>
+      {action && <div className="mt-4">{action}</div>}
+    </div>
   );
 }

@@ -1,4 +1,3 @@
-// src/app/[locale]/(main)/timetable/editor/store.ts
 import { create } from "zustand";
 import type { RawEvent, RawTimetableType } from "~/constants/common.time-table";
 import type { TimeTableWithID } from "~/models/time-table";

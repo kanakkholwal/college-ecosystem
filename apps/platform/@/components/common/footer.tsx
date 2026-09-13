@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { appConfig, orgConfig, supportLinks } from "~/project.config";
 import { ApplicationInfo } from "../logo";
+import GithubRepoButtons from "./github";
 
 const columns = [
   {
@@ -83,6 +84,7 @@ export default function Footer({ className }: { className?: string }) {
                   </a>
                 ))}
               </div>
+              <GithubRepoButtons />
             </div>
 
             <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-4">

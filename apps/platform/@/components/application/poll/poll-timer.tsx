@@ -1,33 +1,30 @@
 "use client";
-import { formatDuration, intervalToDuration } from "date-fns";
+
+import { formatDistanceToNowStrict } from "date-fns";
 import { useEffect, useState } from "react";
 import type { PollType } from "src/models/poll";
 
-export const ClosingBadge = ({ poll }: { poll: PollType }) => {
-  const [remainingTime, setRemainingTime] = useState("");
+const label = (closesAt: Date) =>
+  closesAt.getTime() <= Date.now()
+    ? "Closed"
+    : `Closes in ${formatDistanceToNowStrict(closesAt)}`;
+
+/** Time left on a poll, refreshed every 15s; the text is coarse, so a per-second tick only burned renders. */
+export const ClosingBadge = ({
+  poll,
+}: {
+  poll: Pick<PollType, "closesAt">;
+}) => {
+  const closesAtMs = new Date(poll.closesAt).getTime();
+  const [text, setText] = useState(() => label(new Date(closesAtMs)));
 
   useEffect(() => {
-    const calculateRemainingTime = () => {
-      const now = new Date();
-      const closesAt = new Date(poll.closesAt);
-      // const timeDifference = closesAt.getTime() - now.getTime();
-      if (closesAt > now) {
-        const duration = intervalToDuration({ start: now, end: closesAt });
-        const formattedDuration = formatDuration(duration, {
-          format: ["months", "days", "hours", "minutes", "seconds"],
-          delimiter: ", ",
-        });
-        setRemainingTime(formattedDuration);
-      } else {
-        setRemainingTime("Closed");
-      }
-    };
+    const update = () => setText(label(new Date(closesAtMs)));
+    update();
+    if (closesAtMs <= Date.now()) return;
+    const id = setInterval(update, 15_000);
+    return () => clearInterval(id);
+  }, [closesAtMs]);
 
-    calculateRemainingTime();
-    const intervalId = setInterval(calculateRemainingTime, 1000); // Update every second
-
-    return () => clearInterval(intervalId); // Cleanup the interval on component unmount
-  }, [poll.closesAt]);
-
-  return remainingTime === "Closed" ? "Closed" : `Closing in: ${remainingTime}`;
+  return <span suppressHydrationWarning>{text}</span>;
 };

@@ -4,8 +4,9 @@ import { db } from "~/db/connect";
 import { sessions, users } from "~/db/schema/auth-schema";
 import {
   extractVisitorCount,
+  FALLBACK_STATS,
   getRepoStats,
-  PublicStatsType,
+  type PublicStatsType,
 } from "~/lib/third-party/github";
 import { appConfig } from "~/project.config";
 
@@ -35,13 +36,15 @@ export async function getPublicStats(): Promise<PublicStatsType> {
   const githubStats =
     github_result.status === "fulfilled"
       ? github_result.value
-      : { stars: 0, forks: 0, contributors: 0, visitors: 0 };
+      : { ...FALLBACK_STATS };
 
   return {
     sessionCount,
     userCount,
     githubStats,
     visitors:
-      visitors_result.status === "fulfilled" ? visitors_result.value : 0,
+      visitors_result.status === "fulfilled"
+        ? visitors_result.value
+        : FALLBACK_STATS.visitors,
   };
 }

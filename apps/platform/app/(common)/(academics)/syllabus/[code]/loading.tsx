@@ -1,64 +1,46 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default async function CoursePageLoader() {
+export default function CoursePageLoader() {
   return (
-    <>
-      <div className="relative mb-24" id="home">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40 dark:opacity-20"
-        >
-          <div className="blur-[106px] h-56 bg-gradient-to-br from-primary to-purple-400 dark:from-blue-700" />
-          <div className="blur-[106px] h-32 bg-gradient-to-r from-cyan-400 to-sky-300 dark:to-indigo-600" />
-        </div>
-        <div className="max-w-7xl mx-auto px-6 md:px-12 xl:px-6">
-          <div className="relative pt-24 ml-auto">
-            <div className="p-4 flex flex-col  items-center">
-              <Skeleton className="w-32 h-8 mb-4" />
-              <Skeleton className="w-64 h-16 mb-8" />
-              <Skeleton className="w-48 h-6 mb-8" />
-            </div>
+    <div className="mx-auto flex w-full max-w-(--max-app-width) flex-col px-4 pt-6 pb-16 md:px-6">
+      <Skeleton className="mb-6 h-5 w-64 max-w-full" />
+      <div className="flex items-end justify-between gap-8 border-b border-border pb-8">
+        <div className="min-w-0 flex-1">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="mt-3 h-10 w-full max-w-lg md:h-12" />
+          <div className="mt-6 flex flex-wrap gap-8">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={`meta-${i.toString()}`} className="space-y-1.5">
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-5 w-10" />
+              </div>
+            ))}
           </div>
         </div>
+        <Skeleton className="hidden size-48 shrink-0 rounded-2xl md:block lg:size-56" />
       </div>
-      <div className="max-w-6xl mx-auto px-6 md:px-12 xl:px-6">
-        <Tabs defaultValue="chapters">
-          <TabsList className="mx-auto w-full bg-transparent font-bold">
-            <TabsTrigger value="chapters">
-              <Skeleton className="w-24 h-8" />
-            </TabsTrigger>
-            <TabsTrigger value="books_and_references">
-              <Skeleton className="w-36 h-8" />
-            </TabsTrigger>
-            <TabsTrigger value="prev_papers">
-              <Skeleton className="w-28 h-8" />
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="chapters">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((index) => (
-                <Card key={index}>
-                  <CardHeader className="gap-2 md:flex-row flex-wrap md:items-center md:justify-between w-full">
-                    <Skeleton className="w-36 h-6 mb-2" />
-                    <Skeleton className="w-10 h-10 rounded-full" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="w-full h-4 mb-2" />
-                  </CardContent>
-                </Card>
-              ))}
+      <div className="mt-10 mb-4 flex items-center justify-between gap-4">
+        <Skeleton className="hidden h-8 w-48 sm:block" />
+        <Skeleton className="h-9 w-72 max-w-full" />
+      </div>
+      <div className="divide-y divide-border rounded-2xl border border-border bg-card dark:bg-background">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div
+            key={`chapter-${i.toString()}`}
+            className="flex items-start gap-4 p-4 sm:p-5"
+          >
+            <Skeleton className="h-5 w-6" />
+            <div className="flex flex-1 flex-col gap-3">
+              <Skeleton className="h-6 w-2/3" />
+              <div className="flex flex-wrap gap-1.5">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-20" />
+              </div>
             </div>
-          </TabsContent>
-          <TabsContent value="books_and_references">
-            <Skeleton className="w-full h-16" />
-          </TabsContent>
-          <TabsContent value="prev_papers">
-            <Skeleton className="w-full h-16" />
-          </TabsContent>
-        </Tabs>
+          </div>
+        ))}
       </div>
-    </>
+    </div>
   );
 }

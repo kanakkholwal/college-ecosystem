@@ -1,9 +1,7 @@
 "use client";
 
 import { DateTimePicker } from "@/components/extended/date-n-time";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -21,266 +19,216 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ButtonLink } from "@/components/utils/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Content, JSONContent } from "@tiptap/react";
-import {
-  BellRing,
-  CalendarClock,
-  Hash,
-  Loader2,
-  Megaphone,
-} from "lucide-react";
-import { defaultExtensions, NexoEditor, renderToMarkdown } from "nexo-editor";
-import "nexo-editor/index.css";
+import type { Content } from "@tiptap/react";
+import { ArrowLeft, Loader2, Megaphone } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import type { z } from "zod";
 import { createAnnouncement } from "~/actions/common.announcement";
 import {
-  rawAnnouncementSchema,
   RELATED_FOR_TYPES,
+  rawAnnouncementSchema,
 } from "~/constants/common.announcement";
-import { changeCase } from "~/utils/string";
+import { CATEGORY_LABELS } from "./labels";
 
-//  Default State
-const defaultContent = {
+// Tiptap is client-only and heavy, so it loads after the title and options render.
+const AnnouncementEditor = dynamic(() => import("./editor"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-80 w-full rounded-xl" />,
+});
+
+const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
+
+const emptyDoc = {
   type: "doc",
-  content: [
-    {
-      type: "paragraph",
-      content: [{ type: "text", text: "" }],
-    },
-  ],
-};
+  content: [{ type: "paragraph" }],
+} as Content;
 
-function convertToMd(data: Content) {
-  return renderToMarkdown({
-    content: data as JSONContent,
-    extensions: defaultExtensions,
-  });
-}
+type Values = z.infer<typeof rawAnnouncementSchema>;
 
 export default function CreateAnnouncement() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof rawAnnouncementSchema>>({
+  const form = useForm<Values>({
     resolver: zodResolver(rawAnnouncementSchema),
     defaultValues: {
       title: "",
       content: "",
-      content_json: defaultContent as Content,
+      content_json: emptyDoc,
       relatedFor: RELATED_FOR_TYPES[0],
-      expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // +2 Days default
+      expiresAt: new Date(Date.now() + TWO_DAYS),
     },
   });
+  const submitting = form.formState.isSubmitting;
 
-  function onSubmit(values: z.infer<typeof rawAnnouncementSchema>) {
-    setLoading(true);
-    toast
-      .promise(createAnnouncement(values), {
-        loading: "Broadcasting announcement...",
-        success: () => {
-          router.push("/announcements");
-          return "Announcement Published!";
-        },
-        error: "Failed to broadcast. Try again.",
-      })
-      .finally(() => setLoading(false));
+  async function onSubmit(values: Values) {
+    try {
+      await toast.promise(createAnnouncement(values), {
+        loading: "Publishing announcement...",
+        success: "Announcement published",
+        error: (err) =>
+          typeof err === "string" ? err : "Couldn't publish. Try again.",
+      });
+      router.push("/announcements");
+    } catch {
+      // toast.promise already surfaced the error
+    }
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-20">
+    <div className="mx-auto flex w-full max-w-(--max-app-width) flex-col px-4 pt-6 pb-16 md:px-6">
+      <ButtonLink
+        href="/announcements"
+        variant="ghost"
+        size="sm"
+        className="mb-6 w-fit text-muted-foreground"
+      >
+        <ArrowLeft />
+        Announcements
+      </ButtonLink>
+
+      <header className="border-b border-border pb-8">
+        <h1 className="text-balance text-heading-lg font-medium text-foreground">
+          New announcement
+        </h1>
+        <p className="mt-2 max-w-xl text-pretty text-body text-muted-foreground md:text-body-lg">
+          Posts are public on the notice board and come down on the date you
+          pick.
+        </p>
+      </header>
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col h-full flex-1"
+          className="mt-8 grid grid-cols-1 gap-3 lg:grid-cols-12"
         >
-          <header className="sticky top-0 z-40">
-            <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between rounded-2xl mt-5 w-full border-b border-border/40 bg-card/80 backdrop-blur-md support-[backdrop-filter]:bg-card/60">
-              <div className="flex items-center gap-4">
-                <ButtonLink
-                  href="/announcements"
-                  variant="ghost"
-                  size="icon_sm"
-                  icon="arrow-left"
-                />
-                <div className="flex flex-col">
-                  <h1 className="text-sm font-semibold flex items-center gap-2">
-                    New Announcement
-                  </h1>
-                  <span className="text-[10px] text-muted-foreground">
-                    Draft mode
-                  </span>
-                </div>
-              </div>
+          <div className="flex flex-col gap-6 rounded-2xl border border-border bg-card p-5 sm:p-6 lg:col-span-8 dark:bg-background">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Mid-semester exam schedule released"
+                      autoComplete="off"
+                      disabled={submitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <div className="flex items-center gap-3">
-                <Badge
-                  variant="outline"
-                  className="uppercase text-xs text-muted-foreground"
-                >
-                  Admin Access
-                </Badge>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="gap-2 rounded-full px-5 font-semibold shadow-sm"
-                  disabled={form.formState.isSubmitting || loading}
-                >
-                  {form.formState.isSubmitting || loading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Megaphone className="size-4" />
-                  )}
-                  Broadcast
-                </Button>
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 p-4 lg:p-8">
-            <div className="lg:col-span-8 space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Announcement Title"
-                        className="text-3xl md:text-4xl pl-4 font-bold h-auto py-4 border-none shadow-none focus-visible:ring-0 px-0 bg-transparent placeholder:text-muted-foreground/40"
-                        {...field}
-                        autoFocus
-                        autoComplete="off"
+            <FormField
+              control={form.control}
+              name="content_json"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Details</FormLabel>
+                  <FormControl>
+                    <div className="prose prose-sm min-h-80 max-w-none rounded-xl border border-border dark:prose-invert prose-headings:font-medium prose-a:text-primary">
+                      <AnnouncementEditor
+                        value={field.value as Content}
+                        placeholder="Write the update. Use the toolbar or markdown shortcuts for headings and lists."
+                        onChange={(json, markdown) => {
+                          field.onChange(json);
+                          form.setValue("content", markdown, {
+                            shouldValidate: form.formState.isSubmitted,
+                          });
+                        }}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                  {form.formState.errors.content && (
+                    <p className="text-body text-destructive">
+                      {form.formState.errors.content.message}
+                    </p>
+                  )}
+                </FormItem>
+              )}
+            />
+          </div>
 
-              {/* Rich Text Editor */}
+          <aside className="lg:col-span-4">
+            <div className="flex flex-col gap-6 rounded-2xl border border-border bg-card p-5 sm:p-6 lg:sticky lg:top-6 dark:bg-background">
+              <h2 className="text-body-lg font-medium text-foreground">
+                Publishing
+              </h2>
+
               <FormField
                 control={form.control}
-                name="content_json"
+                name="relatedFor"
                 render={({ field }) => (
                   <FormItem>
-                    <FormControl>
-                      <div className="min-h-[500px] prose prose-zinc dark:prose-invert max-w-none prose-p:text-base prose-headings:font-bold prose-blockquote:border-l-primary">
-                        <NexoEditor
-                          content={field.value as Content}
-                          onChange={(content) => {
-                            field.onChange(content);
-                            form.setValue(
-                              "content",
-                              convertToMd(content as Content)
-                            );
-                          }}
-                          placeholder="Write your update here... Use markdown shortcuts or the toolbar."
-                        />
-                      </div>
-                    </FormControl>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={submitting}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Pick a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {RELATED_FOR_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {CATEGORY_LABELS[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="lg:col-span-4 space-y-6">
-              <div className="sticky top-24 space-y-6">
-                <Card className="border-border/60 shadow-sm bg-card">
-                  <CardHeader className="pb-3 border-b border-border/40 p-4">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <BellRing className="size-4 text-primary" />
-                      Publishing Options
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="space-y-6 pt-5 p-4">
-                    <FormField
-                      control={form.control}
-                      name="relatedFor"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5 mb-2">
-                            <Hash className="size-3" /> Topic Category
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            disabled={form.formState.isSubmitting}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-background">
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {RELATED_FOR_TYPES.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  <span className="capitalize">
-                                    {changeCase(type, "camel_to_title")}
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+              <FormField
+                control={form.control}
+                name="expiresAt"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Take down on</FormLabel>
+                    <DateTimePicker
+                      value={field.value}
+                      disabled={submitting}
+                      onChange={(date) =>
+                        field.onChange(date ? new Date(date) : undefined)
+                      }
                     />
+                    <FormDescription className="text-caption">
+                      The announcement is deleted after this date.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                    <Separator className="bg-border/40" />
-
-                    {/* Expiration Date */}
-                    <FormField
-                      control={form.control}
-                      name="expiresAt"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5 mb-2">
-                            <CalendarClock className="size-3" /> Auto-Archive
-                            Date
-                          </FormLabel>
-                          <div className="relative">
-                            <DateTimePicker
-                              value={
-                                field.value
-                                  ? new Date(field.value).toISOString()
-                                  : ""
-                              }
-                              onChange={(date) =>
-                                field.onChange(
-                                  date ? new Date(date) : undefined
-                                )
-                              }
-                            />
-                          </div>
-                          <FormDescription className="text-[10px] mt-1.5">
-                            This post will be hidden from the main feed after
-                            this date.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Helper Tip */}
-                <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-xs text-muted-foreground">
-                  <p className="font-medium text-blue-600 mb-1">Pro Tip:</p>
-                  You can paste images directly into the editor. Use the toolbar
-                  for headers and lists.
-                </div>
-              </div>
+              <Button
+                type="submit"
+                variant="primary"
+                width="full"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Megaphone />
+                )}
+                {submitting ? "Publishing..." : "Publish"}
+              </Button>
             </div>
-          </main>
+          </aside>
         </form>
       </Form>
     </div>

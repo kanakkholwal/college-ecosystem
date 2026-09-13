@@ -1,19 +1,6 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { TbSend } from "react-icons/tb";
-import * as z from "zod";
 
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -23,90 +10,118 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { Input } from "@/components/ui/input";
+import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import * as z from "zod";
 import {
   updateBooksAndRefPublic,
   updatePrevPapersPublic,
 } from "~/actions/common.course";
 
-const yearOptions: readonly string[] = Array.from({ length: 6 }, (_, index) =>
-  (new Date().getFullYear() - index).toString()
-) as unknown as readonly [string, ...string[]];
+const YEAR_COUNT = 10;
+const yearOptions = Array.from({ length: YEAR_COUNT }, (_, i) =>
+  (new Date().getFullYear() - i).toString()
+);
 
-const formSchema = z.object({
+const EXAMS = [
+  { value: "midsem", label: "Mid semester exam" },
+  { value: "endsem", label: "End semester exam" },
+  { value: "others", label: "Other" },
+] as const;
+
+const REF_TYPES = ["book", "reference", "drive", "youtube", "others"] as const;
+
+// Links render on a public page, so only http(s) URLs are accepted.
+const httpUrl = z
+  .string()
+  .trim()
+  .url("Enter a full link, starting with https://")
+  .refine((v) => /^https?:\/\//i.test(v), "Only http(s) links are allowed");
+
+const paperSchema = z.object({
   exam: z.enum(["midsem", "endsem", "others"]),
-  link: z.string(),
-  year: z.string().refine((val) => yearOptions.includes(val)),
+  link: httpUrl,
+  year: z.string().refine((v) => yearOptions.includes(v), "Pick a year"),
 });
 
-export function AddPrevModal({
-  code,
-  courseId,
-}: {
-  code: string;
-  courseId: string;
-}) {
-  const router = useRouter();
+const refSchema = z.object({
+  type: z.enum(REF_TYPES),
+  link: httpUrl,
+  name: z.string().trim().min(2, "Enter the title").max(200),
+});
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      exam: "midsem",
-      link: "",
-      year: "",
-    },
+type ModalProps = { code: string; courseId: string };
+
+export function AddPrevModal({ code, courseId }: ModalProps) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const form = useForm<z.infer<typeof paperSchema>>({
+    resolver: zodResolver(paperSchema),
+    defaultValues: { exam: "endsem", link: "", year: "" },
   });
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    // Handle form submission
-    console.log(data);
-    toast.promise(
-      updatePrevPapersPublic(courseId, {
-        exam: data.exam,
-        link: data.link,
-        year: Number(data.year),
-      }),
-      {
-        loading: "Adding Previous Paper",
-        success: () => {
-          form.reset();
-          router.refresh();
-          // Optionally, you can also navigate to the course page or show a success message
-          return "Previous Paper Added";
-        },
-        error: "Failed to add Previous Paper",
-      }
-    );
+  const onSubmit = async (data: z.infer<typeof paperSchema>) => {
+    try {
+      await toast.promise(
+        updatePrevPapersPublic(courseId, {
+          exam: data.exam,
+          link: data.link,
+          year: Number(data.year),
+        }),
+        {
+          loading: "Adding paper",
+          success: "Paper added",
+          error: "Couldn't add the paper",
+        }
+      );
+      form.reset();
+      setOpen(false);
+      router.refresh();
+    } catch {
+      // toast.promise already reported the failure
+    }
   };
 
   return (
-    <ResponsiveDialog
-      title={`Add Previous Paper for ${code}`}
-      description="Fill the form below to add a previous paper."
-      btnProps={{
-        children: "Add Previous Paper",
-        type: "submit",
-        variant: "dark",
-        size: "sm",
-      }}
-    >
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="grid grid-cols-1 gap-2"
-        >
-          <FormField
-            control={form.control}
-            name="year"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Year</FormLabel>
-                <FormControl>
-                  <Select required onValueChange={field.onChange}>
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Plus />
+        Add a paper
+      </Button>
+      <ControlledResponsiveDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={`Add a previous paper for ${code}`}
+        description="Share a public link to the paper, for example a Google Drive file anyone can view."
+      >
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4 pb-4 md:pb-0"
+          >
+            <FormField
+              control={form.control}
+              name="year"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Year</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Year" />
+                        <SelectValue placeholder="Select a year" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -117,202 +132,143 @@ export function AddPrevModal({
                       ))}
                     </SelectContent>
                   </Select>
-                </FormControl>
-                <FormDescription>
-                  This is the name of the paper.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="link"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Link</FormLabel>
-                <FormControl>
-                  <Input
-                    variant="outline"
-                    type="url"
-                    placeholder="Enter Link"
-                    required
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  This is the link to the paper.(drive link with public access)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="exam"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Exam Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  required
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Exam Type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="midsem">Midterm Exam</SelectItem>
-                    <SelectItem value="endsem">End Semester Exam</SelectItem>
-                    <SelectItem value="others">Others</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>This is the type of exam.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button
-            type="submit"
-            width="content"
-            size="sm"
-            variant="dark"
-            className="ml-2 md:mx-auto my-3"
-          >
-            Submit Paper
-            <TbSend />
-          </Button>
-        </form>
-      </Form>
-    </ResponsiveDialog>
-  );
-}
-const typeOptions = [
-  "book",
-  "reference",
-  "drive",
-  "youtube",
-  "others",
-] as unknown as readonly [string, ...string[]];
-
-const refFormSchema = z.object({
-  type: z.enum(typeOptions),
-  link: z.string(),
-  name: z.string(),
-});
-
-export function AddRefsModal({
-  code,
-  courseId,
-}: {
-  code: string;
-  courseId: string;
-}) {
-  const router = useRouter();
-  const form = useForm<z.infer<typeof refFormSchema>>({
-    resolver: zodResolver(refFormSchema),
-    defaultValues: {
-      type: typeOptions[0],
-      name: "",
-      link: "",
-    },
-  });
-
-  const onSubmit = async (data: z.infer<typeof refFormSchema>) => {
-    // Handle form submission
-    console.log(data);
-    toast.promise(updateBooksAndRefPublic(courseId, data), {
-      loading: "Adding Reference",
-      success: () => {
-        form.reset();
-        router.refresh();
-        return "Reference Added";
-      },
-      error: "Failed to add Reference",
-    });
-  };
-
-  return (
-    <ResponsiveDialog
-      title={`Add new reference or book for ${code}`}
-      description="Fill the form below to add a new reference."
-      btnProps={{
-        children: "Submit Resources",
-        type: "submit",
-        variant: "dark",
-        size: "sm",
-      }}
-    >
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="grid grid-cols-1 gap-2"
-        >
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input
-                    variant="outline"
-                    type="text"
-                    placeholder="Enter Name of the resource"
-                    required
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  This is the name of the resource.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="link"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Link</FormLabel>
-                <FormControl>
-                  <Input
-                    variant="outline"
-                    type="url"
-                    placeholder="Enter Link"
-                    required
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  This is the link to the reference.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type</FormLabel>
-                <FormControl>
-                  <Select required onValueChange={field.onChange}>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="exam"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Exam</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select ref type" />
+                        <SelectValue placeholder="Select the exam" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {typeOptions.map((type) => (
+                      {EXAMS.map((exam) => (
+                        <SelectItem key={exam.value} value={exam.value}>
+                          {exam.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="link"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link</FormLabel>
+                  <FormControl>
+                    <Input
+                      variant="outline"
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://drive.google.com/..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Make sure anyone with the link can open it.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={form.formState.isSubmitting}
+              className="self-end"
+            >
+              Add paper
+            </Button>
+          </form>
+        </Form>
+      </ControlledResponsiveDialog>
+    </>
+  );
+}
+
+export function AddRefsModal({ code, courseId }: ModalProps) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const form = useForm<z.infer<typeof refSchema>>({
+    resolver: zodResolver(refSchema),
+    defaultValues: { type: "book", name: "", link: "" },
+  });
+
+  const onSubmit = async (data: z.infer<typeof refSchema>) => {
+    try {
+      await toast.promise(updateBooksAndRefPublic(courseId, data), {
+        loading: "Adding resource",
+        success: "Resource added",
+        error: "Couldn't add the resource",
+      });
+      form.reset();
+      setOpen(false);
+      router.refresh();
+    } catch {
+      // toast.promise already reported the failure
+    }
+  };
+
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Plus />
+        Add a resource
+      </Button>
+      <ControlledResponsiveDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={`Add a book or reference for ${code}`}
+        description="Textbooks, reference links, Drive folders or YouTube playlists."
+      >
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4 pb-4 md:pb-0"
+          >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      variant="outline"
+                      type="text"
+                      placeholder="Book or playlist title"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="capitalize">
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {REF_TYPES.map((type) => (
                         <SelectItem
                           key={type}
                           value={type}
@@ -323,27 +279,40 @@ export function AddRefsModal({
                       ))}
                     </SelectContent>
                   </Select>
-                </FormControl>
-                <FormDescription>
-                  This is the type of reference.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button
-            type="submit"
-            width="content"
-            size="sm"
-            variant="dark"
-            className="ml-2 md:mx-auto my-3"
-          >
-            Submit Resources
-            <TbSend />
-          </Button>
-        </form>
-      </Form>
-    </ResponsiveDialog>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="link"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Link</FormLabel>
+                  <FormControl>
+                    <Input
+                      variant="outline"
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={form.formState.isSubmitting}
+              className="self-end"
+            >
+              Add resource
+            </Button>
+          </form>
+        </Form>
+      </ControlledResponsiveDialog>
+    </>
   );
 }

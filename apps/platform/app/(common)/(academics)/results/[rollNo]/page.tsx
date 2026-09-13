@@ -10,6 +10,7 @@ import {
   CalendarDays,
   ChartLine,
   ChevronDown,
+  Clock,
   Mail,
   Table as TableIcon,
   TriangleAlert,
@@ -17,7 +18,7 @@ import {
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ResultTypeWithId } from "src/models/result";
-import { getResultByRollNo } from "~/actions/common.result";
+import { getResultWithRefresh } from "~/actions/common.result";
 import { orgConfig } from "~/project.config";
 
 type Props = {
@@ -75,11 +76,11 @@ export default async function ResultsPage(props: Props) {
     props.searchParams,
   ]);
 
-  const result = await getResultByRollNo(
-    rollNo,
-    searchParams?.update === "1",
-    searchParams?.new === "1"
-  );
+  const { result, refreshBlocked, retryAfterSeconds } =
+    await getResultWithRefresh(rollNo, {
+      update: searchParams?.update === "1",
+      isNew: searchParams?.new === "1",
+    });
   if (!result) return notFound();
 
   const { semesters } = result;
@@ -107,6 +108,24 @@ export default async function ResultsPage(props: Props) {
         variant="ghost"
         className="mb-6 w-fit text-muted-foreground"
       />
+
+      {refreshBlocked && (
+        <p
+          role="status"
+          className="mb-6 flex items-start gap-2 rounded-xl border border-border bg-card px-4 py-3 text-body text-foreground dark:bg-background"
+        >
+          <Clock
+            className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <span>
+            Too many refresh requests. Showing the saved result
+            {retryAfterSeconds > 0
+              ? `; try again in ${Math.ceil(retryAfterSeconds / 60)} min.`
+              : "."}
+          </span>
+        </p>
+      )}
 
       <header className="flex flex-col justify-between gap-6 border-b border-border pb-8 md:flex-row md:items-end">
         <div className="flex items-start gap-4">
