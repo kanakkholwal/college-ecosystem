@@ -1,13 +1,7 @@
 "use client";
 
 import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
@@ -26,9 +20,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { TIME_INTERVALS } from "~/utils/process";
-import { MagicCard } from "../animation/magic-card";
 
-// Types
 export interface DataPoint {
   timestamp: Date;
   [key: string]: Date | number;
@@ -42,16 +34,17 @@ export interface ChartSeries {
 }
 
 export interface GenericAreaChartProps {
-  // Data
   data: DataPoint[];
   series: ChartSeries[];
 
-  // Card props
   title?: string;
   description?: string;
   className?: string;
+  /** Screen-reader summary of what the chart shows; say the takeaway, not the pixels. */
+  summary?: string;
+  /** Heading level for the title, so the card fits the page outline. */
+  titleAs?: "h2" | "h3";
 
-  // Time range filter
   showTimeRangeFilter?: boolean;
   timeRangeOptions?: Array<{
     value: string;
@@ -61,7 +54,6 @@ export interface GenericAreaChartProps {
   defaultTimeRange?: string;
   onTimeRangeChange?: (value: string) => void;
 
-  // Chart configuration
   chartHeight?: number;
   showGrid?: boolean;
   showXAxis?: boolean;
@@ -70,20 +62,40 @@ export interface GenericAreaChartProps {
   stacked?: boolean;
   curveType?: "monotone" | "natural" | "linear" | "step";
 
-  // Formatting
+  /** Serialisable alternative to `xAxisFormatter` for server-rendered callers. */
+  xAxisFormat?: "date" | "time" | "month";
   xAxisFormatter?: (value: Date) => string;
   yAxisFormatter?: (value: number) => string;
   tooltipFormatter?: (value: number | string, name: string) => string | number;
 
-  // Colors
   gradientOpacity?: {
     start: number;
     end: number;
   };
 
-  // Empty state
   emptyStateMessage?: string;
 }
+
+const X_FORMATS: Record<
+  NonNullable<GenericAreaChartProps["xAxisFormat"]>,
+  Intl.DateTimeFormatOptions
+> = {
+  date: { month: "short", day: "numeric" },
+  time: { hour: "numeric", minute: "2-digit" },
+  month: { month: "short", year: "numeric" },
+};
+
+const formatterFor =
+  (format: NonNullable<GenericAreaChartProps["xAxisFormat"]>) =>
+  (value: Date) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return format === "time"
+      ? date.toLocaleTimeString("en-IN", X_FORMATS.time)
+      : date.toLocaleDateString("en-IN", X_FORMATS[format]);
+  };
+
+const defaultYAxisFormatter = (value: number) => value.toLocaleString("en-IN");
 
 export function GenericAreaChart({
   data,
@@ -91,6 +103,8 @@ export function GenericAreaChart({
   title,
   description,
   className = "",
+  summary,
+  titleAs: Title = "h3",
   showTimeRangeFilter = false,
   timeRangeOptions = TIME_INTERVALS,
   defaultTimeRange = "last_month",
@@ -101,18 +115,21 @@ export function GenericAreaChart({
   showYAxis = false,
   showLegend = true,
   stacked = false,
-  curveType = "natural",
+  curveType = "monotone",
+  xAxisFormat = "date",
   xAxisFormatter,
   yAxisFormatter,
-  tooltipFormatter,
-  gradientOpacity = { start: 0.8, end: 0.1 },
-  emptyStateMessage = "No data available",
+  gradientOpacity = { start: 0.24, end: 0.02 },
+  emptyStateMessage = "No data yet",
 }: GenericAreaChartProps) {
-  const [timeRange, setTimeRange] = React.useState<string>(defaultTimeRange);
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  // Generate chart config from series
+  const [timeRange, setTimeRange] = React.useState<string>(
+    searchParams.get("period") ?? defaultTimeRange
+  );
+  const gradientId = React.useId().replace(/:/g, "");
+
   const chartConfig = React.useMemo(() => {
     const config: ChartConfig = {};
     series.forEach((s, index) => {
@@ -124,178 +141,113 @@ export function GenericAreaChart({
     return config;
   }, [series]);
 
-  // Handle time range change
+  const chartData = React.useMemo(
+    () =>
+      data.map((item) => ({
+        ...item,
+        date: new Date(item.timestamp).toISOString(),
+      })),
+    [data]
+  );
+
   const handleTimeRangeChange = (value: string) => {
     setTimeRange(value);
     onTimeRangeChange?.(value);
-    // Update URL search params
     const params = new URLSearchParams(searchParams.toString());
     params.set("period", value);
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Default formatters
-  const defaultXAxisFormatter = (value: Date) => {
-    const date = new Date(value);
-    if (isNaN(date.getTime())) {
-      // Added validation
-      return String(value);
-    }
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const defaultYAxisFormatter = (value: number) => {
-    return value.toLocaleString();
-  };
-
-  const defaultTooltipFormatter = (value: number, name: string) => {
-    return value.toLocaleString();
-  };
-
-  // Transform data for recharts (convert Date to string for dataKey)
-  const chartData = React.useMemo(() => {
-    return data.map((item) => ({
-      ...item,
-      date: item.timestamp.toISOString(),
-    }));
-  }, [data]);
-
-  // Empty state
-  if (!data.length) {
-    return (
-      <MagicCard
-        layerClassName="bg-card"
-        className={cn("hover:shadow duration-500 rounded-lg shadow", className)}
-      >
-        {(title || description || showTimeRangeFilter) && (
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 @2xl:p-4">
-            {(title || description) && (
-              <div className="grid flex-1 gap-1">
-                {title && (
-                  <CardTitle className="font-medium text-base">
-                    {title}
-                  </CardTitle>
-                )}
-                {description && (
-                  <CardDescription className="text-sm text-muted-foreground">
-                    {description}
-                  </CardDescription>
-                )}
-              </div>
-            )}
-            {showTimeRangeFilter && (
-              <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-                <SelectTrigger
-                  className="w-[160px] rounded-lg sm:ml-auto"
-                  aria-label="Select a time range"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {timeRangeOptions.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className="rounded-lg"
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </CardHeader>
-        )}
-        <CardContent className="flex items-center justify-center py-12">
-          <p className="text-sm text-muted-foreground">{emptyStateMessage}</p>
-        </CardContent>
-      </MagicCard>
-    );
-  }
+  const formatX = xAxisFormatter || formatterFor(xAxisFormat);
+  const hasHeader = Boolean(title || description || showTimeRangeFilter);
 
   return (
-    <MagicCard
-      layerClassName="bg-card"
-      className={cn("hover:shadow duration-500 rounded-lg shadow", className)}
+    <figure
+      className={cn(
+        "flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background",
+        className
+      )}
     >
-      {(title || description || showTimeRangeFilter) && (
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 @2xl:p-4">
+      {hasHeader && (
+        <figcaption className="flex flex-wrap items-start justify-between gap-3">
           {(title || description) && (
-            <div className="grid flex-1 gap-1">
+            <div className="min-w-0 space-y-1">
               {title && (
-                <CardTitle className="font-medium text-base">{title}</CardTitle>
+                <Title className="text-body-lg font-medium text-foreground">
+                  {title}
+                </Title>
               )}
               {description && (
-                <CardDescription className="text-sm text-muted-foreground">
-                  {description}
-                </CardDescription>
+                <p className="text-body text-muted-foreground">{description}</p>
               )}
             </div>
           )}
           {showTimeRangeFilter && (
             <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-              <SelectTrigger
-                className="w-[160px] rounded-lg sm:ml-auto"
-                aria-label="Select a time range"
-              >
+              <SelectTrigger className="h-9 w-40" aria-label="Time range">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent>
                 {timeRangeOptions.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    value={option.value}
-                    className="rounded-lg"
-                  >
+                  <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
-        </CardHeader>
+        </figcaption>
       )}
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      {summary && <p className="sr-only">{summary}</p>}
+
+      {data.length === 0 ? (
+        <div
+          className="flex items-center justify-center rounded-xl border border-dashed border-border"
+          style={{ height: chartHeight }}
+        >
+          <p className="text-body text-muted-foreground">{emptyStateMessage}</p>
+        </div>
+      ) : (
         <ChartContainer
           config={chartConfig}
-          className={`aspect-auto w-full`}
+          className="aspect-auto w-full"
           style={{ height: `${chartHeight}px` }}
         >
-          <AreaChart data={chartData}>
-            {/* Gradients */}
+          <AreaChart
+            data={chartData}
+            accessibilityLayer
+            margin={{ left: 0, right: 8 }}
+          >
             <defs>
-              {series.map((s, index) => (
-                <linearGradient
-                  key={s.dataKey}
-                  id={`fill${s.dataKey}`}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="5%"
-                    stopColor={s.color || `hsl(var(--chart-${index + 1}))`}
-                    stopOpacity={gradientOpacity.start}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor={s.color || `hsl(var(--chart-${index + 1}))`}
-                    stopOpacity={gradientOpacity.end}
-                  />
-                </linearGradient>
-              ))}
+              {series.map((s, index) => {
+                const color = s.color || `var(--chart-${index + 1})`;
+                return (
+                  <linearGradient
+                    key={s.dataKey}
+                    id={`${gradientId}-${s.dataKey}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor={color}
+                      stopOpacity={gradientOpacity.start}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={color}
+                      stopOpacity={gradientOpacity.end}
+                    />
+                  </linearGradient>
+                );
+              })}
             </defs>
 
-            {/* Grid */}
             {showGrid && (
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} stroke="var(--border)" />
             )}
-
-            {/* X Axis */}
             {showXAxis && (
               <XAxis
                 dataKey="date"
@@ -303,71 +255,57 @@ export function GenericAreaChart({
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={xAxisFormatter || defaultXAxisFormatter}
+                tickFormatter={(value) => formatX(new Date(value))}
               />
             )}
-
-            {/* Y Axis */}
             {showYAxis && (
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                width={40}
+                allowDecimals={false}
                 tickFormatter={yAxisFormatter || defaultYAxisFormatter}
               />
             )}
-
-            {/* Tooltip */}
             <ChartTooltip
-              cursor={false}
+              cursor={{ stroke: "var(--border-strong)" }}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    const formatter = xAxisFormatter || defaultXAxisFormatter;
-                    return formatter(new Date(value as string | number));
-                  }}
-                  // formatter={(value: string | number) => {
-                  //     if (typeof value === 'number') {
-                  //         return value.toLocaleString()
-                  //     }
-                  //     return value
-                  // }}
+                  labelFormatter={(value) =>
+                    formatX(new Date(value as string | number))
+                  }
                   indicator="dot"
                 />
               }
             />
-
-            {/* Areas */}
             {series.map((s, index) => (
               <Area
                 key={s.dataKey}
                 dataKey={s.dataKey}
                 type={curveType}
-                fill={`url(#fill${s.dataKey})`}
-                stroke={s.color || `hsl(var(--chart-${index + 1}))`}
+                fill={`url(#${gradientId}-${s.dataKey})`}
+                stroke={s.color || `var(--chart-${index + 1})`}
                 strokeWidth={2}
                 stackId={stacked ? "a" : undefined}
               />
             ))}
-
-            {/* Legend */}
             {showLegend && series.length > 1 && (
               <ChartLegend content={<ChartLegendContent />} />
             )}
           </AreaChart>
         </ChartContainer>
-      </CardContent>
-    </MagicCard>
+      )}
+    </figure>
   );
 }
 
-// ============================================
-// USAGE EXAMPLES
-// ============================================
-
-// Example 1: User Growth Chart
-export function UserGrowthChart({ data }: { data: any }) {
-  const chartData = data.graphData.map((d: any) => ({
+export function UserGrowthChart({
+  data,
+}: {
+  data: { graphData: { timestamp: Date; count: number }[] };
+}) {
+  const chartData = data.graphData.map((d) => ({
     timestamp: d.timestamp,
     users: d.count,
   }));
@@ -375,54 +313,10 @@ export function UserGrowthChart({ data }: { data: any }) {
   return (
     <GenericAreaChart
       data={chartData}
-      series={[
-        { dataKey: "users", label: "New Users", color: "hsl(var(--chart-1))" },
-      ]}
-      title="User Growth"
-      description="New user registrations over time"
-      showTimeRangeFilter={false}
+      series={[{ dataKey: "users", label: "New users", color: "var(--chart-1)" }]}
+      title="User growth"
+      description="New registrations over time"
       chartHeight={300}
     />
   );
 }
-
-// Example 5: Multi-metric Dashboard Chart
-// export function MultiMetricChart({ userData, sessionData }: { userData: any; sessionData: any }) {
-//     // Combine both datasets
-//     const userMap = new Map(
-//         userData.graphData.map((d: any) => [d.timestamp.getTime(), d.count])
-//     )
-//     const sessionMap = new Map(
-//         sessionData.graphData.map((d: any) => [d.timestamp.getTime(), d.count])
-//     )
-
-//     const allTimestamps = new Set([
-//         ...userData.graphData.map((d: any) => d.timestamp.getTime()),
-//         ...sessionData.graphData.map((d: any) => d.timestamp.getTime()),
-//     ])
-
-//     const chartData = Array.from(allTimestamps)
-//         .sort((a, b) => a - b)
-//         .map(timestamp => ({
-//             timestamp: new Date(timestamp),
-//             users: userMap.get(timestamp) || 0,
-//             sessions: sessionMap.get(timestamp) || 0,
-//         }))
-
-//     return (
-//         <GenericAreaChart
-//             data={chartData}
-//             series={[
-//                 { dataKey: "users", label: "New Users", color: "hsl(var(--chart-1))" },
-//                 { dataKey: "sessions", label: "Sessions", color: "hsl(var(--chart-2))" },
-//             ]}
-//             title="Users & Sessions"
-//             description="Combined analytics overview"
-//             showTimeRangeFilter={true}
-//             chartHeight={350}
-//             stacked={false}
-//             showLegend={true}
-//             showYAxis={true}
-//         />
-//     )
-// }

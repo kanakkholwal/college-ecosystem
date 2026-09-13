@@ -1,6 +1,5 @@
-import { Separator } from "@/components/ui/separator"; // Assuming you have shadcn separator
 import { cn } from "@/lib/utils";
-import React from "react";
+import { Children, isValidElement, type ReactNode } from "react";
 
 export type HeaderBarProps = {
   Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -11,6 +10,19 @@ export type HeaderBarProps = {
   hideSeparator?: boolean;
 };
 
+const isText = (node: ReactNode) =>
+  typeof node === "string" || typeof node === "number";
+
+// Walks host elements only; an h1 inside a custom component is not detected.
+function containsH1(node: ReactNode): boolean {
+  return Children.toArray(node).some(
+    (child) =>
+      isValidElement<{ children?: ReactNode }>(child) &&
+      (child.type === "h1" || containsH1(child.props.children))
+  );
+}
+
+/** Page header inside the dashboard workspace. Renders the page h1. */
 export function HeaderBar({
   Icon,
   titleNode,
@@ -20,22 +32,42 @@ export function HeaderBar({
   hideSeparator = false,
 }: HeaderBarProps) {
   return (
-    <div className={cn("w-full space-y-4 z-1", className)}>
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            {Icon && <Icon className="size-5 text-primary/80" />}
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {titleNode}
-            </h1>
-          </div>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            {descriptionNode}
-          </p>
+    <header
+      className={cn(
+        "flex w-full flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
+        !hideSeparator && "border-b border-border pb-6",
+        className
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        {Icon && (
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-card text-primary dark:bg-background">
+            <Icon className="size-5" aria-hidden="true" />
+          </span>
+        )}
+        {/* Some callers pass their own h1: style it instead of nesting headings. */}
+        <div className="min-w-0 space-y-1 [&_h1]:text-heading-sm [&_h1]:font-medium [&_h1]:text-foreground">
+          {containsH1(titleNode) ? (
+            titleNode
+          ) : (
+            <h1 className="text-balance">{titleNode}</h1>
+          )}
+          {isText(descriptionNode) ? (
+            <p className="max-w-2xl text-pretty text-body text-muted-foreground">
+              {descriptionNode}
+            </p>
+          ) : (
+            <div className="max-w-2xl text-pretty text-body text-muted-foreground">
+              {descriptionNode}
+            </div>
+          )}
         </div>
-        {actionNode && <div className="ml-4">{actionNode}</div>}
       </div>
-      {!hideSeparator && <Separator className="my-4" />}
-    </div>
+      {actionNode && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {actionNode}
+        </div>
+      )}
+    </header>
   );
 }

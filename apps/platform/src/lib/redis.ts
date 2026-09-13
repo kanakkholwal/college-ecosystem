@@ -45,8 +45,8 @@ async function ensureRedisReady(): Promise<boolean> {
 }
 
 // ---- Flush ALL keys (safe wrapper) ----
+// Server-only helper; call it through an admin-checked action, never mark it "use server".
 export async function flushAllRedisKeys(): Promise<boolean> {
-  "use server";
   if (!(await ensureRedisReady())) {
     console.warn("[redis] flush skipped – redis not ready");
     return false;

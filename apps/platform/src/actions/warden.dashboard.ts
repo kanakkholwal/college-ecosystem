@@ -1,81 +1,75 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { cache } from "react";
 import { auth } from "~/auth";
 import dbConnect from "~/lib/dbConnect";
 import {
   HostelModel,
   HostelStudentModel,
-  IHostelType,
+  type IHostelType,
   OutPassModel,
 } from "~/models/hostel_n_outpass";
 
-// --- Types ---
 type DashboardStats = {
   pendingOutpasses: number;
-  activeOutpasses: number; // Students currently outside
+  /** Students currently outside campus. */
+  activeOutpasses: number;
   totalStudents: number;
   bannedStudents: number;
 };
 
-type ActionResponse<T = any> = Promise<{
+type ActionResponse<T = unknown> = Promise<{
   success: boolean;
   data?: T;
   error?: string;
 }>;
 
-/**
- * 1. GET WARDEN STATS
- * Fetches the counts for the dashboard HUD (Heads-Up Display)
- */
+export type PendingOutpass = {
+  _id: string;
+  reason: string;
+  roomNumber: string;
+  expectedOutTime: string;
+  expectedInTime: string;
+  createdAt: string;
+  student: { name: string; rollNumber: string } | null;
+};
+
+/** The hostel's warden, one of its administrators, or a platform admin. */
+const authorizeHostel = cache(async (hostelSlug: string) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return { error: "Unauthorized" as const };
+
+  await dbConnect();
+  const hostel = await HostelModel.findOne({ slug: hostelSlug })
+    .select("_id warden.email administrators.email")
+    .lean<Pick<IHostelType, "_id" | "warden" | "administrators">>();
+  if (!hostel) return { error: "Hostel not found" as const };
+
+  const email = session.user.email;
+  const isAuthorized =
+    hostel.warden?.email === email ||
+    hostel.administrators?.some((admin) => admin.email === email) ||
+    session.user.role === "admin";
+  if (!isAuthorized) return { error: "Forbidden Access" as const };
+
+  return { hostelId: hostel._id };
+});
+
 export async function getWardenDashboardStats(
   hostelSlug: string
 ): ActionResponse<DashboardStats> {
   try {
-    await dbConnect();
+    const access = await authorizeHostel(hostelSlug);
+    if ("error" in access) return { success: false, error: access.error };
 
-    // 1. Validate Warden Access
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user) return { success: false, error: "Unauthorized" };
-
-    const hostel = await HostelModel.findOne<IHostelType>({
-      slug: hostelSlug,
-    }).lean();
-    if (!hostel) return { success: false, error: "Hostel not found" };
-
-    // Security check: Ensure current user is an admin of this hostel
-    const isAuthorized =
-      hostel.warden.email === session.user.email ||
-      hostel.administrators.some(
-        (admin: any) => admin.email === session.user.email
-      ) ||
-      session.user.role === "admin";
-
-    if (!isAuthorized) return { success: false, error: "Forbidden Access" };
-
-    // 2. Parallel Data Fetching for Performance
+    const hostelId = access.hostelId;
     const [pendingCount, activeCount, studentCount, bannedCount] =
       await Promise.all([
-        // Count Pending Requests
-        OutPassModel.countDocuments({
-          hostel: hostel._id,
-          status: "pending",
-        }),
-        // Count Students currently 'in_use' (Outside campus)
-        OutPassModel.countDocuments({
-          hostel: hostel._id,
-          status: "in_use",
-        }),
-        // Total Students
-        HostelStudentModel.countDocuments({
-          hostelId: hostel._id,
-        }),
-        // Disciplinary Cases
-        HostelStudentModel.countDocuments({
-          hostelId: hostel._id,
-          banned: true,
-        }),
+        OutPassModel.countDocuments({ hostel: hostelId, status: "pending" }),
+        OutPassModel.countDocuments({ hostel: hostelId, status: "in_use" }),
+        HostelStudentModel.countDocuments({ hostelId }),
+        HostelStudentModel.countDocuments({ hostelId, banned: true }),
       ]);
 
     return {
@@ -89,122 +83,35 @@ export async function getWardenDashboardStats(
     };
   } catch (error) {
     console.error("Stats Fetch Error:", error);
-    return {
-      success: false,
-      error: "Failed to load dashboard stats",
-      data: {
-        pendingOutpasses: 0,
-        activeOutpasses: 0,
-        totalStudents: 0,
-        bannedStudents: 0,
-      },
-    };
+    return { success: false, error: "Failed to load dashboard stats" };
   }
 }
 
-/**
- * 2. GET PENDING OUTPASSES
- * Fetches list for the "Review Outpasses" page
- */
+/** Oldest pending requests first, so the queue is worked in order. */
 export async function getPendingOutpasses(
   hostelSlug: string,
   page = 1,
   limit = 20
-): ActionResponse {
+): ActionResponse<PendingOutpass[]> {
   try {
-    await dbConnect();
-    const hostel = await HostelModel.findOne({ slug: hostelSlug }).select(
-      "_id"
-    );
-    if (!hostel) throw new Error("Hostel not found");
+    const access = await authorizeHostel(hostelSlug);
+    if ("error" in access) return { success: false, error: access.error };
 
+    const safeLimit = Math.min(Math.max(1, limit), 50);
     const requests = await OutPassModel.find({
-      hostel: hostel._id,
+      hostel: access.hostelId,
       status: "pending",
     })
-      .populate("student", "name rollNumber roomNumber image") // Get student details
-      .sort({ createdAt: 1 }) // Oldest first (FIFO queue)
-      .skip((page - 1) * limit)
-      .limit(limit)
+      .select("reason roomNumber expectedOutTime expectedInTime createdAt student")
+      .populate("student", "name rollNumber")
+      .sort({ createdAt: 1 })
+      .skip((Math.max(1, page) - 1) * safeLimit)
+      .limit(safeLimit)
       .lean();
 
     return { success: true, data: JSON.parse(JSON.stringify(requests)) };
   } catch (error) {
+    console.error("Pending outpass fetch error:", error);
     return { success: false, error: "Failed to fetch requests" };
-  }
-}
-
-/**
- * 3. PROCESS OUTPASS (Approve/Reject)
- * The core action for the warden
- */
-export async function processOutpassRequest(
-  outpassId: string,
-  decision: "approved" | "rejected",
-  remarks?: string
-): ActionResponse {
-  try {
-    await dbConnect();
-
-    // Auth Check
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user) return { success: false, error: "Unauthorized" };
-
-    // Find and Update
-    const outpass = await OutPassModel.findById(outpassId);
-    if (!outpass) return { success: false, error: "Request not found" };
-
-    if (outpass.status !== "pending") {
-      return { success: false, error: "Request already processed" };
-    }
-
-    outpass.status = decision;
-    // If you had a 'remarks' field in schema, update it here.
-    // Since schema doesn't have it explicitly, we skip saving remarks or add it to schema later.
-
-    await outpass.save();
-
-    // Revalidate the dashboard and requests page
-    revalidatePath("/warden/dashboard");
-    revalidatePath("/warden/outpass-requests");
-
-    return { success: true, data: { status: decision } };
-  } catch (error) {
-    return { success: false, error: "Failed to process request" };
-  }
-}
-
-/**
- * 4. GET STUDENT DIRECTORY
- * For the "Hostelers" page
- */
-export async function getHostelResidents(
-  hostelSlug: string,
-  query?: string
-): ActionResponse {
-  try {
-    await dbConnect();
-    const hostel = await HostelModel.findOne({ slug: hostelSlug }).select(
-      "_id"
-    );
-
-    // Build Search Filter
-    const filter: any = { hostelId: hostel._id };
-    if (query) {
-      filter.$or = [
-        { name: { $regex: query, $options: "i" } },
-        { rollNumber: { $regex: query, $options: "i" } },
-        { roomNumber: { $regex: query, $options: "i" } },
-      ];
-    }
-
-    const students = await HostelStudentModel.find(filter)
-      .sort({ roomNumber: 1 }) // Sort by room
-      .limit(50) // Pagination recommended for production
-      .lean();
-
-    return { success: true, data: JSON.parse(JSON.stringify(students)) };
-  } catch (error) {
-    return { success: false, error: "Failed to fetch residents" };
   }
 }

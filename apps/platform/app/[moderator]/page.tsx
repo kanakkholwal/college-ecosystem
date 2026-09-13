@@ -1,5 +1,3 @@
-import { headers } from "next/headers";
-import { auth } from "~/auth";
 import { DashboardTemplate } from "./dashboards";
 
 interface Props {
@@ -10,19 +8,12 @@ interface Props {
 }
 
 export default async function ModeratorDashboard(props: Props) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
+  const [{ moderator }, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams,
+  ]);
 
   return (
-    <div className="w-full space-y-6 my-5">
-      <DashboardTemplate
-        user_role={params.moderator}
-        searchParams={searchParams}
-      />
-    </div>
+    <DashboardTemplate user_role={moderator} searchParams={searchParams} />
   );
 }

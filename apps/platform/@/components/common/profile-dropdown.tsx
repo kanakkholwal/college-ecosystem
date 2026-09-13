@@ -1,23 +1,45 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { Separator } from "@/components/ui/separator";
-import { socials, SUPPORT_LINKS } from "@/constants/links";
-import { cn } from "@/lib/utils";
-import { ArrowTopRightIcon } from "@radix-ui/react-icons";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SUPPORT_LINKS } from "@/constants/links";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { cn } from "@/lib/utils";
+import {
+  ArrowLeftRight,
   ArrowUpRight,
-  Home,
+  Check,
+  ChevronDown,
+  GraduationCap,
   LayoutGrid,
   LifeBuoy,
+  LoaderCircle,
   LogOut,
-  ShieldAlert,
+  type LucideIcon,
+  Settings,
+  ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import type { Session } from "~/auth/client";
 import { authClient } from "~/auth/client";
 import { changeCase } from "~/utils/string";
@@ -26,242 +48,437 @@ interface ProfileDropdownProps {
   user: Session["user"];
 }
 
+type Row = {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+  external?: boolean;
+};
+
+/** Account menu capped at ~7 rows: long dashboard and help lists live in submenus (drawer sections on phones). */
 export default function ProfileDropdown({ user }: ProfileDropdownProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
-  // Avatar Logic
-  const avatarSrc =
-    user.image && user.image !== "null" && user.image.trim().length > 0
-      ? user.image
-      : `https://api.dicebear.com/5.x/initials/svg?seed=${user.name}`;
+  const hasImage =
+    Boolean(user.image) &&
+    user.image !== "null" &&
+    (user.image?.trim().length ?? 0) > 0;
+  const initials = user.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
 
-  // Role Links
-  const platformLinks = [
+  const dashboards: Row[] = [
     ...(user.role === "admin"
-      ? [{ Icon: ShieldAlert, href: "/admin", title: "Admin Console" }]
+      ? [{ href: "/admin", label: "Admin console", Icon: ShieldCheck }]
       : []),
-    ...user.other_roles.map((role) => ({
-      Icon: LayoutGrid,
-      href: `/${role}`,
-      title: `${changeCase(role, "title")}`,
-    })),
+    ...user.other_roles
+      .filter((role) => role !== "admin")
+      .map((role) => ({
+        href: `/${role}`,
+        label: changeCase(role, "title"),
+        Icon: LayoutGrid,
+      })),
+  ];
+  const currentSegment = `/${pathname.split("/")[1] ?? ""}`;
+  const current = dashboards.find((d) => d.href === currentSegment);
+  const primary =
+    current ??
+    dashboards.find((d) => d.href === `/${user.other_roles[0]}`) ??
+    dashboards[0];
+
+  const account: Row[] = [
+    { href: `/u/${user.username}`, label: "Your profile", Icon: UserRound },
+    ...(user.other_roles.includes("student")
+      ? [
+          {
+            href: `/results/${user.username}`,
+            label: "Your result",
+            Icon: GraduationCap,
+          },
+        ]
+      : []),
+    ...(user.other_roles[0]
+      ? [
+          {
+            href: `/${user.other_roles[0]}/settings`,
+            label: "Settings",
+            Icon: Settings,
+          },
+        ]
+      : []),
   ];
 
-  return (
-    <ResponsiveDialog
-      title="Account"
-      description="Manage your profile."
-      className="px-3 gap-0 overflow-hidden flex flex-col sm:max-w-lg"
-      btnProps={{
-        size: "icon",
-        rounded: "full",
-        variant: "ghost",
-        className:
-          "size-9 rounded-full border border-border transition-colors hover:bg-muted",
-        children: (
-          <Avatar className="size-8 rounded-full">
-            <AvatarImage src={avatarSrc} alt={user.username} />
-            <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        ),
-      }}
+  const help: Row[] = SUPPORT_LINKS.map((link) => ({
+    href: link.href,
+    label: link.title,
+    Icon: ArrowUpRight,
+    external: true,
+  }));
+
+  const signOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => router.push("/auth/sign-in"),
+        onError: () => setSigningOut(false),
+      },
+    });
+  };
+
+  const avatar = (size: "sm" | "lg") => (
+    <Avatar
+      className={cn(
+        "shrink-0 rounded-full border border-border",
+        size === "sm" ? "size-8" : "size-10"
+      )}
     >
-      <div className="flex items-center gap-3 p-4 border-b border-border shrink-0">
-        <div className="relative shrink-0">
-          <Avatar className="size-16 rounded-xl border border-border shadow-sm">
-            <AvatarImage src={avatarSrc} alt={user.username} />
-            <AvatarFallback className="rounded-xl">
-              {user.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background bg-success" />
-        </div>
+      {hasImage && <AvatarImage src={user.image ?? undefined} alt="" />}
+      <AvatarFallback className="bg-muted text-caption font-semibold text-foreground">
+        {initials}
+      </AvatarFallback>
+    </Avatar>
+  );
 
-        <div className="flex flex-col justify-center items-start min-w-0 flex-1">
-          <h4 className="text-body-lg font-medium">{user.name}</h4>
-          <p className="text-muted-foreground font-medium text-xs font-mono">
-            {user.email}
-            <Link
-              href={`/results/${user.username}`}
-              className="text-primary hover:underline ml-2 text-xs"
-            >
-              View Result
-              <ArrowTopRightIcon className="inline-block size-3 ml-1" />
-            </Link>
+  const identity = (
+    <div className="flex min-w-0 items-center gap-3">
+      {avatar("lg")}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-body font-medium text-foreground">
+          {changeCase(user.name.toLowerCase(), "title")}
+        </p>
+        <p className="truncate text-caption text-muted-foreground">
+          {user.email}
+        </p>
+        {user.department && (
+          <p
+            className="truncate text-caption text-muted-foreground"
+            title={user.department}
+          >
+            {user.department}
           </p>
-          <p>
-            <Badge size="sm" className="font-mono whitespace-nowrap">
-              {user.department || "Student"}
-            </Badge>
-          </p>
-        </div>
+        )}
       </div>
+    </div>
+  );
 
-      <div className="flex-1 overflow-y-auto min-h-0 py-2">
-        <div className="pb-2">
-          {/* Section Header with Count */}
-          <div className="flex items-center justify-between px-2 py-2">
-            <span className="text-caption font-semibold text-muted-foreground">
-              Workspaces
-            </span>
-            {platformLinks.length > 0 && (
-              <Badge variant="default" size="sm" className="font-mono">
-                {platformLinks.length}
-              </Badge>
-            )}
-          </div>
+  const signOutLabel = (
+    <>
+      {signingOut ? (
+        <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+      ) : (
+        <LogOut className="size-4" aria-hidden="true" />
+      )}
+      {signingOut ? "Signing out..." : "Sign out"}
+    </>
+  );
 
-          <div className="grid grid-cols-2 gap-1">
-            {platformLinks.length > 0 ? (
-              platformLinks.map((link) => {
-                // Check if this is the Admin link for special styling
-                const isAdmin = link.href === "/admin";
+  const trigger = (
+    <button
+      type="button"
+      aria-label={`Account menu for ${user.name}`}
+      onClick={isDesktop ? undefined : () => setDrawerOpen(true)}
+      className="grid size-10 place-items-center rounded-full outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-muted"
+    >
+      {avatar("sm")}
+    </button>
+  );
 
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "group relative flex items-center gap-3 rounded-lg border border-transparent px-2.5 py-2 transition-all duration-200",
-                      // Conditional Hover Styles
-                      isAdmin
-                        ? "col-span-2 hover:border-destructive/30 hover:bg-destructive/10"
-                        : "hover:border-border hover:bg-muted"
-                    )}
-                  >
-                    {/* Icon Box */}
-                    <div
-                      className={cn(
-                        "flex size-8 shrink-0 items-center justify-center rounded-md border shadow-sm transition-colors",
-                        isAdmin
-                          ? "border-destructive/30 bg-background text-destructive"
-                          : "border-border bg-background text-muted-foreground group-hover:text-primary"
-                      )}
+  const desktopRow = "h-9 gap-2.5 rounded-md px-2.5 text-body focus:bg-muted";
+
+  if (isDesktop) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          sideOffset={8}
+          className="w-72 rounded-xl border-border p-1.5 shadow-lg"
+        >
+          <DropdownMenuLabel className="px-2.5 py-2 font-normal">
+            {identity}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+
+          {primary ? (
+            <DropdownMenuItem asChild className={desktopRow}>
+              <Link href={primary.href}>
+                <primary.Icon
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 flex-1 truncate">
+                  {current ? `${primary.label} dashboard` : "Go to dashboard"}
+                </span>
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            <p className="px-2.5 py-2 text-caption text-muted-foreground">
+              No dashboards yet. Ask an admin for access.
+            </p>
+          )}
+          {dashboards.length > 1 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger
+                className={cn(desktopRow, "cursor-pointer text-foreground")}
+              >
+                <ArrowLeftRight
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="flex-1">Switch dashboard</span>
+                <span className="text-caption tabular-nums text-muted-foreground">
+                  {dashboards.length}
+                </span>
+              </DropdownMenuSubTrigger>
+              {/* Portaled: the parent panel clips (overflow + transform) any submenu rendered inside it. */}
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent
+                  sideOffset={6}
+                  className="max-h-80 w-56 overflow-y-auto rounded-xl border-border bg-popover p-1.5 shadow-lg backdrop-blur-none"
+                >
+                  {dashboards.map((d) => (
+                    <DropdownMenuItem
+                      key={d.href}
+                      asChild
+                      className={desktopRow}
                     >
-                      <link.Icon className="size-4" />
-                    </div>
-
-                    {/* Title */}
-                    <div className="flex-1 truncate">
-                      <span
-                        className={cn(
-                          "block text-xs font-medium text-foreground transition-colors",
-                          isAdmin
-                            ? "group-hover:text-destructive"
-                            : "group-hover:text-primary"
-                        )}
+                      <Link
+                        href={d.href}
+                        aria-current={d === current ? "page" : undefined}
                       >
-                        {link.title}
-                      </span>
-                      <span className="block truncate text-caption text-muted-foreground">
-                        {isAdmin ? "System Configuration" : "Manage dashboard"}
-                      </span>
-                    </div>
+                        <d.Icon
+                          className="size-4 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0 flex-1 truncate">
+                          {d.label}
+                        </span>
+                        {d === current && (
+                          <Check
+                            className="size-4 text-primary"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+          )}
 
-                    {/* Action Icon */}
-                    <ArrowUpRight
-                      className={cn(
-                        "size-3 transition-all duration-300 opacity-0 -translate-x-1 translate-y-1",
-                        "group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0",
-                        isAdmin ? "text-destructive" : "text-primary"
-                      )}
-                    />
-                  </Link>
-                );
-              })
-            ) : (
-              // Improved Empty State
-              <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-muted px-3 py-4">
-                <div className="flex size-8 items-center justify-center rounded-full bg-background text-muted-foreground">
-                  <ShieldAlert className="size-4" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    No Access
-                  </span>
-                  <span className="text-caption text-muted-foreground">
-                    Contact admin for roles.
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <Separator className="mx-2 my-1 w-auto opacity-50" />
-
-        {/* Resources */}
-        <div className="px-2 pt-1">
-          <div className="px-2 py-1.5 text-caption font-semibold text-muted-foreground">
-            Shortcuts
-          </div>
-          <div className="grid grid-cols-2 gap-0.5">
-            {SUPPORT_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex h-9 items-center justify-between rounded-md px-2 text-body text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <div className="flex items-center gap-2 whitespace-nowrap">
-                  <LifeBuoy className="size-3.5 opacity-70" />
-                  {link.title}
-                </div>
+          <DropdownMenuSeparator />
+          {account.map((row) => (
+            <DropdownMenuItem key={row.href} asChild className={desktopRow}>
+              <Link href={row.href}>
+                <row.Icon
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                {row.label}
               </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* --- FIXED FOOTER --- */}
-      <div className="shrink-0 border-t border-border bg-muted p-3">
-        <div className="flex items-center justify-between gap-2">
-          {/* Home Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-            asChild
-          >
-            <Link href="/">
-              <Home className="mr-1.5 size-3.5" /> Home
-            </Link>
-          </Button>
-
-          <div className="h-4 w-px bg-border" />
-
-          {/* Social Icons (Compact) */}
-          <div className="flex items-center gap-1">
-            {socials.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger
+              className={cn(desktopRow, "cursor-pointer text-foreground")}
+            >
+              <LifeBuoy
+                className="size-4 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <span className="flex-1">Help &amp; feedback</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent
+                sideOffset={6}
+                className="w-60 rounded-xl border-border bg-popover p-1.5 shadow-lg backdrop-blur-none"
               >
-                <link.icon className="size-3.5" />
-              </Link>
-            ))}
-          </div>
+                {help.map((row) => (
+                  <DropdownMenuItem
+                    key={row.href}
+                    asChild
+                    className={desktopRow}
+                  >
+                    <a
+                      href={row.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {row.label}
+                      </span>
+                      <row.Icon
+                        className="size-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">(opens in a new tab)</span>
+                    </a>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
 
-          <div className="h-4 w-px bg-border" />
-
-          {/* Sign Out */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 px-3 text-body text-destructive hover:bg-destructive/10"
-            onClick={async () => {
-              await authClient.signOut({
-                fetchOptions: {
-                  onSuccess: () => router.push("/auth/sign-in"),
-                },
-              });
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={signingOut}
+            onSelect={(event) => {
+              event.preventDefault();
+              signOut();
             }}
+            className={cn(
+              desktopRow,
+              "text-destructive focus:bg-destructive/10 focus:text-destructive"
+            )}
           >
-            Sign Out
-            <LogOut className="ml-1.5 size-3.5" />
-          </Button>
-        </div>
-      </div>
-    </ResponsiveDialog>
+            {signOutLabel}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  const close = () => setDrawerOpen(false);
+  const mobileRow =
+    "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-body text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
+
+  return (
+    <>
+      {trigger}
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent className="max-h-[85svh]">
+          <DrawerTitle className="sr-only">Account</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Dashboards, profile, help and sign out
+          </DrawerDescription>
+          <div className="border-b border-border px-5 py-4">{identity}</div>
+          <nav
+            aria-label="Account"
+            className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-3"
+          >
+            {primary && (
+              <Link href={primary.href} onClick={close} className={mobileRow}>
+                <primary.Icon
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                {current ? `${primary.label} dashboard` : "Go to dashboard"}
+              </Link>
+            )}
+            {dashboards.length > 1 && (
+              <DrawerSection
+                title="Switch dashboard"
+                Icon={ArrowLeftRight}
+                count={dashboards.length}
+              >
+                {dashboards.map((d) => (
+                  <Link
+                    key={d.href}
+                    href={d.href}
+                    onClick={close}
+                    aria-current={d === current ? "page" : undefined}
+                    className={cn(mobileRow, "pl-10")}
+                  >
+                    <span className="flex-1 truncate">{d.label}</span>
+                    {d === current && (
+                      <Check
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Link>
+                ))}
+              </DrawerSection>
+            )}
+            <div className="my-1 h-px bg-border" />
+            {account.map((row) => (
+              <Link
+                key={row.href}
+                href={row.href}
+                onClick={close}
+                className={mobileRow}
+              >
+                <row.Icon
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                {row.label}
+              </Link>
+            ))}
+            <DrawerSection title="Help & feedback" Icon={LifeBuoy}>
+              {help.map((row) => (
+                <a
+                  key={row.href}
+                  href={row.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={close}
+                  className={cn(mobileRow, "pl-10")}
+                >
+                  <span className="flex-1 truncate">{row.label}</span>
+                  <row.Icon
+                    className="size-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              ))}
+            </DrawerSection>
+          </nav>
+          <div className="border-t border-border px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={signOut}
+              disabled={signingOut}
+              className={cn(
+                mobileRow,
+                "font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+              )}
+            >
+              {signOutLabel}
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
+function DrawerSection({
+  title,
+  Icon,
+  count,
+  children,
+}: {
+  title: string;
+  Icon: LucideIcon;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="group">
+      <summary className="flex h-11 cursor-pointer list-none items-center gap-3 rounded-lg px-3 text-body text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+        <span className="flex-1">{title}</span>
+        {count !== undefined && (
+          <span className="text-caption tabular-nums text-muted-foreground">
+            {count}
+          </span>
+        )}
+        <ChevronDown
+          className="size-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="flex flex-col gap-0.5 pt-0.5">{children}</div>
+    </details>
   );
 }

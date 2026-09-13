@@ -1,8 +1,13 @@
 "use client";
 
-import { BadgeCheck, ChevronsUpDown, Home, LogOut } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Globe,
+  LayoutGrid,
+  UserRound,
+} from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,27 +24,28 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { Session } from "~/auth/client";
-import { authClient } from "~/auth/client";
+import { ALLOWED_ROLES } from "~/constants";
+import { changeCase } from "~/utils/string";
 
-export function NavUser({ user }: { user: Session["user"] }) {
-  const { isMobile } = useSidebar();
-  const router = useRouter();
+/** Workspace switcher: the current role, the user's other dashboards, and a way back to the site. */
+export function NavUser({
+  user,
+  moderator,
+}: {
+  user: Session["user"];
+  moderator?: string;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  const pathname = usePathname();
+  const current = moderator || pathname.split("/")[1] || user.role;
 
-  // Standardize Avatar Logic
-  const avatarSrc = user.image
-    ? (user.image as string)
-    : user.gender !== "non_specified"
-      ? `/assets/avatars/${user.gender}_user.png`
-      : "";
-
-  const userInitials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const workspaces = [user.role, ...(user.other_roles ?? [])].filter(
+    (role, index, all) =>
+      (ALLOWED_ROLES as readonly string[]).includes(role) &&
+      all.indexOf(role) === index
+  );
 
   return (
     <SidebarMenu>
@@ -48,78 +54,88 @@ export function NavUser({ user }: { user: Session["user"] }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground transition-all duration-200"
+              tooltip={`${changeCase(current, "title")} workspace`}
+              className="data-[state=open]:bg-sidebar-accent"
             >
-              <Avatar className="h-8 w-8 rounded-lg border border-border/50">
-                <AvatarImage src={avatarSrc} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-medium text-xs">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  @{user.username}
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-border bg-background text-primary">
+                <LayoutGrid className="size-4" aria-hidden="true" />
+              </span>
+              <span className="grid min-w-0 flex-1 text-left">
+                <span className="truncate text-body font-medium text-foreground">
+                  {changeCase(current, "title")}
                 </span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4 text-muted-foreground/50" />
+                <span className="truncate text-caption text-muted-foreground">
+                  {user.name}
+                </span>
+              </span>
+              <ChevronsUpDown
+                className="ml-auto size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl border-border/50 shadow-xl"
-            side={isMobile ? "bottom" : "right"}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-xl"
+            side={isMobile ? "top" : "right"}
             align="end"
-            sideOffset={4}
+            sideOffset={8}
           >
-            {/* Header Info */}
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg border border-border/50">
-                  <AvatarImage src={avatarSrc} alt={user.name} />
-                  <AvatarFallback className="rounded-lg text-xs">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </span>
-                </div>
-              </div>
+            <DropdownMenuLabel className="text-caption font-medium text-muted-foreground">
+              Workspaces
             </DropdownMenuLabel>
-
-            <DropdownMenuSeparator />
-
             <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 cursor-pointer" asChild>
-                <Link href="/">
-                  <Home className="size-4 text-muted-foreground" />
-                  Home
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" asChild>
-                <Link href={`/u/${user.username}`}>
-                  <BadgeCheck className="size-4 text-muted-foreground" />
-                  Profile
-                </Link>
-              </DropdownMenuItem>
+              {workspaces.map((role) => (
+                <DropdownMenuItem key={role} asChild>
+                  <Link
+                    href={`/${role}`}
+                    aria-current={role === current ? "page" : undefined}
+                    onClick={() => setOpenMobile(false)}
+                    className="h-9 gap-2"
+                  >
+                    <LayoutGrid
+                      className="size-4 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1 truncate">
+                      {changeCase(role, "title")}
+                    </span>
+                    {role === current && (
+                      <>
+                        <Check
+                          className="size-4 text-primary"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">(current)</span>
+                      </>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />
 
-            {/* Logout */}
-            <DropdownMenuItem
-              className="gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/50"
-              onClick={async () => {
-                await authClient.signOut();
-                router.push("/auth/sign-in");
-              }}
-            >
-              <LogOut className="size-4" />
-              Log out
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link href={`/u/${user.username}`} className="h-9 gap-2">
+                  <UserRound
+                    className="size-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  Public profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/" className="h-9 gap-2">
+                  <Globe
+                    className="size-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  Back to site
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

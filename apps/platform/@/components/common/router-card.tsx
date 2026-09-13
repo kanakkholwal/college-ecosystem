@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ArrowRight, ArrowUpRight, Lock } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +13,7 @@ type RouterCardLink = {
 
 interface RouterCardProps extends RouterCardLink {
   style?: React.CSSProperties;
-  className?: string; // Added for external layout control
+  className?: string;
 }
 
 function RouterCard({
@@ -27,80 +26,69 @@ function RouterCard({
   disabled,
   className,
 }: RouterCardProps) {
+  const TrailingIcon = disabled ? Lock : external ? ArrowUpRight : ArrowRight;
+  const body = (
+    <>
+      <div className="flex w-full items-start justify-between gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors duration-150 group-hover:text-primary">
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        <TrailingIcon
+          className={cn(
+            "size-4 text-muted-foreground",
+            !disabled &&
+              "transition-transform duration-150 group-hover:translate-x-0.5"
+          )}
+          aria-hidden="true"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <h3 className="flex flex-wrap items-center gap-2 text-body-lg font-medium text-foreground">
+          {title}
+          {disabled && (
+            <span className="rounded-full border border-border px-2 text-caption font-medium text-muted-foreground">
+              Coming soon
+            </span>
+          )}
+        </h3>
+        <p className="text-pretty text-body text-muted-foreground">
+          {description}
+        </p>
+        {external && !disabled && (
+          <span className="sr-only">(opens in a new tab)</span>
+        )}
+      </div>
+    </>
+  );
+
+  const base =
+    "group flex h-full flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background";
+
+  if (disabled) {
+    return (
+      <div
+        aria-disabled="true"
+        style={style}
+        className={cn(base, "cursor-not-allowed bg-muted dark:bg-muted", className)}
+      >
+        {body}
+      </div>
+    );
+  }
+
   return (
     <Link
-      href={disabled ? "#" : href}
-      target={external && !disabled ? "_blank" : "_self"}
-      rel={external && !disabled ? "noopener noreferrer" : undefined}
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
       style={style}
       className={cn(
-        // Base Layout
-        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/50 bg-card p-6 transition-all duration-300",
-        // Hover State (Stripe-like lift and glow)
-        !disabled &&
-          "hover:-translate-y-1 hover:shadow-lg hover:border-primary/20 hover:shadow-primary/5",
-        // Disabled State
-        disabled && "opacity-60 cursor-not-allowed bg-muted/20 grayscale",
+        base,
+        "outline-none transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring",
         className
       )}
     >
-      {/* Header: Icon + Action Arrow */}
-      <div className="flex w-full items-start justify-between">
-        <div
-          className={cn(
-            "flex size-10 items-center justify-center rounded-lg border border-border/50 bg-muted/50 transition-colors",
-            !disabled &&
-              "group-hover:bg-primary/10 group-hover:border-primary/20"
-          )}
-        >
-          <Icon
-            className={cn(
-              "size-5 text-muted-foreground transition-colors",
-              !disabled && "group-hover:text-primary"
-            )}
-          />
-        </div>
-
-        {/* Action Icon (Dynamic) */}
-        <div className="text-muted-foreground/50 transition-transform duration-300 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-          {disabled ? (
-            <Lock className="size-5" />
-          ) : external ? (
-            <ArrowUpRight className="size-5" />
-          ) : (
-            <ArrowRight className="size-5" />
-          )}
-        </div>
-      </div>
-
-      {/* Content Body */}
-      <div className="mt-4 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold tracking-tight text-foreground">
-            {title}
-          </h3>
-          {disabled && (
-            <Badge
-              variant="secondary"
-              className="h-5 px-1.5 text-[10px] font-medium tracking-wide uppercase"
-            >
-              Soon
-            </Badge>
-          )}
-        </div>
-
-        <p className="text-sm text-muted-foreground leading-relaxed text-balance">
-          {description}
-        </p>
-      </div>
-
-      {/* Decorative Bottom Light (Only visible on hover) */}
-      {!disabled && (
-        <>
-          <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-          <span className="absolute inset-x-0 bottom-0 h-[2px] blur-sm bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        </>
-      )}
+      {body}
     </Link>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
-import ErrorBanner from "@/components/utils/error";
+
+import { ErrorState } from "@/components/site/error-state";
 import { useEffect } from "react";
 
 export default function ErrorBoundary({
@@ -10,12 +11,12 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service ? posthog, sentry, etc.
     console.error(error);
   }, [error]);
+
   return (
-    <div className="flex items-center justify-center w-full h-full">
-      <ErrorBanner />
+    <div className="py-6 md:py-10">
+      <ErrorState variant="error" error={error} reset={reset} />
     </div>
   );
 }

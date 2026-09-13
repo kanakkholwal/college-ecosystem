@@ -1,130 +1,178 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import toast from "react-hot-toast";
-import { authClient, type Session } from "~/auth/client";
-
-// UI Components
 import ProfileDropdown from "@/components/common/profile-dropdown";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { getNavLinks } from "@/constants/links";
-import { titlesMap } from "@/constants/titles";
-
-// Icons
+import { getNavLinks, getSideNavLinks } from "@/constants/links";
 import { cn } from "@/lib/utils";
-import { ShieldAlert, Slash, X } from "lucide-react";
+import { ChevronRight, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Fragment, useMemo, useTransition } from "react";
+import toast from "react-hot-toast";
+import { authClient, type Session } from "~/auth/client";
+import { changeCase } from "~/utils/string";
 import { QuickLinks } from "./navbar";
 import { ThemeSwitcher } from "./theme-switcher";
 
+const SEGMENT_LABELS: Record<string, string> = {
+  h: "Hostel",
+};
+
+function segmentLabel(segment: string) {
+  let decoded = segment;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {}
+  if (SEGMENT_LABELS[decoded]) return SEGMENT_LABELS[decoded];
+  // Ids and roll numbers read better verbatim than title-cased.
+  return /\d/.test(decoded) ? decoded : changeCase(decoded, "title");
+}
+
+/** Workspace context bar: sidebar toggle, breadcrumb, search, theme and the user menu. */
 export default function Navbar({
   user,
   className,
   impersonatedBy,
+  moderator,
 }: {
   user: Session["user"];
   className?: string;
   impersonatedBy?: string | null;
+  moderator?: string;
 }) {
   const pathname = usePathname();
-  const navLinks = getNavLinks(user);
+  const navLinks = useMemo(() => getNavLinks(user), [user]);
+  const role = moderator || pathname.split("/")[1] || user.role;
 
-  // Derive Page Data
-  const currentTitle = titlesMap.get(pathname);
-  const title = currentTitle?.title ?? "Dashboard";
-  const description = currentTitle?.description ?? pathname.split("/").pop();
-
-  const handleStopImpersonation = async () => {
-    toast.promise(
-      authClient.admin.stopImpersonating(),
-      {
-        loading: "Stopping impersonation...",
-        success: "Impersonation stopped successfully",
-        error: "Failed to stop impersonation",
-      },
-      { position: "top-right", duration: 3000 }
-    );
-  };
+  const crumbs = useMemo(() => {
+    const segments = pathname.split("/").filter(Boolean);
+    const titles = new Map<string, string>();
+    for (const link of getSideNavLinks(role)) {
+      titles.set(link.href, link.title);
+      for (const item of link.items ?? []) titles.set(item.href, item.title);
+    }
+    const trail = segments.map((segment, index) => {
+      const href = `/${segments.slice(0, index + 1).join("/")}`;
+      return {
+        key: href,
+        href,
+        label:
+          index === 0
+            ? changeCase(segment, "title")
+            : (titles.get(href) ?? segmentLabel(segment)),
+      };
+    });
+    if (trail.length === 1)
+      trail.push({ key: "dashboard", href: pathname, label: "Dashboard" });
+    return trail;
+  }, [pathname, role]);
 
   return (
-    <nav
-      className={cn(
-        "sticky top-0 z-10 w-full flex items-center gap-2 px-4 py-3 bg-background/80 backdrop-blur-md transition-all support-[backdrop-filter]:bg-background/60",
-        className
-      )}
-    >
-      <div className="flex items-center gap-2 md:gap-3">
-        <SidebarTrigger className="h-8 w-8 text-muted-foreground hover:text-foreground" />
-
-        <Separator
-          orientation="vertical"
-          className="h-4 bg-border/60 hidden md:block"
-        />
-
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold tracking-tight text-foreground">
-              {title}
-            </h3>
-            <Slash className="h-3 w-3 text-muted-foreground/40 hidden lg:block -rotate-12" />
-            <p className="text-xs text-muted-foreground hidden lg:block truncate max-w-[300px]">
-              {description}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="ml-auto flex items-center gap-2 md:gap-4">
-        {impersonatedBy && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 animate-in fade-in slide-in-from-top-1">
-            <ShieldAlert className="h-3.5 w-3.5" />
-            <span className="truncate max-w-[150px]">
-              Viewing as <span className="font-bold">{user.name}</span>
-            </span>
-            <Separator
-              orientation="vertical"
-              className="h-3 bg-amber-500/20 mx-1"
-            />
-            <button
-              onClick={handleStopImpersonation}
-              className="hover:bg-amber-500/20 rounded-full p-0.5 transition-colors"
-              title="Stop Impersonation"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
+    <>
+      {impersonatedBy && <ImpersonationBanner user={user} />}
+      <header
+        className={cn(
+          "flex min-h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-3 md:px-4",
+          className
         )}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <SidebarTrigger />
+          <span aria-hidden="true" className="h-5 w-px shrink-0 bg-border" />
+          <nav aria-label="Breadcrumb" className="min-w-0">
+            <ol className="flex min-w-0 items-center gap-1 text-body">
+              {crumbs.map((crumb, index) => {
+                const last = index === crumbs.length - 1;
+                const edge = index === 0 || last;
+                return (
+                  <Fragment key={crumb.key}>
+                    {index > 0 && (
+                      <li
+                        aria-hidden="true"
+                        className={cn(
+                          "shrink-0 text-muted-foreground",
+                          !last && "hidden md:block"
+                        )}
+                      >
+                        <ChevronRight className="size-3.5" />
+                      </li>
+                    )}
+                    <li
+                      className={cn(
+                        "min-w-0",
+                        edge ? "flex" : "hidden md:flex",
+                        last ? "shrink" : "shrink-0"
+                      )}
+                    >
+                      {last ? (
+                        <span
+                          aria-current="page"
+                          title={crumb.label}
+                          className="max-w-60 truncate font-medium text-foreground"
+                        >
+                          {crumb.label}
+                        </span>
+                      ) : (
+                        <Link
+                          href={crumb.href}
+                          title={crumb.label}
+                          className="max-w-40 truncate rounded-md px-1 text-muted-foreground outline-none transition-colors duration-150 hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                        >
+                          {crumb.label}
+                        </Link>
+                      )}
+                    </li>
+                  </Fragment>
+                );
+              })}
+            </ol>
+          </nav>
+        </div>
 
-        {/* Action Icons */}
-        <div className="flex items-center gap-1">
-          <QuickLinks user={user} publicLinks={navLinks} />
+        <QuickLinks user={user} publicLinks={navLinks} />
+
+        <div className="flex items-center justify-end gap-1.5 md:flex-1">
           <ThemeSwitcher />
+          <ProfileDropdown user={user} />
         </div>
+      </header>
+    </>
+  );
+}
 
-        <Separator
-          orientation="vertical"
-          className="h-6 bg-border/60 hidden sm:block"
-        />
+function ImpersonationBanner({ user }: { user: Session["user"] }) {
+  const [pending, startTransition] = useTransition();
 
-        {/* Profile */}
-        <ProfileDropdown user={user} />
-      </div>
+  const stop = () =>
+    startTransition(async () => {
+      const { error } = await authClient.admin.stopImpersonating();
+      if (error) {
+        toast.error(error.message || "Could not stop impersonating");
+        return;
+      }
+      // A full load drops the impersonated session from every cached segment.
+      window.location.assign("/dashboard");
+    });
 
-      {/* Mobile Impersonation Alert (Sticky overlay if needed, or simple block) */}
-      {impersonatedBy && (
-        <div className="sm:hidden fixed bottom-4 right-4 z-50">
-          <Button
-            onClick={handleStopImpersonation}
-            variant="destructive"
-            size="sm"
-            className="shadow-lg rounded-full text-xs font-medium"
-          >
-            <ShieldAlert className="mr-2 h-3 w-3" /> Stop Viewing as{" "}
-            {user.name.split(" ")[0]}
-          </Button>
-        </div>
-      )}
-    </nav>
+  return (
+    <div
+      role="status"
+      className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-warning/10 px-3 py-2 md:px-4"
+    >
+      <ShieldAlert
+        className="size-4 shrink-0 text-warning"
+        aria-hidden="true"
+      />
+      <p className="min-w-0 flex-1 text-body text-foreground">
+        <span className="font-medium">Impersonating {user.name}</span>{" "}
+        <span className="text-muted-foreground">
+          (@{user.username}). Every action runs as this account.
+        </span>
+      </p>
+      <Button size="sm" variant="outline" onClick={stop} disabled={pending}>
+        {pending ? "Stopping..." : "Stop impersonating"}
+      </Button>
+    </div>
   );
 }

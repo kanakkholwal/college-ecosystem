@@ -1,11 +1,13 @@
 "use server";
 import type { InferSelectModel } from "drizzle-orm";
-import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
+import { cache } from "react";
 import { auth } from "~/auth";
 import { db } from "~/db/connect";
-import { accounts, sessions, users } from "~/db/schema/auth-schema";
+import { sessions, users } from "~/db/schema/auth-schema";
 import dbConnect from "~/lib/dbConnect";
+import { flushAllRedisKeys } from "~/lib/redis";
 import CommunityPostModel from "~/models/community";
 import { EventModel } from "~/models/events";
 import PollModel from "~/models/poll";
@@ -13,15 +15,37 @@ import ResultModel from "~/models/result";
 import {
   calculateGrowthPercentage,
   calculateTrend,
-  DateRange,
+  type DateRange,
+  type GraphDataPoint,
   generateGraphData,
   getDateRanges,
   getPeriodLabel,
-  GraphDataPoint,
-  PeriodSummary,
-  TimeInterval,
+  type PeriodSummary,
+  type TimeInterval,
 } from "~/utils/process";
 import { updateHostelStudent } from "./hostel.core";
+
+// Mirrors app/[moderator]/(admin)/layout.tsx, which lets both roles in.
+const ADMIN_ROLES = ["admin", "moderator"];
+const SELF_EDITABLE_FIELDS = ["gender", "other_emails"] as const;
+
+const getCurrentSession = cache(async () =>
+  auth.api.getSession({ headers: await headers() })
+);
+
+async function isServerIdentity() {
+  const expected = process.env.SERVER_IDENTITY;
+  if (!expected) return false;
+  return (await headers()).get("x-authorization") === expected;
+}
+
+async function assertAdmin(options: { allowServerIdentity?: boolean } = {}) {
+  if (options.allowServerIdentity && (await isServerIdentity())) return;
+  const session = await getCurrentSession();
+  if (!session || !ADMIN_ROLES.includes(session.user.role)) {
+    throw new Error("Unauthorized");
+  }
+}
 
 export interface UserCountAndGrowthResult {
   currentPeriodCount: number;
@@ -39,102 +63,126 @@ export interface UserCountAndGrowthResult {
   };
 }
 
-/**
- * Calculate user count and growth metrics for a given time interval
- * @param timeInterval - The time period to analyze
- * @returns User count, growth metrics, trend information, and graph-ready data
- * @throws {Error} If an invalid time interval is provided or database query fails
- */
-export async function users_CountAndGrowth(
-  timeInterval: TimeInterval
-): Promise<UserCountAndGrowthResult> {
-  try {
-    const now = new Date();
+function truncateBy(timeInterval: TimeInterval) {
+  switch (timeInterval) {
+    case "last_hour":
+      return sql.raw("'minute'");
+    case "last_24_hours":
+      return sql.raw("'hour'");
+    case "last_year":
+      return sql.raw("'month'");
+    default:
+      return sql.raw("'day'");
+  }
+}
 
-    // Get current and previous period date ranges
-    const { current, previous } = getDateRanges(timeInterval, now);
+type CreatedAtColumn = typeof users.createdAt | typeof sessions.createdAt;
+type CountedTable = typeof users | typeof sessions;
 
-    // Execute all queries in parallel for better performance
-    const [
-      totalUsersResult,
-      currentPeriodResult,
-      previousPeriodResult,
-      timeSeriesData,
-    ] = await Promise.all([
-      // Total user count (all time)
+/** One grouped query over both periods, split in memory (was two round trips). */
+async function fetchTimeSeries(
+  table: CountedTable,
+  column: CreatedAtColumn,
+  timeInterval: TimeInterval,
+  current: DateRange,
+  previous: DateRange
+) {
+  const bucket = sql`DATE_TRUNC(${truncateBy(timeInterval)}, ${column})`;
+  const rows = await db
+    .select({
+      timestamp: sql<Date>`${bucket}`.as("timestamp"),
+      count: sql<number>`COUNT(*)::int`.as("count"),
+    })
+    .from(table)
+    .where(
+      sql`${column} >= ${previous.start} AND ${column} <= ${current.end}`
+    )
+    .groupBy(bucket)
+    .orderBy(bucket);
+
+  const currentData: { timestamp: Date; count: number }[] = [];
+  const previousData: { timestamp: Date; count: number }[] = [];
+  for (const row of rows) {
+    const point = { timestamp: new Date(row.timestamp), count: row.count };
+    (point.timestamp >= current.start ? currentData : previousData).push(point);
+  }
+  return { currentData, previousData };
+}
+
+function periodSummary(
+  timeInterval: TimeInterval,
+  current: DateRange,
+  previous: DateRange,
+  currentCount: number,
+  previousCount: number
+) {
+  return {
+    currentPeriod: {
+      start: current.start,
+      end: current.end,
+      count: currentCount,
+      label: getPeriodLabel(timeInterval, "current"),
+    },
+    previousPeriod: {
+      start: previous.start,
+      end: previous.end,
+      count: previousCount,
+      label: getPeriodLabel(timeInterval, "previous"),
+    },
+  };
+}
+
+const computeUserGrowth = cache(
+  async (timeInterval: TimeInterval): Promise<UserCountAndGrowthResult> => {
+    const { current, previous } = getDateRanges(timeInterval, new Date());
+    const col = users.createdAt;
+    const [counts, timeSeries] = await Promise.all([
       db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(users)
-        .execute(),
-
-      // Current period count
-      db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(users)
-        .where(
-          and(
-            gte(users.createdAt, current.start),
-            lte(users.createdAt, current.end)
-          )
-        )
-        .execute(),
-
-      // Previous period count
-      db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(users)
-        .where(
-          and(
-            gte(users.createdAt, previous.start),
-            lte(users.createdAt, previous.end)
-          )
-        )
-        .execute(),
-
-      // Time series data for graph
-      fetchTimeSeriesData(timeInterval, current, previous),
+        .select({
+          total: sql<number>`COUNT(*)::int`,
+          current: sql<number>`(COUNT(*) FILTER (WHERE ${col} >= ${current.start} AND ${col} <= ${current.end}))::int`,
+          previous: sql<number>`(COUNT(*) FILTER (WHERE ${col} >= ${previous.start} AND ${col} < ${current.start}))::int`,
+        })
+        .from(users),
+      fetchTimeSeries(users, col, timeInterval, current, previous),
     ]);
 
-    const totalUsers = totalUsersResult[0]?.count ?? 0;
-    const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
-    const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
-
-    // Calculate growth metrics
+    const totalUsers = counts[0]?.total ?? 0;
+    const currentPeriodCount = counts[0]?.current ?? 0;
+    const previousPeriodCount = counts[0]?.previous ?? 0;
     const growth = currentPeriodCount - previousPeriodCount;
-    const growthPercent = calculateGrowthPercentage(
-      currentPeriodCount,
-      previousPeriodCount
-    );
-    const trend = calculateTrend(growth);
-
-    // Generate graph data
-    const graphData = generateGraphData(timeSeriesData, timeInterval);
 
     return {
       currentPeriodCount,
       totalUsers,
       growth,
-      growthPercent,
-      trend,
+      growthPercent: calculateGrowthPercentage(
+        currentPeriodCount,
+        previousPeriodCount
+      ),
+      trend: calculateTrend(growth),
       periodStart: current.start,
       periodEnd: current.end,
       previousPeriodCount,
-      graphData,
-      summary: {
-        currentPeriod: {
-          start: current.start,
-          end: current.end,
-          count: currentPeriodCount,
-          label: getPeriodLabel(timeInterval, "current"),
-        },
-        previousPeriod: {
-          start: previous.start,
-          end: previous.end,
-          count: previousPeriodCount,
-          label: getPeriodLabel(timeInterval, "previous"),
-        },
-      },
+      graphData: generateGraphData(timeSeries, timeInterval),
+      summary: periodSummary(
+        timeInterval,
+        current,
+        previous,
+        currentPeriodCount,
+        previousPeriodCount
+      ),
     };
+  }
+);
+
+/** User count and growth for a period. Admins, or the server identity header (/api/stats). */
+export async function users_CountAndGrowth(
+  timeInterval: TimeInterval
+): Promise<UserCountAndGrowthResult> {
+  await assertAdmin({ allowServerIdentity: true });
+  try {
+    return await computeUserGrowth(timeInterval);
   } catch (error) {
     throw new Error(
       `Failed to calculate user count and growth: ${
@@ -144,84 +192,12 @@ export async function users_CountAndGrowth(
   }
 }
 
-/**
- * Fetch time series data for graphing
- */
-async function fetchTimeSeriesData(
-  timeInterval: TimeInterval,
-  current: DateRange,
-  previous: DateRange
-) {
-  const truncateExpression = getTruncateExpression(timeInterval);
-
-  // Fetch data for both current and previous periods
-  const [currentData, previousData] = await Promise.all([
-    db
-      .select({
-        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
-        count: sql<number>`COUNT(*)`.as("count"),
-      })
-      .from(users)
-      .where(
-        and(
-          gte(users.createdAt, current.start),
-          lte(users.createdAt, current.end)
-        )
-      )
-      .groupBy(sql`${truncateExpression}`)
-      .orderBy(sql`${truncateExpression}`)
-      .execute(),
-
-    db
-      .select({
-        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
-        count: sql<number>`COUNT(*)`.as("count"),
-      })
-      .from(users)
-      .where(
-        and(
-          gte(users.createdAt, previous.start),
-          lte(users.createdAt, previous.end)
-        )
-      )
-      .groupBy(sql`${truncateExpression}`)
-      .orderBy(sql`${truncateExpression}`)
-      .execute(),
-  ]);
-
-  /**
-   * Get the appropriate SQL date truncation expression based on interval
-   * This works for PostgreSQL - adjust for other databases
-   */
-  function getTruncateExpression(timeInterval: TimeInterval) {
-    switch (timeInterval) {
-      case "last_hour":
-        // Truncate to minute
-        return sql`DATE_TRUNC('minute', ${users.createdAt})`;
-      case "last_24_hours":
-        // Truncate to hour
-        return sql`DATE_TRUNC('hour', ${users.createdAt})`;
-      case "last_week":
-        // Truncate to day
-        return sql`DATE_TRUNC('day', ${users.createdAt})`;
-      case "last_month":
-        // Truncate to day
-        return sql`DATE_TRUNC('day', ${users.createdAt})`;
-      case "last_year":
-        // Truncate to month
-        return sql`DATE_TRUNC('month', ${users.createdAt})`;
-      default:
-        return sql`DATE_TRUNC('day', ${users.createdAt})`;
-    }
-  }
-
-  return { currentData, previousData };
-}
-
 export interface SessionCountAndGrowthResult {
   currentPeriodCount: number;
   totalSessions: number;
   activeSessions: number;
+  /** Distinct users holding an unexpired session. */
+  activeUsers: number;
   growth: number;
   growthPercent: number;
   trend: -1 | 1 | 0;
@@ -237,130 +213,70 @@ export interface SessionCountAndGrowthResult {
   avgSessionsPerUser: number;
 }
 
-/**
- * Calculate session count and growth metrics for a given time interval
- * @param timeInterval - The time period to analyze
- * @returns Session count, growth metrics, trend information, and graph-ready data
- * @throws {Error} If an invalid time interval is provided or database query fails
- */
-export async function sessions_CountAndGrowth(
-  timeInterval: TimeInterval
-): Promise<SessionCountAndGrowthResult> {
-  try {
+const computeSessionGrowth = cache(
+  async (timeInterval: TimeInterval): Promise<SessionCountAndGrowthResult> => {
     const now = new Date();
-
-    // Get current and previous period date ranges
     const { current, previous } = getDateRanges(timeInterval, now);
-
-    // Execute all queries in parallel for better performance
-    const [
-      totalSessionsResult,
-      activeSessionsResult,
-      currentPeriodResult,
-      previousPeriodResult,
-      uniqueUsersCurrentResult,
-      timeSeriesData,
-    ] = await Promise.all([
-      // Total session count (all time)
+    const col = sessions.createdAt;
+    const inCurrent = sql`${col} >= ${current.start} AND ${col} <= ${current.end}`;
+    const [counts, timeSeries] = await Promise.all([
       db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(sessions)
-        .execute(),
-
-      // Active sessions (not expired)
-      db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(sessions)
-        .where(gte(sessions.expiresAt, now))
-        .execute(),
-
-      // Current period count
-      db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(sessions)
-        .where(
-          and(
-            gte(sessions.createdAt, current.start),
-            lte(sessions.createdAt, current.end)
-          )
-        )
-        .execute(),
-
-      // Previous period count
-      db
-        .select({ count: sql<number>`COUNT(*)` })
-        .from(sessions)
-        .where(
-          and(
-            gte(sessions.createdAt, previous.start),
-            lte(sessions.createdAt, previous.end)
-          )
-        )
-        .execute(),
-
-      // Unique users in current period
-      db
-        .select({ count: sql<number>`COUNT(DISTINCT ${sessions.userId})` })
-        .from(sessions)
-        .where(
-          and(
-            gte(sessions.createdAt, current.start),
-            lte(sessions.createdAt, current.end)
-          )
-        )
-        .execute(),
-
-      // Time series data for graph
-      fetchSessionTimeSeriesData(timeInterval, current, previous),
+        .select({
+          total: sql<number>`COUNT(*)::int`,
+          active: sql<number>`(COUNT(*) FILTER (WHERE ${sessions.expiresAt} >= ${now}))::int`,
+          activeUsers: sql<number>`(COUNT(DISTINCT ${sessions.userId}) FILTER (WHERE ${sessions.expiresAt} >= ${now}))::int`,
+          current: sql<number>`(COUNT(*) FILTER (WHERE ${inCurrent}))::int`,
+          previous: sql<number>`(COUNT(*) FILTER (WHERE ${col} >= ${previous.start} AND ${col} < ${current.start}))::int`,
+          uniqueUsers: sql<number>`(COUNT(DISTINCT ${sessions.userId}) FILTER (WHERE ${inCurrent}))::int`,
+        })
+        .from(sessions),
+      fetchTimeSeries(sessions, col, timeInterval, current, previous),
     ]);
 
-    const totalSessions = totalSessionsResult[0]?.count ?? 0;
-    const activeSessions = activeSessionsResult[0]?.count ?? 0;
-    const currentPeriodCount = currentPeriodResult[0]?.count ?? 0;
-    const previousPeriodCount = previousPeriodResult[0]?.count ?? 0;
-    const uniqueUsers = uniqueUsersCurrentResult[0]?.count ?? 0;
-    const avgSessionsPerUser =
-      uniqueUsers > 0 ? currentPeriodCount / uniqueUsers : 0;
-
-    // Calculate growth metrics
+    const row = counts[0];
+    const currentPeriodCount = row?.current ?? 0;
+    const previousPeriodCount = row?.previous ?? 0;
+    const uniqueUsers = row?.uniqueUsers ?? 0;
     const growth = currentPeriodCount - previousPeriodCount;
-    const growthPercent = calculateGrowthPercentage(
-      currentPeriodCount,
-      previousPeriodCount
-    );
-    const trend = calculateTrend(growth);
-
-    // Generate graph data
-    const graphData = generateGraphData(timeSeriesData, timeInterval);
 
     return {
       currentPeriodCount,
-      totalSessions,
-      activeSessions,
+      totalSessions: row?.total ?? 0,
+      activeSessions: row?.active ?? 0,
+      activeUsers: row?.activeUsers ?? 0,
       growth,
-      growthPercent,
-      trend,
+      growthPercent: calculateGrowthPercentage(
+        currentPeriodCount,
+        previousPeriodCount
+      ),
+      trend: calculateTrend(growth),
       periodStart: current.start,
       periodEnd: current.end,
       previousPeriodCount,
-      graphData,
-      summary: {
-        currentPeriod: {
-          start: current.start,
-          end: current.end,
-          count: currentPeriodCount,
-          label: getPeriodLabel(timeInterval, "current"),
-        },
-        previousPeriod: {
-          start: previous.start,
-          end: previous.end,
-          count: previousPeriodCount,
-          label: getPeriodLabel(timeInterval, "previous"),
-        },
-      },
+      graphData: generateGraphData(timeSeries, timeInterval),
+      summary: periodSummary(
+        timeInterval,
+        current,
+        previous,
+        currentPeriodCount,
+        previousPeriodCount
+      ),
       uniqueUsers,
-      avgSessionsPerUser: Number(avgSessionsPerUser.toFixed(2)),
+      avgSessionsPerUser:
+        uniqueUsers > 0
+          ? Number((currentPeriodCount / uniqueUsers).toFixed(2))
+          : 0,
     };
+  }
+);
+
+/** Session count and growth for a period. Admins, or the server identity header (/api/stats). */
+export async function sessions_CountAndGrowth(
+  timeInterval: TimeInterval
+): Promise<SessionCountAndGrowthResult> {
+  await assertAdmin({ allowServerIdentity: true });
+  try {
+    return await computeSessionGrowth(timeInterval);
   } catch (error) {
     throw new Error(
       `Failed to calculate session count and growth: ${
@@ -370,165 +286,83 @@ export async function sessions_CountAndGrowth(
   }
 }
 
-/**
- * Fetch time series data for session graphing
- */
-async function fetchSessionTimeSeriesData(
-  timeInterval: TimeInterval,
-  current: DateRange,
-  previous: DateRange
-) {
-  const truncateExpression = getTruncateExpression(timeInterval);
-
-  // Fetch data for both current and previous periods
-  const [currentData, previousData] = await Promise.all([
-    db
-      .select({
-        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
-        count: sql<number>`COUNT(*)`.as("count"),
-      })
-      .from(sessions)
-      .where(
-        and(
-          gte(sessions.createdAt, current.start),
-          lte(sessions.createdAt, current.end)
-        )
-      )
-      .groupBy(sql`${truncateExpression}`)
-      .orderBy(sql`${truncateExpression}`)
-      .execute(),
-
-    db
-      .select({
-        timestamp: sql<Date>`${truncateExpression}`.as("timestamp"),
-        count: sql<number>`COUNT(*)`.as("count"),
-      })
-      .from(sessions)
-      .where(
-        and(
-          gte(sessions.createdAt, previous.start),
-          lte(sessions.createdAt, previous.end)
-        )
-      )
-      .groupBy(sql`${truncateExpression}`)
-      .orderBy(sql`${truncateExpression}`)
-      .execute(),
-  ]);
-
-  /**
-   * Get the appropriate SQL date truncation expression based on interval
-   * This works for PostgreSQL - adjust for other databases
-   */
-  function getTruncateExpression(timeInterval: TimeInterval) {
-    switch (timeInterval) {
-      case "last_hour":
-        // Truncate to minute
-        return sql`DATE_TRUNC('minute', ${sessions.createdAt})`;
-      case "last_24_hours":
-        // Truncate to hour
-        return sql`DATE_TRUNC('hour', ${sessions.createdAt})`;
-      case "last_week":
-        // Truncate to day
-        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
-      case "last_month":
-        // Truncate to day
-        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
-      case "last_year":
-        // Truncate to month
-        return sql`DATE_TRUNC('month', ${sessions.createdAt})`;
-      default:
-        return sql`DATE_TRUNC('day', ${sessions.createdAt})`;
-    }
-  }
-  return { currentData, previousData };
-}
 interface PlatformDBStats {
   results: number;
   polls: number;
   communityPosts: number;
   events: number;
 }
+
 export async function getPlatformDBStats(): Promise<PlatformDBStats> {
+  await assertAdmin();
   try {
     await dbConnect();
-    const promises = [
-      ResultModel.countDocuments(),
-      PollModel.countDocuments(),
-      CommunityPostModel.countDocuments(),
-      EventModel.countDocuments(),
-    ];
-    const [resultsCount, pollsCount, communityPostsCount, eventsCount] =
-      await Promise.all(promises);
-
-    return {
-      results: resultsCount,
-      polls: pollsCount,
-      communityPosts: communityPostsCount,
-      events: eventsCount,
-    };
+    // estimatedDocumentCount reads collection metadata instead of scanning.
+    const [results, polls, communityPosts, events] = await Promise.all([
+      ResultModel.estimatedDocumentCount(),
+      PollModel.estimatedDocumentCount(),
+      CommunityPostModel.estimatedDocumentCount(),
+      EventModel.estimatedDocumentCount(),
+    ]);
+    return { results, polls, communityPosts, events };
   } catch (error) {
-    console.error("Error extracting visitor count:", error);
-    return {
-      results: 0,
-      polls: 0,
-      communityPosts: 0,
-      events: 0,
-    };
+    console.error("Error counting platform collections:", error);
+    return { results: 0, polls: 0, communityPosts: 0, events: 0 };
   }
 }
 
-export async function flushCache() {
-  try {
-    // await redis?.flushall();
-    return Promise.resolve(true);
-  } catch (error) {
-    console.error(error);
-    return Promise.reject(error);
-  }
+export async function flushCache(): Promise<boolean> {
+  await assertAdmin();
+  return flushAllRedisKeys();
 }
 
-// Infer the User model from the schema
 type User = InferSelectModel<typeof users>;
 
-type UserSortField = keyof Pick<
-  User,
-  "createdAt" | "updatedAt" | "name" | "username"
->;
-
-interface UserListOptions {
-  sortBy?: UserSortField; // Restrict sortBy to valid fields
-  sortOrder?: "asc" | "desc";
-  limit?: number;
-  offset?: number;
-  searchQuery?: string;
-}
-
 export async function getUser(userId: string): Promise<User | null> {
+  await assertAdmin();
   const user = await db
     .select()
     .from(users)
-    .where(eq(users.id, userId)) // Fetch the user by their ID
-    .limit(1) // Limit to 1 result since ID is unique
+    .where(eq(users.id, userId))
+    .limit(1)
     .execute();
 
-  return user.length > 0 ? user[0] : null; // Return the first user or null if not found
+  return user.length > 0 ? user[0] : null;
 }
 
+/** Admins may edit any field; everyone else only their own gender (once) and extra emails. */
 export async function updateUser(
   userId: string,
   data: Partial<User>
 ): Promise<User | null> {
   try {
-    await db.update(users).set(data).where(eq(users.id, userId)).execute();
-    const user = await getUser(userId);
-    if (data.hostelId && user) {
-      console.log("Hostel updating for user:", user.email);
-      await updateHostelStudent(user.email, {
-        hostelId: data.hostelId,
-      });
-      console.log("Hostel updated for user:", user.email);
+    const session = await getCurrentSession();
+    if (!session) throw new Error("Unauthorized");
+    const isAdmin = ADMIN_ROLES.includes(session.user.role);
+    if (!isAdmin && session.user.id !== userId) {
+      throw new Error("Unauthorized");
     }
-    return user;
+
+    let patch: Partial<User> = data;
+    if (!isAdmin) {
+      patch = {};
+      for (const field of SELF_EDITABLE_FIELDS) {
+        if (field in data) Object.assign(patch, { [field]: data[field] });
+      }
+      if (session.user.gender !== "not_specified") delete patch.gender;
+      if (Object.keys(patch).length === 0) throw new Error("Nothing to update");
+    }
+
+    await db.update(users).set(patch).where(eq(users.id, userId)).execute();
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (isAdmin && patch.hostelId && user) {
+      await updateHostelStudent(user.email, { hostelId: patch.hostelId });
+    }
+    return user ?? null;
   } catch (error) {
     console.error(error);
     return null;
@@ -540,10 +374,7 @@ export async function changeUserPassword(
   newPassword: string
 ): Promise<boolean> {
   try {
-    const headersList = await headers();
-    const session = await auth.api.getSession({
-      headers: headersList,
-    });
+    const session = await getCurrentSession();
     if (
       !session ||
       session.user.id !== userId ||
@@ -554,291 +385,63 @@ export async function changeUserPassword(
     const ctx = await auth.$context;
     const hash = await ctx.password.hash(newPassword);
     await ctx.internalAdapter.updatePassword(userId, hash);
-    return Promise.resolve(true);
+    return true;
   } catch (error) {
     console.error("Error changing user password:", error);
     return false;
   }
 }
 
-/**
- * User Statistics Functions
- */
-export async function getTotalUsers(): Promise<number> {
-  const result = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(users)
-    .execute();
-  return result[0]?.count ?? 0;
-}
-
 export async function getUsersByRole(): Promise<
   { role: string; count: number }[]
 > {
-  // const result = await db
-  //   .select({
-  //     role: users.role,
-  //     count: sql<number>`COUNT(*)`,
-  //   })
-  //   .from(users)
-  //   .groupBy(users.role)
-  //   .execute();
-  // return result;
-  // const result = await db
-  //   .select({
-  //     role: sql<string>`role_value`,
-  //     count: sql<number>`COUNT(*)`,
-  //   })
-  //   .from(
-  //     // Create a derived table that combines main role and other_roles
-  //     db
-  //       .select({
-  //         role_value: users.role,
-  //       })
-  //       .from(users)
-  //       .unionAll(
-  //         db
-  //           .select({
-  //             role_value: sql<string>`unnest(${users.other_roles})::text`,
-  //           })
-  //           .from(users)
-  //           .where(sql`array_length(${users.other_roles}, 1) > 0`)
-  //       )
-  //       .as("all_roles")
-  //   )
-  //   .groupBy(sql`role_value`)
-  //   .execute();
-
-  // return result;
-  const allUsers = await db
-    .select({
-      role: users.role,
-      other_roles: users.other_roles,
-    })
-    .from(users)
-    .execute();
-
-  const roleCounts: Record<string, number> = {};
-  // Iterate through all users to count roles
-  for (const user of allUsers) {
-    // Count main role
-    if (user.role !== "user")
-      roleCounts[user.role] = (roleCounts[user.role] || 0) + 1;
-
-    // Count each role in other_roles (converting enum to string)
-    user.other_roles.forEach((otherRole) => {
-      const roleString = String(otherRole); // Convert enum to string
-      roleCounts[roleString] = (roleCounts[roleString] || 0) + 1;
-    });
-  }
-
-  return Object.entries(roleCounts).map(([role, count]) => ({ role, count }));
+  await assertAdmin();
+  // Primary role (except the default "user") plus every secondary role, counted in SQL.
+  const result = await db.execute<{ role: string; count: number }>(sql`
+    SELECT role, COUNT(*)::int AS count FROM (
+      SELECT ${users.role} AS role FROM ${users} WHERE ${users.role} <> 'user'
+      UNION ALL
+      SELECT unnest(${users.other_roles})::text AS role FROM ${users}
+    ) AS all_roles
+    GROUP BY role
+  `);
+  return result.rows.map((row) => ({
+    role: String(row.role),
+    count: Number(row.count),
+  }));
 }
 
 export async function getUsersByDepartment(): Promise<
   { department: string; count: number }[]
 > {
-  const result = await db
+  await assertAdmin();
+  return db
     .select({
       department: users.department,
-      count: sql<number>`COUNT(*)`,
+      count: sql<number>`COUNT(*)::int`,
     })
     .from(users)
-    .groupBy(users.department)
-    .execute();
-  return result;
+    .groupBy(users.department);
 }
 
 export async function getUsersByGender(): Promise<Record<string, number>> {
+  await assertAdmin();
   const result = await db
     .select({
       gender: users.gender,
-      count: sql<number>`COUNT(*)`,
+      count: sql<number>`COUNT(*)::int`,
     })
     .from(users)
-    .groupBy(users.gender)
-    .execute();
-  return result.reduce(
-    (acc, curr) => {
-      acc[curr.gender] = Number.parseInt(curr.count as unknown as string, 10);
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+    .groupBy(users.gender);
+  return Object.fromEntries(result.map((row) => [row.gender, row.count]));
 }
 
-/**
- * Session Statistics Functions
- */
-
+/** Distinct users with an unexpired session. */
 export async function getActiveSessions(): Promise<number> {
-  const currentTime = new Date();
+  await assertAdmin();
   const result = await db
-    .select({ count: sql<number>`COUNT(DISTINCT "userId")` })
+    .select({ count: sql<number>`COUNT(DISTINCT ${sessions.userId})::int` })
     .from(sessions)
-    .where(sql`"expiresAt" > ${currentTime}`)
-    .execute();
+    .where(sql`${sessions.expiresAt} > ${new Date()}`);
   return result[0]?.count ?? 0;
-}
-export async function getSessionsByUserAgent(): Promise<
-  { userAgent: string; count: number }[]
-> {
-  const result = await db
-    .select({
-      userAgent: sql<string>`COALESCE(${sessions.userAgent}, 'Unknown')`,
-      count: sql<number>`COUNT(*)`,
-    })
-    .from(sessions)
-    .groupBy(sessions.userAgent)
-    .execute();
-  return result;
-}
-
-export async function getTotalAccounts(): Promise<number> {
-  const result = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(accounts)
-    .execute();
-  return result[0]?.count ?? 0;
-}
-
-// Users with the most sessions
-export async function mostSessionsUsers(): Promise<
-  { userId: string; sessionCount: number }[]
-> {
-  const result = await db
-    .select({
-      userId: sessions.userId,
-      sessionCount: sql<number>`COUNT(*)`,
-    })
-    .from(sessions)
-    .groupBy(sessions.userId)
-    .orderBy(desc(sql`COUNT(*)`))
-    .execute();
-  return result;
-}
-
-// Average session duration
-export async function averageSessionDuration(): Promise<number | null> {
-  const result = await db
-    .select({
-      avgDuration: sql<number>`AVG(EXTRACT(EPOCH FROM ("expiresAt" - "createdAt")))`,
-    })
-    .from(sessions)
-    .execute();
-  return result[0]?.avgDuration ?? null;
-}
-
-// Sessions by user (most/least active users)
-export async function sessionActivity(): Promise<{
-  mostActive: { userId: string; sessionCount: number } | null;
-  leastActive: { userId: string; sessionCount: number } | null;
-}> {
-  const result = await db
-    .select({
-      userId: sessions.userId,
-      sessionCount: sql<number>`COUNT(*)`,
-    })
-    .from(sessions)
-    .groupBy(sessions.userId)
-    .orderBy(desc(sql`COUNT(*)`), asc(sql`COUNT(*)`))
-    .execute();
-
-  return {
-    mostActive: result[0] ?? null,
-    leastActive: result[result.length - 1] ?? null,
-  };
-}
-
-// Total user growth over time
-export async function userGrowthOverTime(): Promise<
-  { date: string; count: number }[]
-> {
-  const result = await db
-    .select({
-      date: sql<string>`DATE_TRUNC('month', "createdAt")`.as("date"),
-      count: sql<number>`COUNT(*)`,
-    })
-    .from(users)
-    .groupBy(sql`DATE_TRUNC('month', "createdAt")`)
-    .orderBy(desc(sql`DATE_TRUNC('month', "createdAt")`))
-    .execute();
-  return result;
-}
-
-// Session trends (new vs recurring)
-export async function sessionTrends(): Promise<{
-  newSessions: number;
-  recurringSessions: number;
-}> {
-  const newSessions = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(sessions)
-    .where(sql`"userId" NOT IN (SELECT DISTINCT "userId" FROM ${sessions})`)
-    .execute();
-
-  const recurringSessions = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(sessions)
-    .where(sql`"userId" IN (SELECT DISTINCT "userId" FROM ${sessions})`)
-    .execute();
-
-  return {
-    newSessions: newSessions[0]?.count ?? 0,
-    recurringSessions: recurringSessions[0]?.count ?? 0,
-  };
-}
-
-// External account usage patterns
-export async function externalAccountPatterns(): Promise<
-  { providerId: string; count: number }[]
-> {
-  const result = await db
-    .select({
-      providerId: accounts.providerId,
-      count: sql<number>`COUNT(*)`,
-    })
-    .from(accounts)
-    .groupBy(accounts.providerId)
-    .orderBy(desc(sql`COUNT(*)`))
-    .execute();
-  return result;
-}
-
-// Engagement trends
-export async function userEngagement(): Promise<{
-  highestEngagement: { userId: string; sessionCount: number } | null;
-  lowestEngagement: { userId: string; sessionCount: number } | null;
-}> {
-  const result = await db
-    .select({
-      userId: sessions.userId,
-      sessionCount: sql<number>`COUNT(*)`,
-    })
-    .from(sessions)
-    .groupBy(sessions.userId)
-    .orderBy(desc(sql`COUNT(*)`), asc(sql`COUNT(*)`))
-    .execute();
-
-  return {
-    highestEngagement: result[0] ?? null,
-    lowestEngagement: result[result.length - 1] ?? null,
-  };
-}
-
-// Department-wise or role-wise engagement
-export async function departmentWiseEngagement(): Promise<
-  { department: string; sessionCount: number }[]
-> {
-  const result = await db
-    .select({
-      department: users.department,
-      sessionCount: sql<number>`COUNT(${sessions.id})`,
-    })
-    .from(users)
-    .leftJoin(sessions, eq(users.id, sessions.userId))
-    .groupBy(users.department)
-    .orderBy(desc(sql`COUNT(${sessions.id})`))
-    .execute();
-  return result;
 }

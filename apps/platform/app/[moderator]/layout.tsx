@@ -1,9 +1,9 @@
-import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import AdUnit from "@/components/common/adsense";
 import Navbar from "@/components/common/app-navbar";
 import { AppSidebar } from "@/components/common/sidebar/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import type { Metadata, ResolvingMetadata } from "next";
+import { SIDEBAR_COOKIE_NAME, SidebarProvider } from "@/components/ui/sidebar";
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { Session } from "~/auth";
 import { getSession } from "~/auth/server";
@@ -22,10 +22,9 @@ interface DashboardLayoutProps {
   }>;
 }
 
-export async function generateMetadata(
-  { params }: DashboardLayoutProps,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: DashboardLayoutProps): Promise<Metadata> {
   const { moderator } = await params;
 
   return {
@@ -62,49 +61,47 @@ export default async function DashboardLayout({
     );
   }
 
+  const sidebarOpen =
+    (await cookies()).get(SIDEBAR_COOKIE_NAME)?.value !== "false";
+
   return (
-    <SidebarProvider>
-      <AppSidebar
-        user={session.user}
-        moderator={moderator}
-        className="border-r-transparent"
-      />
-      <SidebarInset className="flex flex-col flex-1 w-full rounded-t-2xl">
-        <Navbar
-          user={session.user}
-          impersonatedBy={session.session.impersonatedBy}
-        />
-
-        <div className="relative flex-1 mr-2">
-          <div className="absolute top-0 left-0 z-0 w-full min-h-80 mask-[linear-gradient(to_top,transparent_25%,black_95%)]">
-            <FlickeringGrid
-              className="absolute top-0 left-0 size-full"
-              squareSize={4}
-              gridGap={6}
-              color="#6B7280"
-              maxOpacity={0.2}
-              flickerChance={0.05}
-            />
-          </div>
-
-          <main className="relative rounded-2xl overflow-hidden dark:bg-muted flex-1 px-4 py-6 md:px-6 md:py-8 lg:px-8 @container">
-            <div className="mx-auto max-w-7xl space-y-8 z-4">
-              <header className="relative">
-                <div className="flex items-center justify-center w-full mx-auto max-w-7xl empty:hidden empty:p-0">
-                  <AdUnit adSlot="display-horizontal" key="dashboard-top" />
-                </div>
-              </header>
+    <SidebarProvider
+      defaultOpen={sidebarOpen}
+      className="h-svh overflow-hidden bg-canvas"
+    >
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-background px-3 py-2 text-body font-medium text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:ring-2 focus:ring-ring"
+      >
+        Skip to content
+      </a>
+      <AppSidebar user={session.user} moderator={moderator} />
+      <div className="flex min-w-0 flex-1 flex-col md:py-2 md:pr-2">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-xl md:border md:border-border md:shadow-xs">
+          <Navbar
+            user={session.user}
+            impersonatedBy={session.session.impersonatedBy}
+            moderator={moderator}
+          />
+          <main
+            id="main"
+            tabIndex={-1}
+            className="@container relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain outline-none [scrollbar-width:thin]"
+          >
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 md:py-8 lg:px-8">
               {children}
+              {/* Ads trail the content so they never push the page's primary view down. */}
+              <aside
+                aria-label="Advertisement"
+                className="mt-12 grid gap-4 xl:grid-cols-2"
+              >
+                <AdUnit adSlot="display-horizontal" key="dashboard-top" />
+                <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
+              </aside>
             </div>
           </main>
-
-          <footer className="relative">
-            <div className="flex items-center justify-center w-full mx-auto max-w-7xl empty:hidden empty:p-0">
-              <AdUnit adSlot="display-horizontal" key="dashboard-bottom" />
-            </div>
-          </footer>
         </div>
-      </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

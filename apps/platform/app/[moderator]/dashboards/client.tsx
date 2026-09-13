@@ -13,22 +13,24 @@ export function FlushCacheButton({
   return (
     <Button
       size="sm"
-      variant="default_soft"
-      className="gap-2"
+      variant="outline"
       disabled={isPending}
       icon={isPending ? "loader-circle" : "broom"}
       iconClassName={isPending ? "animate-spin" : ""}
       onClick={() => {
-        startTransition(() => {
-          toast.promise(flushFn(), {
-            loading: "Flushing cache...",
-            success: "Cache flushed successfully!",
-            error: "Failed to flush cache.",
-          });
+        startTransition(async () => {
+          const id = toast.loading("Flushing cache...");
+          try {
+            // flushFn resolves false on failure instead of throwing.
+            if (await flushFn()) toast.success("Cache flushed", { id });
+            else toast.error("Could not flush the cache", { id });
+          } catch {
+            toast.error("Could not flush the cache", { id });
+          }
         });
       }}
     >
-      {isPending ? "Flushing..." : "Flush Cache"}
+      {isPending ? "Flushing..." : "Flush cache"}
     </Button>
   );
 }

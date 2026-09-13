@@ -4,7 +4,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/extended/collapsible";
+} from "@radix-ui/react-collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -15,13 +15,12 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { getWindowOrigin } from "@/lib/env";
-import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useId, useState } from "react";
 
 interface NavItem {
   title: string;
@@ -35,100 +34,112 @@ interface NavItem {
   }[];
 }
 
-export function NavMain({ items }: { items: NavItem[] }) {
+// Hick's law: longer groups fold the rest behind "Show more".
+const MAX_VISIBLE_ITEMS = 7;
+
+const isWithin = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
+
+export function NavMain({
+  items,
+  label,
+  rootHref,
+}: {
+  items: NavItem[];
+  /** Group heading. Omit for an unlabelled group. */
+  label?: string;
+  /** The dashboard root, which is only active on an exact match. */
+  rootHref?: string;
+}) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  const [showAll, setShowAll] = useState(false);
+  const overflowId = useId();
 
-  // Helper to construct URLs with preserved params
-  const constructUrl = useCallback(
-    (href: string, preserve: boolean | undefined) => {
-      try {
-        const url = new URL(href, getWindowOrigin());
-        if (preserve && pathname === href) {
-          const current = new URLSearchParams(searchParams.toString());
-          // Merge params logic here if needed, or just append
-          url.search = current.toString();
-        }
-        return url.toString();
-      } catch (e) {
-        return href;
-      }
-    },
-    [pathname, searchParams]
-  );
+  const hrefFor = (href: string, preserve?: boolean) => {
+    if (!preserve || pathname !== href) return href;
+    const query = searchParams.toString();
+    return query ? `${href}?${query}` : href;
+  };
+
+  const activeFor = (item: NavItem) => {
+    if (item.isActive) return true;
+    if (item.href === rootHref) return pathname === item.href;
+    return isWithin(pathname, item.href);
+  };
+
+  const overflowing = items.length > MAX_VISIBLE_ITEMS;
+  const hiddenHasActive = items
+    .slice(MAX_VISIBLE_ITEMS - 1)
+    .some((item) => activeFor(item));
+  const visible =
+    overflowing && !showAll && !hiddenHasActive
+      ? items.slice(0, MAX_VISIBLE_ITEMS - 1)
+      : items;
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
-        Platform
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item, idx) => {
-          const hasSubItems = item.items && item.items.length > 0;
-          const isMainActive =
-            item.isActive || (pathname.startsWith(item.href) && idx !== 0);
+    <SidebarGroup className="py-1">
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+      <SidebarMenu id={overflowId}>
+        {visible.map((item) => {
+          const isActive = activeFor(item);
+          const subItems = item.items ?? [];
 
           return (
             <Collapsible
-              key={item.title}
+              key={item.href}
               asChild
-              defaultOpen={item.isActive}
+              defaultOpen={isActive}
               className="group/collapsible"
             >
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   tooltip={item.title}
-                  isActive={isMainActive}
-                  className={cn(
-                    "transition-all duration-200",
-                    isMainActive && "font-medium text-primary bg-primary/5"
-                  )}
+                  isActive={isActive}
                 >
-                  <Link href={constructUrl(item.href, item.preserveParams)}>
-                    <item.icon
-                      className={cn(
-                        "size-4 transition-colors",
-                        isMainActive
-                          ? "text-primary"
-                          : "text-muted-foreground group-hover/collapsible:text-foreground"
-                      )}
-                    />
+                  <Link
+                    href={hrefFor(item.href, item.preserveParams)}
+                    aria-current={pathname === item.href ? "page" : undefined}
+                    onClick={() => setOpenMobile(false)}
+                  >
+                    <item.icon aria-hidden="true" />
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
 
-                {hasSubItems && (
+                {subItems.length > 0 && (
                   <>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="data-[state=open]:rotate-90 transition-transform duration-200 text-muted-foreground hover:text-foreground">
-                        <ChevronRight className="size-3" />
-                        <span className="sr-only">Toggle</span>
+                      <SidebarMenuAction className="data-[state=open]:rotate-90">
+                        <ChevronRight aria-hidden="true" />
+                        <span className="sr-only">
+                          Toggle {item.title} links
+                        </span>
                       </SidebarMenuAction>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <SidebarMenuSub className="border-l-border/50 ml-3.5">
-                        {item.items?.map((subItem) => {
+                      <SidebarMenuSub>
+                        {subItems.map((subItem) => {
                           const isSubActive = pathname === subItem.href;
                           return (
-                            <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubItem key={subItem.href}>
                               <SidebarMenuSubButton
                                 asChild
                                 isActive={isSubActive}
-                                className={cn(
-                                  "text-xs transition-colors",
-                                  isSubActive
-                                    ? "font-medium text-primary"
-                                    : "text-muted-foreground hover:text-foreground"
-                                )}
                               >
                                 <Link
-                                  href={constructUrl(
+                                  href={hrefFor(
                                     subItem.href,
                                     item.preserveParams
                                   )}
+                                  aria-current={
+                                    isSubActive ? "page" : undefined
+                                  }
+                                  onClick={() => setOpenMobile(false)}
                                 >
-                                  {subItem.title}
+                                  <span>{subItem.title}</span>
                                 </Link>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -142,6 +153,27 @@ export function NavMain({ items }: { items: NavItem[] }) {
             </Collapsible>
           );
         })}
+
+        {overflowing && !hiddenHasActive && (
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              aria-expanded={showAll}
+              aria-controls={overflowId}
+              tooltip={showAll ? "Show less" : "Show more"}
+              onClick={() => setShowAll((open) => !open)}
+            >
+              <ChevronDown
+                aria-hidden="true"
+                className={showAll ? "rotate-180" : undefined}
+              />
+              <span>
+                {showAll
+                  ? "Show less"
+                  : `Show ${items.length - (MAX_VISIBLE_ITEMS - 1)} more`}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )}
       </SidebarMenu>
     </SidebarGroup>
   );
