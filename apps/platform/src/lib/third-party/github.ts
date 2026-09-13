@@ -51,38 +51,35 @@ export const getRepoStarGazers = cache(
     }
   }
 );
-export const extractVisitorCount = cache(async (): Promise<number> => {
-  const url =
-    "https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge";
+export const VISITOR_BADGE_URL =
+  "https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge";
 
+/** Reads the counter out of the badge SVG, or null if its markup changed. */
+export function parseVisitorCount(svg: string): number | null {
+  const match = svg.match(/<text[^>]*>\s*(\d+)\s*<\/text>/i);
+  if (!match) return null;
+  const count = Number.parseInt(match[1], 10);
+  return Number.isNaN(count) ? null : count;
+}
+
+/** Every request to the badge adds one to the counter, so this both records a view and returns the new total. */
+export async function recordImpression(): Promise<number> {
   try {
-    // react `cache` only dedupes within one request; without revalidate this
-    // fetch defaults to no-store and hits the badge service on every render.
-    const response = await fetch(url, { next: { revalidate: 3600 } });
-    const svgText = await response.text();
-
-    // Looks for text elements containing only digits, ignoring attributes
-    const digitMatches = svgText.match(/<text[^>]*>(\d+)<\/text>/gi);
-    if (digitMatches) {
-      // Find the first match that's actually the number (not x/y coordinates etc)
-      for (const match of digitMatches) {
-        const numberMatch = match.match(/>(\d+)</);
-        if (numberMatch && numberMatch[1]) {
-          const count = parseInt(numberMatch[1], 10);
-          if (!isNaN(count)) return count;
-        }
-      }
-    }
-
-    // Method 3: Alternative regex pattern if the above fails
-    const lastResortMatch = svgText.match(/>\s*(\d+)\s*<\/text>/);
-    if (lastResortMatch && lastResortMatch[1]) {
-      const count = parseInt(lastResortMatch[1], 10);
-      if (!isNaN(count)) return count;
-    }
-
-    console.warn("Visitor count not found in SVG");
+    const response = await fetch(VISITOR_BADGE_URL, { cache: "no-store" });
+    return parseVisitorCount(await response.text()) ?? FALLBACK_STATS.visitors;
+  } catch (error) {
+    console.error("Error recording impression:", error);
     return FALLBACK_STATS.visitors;
+  }
+}
+
+// Server-side reads also count as hits, so this revalidates hourly to add at most one per hour.
+export const extractVisitorCount = cache(async (): Promise<number> => {
+  try {
+    const response = await fetch(VISITOR_BADGE_URL, {
+      next: { revalidate: 3600 },
+    });
+    return parseVisitorCount(await response.text()) ?? FALLBACK_STATS.visitors;
   } catch (error) {
     console.error("Error extracting visitor count:", error);
     return FALLBACK_STATS.visitors;
@@ -162,7 +159,6 @@ export type PublicStatsType = {
   sessionCount: number;
   userCount: number;
   githubStats: StatsData;
-  visitors: number;
 };
 
 export interface RepoData {

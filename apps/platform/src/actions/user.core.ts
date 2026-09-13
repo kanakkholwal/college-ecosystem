@@ -1,6 +1,5 @@
 "use server";
-import type { InferSelectModel } from "drizzle-orm";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "~/db/connect";
 import {
   personalAttendance,
@@ -19,8 +18,6 @@ import Announcement from "~/models/announcement";
 import CommunityPost, { CommunityComment } from "~/models/community";
 import { HostelStudentModel } from "~/models/hostel_n_outpass";
 import PollModel from "~/models/poll";
-
-type User = InferSelectModel<typeof users>;
 
 /** Deletes a user and everything they own. Admins only, and never their own account. */
 export async function deleteUserResourcesById(userId: string): Promise<void> {

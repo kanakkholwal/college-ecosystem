@@ -1,4 +1,5 @@
 import { CampusHub } from "@/components/illustrations/campus-hub";
+import { HeroStats } from "@/components/landing/hero-stats";
 import { TiltedChip } from "@/components/site/sections";
 import { ButtonLink } from "@/components/utils/link";
 import { ArrowRight } from "lucide-react";
@@ -63,6 +64,8 @@ export function HeroSection({
             <LuGithub />
           </ButtonLink>
         </div>
+
+        <HeroStats />
       </div>
 
       <div className="flex min-h-0 items-center justify-center pb-8 lg:py-12">

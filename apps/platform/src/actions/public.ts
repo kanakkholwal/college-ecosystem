@@ -3,7 +3,6 @@ import { sql } from "drizzle-orm";
 import { db } from "~/db/connect";
 import { sessions, users } from "~/db/schema/auth-schema";
 import {
-  extractVisitorCount,
   FALLBACK_STATS,
   getRepoStats,
   type PublicStatsType,
@@ -12,23 +11,18 @@ import { appConfig } from "~/project.config";
 
 export async function getPublicStats(): Promise<PublicStatsType> {
   const session_promise = db
-    .select({ count: sql<number>`COUNT(*)` })
+    .select({ count: sql<number>`COUNT(*)::int` })
     .from(sessions)
     .execute();
   const user_promise = db
-    .select({ count: sql<number>`COUNT(*)` })
+    .select({ count: sql<number>`COUNT(*)::int` })
     .from(users)
     .execute();
   const github_promise = getRepoStats(appConfig.githubUri);
-  const visitors_promise = extractVisitorCount();
   // Wait for all promises to settle
-  const [session_result, user_result, github_result, visitors_result] =
-    await Promise.allSettled([
-      session_promise,
-      user_promise,
-      github_promise,
-      visitors_promise,
-    ]);
+  const [session_result, user_result, github_result] = await Promise.allSettled(
+    [session_promise, user_promise, github_promise]
+  );
   const sessionCount =
     session_result.status === "fulfilled" ? session_result.value[0].count : 0;
   const userCount =
@@ -42,9 +36,5 @@ export async function getPublicStats(): Promise<PublicStatsType> {
     sessionCount,
     userCount,
     githubStats,
-    visitors:
-      visitors_result.status === "fulfilled"
-        ? visitors_result.value
-        : FALLBACK_STATS.visitors,
   };
 }

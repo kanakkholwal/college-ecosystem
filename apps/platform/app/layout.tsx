@@ -1,6 +1,7 @@
 import "@fontsource-variable/google-sans";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/source-code-pro";
+import { ImpressionsBadge } from "@/components/common/impressions-badge";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import Script from "next/script";
@@ -109,6 +110,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
         {/* ✅ Load AdSense script once globally */}
         <Provider>{children} </Provider>
+        <ImpressionsBadge />
         {process.env.NODE_ENV === "production" && (
           <>
             <Script
@@ -122,19 +124,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
               crossOrigin="anonymous"
             />
             <GoogleAnalytics gaId={appConfig.verifications.google_analytics} />
-            <div className="fixed bottom-2 right-2 left-auto top-auto z-50 flex gap-1 items-center">
-              <span>
-                {/* biome-ignore lint/performance/noImgElement: external visitor-badge image */}
-                <img
-                  height={20}
-                  width={80}
-                  src="https://visitor-badge.laobi.icu/badge?page_id=nith_portal.visitor-badge"
-                  alt="Visitor counter"
-                  className="inline-block font-inherit h-4"
-                  loading="lazy"
-                />
-              </span>
-            </div>
           </>
         )}
       </body>
