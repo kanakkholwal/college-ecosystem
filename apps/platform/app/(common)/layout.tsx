@@ -12,17 +12,13 @@ type LayoutProps = Readonly<{
 export default async function Layout({ children }: LayoutProps) {
   const session = await getSession();
   return (
-    <div className="flex flex-1 flex-col justify-center min-h-svh min-w-full z-0">
+    <div className="flex min-h-svh w-full flex-1 flex-col bg-canvas">
       <Navbar user={session?.user} />
-      <div className="relative flex-1 z-1 mx-auto max-w-(--max-app-width) w-full h-full min-h-screen @container flex-col items-center justify-start space-y-4 pb-8">
+      <div className="@container relative mx-auto h-full min-h-screen w-full max-w-(--max-app-width) flex-1 flex-col items-center justify-start space-y-4 pb-8">
         {children}
         <GithubBanner />
       </div>
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-0 w-md h-112 bg-tertiary/20 rounded-full blur-3xl animate-pulse delay-700" />
-      </div>
-      <Footer className="z-1" />
+      <Footer />
     </div>
   );
 }

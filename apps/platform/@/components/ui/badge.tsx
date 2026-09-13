@@ -3,11 +3,10 @@
 import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+import type * as React from "react";
 
 export interface BadgeProps
-  extends
-    React.HTMLAttributes<HTMLDivElement>,
+  extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {
   asChild?: boolean;
   dotClassName?: string;
@@ -15,8 +14,7 @@ export interface BadgeProps
 }
 
 export interface BadgeButtonProps
-  extends
-    React.ButtonHTMLAttributes<HTMLDivElement>,
+  extends React.ButtonHTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeButtonVariants> {
   asChild?: boolean;
 }
@@ -29,28 +27,22 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "bg-muted text-muted-foreground",
-        default_soft:
-          "border-primary/5 bg-primary/5 text-primary hover:bg-primary/20 dark:backdrop-blur",
+        default_soft: "bg-primary/10 text-primary",
         secondary: "bg-secondary text-secondary-foreground",
         outline: "bg-transparent border border-border text-foreground",
 
-        // Colored variants
-        success: "bg-emerald-600 hover:bg-emerald-500 text-emerald-100",
-        success_soft:
-          "bg-emerald-600/10 text-emerald-600 hover:bg-emerald-600/20",
-        info: "bg-sky-600 hover:bg-sky-500 text-sky-100",
-        info_soft: "bg-sky-600/10 text-sky-600 hover:bg-sky-600/20",
-        warning: "bg-amber-600 hover:bg-amber-500 text-amber-100",
-        warning_soft: "bg-amber-600/10 text-amber-600 hover:bg-amber-600/20",
-        destructive: "bg-rose-600 hover:bg-rose-500 text-rose-100",
-        destructive_soft: "bg-rose-600/10 text-rose-600 hover:bg-rose-600/20",
-        // legacy
-        dark: "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 dark:text-neutral-800",
+        success: "bg-success text-success-foreground",
+        success_soft: "bg-success/10 text-success",
+        info: "bg-info text-info-foreground",
+        info_soft: "bg-info/10 text-info",
+        warning: "bg-warning text-warning-foreground",
+        warning_soft: "bg-warning/10 text-warning",
+        destructive: "bg-destructive text-destructive-foreground",
+        destructive_soft: "bg-destructive/10 text-destructive",
+        dark: "bg-action text-action-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        ghost:
-          "bg-white hover:bg-white hover:text-accent-foreground  dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white",
-        slate:
-          "bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950 dark:hover:text-slate-100",
+        ghost: "bg-card text-foreground hover:bg-muted",
+        slate: "bg-muted text-foreground",
         gradient_blue:
           "text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br",
         gradient_green:
@@ -68,7 +60,7 @@ const badgeVariants = cva(
         gradient_purple:
           "text-white bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 hover:bg-gradient-to-br",
         glass:
-          "backdrop-blur-lg bg-white/30 dark:bg-slate-800/15 backdrop-blur-xl border-white/5 dark:border-white/5 dark:text-white shadow",
+          "border-border bg-background/80 text-foreground backdrop-blur-xl",
       },
       appearance: {
         default: "",

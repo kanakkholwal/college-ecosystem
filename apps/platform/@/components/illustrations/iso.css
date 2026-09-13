@@ -1,0 +1,198 @@
+.iso {
+  --iso-ink: var(--foreground);
+  --iso-top: var(--canvas);
+  --iso-left: color-mix(in oklch, var(--foreground) 3%, var(--canvas));
+  --iso-right: color-mix(in oklch, var(--foreground) 8%, var(--canvas));
+  overflow: visible;
+}
+
+.iso .solid polygon,
+.iso .hatch,
+.iso .decal,
+.iso .bell-shape,
+.iso .dash,
+.iso .line,
+.iso .drop {
+  stroke: var(--iso-ink);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.iso .face-top {
+  fill: var(--iso-top);
+}
+.iso .face-left {
+  fill: var(--iso-left);
+}
+.iso .face-right {
+  fill: var(--iso-right);
+}
+.iso .hatch {
+  fill: none;
+  stroke-width: 1;
+}
+.iso .decal {
+  fill: none;
+}
+.iso .accent-top {
+  fill: var(--primary);
+}
+.iso .accent-side {
+  fill: var(--primary-active);
+}
+.iso .tile-label {
+  fill: var(--primary-foreground);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.iso .check-dot,
+.iso .drop-dot {
+  fill: var(--primary);
+  stroke: none;
+}
+.iso .check-mark {
+  stroke: var(--primary-foreground);
+  stroke-width: 1.5;
+}
+.iso .bell-shape {
+  fill: var(--iso-top);
+}
+.iso .drop,
+.iso .dash {
+  fill: none;
+  stroke-dasharray: 3 5;
+}
+.iso .doc {
+  transform-box: view-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .iso .doc-in {
+    animation: iso-doc-in 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  .iso .doc-out {
+    animation: iso-doc-out 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  .iso .glow {
+    animation: iso-glow 7s ease-in-out infinite;
+  }
+}
+
+@keyframes iso-doc-in {
+  0%,
+  8% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  36% {
+    transform: translate(var(--dx), var(--dy));
+    opacity: 1;
+  }
+  40%,
+  90% {
+    transform: translate(var(--dx), var(--dy));
+    opacity: 0;
+  }
+  91% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes iso-doc-out {
+  0%,
+  52% {
+    transform: translate(calc(var(--dx) * -1), calc(var(--dy) * -1));
+    opacity: 0;
+  }
+  56% {
+    transform: translate(calc(var(--dx) * -1), calc(var(--dy) * -1));
+    opacity: 1;
+  }
+  82%,
+  92% {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes iso-glow {
+  0%,
+  38%,
+  58%,
+  100% {
+    stroke: var(--iso-ink);
+  }
+  44%,
+  52% {
+    stroke: var(--primary);
+  }
+}
+
+.iso .line {
+  fill: none;
+}
+.iso .accent-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.iso .label {
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+.iso .float,
+.iso .pulse {
+  transform-box: view-box;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .iso .float {
+    animation: iso-float 5s ease-in-out infinite;
+  }
+  .iso .float-2 {
+    animation-delay: -1.6s;
+  }
+  .iso .float-3 {
+    animation-delay: -3.2s;
+  }
+  .iso .pulse {
+    animation: iso-pulse 3.2s ease-out infinite;
+  }
+  .iso .pulse-2 {
+    animation-delay: 1.1s;
+  }
+}
+
+@keyframes iso-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes iso-pulse {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

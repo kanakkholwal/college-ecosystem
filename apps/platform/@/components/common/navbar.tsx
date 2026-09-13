@@ -76,7 +76,7 @@ export default function Navbar({ user }: NavbarProps) {
       id="navbar"
       className={cn(
         "z-50 w-full transition-all duration-300",
-        "bg-background/40 backdrop-blur-xl border-b border-border/40 supports-backdrop-filter:bg-background/30"
+        "border-b border-border bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/70"
       )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto">
@@ -93,7 +93,7 @@ export default function Navbar({ user }: NavbarProps) {
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <QuickLinks user={user} publicLinks={navLinks} />
 
-            <div className="h-6 w-px bg-border/50 hidden sm:block mx-1" />
+            <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
 
             <ThemeSwitcher />
             <ThemePopover className="hidden md:inline-flex" />
@@ -127,10 +127,10 @@ export default function Navbar({ user }: NavbarProps) {
                     key={category}
                     onClick={() => setActiveCategory(category)}
                     className={cn(
-                      "relative px-3 py-1.5 text-xs font-medium capitalize transition-colors rounded-md whitespace-nowrap",
+                      "relative h-8 whitespace-nowrap rounded-md px-3 text-caption font-medium capitalize transition-colors duration-150",
                       activeCategory === category
                         ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
                     {category}
@@ -334,12 +334,12 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
       {/* Desktop Search Button */}
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center w-56 h-9 px-3 rounded-lg border border-border/80 bg-card/80 hover:bg-card hover:border-border transition-all text-sm text-muted-foreground group"
+        className="group hidden h-9 w-60 items-center rounded-lg border border-border bg-card px-3 text-body text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground md:flex"
       >
-        <Search className="size-3.5 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" />
+        <Search className="mr-2 size-4" aria-hidden="true" />
         <span className="flex-1 text-left">Search...</span>
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-          <span className="text-xs">⌘</span>K
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded-sm border border-border bg-muted px-1.5 font-mono text-caption font-medium text-muted-foreground">
+          <span>⌘</span>K
         </kbd>
       </button>
 
@@ -374,7 +374,7 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
                   ? `No results found for "${search}"`
                   : "Start typing to search"}
               </p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
+              <p className="mt-1 text-caption text-muted-foreground">
                 Search for pages, commands, and more
               </p>
             </div>
@@ -390,19 +390,19 @@ export function QuickLinks({ user, publicLinks }: QuickLinksProps) {
         </CommandList>
 
         {/* Footer with Keyboard Hints */}
-        <div className="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-10 items-center gap-3 rounded-b-lg border-t border-border/40 bg-muted/30 px-4 text-xs font-medium">
+        <div className="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-10 items-center gap-3 rounded-b-lg border-t border-border bg-muted px-4 text-caption font-medium">
           <div className="flex items-center gap-2">
             <CommandMenuKbd>
               <CornerDownLeftIcon className="size-3" />
             </CommandMenuKbd>
             <span>Select</span>
           </div>
-          <div className="h-4 w-px bg-border/50" />
+          <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <CommandMenuKbd>↑↓</CommandMenuKbd>
             <span>Navigate</span>
           </div>
-          <div className="h-4 w-px bg-border/50" />
+          <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
             <CommandMenuKbd>Esc</CommandMenuKbd>
             <span>Close</span>
@@ -448,7 +448,7 @@ function CommandMenuItemComponent({
     <CommandItem
       ref={ref}
       className={cn(
-        "data-[selected=true]:border-input data-[selected=true]:bg-input/50 h-11 rounded-md border border-transparent px-3 font-medium flex items-center gap-3",
+        "data-[selected=true]:border-border data-[selected=true]:bg-muted h-11 rounded-md border border-transparent px-3 font-medium flex items-center gap-3",
         className
       )}
       {...props}
@@ -463,7 +463,7 @@ function CommandMenuKbd({ className, ...props }: React.ComponentProps<"kbd">) {
   return (
     <kbd
       className={cn(
-        "bg-background text-muted-foreground pointer-events-none inline-flex h-5 items-center justify-center gap-1 rounded border border-border/50 px-1.5 font-mono text-[10px] font-medium select-none",
+        "pointer-events-none inline-flex h-5 select-none items-center justify-center gap-1 rounded-sm border border-border bg-background px-1.5 font-mono text-caption font-medium text-muted-foreground",
         className
       )}
       {...props}
@@ -484,7 +484,7 @@ export function SocialBar({ className }: { className?: string }) {
           target="_blank"
           className={cn(
             "flex items-center justify-center size-8 rounded-full text-muted-foreground transition-all",
-            "hover:bg-primary/10 hover:text-primary hover:scale-105"
+            "hover:bg-muted hover:text-foreground"
           )}
         >
           <link.icon className="size-4" />

@@ -1,104 +1,134 @@
-import { GoToTopButton, SocialBar } from "@/components/common/navbar";
+import { FooterWordmark } from "@/components/site/footer-wordmark";
+import { socials } from "@/constants/links";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { appConfig, supportLinks } from "~/project.config";
+import { appConfig, orgConfig, supportLinks } from "~/project.config";
 import { ApplicationInfo } from "../logo";
-import GithubStars from "./github";
-import { ThemePopover, ThemeSwitcher } from "./theme-switcher";
 
-const footerSections = [
+const columns = [
+  {
+    title: "Academics",
+    links: [
+      { title: "Results", href: "/results" },
+      { title: "Syllabus", href: "/syllabus" },
+      { title: "Time tables", href: "/schedules" },
+      { title: "Classroom finder", href: "/classroom-availability" },
+      { title: "Academic calendar", href: "/academic-calendar" },
+    ],
+  },
   {
     title: "Community",
     links: [
-      ...supportLinks,
+      { title: "Community", href: "/community" },
+      { title: "Announcements", href: "/announcements" },
+      { title: "Polls", href: "/polls" },
+      { title: "Whisper Room", href: "/whisper-room" },
+    ],
+  },
+  {
+    title: "Project",
+    links: [
+      ...supportLinks.map((l) => ({ ...l, external: true })),
       {
         title: "GitHub Discussions",
         href: `${appConfig.githubRepo}/discussions`,
+        external: true,
       },
     ],
   },
   {
-    title: "About & Legal",
+    title: "Company",
     links: [
-      { title: "About Us", href: "/about" },
+      { title: "About", href: "/about" },
       { title: "Contact", href: "/contact" },
       { title: "Terms of Service", href: "/terms" },
       { title: "Privacy Policy", href: "/privacy-policy" },
-      { title: "Features", href: "/#features" },
     ],
   },
 ];
 
 export default function Footer({ className }: { className?: string }) {
   return (
-    <footer
-      className={cn(
-        "border-t border-border/40 bg-background pt-16 pb-8 lg:pt-24 lg:pb-12",
-        className
-      )}
-    >
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8">
-          <div className="lg:col-span-4 flex flex-col items-start gap-6">
-            <Link href="/" className="transition-opacity hover:opacity-80">
-              <ApplicationInfo />
-            </Link>
-
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              {appConfig.description}. <br />
-              Built for the open web.
-            </p>
-
-            <div className="flex flex-col gap-4">
-              <GithubStars />
-              <SocialBar className="ml-0" />
+    <>
+      <div aria-hidden="true" className="rail-dash w-full border-t-2" />
+      <footer
+        className={cn(
+          "rail-column mx-auto px-3 py-10 sm:px-6 sm:py-14",
+          className
+        )}
+      >
+        <div className="rounded-3xl border border-border bg-card px-6 py-8 sm:px-10 sm:py-10 dark:bg-background">
+          <div className="grid gap-10 lg:grid-cols-6">
+            <div className="flex flex-col items-start gap-4 lg:col-span-2">
+              <Link
+                href="/"
+                className="rounded-md transition-opacity duration-200 hover:opacity-80"
+                aria-label={`${appConfig.name} home`}
+              >
+                <ApplicationInfo />
+              </Link>
+              <p className="max-w-xs text-pretty text-body leading-relaxed text-muted-foreground">
+                {appConfig.description}
+              </p>
+              <div className="flex gap-1">
+                {socials.map((s) => (
+                  <a
+                    key={s.href}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={new URL(s.href).hostname.replace("www.", "")}
+                    className="grid size-10 place-items-center rounded-md text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+                  >
+                    <s.icon className="size-4.5" />
+                  </a>
+                ))}
+              </div>
             </div>
 
-            {/* <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mt-auto pt-4">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                All Systems Normal
-            </div> */}
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-4">
+              {columns.map((col) => (
+                <nav
+                  key={col.title}
+                  aria-label={col.title}
+                  className="flex flex-col gap-3"
+                >
+                  <span className="text-caption font-semibold text-foreground">
+                    {col.title}
+                  </span>
+                  <ul className="flex flex-col gap-2">
+                    {col.links.map((link) => (
+                      <li key={link.href + link.title}>
+                        <Link
+                          href={link.href}
+                          target={"external" in link ? "_blank" : undefined}
+                          rel={
+                            "external" in link
+                              ? "noopener noreferrer"
+                              : undefined
+                          }
+                          className="text-body text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                        >
+                          {link.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ))}
+            </div>
           </div>
 
-          <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:pl-12">
-            {footerSections.map((section) => (
-              <div key={section.title} className="flex flex-col gap-4">
-                <h3 className="text-sm font-semibold tracking-wide text-foreground">
-                  {section.title}
-                </h3>
-                <ul className="flex flex-col gap-3">
-                  {section.links.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-primary hover:underline underline-offset-4"
-                      >
-                        {link.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-16 border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-muted-foreground text-center md:text-left">
-            &copy; {new Date().getFullYear()} {appConfig.name} Inc. All rights
-            reserved.
-          </p>
-
-          <div className="flex items-center gap-4">
-            <ThemeSwitcher />
-            <ThemePopover className="md:hidden" />
-            <GoToTopButton />
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-border pt-5 text-caption text-muted-foreground">
+            <p>
+              © {new Date().getFullYear()} {appConfig.name}
+            </p>
+            <p>Open source · Built by students of {orgConfig.shortName}</p>
           </div>
         </div>
-      </div>
-    </footer>
+
+        <FooterWordmark text={orgConfig.shortName} />
+      </footer>
+    </>
   );
 }

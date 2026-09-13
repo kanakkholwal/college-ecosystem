@@ -166,35 +166,33 @@ export interface BrandThemeType {
   color: string;
 }
 
+/** Swatch colours. The applied light/dark pairs live in global.css under `[data-brand]`. */
 export const brand_themes: BrandThemeType[] = [
-  { id: "teal", label: "Teal", color: "#0d9488" },
-  { id: "violet", label: "Violet", color: "#7c3aed" },
-  { id: "indigo", label: "Indigo", color: "#4f46e5" },
-  { id: "blue", label: "Ocean", color: "#2563eb" },
-  { id: "sky", label: "Sky", color: "#0284c7" },
-  { id: "emerald", label: "Emerald", color: "#059669" },
-  { id: "amber", label: "Amber", color: "#d97706" },
-  { id: "orange", label: "Tangerine", color: "#ea580c" },
-  { id: "rose", label: "Rose", color: "#e11d48" },
-  { id: "crimson", label: "Crimson", color: "#dc2626" },
+  { id: "teal", label: "Teal", color: "#0f766e" },
+  { id: "violet", label: "Violet", color: "#6d28d9" },
+  { id: "indigo", label: "Indigo", color: "#4338ca" },
+  { id: "blue", label: "Ocean", color: "#1d4ed8" },
+  { id: "sky", label: "Sky", color: "#0369a1" },
+  { id: "emerald", label: "Emerald", color: "#047857" },
+  { id: "amber", label: "Amber", color: "#b45309" },
+  { id: "orange", label: "Tangerine", color: "#c2410c" },
+  { id: "rose", label: "Rose", color: "#be123c" },
+  { id: "crimson", label: "Crimson", color: "#b91c1c" },
   { id: "slate", label: "Graphite", color: "#475569" },
   { id: "zinc", label: "Carbon", color: "#27272a" },
 ];
 
 function brandThemeCallback(currentTheme: BrandThemeType) {
-  // Fallback to default if storage has invalid data
   const selected =
     brand_themes.find((t) => t.id === currentTheme.id) || brand_themes[0];
 
   const root = document.documentElement;
+  // Older builds wrote a single hex inline for both themes; clear it so the token pairs apply.
+  root.style.removeProperty("--primary");
+  root.style.removeProperty("--ring");
+  if (selected.id === brand_themes[0].id) delete root.dataset.brand;
+  else root.dataset.brand = selected.id;
 
-  // Inject Hex Color
-  root.style.setProperty("--primary", selected.color);
-  root.style.setProperty("--ring", selected.color);
-  // Optional: If you use HSL in Tailwind (e.g. 262 80% 50%)
-  // You might need a hexToHsl helper here if your tailwind.config uses <alpha-value>
-
-  // Update Meta Theme Color for Mobile Browsers
   let themeMeta = document.querySelector<HTMLMetaElement>(
     'meta[name="theme-color"]'
   );

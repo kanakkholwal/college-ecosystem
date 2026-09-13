@@ -1,7 +1,8 @@
-import { cn } from "@/lib/utils";
+import "@fontsource-variable/google-sans";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/source-code-pro";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
-import { Inter as FontSans, Space_Mono } from "next/font/google";
 import Script from "next/script";
 import { appConfig, orgConfig } from "~/project.config";
 import "./global.css";
@@ -83,16 +84,6 @@ export const metadata: Metadata = {
   },
 };
 
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
-const fontMono = Space_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: "400",
-});
-
 type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
@@ -107,13 +98,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
         <meta name="apple-mobile-web-app-title" content={appConfig.shortName} />
       </head>
-      <body
-        className={cn(
-          "min-h-screen min-w-screen w-full antialiased",
-          fontSans.variable,
-          fontMono.variable
-        )}
-      >
+      <body className="min-h-screen w-full antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
