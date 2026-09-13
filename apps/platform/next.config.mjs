@@ -54,6 +54,9 @@ const nextConfig = {
   // Trailing slashes help with Azure SWA routing
   trailingSlash: true,
   poweredByHeader: false,
+  // Vercel and Cloudflare compress at the edge. Next's own gzip attaches a drain listener per
+  // backpressured write of a streamed page, tripping MaxListenersExceededWarning on Suspense-heavy routes.
+  compress: false,
   // Reduce bundle size
 
   // optimizePackageImports: [

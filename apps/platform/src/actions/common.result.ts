@@ -1,11 +1,12 @@
 "use server";
+import { after } from "next/server";
 import { cache } from "react";
 import type { ResultTypeWithId } from "~/models/result";
 
 import { PipelineStage } from "mongoose";
 import dbConnect from "~/lib/dbConnect";
 import { serverFetch } from "~/lib/fetch-server";
-import redis from "~/lib/redis";
+import { redisGet, redisSet } from "~/lib/redis";
 import ResultModel from "~/models/result";
 import { consumeRateLimit, getClientIp } from "~/lib/rate-limit";
 import { z } from "zod/v3";
@@ -64,22 +65,10 @@ export async function getResults(
     ];
     const cacheKey = `results:${keyParts.join("|")}`;
 
+    // A forced refresh skips the read; the write below overwrites the stale entry.
     if (!new_cache) {
-      try {
-        const cached = await redis?.get(cacheKey);
-        if (cached) {
-          console.log("Cache hit for key:", cacheKey);
-          return JSON.parse(cached) as getResultsReturnType;
-        }
-      } catch (e) {
-        console.log("Redis GET error:", e);
-      }
-    } else {
-      try {
-        await redis?.del(cacheKey);
-      } catch (e) {
-        console.log("Redis DEL error:", e);
-      }
+      const cached = await redisGet<getResultsReturnType>(cacheKey);
+      if (cached) return cached;
     }
 
     await dbConnect();
@@ -173,11 +162,8 @@ export async function getResults(
     const totalPages = Math.max(1, Math.ceil(totalCount / resultsPerPage));
     const response = { results, totalPages, totalCount };
 
-    try {
-      await redis?.set(cacheKey, JSON.stringify(response), "EX", 60 * 60 * 24);
-    } catch (e) {
-      console.log("Redis SET error:", e);
-    }
+    // Cache writes never block the response.
+    after(() => redisSet(cacheKey, response, 60 * 60 * 24));
 
     return response;
   } catch (err) {
@@ -195,18 +181,8 @@ export const getCachedLabels = cache(
   async (new_cache?: boolean): Promise<CachedLabels> => {
     const cacheKey = "result:cached_labels:v1";
     if (!new_cache) {
-      try {
-        const cached = await redis?.get(cacheKey);
-        if (cached) return JSON.parse(cached);
-      } catch (e) {
-        console.log("Redis GET error:", e);
-      }
-    } else {
-      try {
-        await redis?.del(cacheKey);
-      } catch (e) {
-        console.log("Redis DEL error:", e);
-      }
+      const cached = await redisGet<CachedLabels>(cacheKey);
+      if (cached) return cached;
     }
 
     try {
@@ -219,16 +195,7 @@ export const getCachedLabels = cache(
       ]);
 
       const labels = { branches, batches, programmes };
-      try {
-        await redis?.set(
-          cacheKey,
-          JSON.stringify(labels),
-          "EX",
-          60 * 60 * 24 * 30 * 6
-        ); // 6 months
-      } catch (e) {
-        console.log("Redis SET error:", e);
-      }
+      after(() => redisSet(cacheKey, labels, 60 * 60 * 24 * 30 * 6));
       return labels;
     } catch (err) {
       console.error("Error fetching labels:", err);
@@ -247,26 +214,9 @@ async function loadResult(
   is_new?: boolean
 ): Promise<ResultTypeWithId | null> {
   const cacheKey = `result:r:${rollNo}`;
-  try {
-    if (!is_new && !update) {
-      try {
-        const cached = await redis?.get(cacheKey);
-        if (cached) {
-          console.log("Cache hit for key:", cacheKey);
-          return JSON.parse(cached) as ResultTypeWithId;
-        }
-      } catch (e) {
-        console.log("Redis GET error:", e);
-      }
-    } else {
-      try {
-        await redis?.del(cacheKey);
-      } catch (e) {
-        console.log("Redis DEL error:", e);
-      }
-    }
-  } catch (e) {
-    console.log("Cache Error in getResultByRollNo:", e);
+  if (!is_new && !update) {
+    const cached = await redisGet<ResultTypeWithId>(cacheKey);
+    if (cached) return cached;
   }
 
   await dbConnect();
@@ -286,11 +236,7 @@ async function loadResult(
     const updated = response.data?.data;
     if (response.error || !updated) return null;
     await assignRanks();
-    try {
-      await redis?.set(cacheKey, JSON.stringify(updated), "EX", 60);
-    } catch (e) {
-      console.log("Redis SET error:", e);
-    }
+    after(() => redisSet(cacheKey, updated, 60));
     return updated;
   }
 
@@ -306,11 +252,7 @@ async function loadResult(
     const created = response.data?.data;
     if (response.error || !created) return null;
     await assignRanks();
-    try {
-      await redis?.set(cacheKey, JSON.stringify(created), "EX", 60);
-    } catch (e) {
-      console.log("Redis SET error:", e);
-    }
+    after(() => redisSet(cacheKey, created, 60));
     return created;
   }
 
@@ -319,11 +261,7 @@ async function loadResult(
     return null;
   }
 
-  try {
-    await redis?.set(cacheKey, JSON.stringify(result), "EX", 60);
-  } catch (e) {
-    console.log("Redis SET error:", e);
-  }
+  after(() => redisSet(cacheKey, result, 60));
 
   return JSON.parse(JSON.stringify(result)); // deep clone
 }

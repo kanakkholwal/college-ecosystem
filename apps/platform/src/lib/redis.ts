@@ -1,141 +1,170 @@
-import Redis from "ioredis";
+import Redis, { type RedisOptions } from "ioredis";
 
-const REDIS_URL = process.env.REDIS_URL;
+// Redis is a cache only: every helper resolves to a fallback instead of throwing or waiting.
+const REDIS_URL = process.env.REDIS_URL!;
 
-if (!REDIS_URL) {
-  console.warn("[redis] REDIS_URL not set – caching disabled");
+const COMMAND_TIMEOUT_MS = 400;
+const CONNECT_TIMEOUT_MS = 1500;
+const FAILURES_BEFORE_OPEN = 3;
+const BASE_COOLDOWN_MS = 30_000;
+const MAX_COOLDOWN_MS = 5 * 60_000;
+// A spent free-tier quota won't recover in minutes, so back off for an hour.
+const QUOTA_COOLDOWN_MS = 60 * 60_000;
+const QUOTA_ERROR =
+  /max (daily|monthly)? ?requests? limit|limit exceeded|quota|exceeded .*limit|OOM command not allowed/i;
+
+type BreakerState = {
+  failures: number;
+  openUntil: number;
+  cooldown: number;
+  loggedOpen: boolean;
+};
+
+type RedisGlobal = typeof globalThis & {
+  __redisClient?: Redis | null;
+  __redisBreaker?: BreakerState;
+};
+
+const g = globalThis as RedisGlobal;
+
+// Dev HMR re-evaluates this module; reuse one client instead of leaking a connection per reload.
+if (!g.__redisBreaker) {
+  g.__redisBreaker = {
+    failures: 0,
+    openUntil: 0,
+    cooldown: BASE_COOLDOWN_MS,
+    loggedOpen: false,
+  };
+}
+const breaker: BreakerState = g.__redisBreaker;
+
+function createClient(): Redis | null {
+  if (!REDIS_URL) {
+    console.warn("[redis] REDIS_URL not set, caching disabled");
+    return null;
+  }
+  const options: Omit<RedisOptions, "T"> = {
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 0,
+    connectTimeout: CONNECT_TIMEOUT_MS,
+    commandTimeout: COMMAND_TIMEOUT_MS,
+    // Reconnect in the background with backoff; while the breaker is open, stop and let the next request retry.
+    retryStrategy(times) {
+      if (Date.now() < breaker.openUntil) return null;
+      return Math.min(times * 500, 10_000);
+    },
+    reconnectOnError(err) {
+      return /READONLY|ECONNRESET|ETIMEDOUT|LOADING/.test(err.message);
+    },
+  };
+  // ioredis 5.11.1 ships a stray required "T" in RedisOptions (a doc-comment typo); drop the cast once it's fixed upstream.
+  const client = new Redis(REDIS_URL, options as RedisOptions);
+  // Without an error listener ioredis rethrows connection errors as unhandled and crashes the process.
+  client.on("error", (err) => recordFailure(err));
+  client.on("ready", () => recordSuccess());
+  return client;
 }
 
-// ---- Redis instance (lazy-safe) ----
-const redis = new Redis(REDIS_URL, {
-  lazyConnect: true,
-  maxRetriesPerRequest: 1, // fail fast
-  enableOfflineQueue: false, // don't pile up commands
-  reconnectOnError(err) {
-    // reconnect on READONLY / connection resets / max clients
-    const msg = err.message || "";
-    return (
-      msg.includes("READONLY") ||
-      msg.includes("ECONNRESET") ||
-      msg.includes("ETIMEDOUT") ||
-      msg.includes("max number of clients") ||
-      msg.includes("LOADING")
+const client: Redis | null =
+  g.__redisClient !== undefined ? g.__redisClient : createClient();
+g.__redisClient = client;
+
+function recordSuccess() {
+  if (breaker.failures > 0 || breaker.openUntil > 0) {
+    if (breaker.loggedOpen) console.info("[redis] recovered, cache enabled");
+  }
+  breaker.failures = 0;
+  breaker.openUntil = 0;
+  breaker.cooldown = BASE_COOLDOWN_MS;
+  breaker.loggedOpen = false;
+}
+
+function recordFailure(err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  const quota = QUOTA_ERROR.test(message);
+  breaker.failures += 1;
+  if (!quota && breaker.failures < FAILURES_BEFORE_OPEN) return;
+
+  const cooldown = quota ? QUOTA_COOLDOWN_MS : breaker.cooldown;
+  breaker.openUntil = Date.now() + cooldown;
+  if (!quota)
+    breaker.cooldown = Math.min(breaker.cooldown * 2, MAX_COOLDOWN_MS);
+  if (!breaker.loggedOpen) {
+    console.warn(
+      `[redis] ${quota ? "quota exhausted" : "unavailable"} (${message}); skipping cache for ${Math.round(cooldown / 1000)}s`
     );
-  },
-  retryStrategy(times) {
-    // exponential backoff, cap at 5s
-    return Math.min(times * 200, 5000);
-  },
-});
-
-// ---- Connection guards ----
-async function ensureRedisReady(): Promise<boolean> {
-  if (!redis) return false;
-
-  try {
-    if (redis.status === "ready") return true;
-    if (redis.status === "connecting") return false;
-
-    await redis.connect();
-    return true;
-  } catch (err) {
-    console.error("[redis] connect failed:", (err as Error).message);
-    return false;
+    breaker.loggedOpen = true;
   }
 }
 
-// ---- Flush ALL keys (safe wrapper) ----
-// Server-only helper; call it through an admin-checked action, never mark it "use server".
-export async function flushAllRedisKeys(): Promise<boolean> {
-  if (!(await ensureRedisReady())) {
-    console.warn("[redis] flush skipped – redis not ready");
-    return false;
-  }
-
-  try {
-    await redis!.flushall();
-    console.log("[redis] FLUSHALL successful");
-    return true;
-  } catch (err) {
-    const msg = (err as Error).message;
-    console.error("[redis] FLUSHALL failed:", msg);
-
-    // plan limits / managed redis restrictions
-    if (
-      msg.includes("NOPERM") ||
-      msg.includes("permission") ||
-      msg.includes("unknown command")
-    ) {
-      console.warn("[redis] FLUSHALL not permitted on this plan");
-    }
-
-    return false;
-  }
+/** Cheap synchronous check callers can use to skip cache work entirely. */
+export function isRedisAvailable(): boolean {
+  return client !== null && Date.now() >= breaker.openUntil;
 }
 
-// ---- Safe wrappers (use these instead of redis.get/set directly) ----
-export async function redisGet<T = any>(key: string): Promise<T | null> {
-  if (!(await ensureRedisReady())) return null;
-
+async function getReadyClient(): Promise<Redis | null> {
+  if (!client || !isRedisAvailable()) return null;
+  if (client.status === "ready") return client;
+  // Connecting or reconnecting: don't make this request wait on it.
+  if (client.status !== "wait" && client.status !== "end") return null;
   try {
-    const val = await redis!.get(key);
-    return val ? (JSON.parse(val) as T) : null;
+    await client.connect();
+    return client;
   } catch (err) {
-    console.error("[redis] GET error:", (err as Error).message);
+    recordFailure(err);
     return null;
   }
 }
 
-export async function redisSet(
+async function run<T>(op: (c: Redis) => Promise<T>, fallback: T): Promise<T> {
+  const c = await getReadyClient();
+  if (!c) return fallback;
+  try {
+    const result = await op(c);
+    if (breaker.failures > 0) recordSuccess();
+    return result;
+  } catch (err) {
+    recordFailure(err);
+    return fallback;
+  }
+}
+
+export async function redisGet<T = unknown>(key: string): Promise<T | null> {
+  const raw = await run((c) => c.get(key), null);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    // A corrupt entry is a cache miss, not an outage.
+    return null;
+  }
+}
+
+export function redisSet(
   key: string,
-  value: any,
+  value: unknown,
   ttlSeconds?: number
 ): Promise<boolean> {
-  if (!(await ensureRedisReady())) return false;
-
-  try {
+  return run(async (c) => {
     const payload = JSON.stringify(value);
-    if (ttlSeconds) {
-      await redis!.set(key, payload, "EX", ttlSeconds);
-    } else {
-      await redis!.set(key, payload);
-    }
+    if (ttlSeconds) await c.set(key, payload, "EX", ttlSeconds);
+    else await c.set(key, payload);
     return true;
-  } catch (err) {
-    console.error("[redis] SET error:", (err as Error).message);
-    return false;
-  }
+  }, false);
 }
 
-export async function redisDel(key: string): Promise<boolean> {
-  if (!(await ensureRedisReady())) return false;
-
-  try {
-    await redis!.del(key);
+export function redisDel(key: string): Promise<boolean> {
+  return run(async (c) => {
+    await c.del(key);
     return true;
-  } catch (err) {
-    console.error("[redis] DEL error:", (err as Error).message);
-    return false;
-  }
+  }, false);
 }
 
-// ---- Optional lifecycle logs (useful in prod) ----
-if (redis) {
-  redis.on("connect", () => {
-    console.log("[redis] connected");
-  });
-
-  redis.on("ready", () => {
-    console.log("[redis] ready");
-  });
-
-  redis.on("error", (err) => {
-    console.error("[redis] error:", err.message);
-  });
-
-  redis.on("close", () => {
-    console.warn("[redis] connection closed");
-  });
+/** Server-only helper; call it through an admin-checked action, never mark it "use server". */
+export function flushAllRedisKeys(): Promise<boolean> {
+  return run(async (c) => {
+    await c.flushall();
+    return true;
+  }, false);
 }
-
-export default redis;
