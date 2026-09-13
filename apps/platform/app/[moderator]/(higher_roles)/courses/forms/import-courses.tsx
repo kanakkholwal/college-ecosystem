@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, CircleCheck, FileUp, Loader2, TriangleAlert } from "lucide-react";
+import {
+  ChevronDown,
+  CircleCheck,
+  FileUp,
+  Loader2,
+  TriangleAlert,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import toast from "react-hot-toast";
@@ -12,10 +18,18 @@ import type { z } from "zod";
 import type { courseSchemaByOCR } from "~/constants/common.course";
 import { DEPARTMENTS_LIST } from "~/constants/core.departments";
 import { importCourses } from "../actions";
-import { type CourseFormValues, courseFormSchema, EMPTY_COURSE } from "./schema";
+import {
+  type CourseFormValues,
+  courseFormSchema,
+  EMPTY_COURSE,
+} from "./schema";
 
 type Extracted = z.infer<typeof courseSchemaByOCR>;
-type Candidate = { values: CourseFormValues; problem: string | null };
+type Candidate = {
+  uid: string;
+  values: CourseFormValues;
+  problem: string | null;
+};
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 
@@ -47,6 +61,7 @@ function toCandidate(course: Extracted): Candidate {
   };
   const parsed = courseFormSchema.safeParse(values);
   return {
+    uid: crypto.randomUUID(),
     values,
     problem: parsed.success
       ? null
@@ -133,7 +148,9 @@ export default function ImportCourses({
         );
       }
       if (failed.length) {
-        toast.error(`Couldn't save ${failed.join(", ")}. Review them in the form.`);
+        toast.error(
+          `Couldn't save ${failed.join(", ")}. Review them in the form.`
+        );
       }
       setCandidates((prev) =>
         prev ? prev.filter((c) => !saved.includes(c.values.code)) : prev
@@ -180,7 +197,9 @@ export default function ImportCourses({
             onClick={extract}
             disabled={!file || extracting}
           >
-            {extracting && <Loader2 className="animate-spin" aria-hidden="true" />}
+            {extracting && (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            )}
             {extracting ? "Reading document..." : "Find courses"}
           </Button>
         </div>
@@ -199,7 +218,7 @@ export default function ImportCourses({
                 const ready = candidate.problem === null;
                 return (
                   <li
-                    key={`${candidate.values.code}-${index}`}
+                    key={candidate.uid}
                     className="flex flex-col gap-3 rounded-xl border border-border p-3 sm:flex-row sm:items-center"
                   >
                     <Checkbox
@@ -218,12 +237,18 @@ export default function ImportCourses({
                       <span className="flex items-center gap-1.5 text-caption text-muted-foreground">
                         {ready ? (
                           <>
-                            <CircleCheck className="size-3.5 text-success" aria-hidden="true" />
+                            <CircleCheck
+                              className="size-3.5 text-success"
+                              aria-hidden="true"
+                            />
                             Ready, {candidate.values.chapters.length} units
                           </>
                         ) : (
                           <>
-                            <TriangleAlert className="size-3.5 text-warning" aria-hidden="true" />
+                            <TriangleAlert
+                              className="size-3.5 text-warning"
+                              aria-hidden="true"
+                            />
                             Needs review: {candidate.problem}
                           </>
                         )}
@@ -248,8 +273,11 @@ export default function ImportCourses({
                 disabled={selected.size === 0 || isSaving}
                 onClick={saveSelected}
               >
-                {isSaving && <Loader2 className="animate-spin" aria-hidden="true" />}
-                Save {selected.size} {selected.size === 1 ? "course" : "courses"}
+                {isSaving && (
+                  <Loader2 className="animate-spin" aria-hidden="true" />
+                )}
+                Save {selected.size}{" "}
+                {selected.size === 1 ? "course" : "courses"}
               </Button>
             </div>
           </div>

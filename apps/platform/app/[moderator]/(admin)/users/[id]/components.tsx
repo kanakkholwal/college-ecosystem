@@ -205,7 +205,9 @@ export function UserAccessForm({
                   <FormControl>
                     <Input placeholder="Not set" {...field} />
                   </FormControl>
-                  <FormDescription>Shown on their public profile.</FormDescription>
+                  <FormDescription>
+                    Shown on their public profile.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -406,7 +408,10 @@ export function UserAccessForm({
         </Panel>
 
         <div className="flex flex-wrap items-center justify-end gap-3">
-          <p className="mr-auto text-body text-muted-foreground" aria-live="polite">
+          <p
+            className="mr-auto text-body text-muted-foreground"
+            aria-live="polite"
+          >
             {dirty ? "You have unsaved changes." : "All changes saved."}
           </p>
           <Button
@@ -464,16 +469,15 @@ export function UserAccessForm({
 
 function deviceLabel(userAgent: string | null) {
   if (!userAgent) return "Unknown device";
-  const browser =
-    /Edg\//.test(userAgent)
-      ? "Edge"
-      : /Chrome\//.test(userAgent)
-        ? "Chrome"
-        : /Firefox\//.test(userAgent)
-          ? "Firefox"
-          : /Safari\//.test(userAgent)
-            ? "Safari"
-            : "Browser";
+  const browser = /Edg\//.test(userAgent)
+    ? "Edge"
+    : /Chrome\//.test(userAgent)
+      ? "Chrome"
+      : /Firefox\//.test(userAgent)
+        ? "Firefox"
+        : /Safari\//.test(userAgent)
+          ? "Safari"
+          : "Browser";
   const os = /Android/.test(userAgent)
     ? "Android"
     : /iPhone|iPad/.test(userAgent)
@@ -642,7 +646,11 @@ export function UserSessions({
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-            <Button variant="destructive" disabled={pending} onClick={revokeAll}>
+            <Button
+              variant="destructive"
+              disabled={pending}
+              onClick={revokeAll}
+            >
               {pending ? "Signing out..." : "Sign out everywhere"}
             </Button>
           </AlertDialogFooter>
@@ -755,7 +763,9 @@ export function UserAccountActions({
                 </AlertDialogTitle>
                 <AlertDialogDescription asChild>
                   <ul className="flex list-disc flex-col gap-1 pl-5 text-body text-muted-foreground">
-                    <li>You leave your admin session and act as this account.</li>
+                    <li>
+                      You leave your admin session and act as this account.
+                    </li>
                     <li>
                       Anything you change, post or submit is recorded as{" "}
                       {target.name}.
@@ -769,7 +779,11 @@ export function UserAccountActions({
               </AlertDialogHeader>
               <AlertDialogFooter className="gap-2">
                 <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-                <Button variant="primary" disabled={pending} onClick={impersonate}>
+                <Button
+                  variant="primary"
+                  disabled={pending}
+                  onClick={impersonate}
+                >
                   {pending ? "Switching..." : `Impersonate ${target.name}`}
                 </Button>
               </AlertDialogFooter>
@@ -787,8 +801,8 @@ export function UserAccountActions({
                       <li>Their sign-in, sessions and linked accounts</li>
                       <li>Attendance records and classroom usage history</li>
                       <li>
-                        Announcements, community posts, comments and polls
-                        they created
+                        Announcements, community posts, comments and polls they
+                        created
                       </li>
                       <li>Their hostel student record</li>
                     </ul>
@@ -797,7 +811,11 @@ export function UserAccountActions({
               </AlertDialogHeader>
               <AlertDialogFooter className="gap-2">
                 <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-                <Button variant="destructive" disabled={pending} onClick={remove}>
+                <Button
+                  variant="destructive"
+                  disabled={pending}
+                  onClick={remove}
+                >
                   {pending ? "Deleting..." : "Delete account"}
                 </Button>
               </AlertDialogFooter>

@@ -1,4 +1,10 @@
 "use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import type z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,15 +25,8 @@ import {
   MultiSelectorTrigger,
 } from "@/components/ui/multi-select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
-import type z from "zod";
 import { createHostel, importHostelsFromSite } from "~/actions/hostel.core";
-import { IN_CHARGES_EMAILS } from "~/constants/hostel_n_outpass";
-
-import { createHostelSchema } from "~/constants/hostel_n_outpass";
+import { createHostelSchema, IN_CHARGES_EMAILS } from "~/constants/hostel_n_outpass";
 
 export function CreateHostelForm() {
   const form = useForm<z.infer<typeof createHostelSchema>>({
@@ -45,17 +44,17 @@ export function CreateHostelForm() {
       students: [],
     },
   });
+  const router = useRouter();
   const handleSubmit = async (data: z.infer<typeof createHostelSchema>) => {
-    try {
-      toast.promise(createHostel(data), {
-        loading: "Creating Hostel",
-        success: "Hostel created successfully",
-        error: "Failed to create hostel",
-      });
-
-      toast.success("Hostel created successfully");
-    } catch (error) {
-      toast.error("Failed to create user");
+    const res = await createHostel(data);
+    if (res.success) {
+      toast.success(`${data.name} added`);
+      form.reset();
+      router.refresh();
+    } else {
+      toast.error(
+        typeof res.error === "string" ? res.error : "Couldn't add the hostel"
+      );
     }
   };
 
@@ -84,7 +83,11 @@ export function CreateHostelForm() {
                       const value = e.target.value;
                       form.setValue(
                         "slug",
-                        value.toLowerCase().replace(" ", "_")
+                        value
+                          .trim()
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, "-")
+                          .replace(/^-|-$/g, "")
                       );
                       field.onChange(e);
                     }}
@@ -232,8 +235,12 @@ export function CreateHostelForm() {
           />
         </div>
 
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          Add Hostel
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting ? "Adding hostel" : "Add hostel"}
         </Button>
       </form>
     </Form>
@@ -241,31 +248,27 @@ export function CreateHostelForm() {
 }
 
 export function ImportFromSiteButton() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   return (
     <Button
-      variant="success_soft"
-      size="sm"
+      variant="primary"
       onClick={() => {
         setLoading(true);
         toast
           .promise(importHostelsFromSite(), {
-            loading: "Importing Hostels",
-            success: (data: string | undefined) => {
-              console.log(data);
-              return data || "Hostels imported successfully";
-            },
+            loading: "Importing hostels",
+            success: (data: string | undefined) => data || "Hostels imported",
             error: (msg: string | undefined) =>
               msg || "Failed to import hostels",
           })
-          .finally(() => {
-            setLoading(false);
-          });
+          .then(() => router.refresh())
+          .finally(() => setLoading(false));
       }}
       disabled={loading}
     >
-      {loading ? "Importing Hostels" : "Import Hostels"}
+      {loading ? "Importing hostels" : "Import from college site"}
     </Button>
   );
 }

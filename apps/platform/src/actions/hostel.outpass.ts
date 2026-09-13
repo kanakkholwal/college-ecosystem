@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import type z from "zod";
+import { ROLES_ENUMS } from "~/constants";
 import { REASONS, requestOutPassSchema } from "~/constants/hostel.outpass";
 import dbConnect from "~/lib/dbConnect";
 import {
@@ -11,8 +12,8 @@ import {
   authorizeHostelManager,
   authorizeResident,
   getHostelSession,
-  hasRole,
   HOSTEL_STAFF_ROLES,
+  hasRole,
   isCampusWide,
   isListedStaff,
 } from "~/lib/hostel-access";
@@ -21,7 +22,6 @@ import {
   OutPassModel,
   type OutPassType,
 } from "~/models/hostel_n_outpass";
-import { ROLES_ENUMS } from "~/constants";
 
 const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
 
@@ -51,7 +51,10 @@ export async function createOutPass(
     const { hosteler, hostel } = access;
 
     const now = new Date();
-    if (hosteler.banned && (!hosteler.bannedTill || hosteler.bannedTill > now)) {
+    if (
+      hosteler.banned &&
+      (!hosteler.bannedTill || hosteler.bannedTill > now)
+    ) {
       return Promise.reject(
         `You can't request outpasses until ${hosteler.bannedTill ? format(new Date(hosteler.bannedTill), "dd/MM/yyyy HH:mm") : "the warden lifts the ban"}`
       );
@@ -206,10 +209,7 @@ const describeGateState = (status?: string) => {
   }
 };
 
-/**
- * Atomic: the status only moves approved -> in_use -> processed, so a double scan
- * or two guards on the same pass can never log twice or step backwards.
- */
+/** Atomic approved -> in_use -> processed, so a double scan never logs twice or steps back. */
 export async function allowEntryExit(
   id: string,
   action_type: "entry" | "exit"
@@ -233,7 +233,13 @@ export async function allowEntryExit(
           actualOutTime: null,
           expectedInTime: { $gt: now },
         },
-        { $set: { status: "in_use", actualOutTime: now, exitLoggedBy: loggedBy } },
+        {
+          $set: {
+            status: "in_use",
+            actualOutTime: now,
+            exitLoggedBy: loggedBy,
+          },
+        },
         { new: true }
       ).lean();
       if (updated) return "Exit logged.";
@@ -252,7 +258,11 @@ export async function allowEntryExit(
     const updated = await OutPassModel.findOneAndUpdate(
       { _id: id, status: "in_use", actualInTime: null },
       {
-        $set: { status: "processed", actualInTime: now, entryLoggedBy: loggedBy },
+        $set: {
+          status: "processed",
+          actualInTime: now,
+          entryLoggedBy: loggedBy,
+        },
       },
       { new: true }
     ).lean();
@@ -273,10 +283,7 @@ export async function allowEntryExit(
   }
 }
 
-/**
- * Only staff of the outpass's hostel (or campus-wide roles) may decide, and only while pending.
- * Repeating the same decision is a no-op; the opposite decision is refused.
- */
+/** Hostel staff decide once while pending; a repeat is a no-op, the opposite is refused. */
 export async function approveRejectOutPass(
   id: string,
   action: "approve" | "reject",
@@ -485,7 +492,13 @@ export async function getOutPassByIdForHosteler(
   slug?: string
 ): Promise<{
   data: OutPassType[] | null;
-  student: { _id: string; name: string; rollNumber: string; email: string; roomNumber: string } | null;
+  student: {
+    _id: string;
+    name: string;
+    rollNumber: string;
+    email: string;
+    roomNumber: string;
+  } | null;
   error: string | null;
 }> {
   if (!mongoose.isValidObjectId(studentId)) {

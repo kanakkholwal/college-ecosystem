@@ -1,33 +1,25 @@
 "use client";
 
 import {
-  ArrowRight,
-  Database,
+  ArrowLeft,
+  CircleAlert,
+  CircleCheck,
   FileSpreadsheet,
+  LoaderCircle,
+  Lock,
+  LockOpen,
   RotateCcw,
-  UploadCloud,
 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner"; // or react-hot-toast
+import { useRouter } from "next/navigation";
+import { useId, useState } from "react";
+import toast from "react-hot-toast";
+import { readSheet as readXlsxFile } from "read-excel-file/browser";
 import wordsToNumbers from "words-to-numbers";
-
-// Actions & Utils
-import { ExcelFileHandler } from "@/components/application/xlsx.control";
-import { addHostelRooms } from "~/actions/hostel.allotment-process";
-import { filterColumnsByCallback, filterRowsByCallback } from "~/utils/xlsx";
-
-// UI Components
+import BaseSearchBox from "@/components/application/base-search";
+import type { FilterOption } from "@/components/application/filter-panel";
+import { TableFrame, Td, Th } from "@/components/application/hostel/ui";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -35,326 +27,394 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import {
+  addHostelRooms,
+  lockToggleRoom,
+} from "~/actions/hostel.allotment-process";
 
-export function HostelImporter({ hostelId }: { hostelId: string }) {
-  // State
-  const [extractedKeys, setExtractedKeys] = useState<string[]>([]);
-  const [data, setData] = useState<string[][]>([]);
-  const [fileLoaded, setFileLoaded] = useState(false);
+const FILTERS: FilterOption[] = [
+  {
+    key: "availability",
+    label: "Availability",
+    values: [
+      { value: "free", label: "Has free beds" },
+      { value: "full", label: "Full" },
+      { value: "locked", label: "Locked" },
+    ],
+  },
+  {
+    key: "capacity",
+    label: "Beds per room",
+    values: ["1", "2", "3", "4", "5", "6", "7"].map((v) => ({
+      value: v,
+      label: `${v} ${v === "1" ? "bed" : "beds"}`,
+    })),
+  },
+];
 
-  // Mapping State
-  const [mappings, setMappings] = useState<{
-    roomKey: string;
-    capacityKey: string;
-  }>({
-    roomKey: "",
-    capacityKey: "",
-  });
-
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // --- Handlers ---
-
-  const handleFileLoad = async (rawData: any[]) => {
-    // 1. Filter Empty Rows
-    const filteredRows = filterRowsByCallback<string[]>(
-      rawData,
-      (row) =>
-        row.length > 0 &&
-        row.some((cell) => cell !== null && cell !== undefined && cell !== "")
-    );
-
-    // 2. Filter Empty Columns & Extract Headers
-    const cleanData = filterColumnsByCallback<string[]>(
-      filteredRows,
-      (cell) =>
-        cell !== null && cell !== undefined && cell.toString().trim() !== ""
-    );
-
-    if (cleanData.length < 2) {
-      toast.error("File is empty or invalid. Please check the format.");
-      return;
-    }
-
-    const [headers, ...rows] = cleanData;
-    setExtractedKeys(headers);
-    setData(rows);
-    setFileLoaded(true);
-    toast.success(`File loaded: ${rows.length} rows found`);
-  };
-
-  const handleReset = () => {
-    setExtractedKeys([]);
-    setData([]);
-    setFileLoaded(false);
-    setMappings({ roomKey: "", capacityKey: "" });
-  };
-
-  const processImport = async () => {
-    if (!mappings.roomKey || !mappings.capacityKey) {
-      toast.error("Please map both Room Number and Capacity columns.");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      const roomIndex = extractedKeys.indexOf(mappings.roomKey);
-      const capacityIndex = extractedKeys.indexOf(mappings.capacityKey);
-
-      // Transform Data
-      const processedData = data.map((row) => {
-        // Safe Capacity Parsing (Words to Numbers)
-        const rawCapacity = row[capacityIndex];
-        const capacityString = rawCapacity ? rawCapacity.toString() : "1";
-        const parsedCapacity = wordsToNumbers(
-          capacityString.split(" ")[0].toLowerCase()
-        );
-
-        return {
-          roomNumber: row[roomIndex]?.toString() || "Unknown",
-          capacity: parsedCapacity ? Number(parsedCapacity) : 1,
-          occupied_seats: 0,
-          isLocked: false,
-          hostStudent: null,
-          hostel: hostelId,
-        };
-      });
-
-      // Server Action
-      const result = await addHostelRooms(hostelId, processedData);
-
-      if (result.error) {
-        throw new Error(result.message);
-      }
-
-      toast.success(`Successfully imported ${processedData.length} rooms!`);
-      handleReset(); // Reset on success
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "Failed to import rooms");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // --- Render ---
-
-  if (!fileLoaded) {
-    return (
-      <Card className="border-dashed border-2 shadow-sm bg-muted/10">
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-          <div className="p-4 bg-background rounded-full shadow-sm">
-            <UploadCloud className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold">Upload Inventory File</h3>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-              Drag and drop your Excel (.xlsx) or CSV file here to start the
-              import process.
-            </p>
-          </div>
-
-          {/* Wrapper for your existing ExcelFileHandler to make it invisible/seamless */}
-          <div className="mt-4">
-            <ExcelFileHandler callBackFn={handleFileLoad} />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+export function RoomSearch() {
   return (
-    <div className="space-y-6">
-      {/* 1. File Summary Bar */}
-      <div className="flex items-center justify-between p-4 bg-card border rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-green-100 text-green-700 rounded-md">
-            <FileSpreadsheet className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="font-medium">File Loaded Successfully</p>
-            <p className="text-xs text-muted-foreground">
-              {data.length} rows • {extractedKeys.length} columns detected
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleReset}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Reset File
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 2. Mapping Configuration */}
-        <Card className="md:col-span-2 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Map Columns</CardTitle>
-            <CardDescription>
-              Match the columns from your file to the system requirements.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <MappingField
-              label="Room Number"
-              description="The unique identifier for the room (e.g., A-101)."
-              value={mappings.roomKey}
-              onChange={(val) =>
-                setMappings((prev) => ({ ...prev, roomKey: val }))
-              }
-              options={extractedKeys}
-              sampleData={data[0]} // Pass first row for preview
-            />
-
-            <Separator />
-
-            <MappingField
-              label="Room Capacity (Seater)"
-              description={`Number of students per room (e.g., '2', 'Double').`}
-              value={mappings.capacityKey}
-              onChange={(val) =>
-                setMappings((prev) => ({ ...prev, capacityKey: val }))
-              }
-              options={extractedKeys}
-              sampleData={data[0]}
-            />
-          </CardContent>
-          <CardFooter className="bg-muted/30 py-4 flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">
-              {`* "Words to Numbers" is enabled (e.g., "Three" → 3).`}
-            </p>
-            <Button
-              onClick={processImport}
-              disabled={
-                isProcessing || !mappings.roomKey || !mappings.capacityKey
-              }
-              className="w-full md:w-auto"
-            >
-              {isProcessing ? "Importing..." : "Confirm & Import Rooms"}
-              {!isProcessing && <ArrowRight className="w-4 h-4 ml-2" />}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* 3. Data Preview Panel */}
-        <Card className="bg-muted/10 border-none shadow-none md:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Database className="w-4 h-4" /> Data Preview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <ScrollArea className="h-[300px] w-full px-4">
-              <div className="space-y-3">
-                {data.slice(0, 5).map((row, i) => (
-                  <div
-                    key={i}
-                    className="text-xs p-3 bg-background border rounded-md space-y-1"
-                  >
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Raw Room:</span>
-                      <span className="font-mono">
-                        {mappings.roomKey
-                          ? row[extractedKeys.indexOf(mappings.roomKey)]
-                          : "-"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Raw Cap:</span>
-                      <span className="font-mono">
-                        {mappings.capacityKey
-                          ? row[extractedKeys.indexOf(mappings.capacityKey)]
-                          : "-"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {data.length > 5 && (
-                  <p className="text-xs text-center text-muted-foreground pt-2">
-                    + {data.length - 5} more rows...
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <BaseSearchBox
+      id="room-search"
+      searchPlaceholder="Search by room number"
+      filterOptions={FILTERS}
+      filterDialogTitle="Filter rooms"
+      filterDialogDescription="Narrow by free beds, lock state or room size."
+      className="max-w-none"
+    />
   );
 }
 
-// --- Helper Component for Mapping Fields ---
-
-function MappingField({
-  label,
-  description,
-  value,
-  onChange,
-  options,
-  sampleData,
+/** Optimistic with rollback: the lock flips at once and reverts if the server refuses. */
+export function RoomLockButton({
+  roomId,
+  roomNumber,
+  locked,
 }: {
-  label: string;
-  description: string;
-  value: string;
-  onChange: (val: string) => void;
-  options: string[];
-  sampleData: string[];
+  roomId: string;
+  roomNumber: string;
+  locked: boolean;
 }) {
-  // Find sample value based on current selection
-  const selectedIndex = options.indexOf(value);
-  const currentSample = selectedIndex !== -1 ? sampleData[selectedIndex] : null;
+  const router = useRouter();
+  const [value, setValue] = useState(locked);
+  const [pending, setPending] = useState(false);
+
+  const toggle = async () => {
+    const previous = value;
+    setValue(!previous);
+    setPending(true);
+    try {
+      const res = await lockToggleRoom(roomId);
+      if (res.error || !res.data) throw new Error(res.message);
+      setValue(res.data.isLocked);
+      router.refresh();
+    } catch (error) {
+      setValue(previous);
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't change the lock"
+      );
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-col gap-1">
-        <Label className="text-base font-medium">{label}</Label>
-        <p className="text-sm text-muted-foreground">{description}</p>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={toggle}
+      disabled={pending}
+      aria-label={`${value ? "Unlock" : "Lock"} room ${roomNumber}`}
+    >
+      {value ? <LockOpen aria-hidden="true" /> : <Lock aria-hidden="true" />}
+      {value ? "Unlock" : "Lock"}
+    </Button>
+  );
+}
+
+type ParsedRoom = {
+  row: number;
+  roomNumber: string;
+  capacity: number | null;
+  problem: string | null;
+};
+
+function parseCapacity(raw: unknown): number | null {
+  if (typeof raw === "number") return raw;
+  const text = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (!text) return null;
+  const first = text.split(/\s+/)[0];
+  const asNumber = Number(first);
+  if (Number.isFinite(asNumber)) return asNumber;
+  const words: Record<string, number> = { single: 1, double: 2, triple: 3 };
+  if (words[first]) return words[first];
+  const converted = wordsToNumbers(first);
+  return typeof converted === "number" ? converted : null;
+}
+
+export function ImportRooms({ hostelId }: { hostelId: string }) {
+  const router = useRouter();
+  const fileId = useId();
+  const [fileName, setFileName] = useState("");
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [rows, setRows] = useState<unknown[][]>([]);
+  const [roomCol, setRoomCol] = useState("");
+  const [capCol, setCapCol] = useState("");
+  const [reviewing, setReviewing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{
+    added: number;
+    skipped: { roomNumber: string; reason: string }[];
+  } | null>(null);
+
+  const reset = () => {
+    setFileName("");
+    setHeaders([]);
+    setRows([]);
+    setRoomCol("");
+    setCapCol("");
+    setReviewing(false);
+    setResult(null);
+  };
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const [head, ...body] = await readXlsxFile(file);
+      const names = head.map((h) => String(h ?? "").trim());
+      const data = body.filter((r) =>
+        r.some((c) => c !== null && String(c).trim() !== "")
+      );
+      if (data.length === 0) {
+        toast.error("That sheet has a header row but no data");
+        return;
+      }
+      setFileName(file.name);
+      setHeaders(names);
+      setRows(data);
+      setRoomCol(names.find((h) => /room/i.test(h)) ?? "");
+      setCapCol(names.find((h) => /capacity|seater|beds?/i.test(h)) ?? "");
+    } catch {
+      toast.error("Couldn't read that file. Upload an .xlsx sheet.");
+    }
+  };
+
+  const parsed: ParsedRoom[] = reviewing
+    ? (() => {
+        const seen = new Set<string>();
+        const r = headers.indexOf(roomCol);
+        const c = headers.indexOf(capCol);
+        return rows.map((row, i) => {
+          const roomNumber = String(row[r] ?? "").trim();
+          const capacity = parseCapacity(row[c]);
+          let problem: string | null = null;
+          if (!roomNumber) problem = "Room number is empty";
+          else if (seen.has(roomNumber)) problem = "Repeated in this file";
+          else if (
+            !capacity ||
+            !Number.isInteger(capacity) ||
+            capacity < 1 ||
+            capacity > 7
+          )
+            problem = "Capacity must be a whole number from 1 to 7";
+          if (roomNumber) seen.add(roomNumber);
+          return { row: i + 2, roomNumber, capacity, problem };
+        });
+      })()
+    : [];
+  const valid = parsed.filter((p) => !p.problem);
+  const problems = parsed.length - valid.length;
+
+  const commit = async () => {
+    setBusy(true);
+    try {
+      const res = await addHostelRooms(
+        hostelId,
+        valid.map((p) => ({
+          roomNumber: p.roomNumber,
+          capacity: p.capacity ?? 1,
+        }))
+      );
+      if (res.error || !res.data) {
+        toast.error(res.message);
+        return;
+      }
+      setResult(res.data);
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const step = result ? 4 : reviewing ? 3 : fileName ? 2 : 1;
+
+  return (
+    <section
+      aria-labelledby="room-import-heading"
+      className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 dark:bg-background"
+    >
+      <div className="space-y-1">
+        <h2
+          id="room-import-heading"
+          className="text-subheading font-medium text-foreground"
+        >
+          Import rooms from a sheet
+        </h2>
+        <p className="text-body text-muted-foreground">
+          Rooms that already exist are skipped. Nothing is saved until you
+          confirm.
+        </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <Select onValueChange={onChange} value={value}>
-            <SelectTrigger
-              className={cn(value ? "border-primary/50 bg-primary/5" : "")}
-            >
-              <SelectValue placeholder="Select Column..." />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((opt) => (
-                <SelectItem
-                  key={opt}
-                  value={opt}
-                  className="flex justify-between items-center"
-                >
-                  <span>{opt}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {step === 1 && (
+        <label
+          htmlFor={fileId}
+          className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-10 text-center transition-colors duration-150 hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring"
+        >
+          <span className="flex size-10 items-center justify-center rounded-lg border border-border text-muted-foreground">
+            <FileSpreadsheet className="size-5" aria-hidden="true" />
+          </span>
+          <span className="text-body font-medium text-foreground">
+            Choose an .xlsx file
+          </span>
+          <span className="text-body text-muted-foreground">
+            One row per room, with a room number and a capacity column ("2",
+            "Double" and "Two seater" all work).
+          </span>
+          <input
+            id={fileId}
+            type="file"
+            accept=".xlsx"
+            className="sr-only"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+        </label>
+      )}
 
-        {/* Sample Value Feedback */}
-        <div className="hidden sm:flex flex-col flex-1 p-2 bg-muted/50 rounded-md border border-dashed h-10 justify-center px-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground font-medium uppercase">
-              Sample:
-            </span>
-            <span
-              className="font-mono truncate max-w-[120px]"
-              title={currentSample || ""}
+      {step === 2 && (
+        <div className="flex flex-col gap-4">
+          <p className="text-body text-muted-foreground">
+            <span className="font-medium text-foreground">{fileName}</span>,{" "}
+            {rows.length} rows.
+          </p>
+          <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-2">
+            {(
+              [
+                ["Room number", roomCol, setRoomCol],
+                ["Capacity", capCol, setCapCol],
+              ] as const
+            ).map(([label, value, set]) => (
+              <div key={label} className="flex flex-col gap-1.5">
+                <Label htmlFor={`room-map-${label}`}>{label}</Label>
+                <Select value={value} onValueChange={set}>
+                  <SelectTrigger id={`room-map-${label}`}>
+                    <SelectValue placeholder="Pick a column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {headers.filter(Boolean).map((h) => (
+                      <SelectItem key={h} value={h}>
+                        {h}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="ghost" onClick={reset}>
+              <RotateCcw aria-hidden="true" />
+              Choose another file
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => setReviewing(true)}
+              disabled={!roomCol || !capCol}
             >
-              {currentSample || "No selection"}
-            </span>
+              Check rows
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {step === 3 && (
+        <div className="flex flex-col gap-4">
+          <p className="text-body text-foreground">
+            {valid.length} rooms ready
+            {problems > 0 && (
+              <span className="text-destructive">
+                , {problems} with problems (skipped)
+              </span>
+            )}
+          </p>
+          <TableFrame
+            caption="Rooms in the file"
+            className="max-h-96 overflow-y-auto"
+          >
+            <thead>
+              <tr>
+                <Th className="w-16">Row</Th>
+                <Th>Room</Th>
+                <Th>Beds</Th>
+                <Th>Result</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {parsed.slice(0, 300).map((p) => (
+                <tr key={p.row} className="group/row">
+                  <Td className="tabular-nums text-muted-foreground">
+                    {p.row}
+                  </Td>
+                  <Td className="font-mono">{p.roomNumber || "empty"}</Td>
+                  <Td className="tabular-nums">{p.capacity ?? "unknown"}</Td>
+                  <Td>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5",
+                        p.problem ? "text-destructive" : "text-foreground"
+                      )}
+                    >
+                      {p.problem ? (
+                        <CircleAlert className="size-4" aria-hidden="true" />
+                      ) : (
+                        <CircleCheck
+                          className="size-4 text-success"
+                          aria-hidden="true"
+                        />
+                      )}
+                      {p.problem ?? "Ready"}
+                    </span>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableFrame>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="ghost" onClick={() => setReviewing(false)}>
+              <ArrowLeft aria-hidden="true" />
+              Back to columns
+            </Button>
+            <Button
+              variant="primary"
+              onClick={commit}
+              disabled={busy || valid.length === 0}
+            >
+              {busy && (
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
+              )}
+              Add {valid.length} rooms
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && result && (
+        <div className="flex flex-col gap-3">
+          <p className="flex items-center gap-2 text-body-lg font-medium text-foreground">
+            <CircleCheck className="size-5 text-success" aria-hidden="true" />
+            Added {result.added} rooms
+          </p>
+          {result.skipped.length > 0 && (
+            <p className="text-body text-muted-foreground">
+              Skipped:{" "}
+              {result.skipped
+                .slice(0, 20)
+                .map((s) => `${s.roomNumber} (${s.reason.toLowerCase()})`)
+                .join(", ")}
+              {result.skipped.length > 20 &&
+                ` and ${result.skipped.length - 20} more`}
+            </p>
+          )}
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={reset}>
+              Import another file
+            </Button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

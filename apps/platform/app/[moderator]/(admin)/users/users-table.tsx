@@ -22,7 +22,7 @@ import { auth } from "~/auth";
 import { PageSizeSelect, UserRowActions } from "./users-controls";
 import { departmentShort, formatDate, initials, roleLabel } from "./shared";
 
-export const PAGE_SIZES = [10, 20, 50, 100] as const satisfies number[];
+export const PAGE_SIZES: readonly number[] = [10, 20, 50, 100];
 export const SORT_FIELDS = ["name", "department", "createdAt"] as const;
 
 export type UsersQuery = {
@@ -360,7 +360,11 @@ function SortHeader({
   // Dates read newest first; text reads A to Z first.
   const firstDir = field === "createdAt" ? "desc" : "asc";
   const nextDir = active ? (query.dir === "asc" ? "desc" : "asc") : firstDir;
-  const Glyph = !active ? ArrowUpDown : query.dir === "asc" ? ArrowUp : ArrowDown;
+  const Glyph = !active
+    ? ArrowUpDown
+    : query.dir === "asc"
+      ? ArrowUp
+      : ArrowDown;
   return (
     <Th
       className={className}

@@ -1,47 +1,33 @@
-import Page403 from "@/components/utils/403";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
-import { ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
+import { AccessNotice } from "@/components/application/hostel/ui";
+import { ROLES_ENUMS } from "~/constants";
+import { getHostelSession, isCampusWide } from "~/lib/hostel-access";
 
-const ONLY_ALLOWED_ROLES = [ROLES_ENUMS.CHIEF_WARDEN, ROLES_ENUMS.ADMIN];
+const DIRECTORY_ROUTES: string[] = [
+  ROLES_ENUMS.CHIEF_WARDEN,
+  ROLES_ENUMS.ADMIN,
+];
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  params: Promise<{
-    moderator: (typeof ALLOWED_ROLES)[number];
-  }>;
-}
-
-export default async function DashboardLayout({
+export default async function HostelsLayout({
   children,
   params,
-}: DashboardLayoutProps) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  const { moderator } = await params;
-  if (
-    !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number]) ||
-    !ONLY_ALLOWED_ROLES.includes(
-      moderator as (typeof ONLY_ALLOWED_ROLES)[number]
-    )
-  ) {
-    return notFound();
-  }
+}: {
+  children: React.ReactNode;
+  params: Promise<{ moderator: string }>;
+}) {
+  const [{ moderator }, session] = await Promise.all([
+    params,
+    getHostelSession(),
+  ]);
+  if (!DIRECTORY_ROUTES.includes(moderator)) notFound();
 
-  if (
-    !(
-      (session?.user.other_roles.some((role) =>
-        ALLOWED_ROLES.includes(role as (typeof ALLOWED_ROLES)[number])
-      ) &&
-        ALLOWED_ROLES.includes(moderator)) ||
-      session?.user?.role === ROLES_ENUMS.ADMIN
-    )
-  ) {
-    return <Page403 />;
+  if (!session?.user || !isCampusWide(session.user)) {
+    return (
+      <AccessNotice
+        title="The hostel directory is for the chief warden and admins"
+        description="Wardens can reach their own hostel from the dashboard."
+      />
+    );
   }
-
   return children;
 }

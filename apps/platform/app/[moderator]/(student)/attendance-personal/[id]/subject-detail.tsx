@@ -18,7 +18,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { CalendarDays, Check, CircleCheck, CircleX, Trash2, X } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  CircleCheck,
+  CircleX,
+  Trash2,
+  X,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useOptimistic, useState } from "react";
@@ -211,8 +218,8 @@ export function SubjectDetail({
             <>
               <TrendChart points={trend} />
               <p className="mt-2 text-caption text-muted-foreground">
-                Your running percentage after each class. The dashed line is
-                the minimum.
+                Your running percentage after each class. The dashed line is the
+                minimum.
               </p>
             </>
           )}

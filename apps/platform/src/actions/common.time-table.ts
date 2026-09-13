@@ -163,7 +163,7 @@ export async function updateTimeTable(
       year &&
       semester &&
       (await Timetable.exists({
-      _id: { $ne: timetableId },
+        _id: { $ne: timetableId },
         department_code,
         sectionName,
         year,

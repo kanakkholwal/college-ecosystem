@@ -142,11 +142,17 @@ export function UserRowActions({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer gap-2" onSelect={() => copy(email, "Email")}>
+        <DropdownMenuItem
+          className="cursor-pointer gap-2"
+          onSelect={() => copy(email, "Email")}
+        >
           <Mail className="size-4" aria-hidden="true" />
           Copy email
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer gap-2" onSelect={() => copy(id, "User ID")}>
+        <DropdownMenuItem
+          className="cursor-pointer gap-2"
+          onSelect={() => copy(id, "User ID")}
+        >
           <Copy className="size-4" aria-hidden="true" />
           Copy user ID
         </DropdownMenuItem>

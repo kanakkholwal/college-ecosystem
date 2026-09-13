@@ -144,9 +144,9 @@ export function RecalculateRanksJob({ total }: { total: number }) {
 
 export function SyncBranchesJob() {
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState<JobState<{ timeTaken: string | null }>>(
-    { status: "idle" }
-  );
+  const [state, setState] = useState<JobState<{ timeTaken: string | null }>>({
+    status: "idle",
+  });
   const elapsed = useElapsed(state.status === "running");
 
   const run = async () => {
@@ -221,10 +221,7 @@ export function ResultLookup() {
   const [isPending, startTransition] = useTransition();
   const busy = isPending || state.status === "loading";
 
-  const runStep = (
-    message: string,
-    step: () => Promise<LookupState>
-  ) => {
+  const runStep = (message: string, step: () => Promise<LookupState>) => {
     setState({ status: "loading", message });
     startTransition(async () => setState(await step()));
   };
@@ -516,7 +513,12 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
     cancelRef.current = false;
     const errors: { rollNo: string; error: string }[] = [];
     let sent = 0;
-    setState({ status: "running", kind: "refresh", done: 0, total: rollNos.length });
+    setState({
+      status: "running",
+      kind: "refresh",
+      done: 0,
+      total: rollNos.length,
+    });
     for (let i = 0; i < rollNos.length; i += REFRESH_CHUNK) {
       if (cancelRef.current) break;
       const chunk = rollNos.slice(i, i + REFRESH_CHUNK);
@@ -527,7 +529,12 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
         errors.push(...chunk.map((rollNo) => ({ rollNo, error: res.error })));
       }
       sent += chunk.length;
-      setState({ status: "running", kind: "refresh", done: sent, total: rollNos.length });
+      setState({
+        status: "running",
+        kind: "refresh",
+        done: sent,
+        total: rollNos.length,
+      });
     }
     setState({
       status: "done",
@@ -628,7 +635,10 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
         {state.status === "done" && state.kind === "refresh" && (
           <div className="flex flex-col gap-3">
             <p className="flex items-center gap-2 text-body text-foreground">
-              <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+              <CheckCircle2
+                className="size-4 text-success"
+                aria-hidden="true"
+              />
               {state.cancelled ? "Stopped after" : "Sent"}{" "}
               {state.sent.toLocaleString("en-IN")} records to the scraper. The
               list below now shows what is still flagged.
@@ -745,15 +755,16 @@ export function ResultMailer() {
           }}
           aria-describedby="mail-targets-hint"
         />
-        <p id="mail-targets-hint" className="text-caption text-muted-foreground">
+        <p
+          id="mail-targets-hint"
+          className="text-caption text-muted-foreground"
+        >
           Separate with commas, spaces or new lines. A bare username gets{" "}
           {orgConfig.mailSuffix} added.
           {input.trim() && (
             <>
               {" "}
-              <span className="text-foreground">
-                {valid.length} valid
-              </span>
+              <span className="text-foreground">{valid.length} valid</span>
               {invalid.length > 0 && (
                 <span className="text-destructive">
                   , {invalid.length} invalid: {invalid.slice(0, 3).join(", ")}

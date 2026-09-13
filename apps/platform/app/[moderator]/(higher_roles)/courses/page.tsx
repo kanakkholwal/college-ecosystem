@@ -8,7 +8,13 @@ import { HeaderBar } from "@/components/common/header-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { ButtonLink } from "@/components/utils/link";
-import { ArrowUpRight, Library, Plus, SearchX, TriangleAlert } from "lucide-react";
+import {
+  ArrowUpRight,
+  Library,
+  Plus,
+  SearchX,
+  TriangleAlert,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { cache, Suspense } from "react";
 import { getCourses } from "~/actions/common.course";
@@ -63,7 +69,10 @@ export default async function CoursesPage(props: Props) {
               <ArrowUpRight />
             </ButtonLink>
             {canEdit && (
-              <ButtonLink href={`/${moderator}/courses/create`} variant="primary">
+              <ButtonLink
+                href={`/${moderator}/courses/create`}
+                variant="primary"
+              >
                 <Plus />
                 New course
               </ButtonLink>
@@ -105,7 +114,12 @@ export default async function CoursesPage(props: Props) {
   );
 }
 
-type ListArgs = { query: string; page: number; department: string; type: string };
+type ListArgs = {
+  query: string;
+  page: number;
+  department: string;
+  type: string;
+};
 
 async function SearchWithFacets({ query, page, department, type }: ListArgs) {
   const facets = await loadCourses(query, page, department, type).catch(
@@ -148,7 +162,11 @@ async function CourseList({
         }
         action={
           filtered || args.page > 1 ? (
-            <ButtonLink href={`/${moderator}/courses`} variant="outline" size="sm">
+            <ButtonLink
+              href={`/${moderator}/courses`}
+              variant="outline"
+              size="sm"
+            >
               Clear search
             </ButtonLink>
           ) : (

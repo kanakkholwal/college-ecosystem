@@ -195,7 +195,7 @@ export const sidebar_links: rawLinkType[] = [
     items: [
       {
         title: "Create Event",
-        path: "/create",
+        path: "/new",
         allowed_roles: [ROLES_ENUMS.ADMIN],
       },
     ],

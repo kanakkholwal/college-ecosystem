@@ -1,4 +1,7 @@
-import { Panel, PanelTitle } from "@/components/application/dashboard/primitives";
+import {
+  Panel,
+  PanelTitle,
+} from "@/components/application/dashboard/primitives";
 import { HeaderBar } from "@/components/common/header-bar";
 import { ButtonLink } from "@/components/utils/link";
 import { ChevronLeft, CircleAlert, CircleCheck } from "lucide-react";

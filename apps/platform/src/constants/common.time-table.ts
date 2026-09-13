@@ -43,6 +43,7 @@ export const rawTimetableSchema = z.object({
               _id: z.string().optional(),
               title: z.string(),
               description: z.string().optional(),
+              heldBy: z.string().optional(),
             })
           ),
         })

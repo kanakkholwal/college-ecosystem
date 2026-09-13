@@ -1,137 +1,256 @@
-"use client";
-
+import { ChevronLeft, ChevronRight, History, SearchX } from "lucide-react";
+import Link from "next/link";
+import { Suspense } from "react";
+import {
+  EmptyNote,
+  SectionError,
+} from "@/components/application/dashboard/primitives";
+import {
+  OUTPASS_STATUS_META,
+  OutpassStatusTag,
+  PageLink,
+  REASON_LABEL,
+  shortDateTime,
+  TableFrame,
+  Td,
+  Th,
+} from "@/components/application/hostel/ui";
 import { HeaderBar } from "@/components/common/header-bar";
-import { DataTable } from "@/components/ui/data-table"; // Ensure your DataTable accepts className/style props
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorBoundary } from "@/components/utils/error-boundary";
-import { FileClock, History } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ButtonLink } from "@/components/utils/link";
 import { getOutPassHistoryForHostel } from "~/actions/hostel.outpass";
+import { OUTPASS_STATUS } from "~/constants/hostel.outpass";
 import type { OutPassType } from "~/models/hostel_n_outpass";
-import { columns } from "./columns";
-import { OutpassToolbar } from "./toolbar";
+import { OutpassLogSearch } from "./search";
 
-// Function to fetch outpass based on search parameters
-async function fetchOutpass(searchParams: {
-  query?: string;
-  offset?: number;
-  limit?: number;
-  sortBy?: string;
-  sortDirection?: "asc" | "desc";
-}) {
-  return await getOutPassHistoryForHostel({
-    query: searchParams.query,
-    offset: searchParams.offset,
-    limit: searchParams.limit,
-    sortBy: searchParams.sortDirection || "desc",
-  });
+const PAGE_SIZE = 25;
+
+type RawParams = Record<string, string | string[] | undefined>;
+type LogQuery = {
+  query: string;
+  status: OutPassType["status"] | null;
+  sort: "asc" | "desc";
+  page: number;
+};
+
+const one = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
+
+function parseQuery(raw: RawParams): LogQuery {
+  const status = one(raw.status);
+  const page = Number(one(raw.page));
+  return {
+    query: (one(raw.query) ?? "").trim(),
+    status: OUTPASS_STATUS.includes(status as OutPassType["status"])
+      ? (status as OutPassType["status"])
+      : null,
+    sort: one(raw.sort) === "asc" ? "asc" : "desc",
+    page: Number.isInteger(page) && page > 0 ? page : 1,
+  };
 }
 
-export default function OutPassHistoryPage() {
-  const searchParams = useSearchParams();
-  const [data, setData] = useState<OutPassType[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+function toSearch(query: LogQuery, patch: Partial<LogQuery>) {
+  const next = { ...query, ...patch };
+  const params = new URLSearchParams();
+  if (next.query) params.set("query", next.query);
+  if (next.status) params.set("status", next.status);
+  if (next.sort === "asc") params.set("sort", "asc");
+  if (next.page > 1) params.set("page", String(next.page));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "?";
+}
 
-  // Extract params to ensure stability in dependency array
-  const queryParam = searchParams.get("query");
-  const offsetParam = searchParams.get("offset");
-  const limitParam = searchParams.get("limit");
-  const sortParam = searchParams.get("sortDirection");
-
-  useEffect(() => {
-    const query = {
-      query: queryParam || "",
-      offset: Number.parseInt(offsetParam || "0", 10),
-      limit: Number.parseInt(limitParam || "100", 10),
-      sortDirection: (sortParam as "asc" | "desc") || "desc",
-    };
-
-    setLoading(true);
-    fetchOutpass(query)
-      .then((res) => {
-        if (res?.data) {
-          setData(res.data || []);
-          setError(null);
-        } else {
-          setError(res.error || "Failed to load data");
-        }
-      })
-      .catch((err) => {
-        setError(err?.message || "Error fetching data");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [queryParam, offsetParam, limitParam, sortParam]);
+export default async function OutpassLogsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ moderator: string; slug: string }>;
+  searchParams: Promise<RawParams>;
+}) {
+  const [{ moderator, slug }, raw] = await Promise.all([params, searchParams]);
+  const query = parseQuery(raw);
+  const base = `/${moderator}/h/${slug}`;
 
   return (
-    <div className="space-y-6 my-6 w-full max-w-[1600px] mx-auto px-4 sm:px-6">
-      {/* --- Header Section --- */}
+    <div className="@container flex flex-col gap-6">
       <HeaderBar
         Icon={History}
-        titleNode={
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Outpass Logs
-            </h1>
-          </div>
+        titleNode="Outpass logs"
+        descriptionNode="Every request from this hostel with its exit and return times."
+        actionNode={
+          <ButtonLink href={`${base}/outpass-requests`} variant="outline">
+            Pending queue
+          </ButtonLink>
         }
-        descriptionNode="View and audit past entry/exit records for students."
       />
-
-      {/* --- Main Content Area --- */}
-      <div className="flex flex-col space-y-4">
-        {/* Toolbar handles Search, Sort, and View Options */}
-        <OutpassToolbar />
-
-        {loading ? (
-          <TableSkeleton />
-        ) : (
-          <ErrorBoundary
-            fallback={
-              <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed bg-muted/30 p-8 text-center animate-in fade-in-50">
-                <FileClock className="h-10 w-10 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">Unable to load logs</h3>
-                <p className="text-sm text-muted-foreground max-w-sm mt-2">
-                  {error}
-                </p>
-              </div>
-            }
-          >
-            <div className="rounded-xl bg-card shadow-sm overflow-hidden">
-              <DataTable data={data} columns={columns} />
-            </div>
-          </ErrorBoundary>
-        )}
-      </div>
+      <OutpassLogSearch />
+      <Suspense key={JSON.stringify(query)} fallback={<LogsSkeleton />}>
+        <LogResults slug={slug} base={base} query={query} />
+      </Suspense>
     </div>
   );
 }
 
-function TableSkeleton() {
+async function LogResults({
+  slug,
+  base,
+  query,
+}: {
+  slug: string;
+  base: string;
+  query: LogQuery;
+}) {
+  const res = await getOutPassHistoryForHostel({
+    slug,
+    query: query.query,
+    status: query.status ?? undefined,
+    page: query.page,
+    limit: PAGE_SIZE,
+    sortBy: query.sort,
+  });
+  if (res.error) return <SectionError what="Outpass logs" />;
+
+  const { data: rows, total } = res;
+  const filtered = Boolean(query.query || query.status);
+
+  if (rows.length === 0) {
+    return filtered || query.page > 1 ? (
+      <EmptyNote
+        icon={<SearchX />}
+        title="No outpasses match"
+        description="Check the roll number, or clear the status filter."
+        action={
+          <ButtonLink href="?" variant="outline">
+            Clear search and filters
+          </ButtonLink>
+        }
+      />
+    ) : (
+      <EmptyNote
+        icon={<History />}
+        title="No outpasses yet"
+        description="Requests from residents are logged here once they're sent."
+      />
+    );
+  }
+
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = (query.page - 1) * PAGE_SIZE + 1;
+  const to = from + rows.length - 1;
+  const summary = `Showing ${from} to ${to} of ${total.toLocaleString("en-IN")} outpasses${query.status ? `, ${OUTPASS_STATUS_META[query.status].label.toLowerCase()}` : ""}`;
+
   return (
-    <div className="space-y-3">
-      <div className="rounded-xl border bg-card">
-        <div className="p-4 border-b space-y-3">
-          <Skeleton className="h-8 w-[250px]" />
-        </div>
-        {Array.from({ length: 5 }).map((_, i) => (
+    <section aria-label="Outpass logs" className="flex flex-col gap-3">
+      <p className="text-body text-muted-foreground" aria-live="polite">
+        {summary}
+      </p>
+      <TableFrame caption={summary}>
+        <thead>
+          <tr>
+            <Th>Student</Th>
+            <Th>Status</Th>
+            <Th className="hidden @2xl:table-cell">Reason</Th>
+            <Th>Out</Th>
+            <Th className="hidden @3xl:table-cell">Back</Th>
+            <Th className="hidden @4xl:table-cell">Requested</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr
+              key={row._id}
+              className="group/row transition-colors duration-150 hover:bg-muted"
+            >
+              <Td>
+                {row.student ? (
+                  <Link
+                    href={`${base}/outpass-logs/${row.student._id}`}
+                    className="block rounded-sm font-medium text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {row.student.name}
+                  </Link>
+                ) : (
+                  <span className="text-muted-foreground">Unknown student</span>
+                )}
+                <span className="block font-mono text-caption text-muted-foreground">
+                  {row.student?.rollNumber ?? "No roll number"}, room{" "}
+                  {row.roomNumber}
+                </span>
+              </Td>
+              <Td>
+                <OutpassStatusTag status={row.status} />
+              </Td>
+              <Td className="hidden @2xl:table-cell">
+                {REASON_LABEL[row.reason] ?? row.reason}
+              </Td>
+              <Td className="whitespace-nowrap tabular-nums">
+                {shortDateTime(row.actualOutTime ?? row.expectedOutTime)}
+                <span className="block text-caption text-muted-foreground">
+                  {row.actualOutTime ? "Exited" : "Planned"}
+                </span>
+              </Td>
+              <Td className="hidden whitespace-nowrap tabular-nums @3xl:table-cell">
+                {shortDateTime(row.actualInTime ?? row.expectedInTime)}
+                <span className="block text-caption text-muted-foreground">
+                  {row.actualInTime
+                    ? new Date(row.actualInTime) > new Date(row.expectedInTime)
+                      ? "Returned late"
+                      : "Returned"
+                    : "Due"}
+                </span>
+              </Td>
+              <Td className="hidden whitespace-nowrap tabular-nums text-muted-foreground @4xl:table-cell">
+                {shortDateTime(row.createdAt)}
+              </Td>
+            </tr>
+          ))}
+        </tbody>
+      </TableFrame>
+      <nav
+        aria-label="Pagination"
+        className="flex items-center justify-end gap-2"
+      >
+        <span className="text-body tabular-nums text-muted-foreground">
+          Page {query.page} of {pageCount}
+        </span>
+        <PageLink
+          href={toSearch(query, { page: query.page - 1 })}
+          disabled={query.page <= 1}
+          label="Previous page"
+        >
+          <ChevronLeft aria-hidden="true" />
+        </PageLink>
+        <PageLink
+          href={toSearch(query, { page: query.page + 1 })}
+          disabled={query.page >= pageCount}
+          label="Next page"
+        >
+          <ChevronRight aria-hidden="true" />
+        </PageLink>
+      </nav>
+    </section>
+  );
+}
+
+function LogsSkeleton() {
+  return (
+    <div className="flex flex-col gap-3" aria-busy="true">
+      <span className="sr-only">Loading outpass logs</span>
+      <Skeleton className="h-5 w-56 bg-muted" />
+      <div className="rounded-2xl border border-border bg-card dark:bg-background">
+        <div className="h-11 border-b border-border" />
+        {Array.from({ length: 8 }, (_, i) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
             key={i}
-            className="flex items-center justify-between p-4 border-b last:border-0"
+            className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
           >
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-20" />
-              </div>
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-40 bg-muted" />
+              <Skeleton className="h-3 w-28 bg-muted" />
             </div>
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-6 w-16 rounded-full" />
-            <Skeleton className="h-8 w-8" />
+            <Skeleton className="h-6 w-20 rounded-full bg-muted" />
+            <Skeleton className="h-4 w-24 bg-muted" />
           </div>
         ))}
       </div>

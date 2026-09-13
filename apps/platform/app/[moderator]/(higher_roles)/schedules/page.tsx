@@ -1,172 +1,306 @@
-import { ResponsiveContainer } from "@/components/common/container";
-import EmptyArea from "@/components/common/empty-area";
+import { EmptyNote } from "@/components/application/dashboard/primitives";
+import { TimetableCardSkeleton } from "@/components/application/schedule/card";
+import ScheduleSearchBox from "@/components/application/schedule/search";
 import { HeaderBar } from "@/components/common/header-bar";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { ButtonLink } from "@/components/utils/link";
-import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
 import {
-  ArrowUpRight,
-  Calendar,
+  ArrowRight,
   CalendarDays,
-  Clock,
-  Layers,
+  CalendarRange,
   Plus,
-  Settings2,
+  SearchX,
+  TriangleAlert,
 } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getAllTimeTables } from "~//actions/common.time-table";
-import { TimeTableWithID } from "~/models/time-table";
+import { cache, Suspense } from "react";
+import { getAllTimeTables } from "~/actions/common.time-table";
+import { getSession } from "~/auth/server";
+import { DEPARTMENTS_LIST } from "~/constants/core.departments";
+import type { TimeTableWithID } from "~/models/time-table";
+import { canManageTimetables } from "../access";
+import { timetableEditHref } from "./paths";
 
-export default async function Schedules(props: {
-  params: Promise<{
-    moderator: string;
-  }>;
-}) {
-  const timetables = await getAllTimeTables();
-  const params = await props.params;
+export const metadata: Metadata = {
+  title: "Timetables",
+  description: "Create and edit class timetables for each section.",
+};
+
+type Props = {
+  params: Promise<{ moderator: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+type Filters = { query: string; branch: string; year: string };
+
+// Search facets and the list read the same rows; cache() runs the query once.
+const loadTimetables = cache(getAllTimeTables);
+
+const first = (v: string | string[] | undefined) =>
+  (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
+
+const updatedFormat = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "Asia/Kolkata",
+});
+
+export default async function SchedulesPage(props: Props) {
+  const [{ moderator }, sp, session] = await Promise.all([
+    props.params,
+    props.searchParams,
+    getSession(),
+  ]);
+  const filters: Filters = {
+    query: first(sp.query).toLowerCase(),
+    branch: first(sp.branch),
+    year: first(sp.year),
+  };
+  const canManage = canManageTimetables(session?.user);
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="@container flex flex-col gap-8">
       <HeaderBar
         Icon={CalendarDays}
-        titleNode={
-          <div className="flex items-center gap-3">
-            <span>Manage Timetables</span>
-            <Badge
-              variant="default"
-              className="px-2 h-6 rounded-md text-xs font-mono"
-            >
-              {timetables.length}
-            </Badge>
-          </div>
+        titleNode="Timetables"
+        descriptionNode={
+          canManage
+            ? "One timetable per section. Open one to edit its week, or add a new section."
+            : "Browse section timetables. Only admins, faculty and CRs can edit them."
         }
-        descriptionNode="Configure academic schedules, manage sections, and publish updates."
         actionNode={
-          <ButtonLink
-            variant="default"
-            size="sm"
-            effect="shineHover"
-            href={`/${params.moderator}/schedules/create`}
-            className="h-9 px-4 shadow-md shadow-primary/20"
-          >
-            <Plus className="mr-2 size-4" />
-            Create Schedule
-          </ButtonLink>
+          canManage && (
+            <ButtonLink
+              href={`/${moderator}/schedules/create`}
+              variant="primary"
+            >
+              <Plus />
+              New timetable
+            </ButtonLink>
+          )
         }
       />
 
-      {timetables.length === 0 ? (
-        <div className="mt-8 px-4">
-          <EmptyArea
-            title="No Timetables Configured"
-            description="Get started by creating a master schedule for a specific year and department."
-            icons={[Calendar, Layers, Plus]}
-            actionProps={{
-              variant: "outline",
-              href: `/${params.moderator}/schedules/create`,
-              className: cn("mt-4"),
-              children: (
-                <>
-                  <Plus className="mr-2 size-4" /> Create First Timetable
-                </>
-              ),
-            }}
-          />
-        </div>
-      ) : (
-        <ResponsiveContainer className="mt-8">
-          {timetables.map((timetable, i) => {
-            // Construct the view URL
-            const href = `/${params.moderator}/schedules/${timetable.department_code}/${timetable.year}/${timetable.semester}`;
+      <Suspense fallback={<Skeleton className="h-14 w-full rounded-2xl" />}>
+        <SearchWithFilters />
+      </Suspense>
 
-            return (
-              <TimetableCard
-                key={timetable._id}
-                timetable={timetable}
-                href={href}
-                index={i}
-              />
-            );
-          })}
-        </ResponsiveContainer>
-      )}
+      <ErrorBoundaryWithSuspense
+        fallback={
+          <EmptyNote
+            icon={<TriangleAlert />}
+            title="Timetables couldn't load"
+            description="The schedule service didn't respond. Refresh the page to try again."
+          />
+        }
+        loadingFallback={<ListSkeleton />}
+      >
+        <TimetableGroups
+          moderator={moderator}
+          filters={filters}
+          canManage={canManage}
+        />
+      </ErrorBoundaryWithSuspense>
     </div>
   );
 }
 
-function TimetableCard({
+async function SearchWithFilters() {
+  const timetables = await loadTimetables().catch(() => []);
+  const codes = new Set(timetables.map((t) => t.department_code));
+  const departments = DEPARTMENTS_LIST.filter((d) => codes.has(d.code));
+  const years = Array.from(
+    new Set(timetables.map((t) => t.year).filter((y) => typeof y === "number"))
+  )
+    .sort((a, b) => a - b)
+    .map(String);
+
+  return (
+    <ScheduleSearchBox
+      branches={departments.map((d) => d.code)}
+      branchLabels={Object.fromEntries(
+        departments.map((d) => [d.code, d.name])
+      )}
+      years={years}
+    />
+  );
+}
+
+async function TimetableGroups({
+  moderator,
+  filters,
+  canManage,
+}: {
+  moderator: string;
+  filters: Filters;
+  canManage: boolean;
+}) {
+  const timetables = await loadTimetables();
+
+  if (timetables.length === 0) {
+    return (
+      <EmptyNote
+        icon={<CalendarRange />}
+        title="No timetables yet"
+        description="Start with one section: set its department, year and semester, then fill in the week."
+        action={
+          canManage && (
+            <ButtonLink
+              href={`/${moderator}/schedules/create`}
+              variant="primary"
+              size="sm"
+            >
+              <Plus />
+              New timetable
+            </ButtonLink>
+          )
+        }
+      />
+    );
+  }
+
+  const matches = timetables.filter((t) => {
+    if (filters.branch && t.department_code !== filters.branch) return false;
+    if (filters.year && String(t.year) !== filters.year) return false;
+    if (!filters.query) return true;
+    const dept = DEPARTMENTS_LIST.find((d) => d.code === t.department_code);
+    return [t.sectionName, dept?.short, dept?.name].some((field) =>
+      field?.toLowerCase().includes(filters.query)
+    );
+  });
+
+  if (matches.length === 0) {
+    return (
+      <EmptyNote
+        icon={<SearchX />}
+        title="No timetables match"
+        description="Check the section name, or clear a filter."
+        action={
+          <ButtonLink
+            href={`/${moderator}/schedules`}
+            variant="outline"
+            size="sm"
+          >
+            Clear search
+          </ButtonLink>
+        }
+      />
+    );
+  }
+
+  const groups = DEPARTMENTS_LIST.map((dept) => ({
+    dept,
+    items: matches.filter((t) => t.department_code === dept.code),
+  })).filter((g) => g.items.length > 0);
+
+  return (
+    <div className="flex flex-col gap-10">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+        <p className="text-body-lg font-medium tabular-nums text-foreground">
+          {matches.length} {matches.length === 1 ? "timetable" : "timetables"}
+        </p>
+        <p className="text-caption tabular-nums text-muted-foreground">
+          {groups.length} {groups.length === 1 ? "department" : "departments"}
+          {matches.length !== timetables.length &&
+            `, of ${timetables.length} in total`}
+        </p>
+      </div>
+
+      {groups.map(({ dept, items }) => (
+        <section
+          key={dept.code}
+          aria-labelledby={`dept-${dept.code}`}
+          className="flex flex-col gap-3"
+        >
+          <div className="flex items-baseline gap-3">
+            <h2
+              id={`dept-${dept.code}`}
+              className="text-subheading font-medium text-foreground"
+            >
+              {dept.name}
+            </h2>
+            <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-caption text-foreground">
+              {dept.short}
+            </span>
+            <span className="ml-auto text-caption tabular-nums text-muted-foreground">
+              {items.length} {items.length === 1 ? "section" : "sections"}
+            </span>
+          </div>
+          <ul className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-3">
+            {items.map((timetable) => (
+              <li key={timetable._id}>
+                <ManageCard
+                  timetable={timetable}
+                  href={timetableEditHref(moderator, timetable)}
+                  canManage={canManage}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function ManageCard({
   timetable,
   href,
-  index,
+  canManage,
 }: {
   timetable: Partial<TimeTableWithID>;
   href: string;
-  index: number;
+  canManage: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="group relative flex flex-col justify-between rounded-xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
-      style={{ animationDelay: `${index * 100}ms` }}
+      prefetch={false}
+      className="group flex h-full flex-col gap-4 rounded-2xl border border-border bg-card p-5 outline-none transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring dark:bg-background"
     >
-      {/* Header: Icon & Title */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted/50 text-muted-foreground group-hover:border-primary/20 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-            <Calendar className="size-5" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">
-              {timetable.sectionName || "Untitled Section"}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 font-mono">
-              {timetable.department_code}
-            </p>
-          </div>
-        </div>
-
-        {/* Edit Action */}
-        <div className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-          <div className="p-2 rounded-full bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary">
-            <Settings2 className="size-4" />
-          </div>
+      <div className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground transition-colors group-hover:text-primary">
+          <CalendarRange className="size-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="line-clamp-2 text-body-lg font-medium text-foreground">
+            {timetable.sectionName || "Untitled section"}
+          </h3>
+          <p className="mt-0.5 text-body tabular-nums text-muted-foreground">
+            Year {timetable.year} · Semester {timetable.semester}
+          </p>
         </div>
       </div>
-
-      {/* Body: Metadata Chips */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <Badge
-          variant="outline"
-          className="rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-background/50 text-muted-foreground border-border/60"
-        >
-          Year {timetable.year}
-        </Badge>
-        <div className="w-px h-5 bg-border/60" />
-        <Badge
-          variant="outline"
-          className="rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-background/50 text-muted-foreground border-border/60"
-        >
-          Sem {timetable.semester}
-        </Badge>
-      </div>
-
-      {/* Footer: Timestamp & Action */}
-      <div className="flex items-center justify-between pt-4 border-t border-border/40">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-          <Clock className="size-3" />
-          <span>
-            Updated{" "}
-            {formatDistanceToNow(new Date(timetable.updatedAt || new Date()), {
-              addSuffix: true,
-            })}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-          View Details <ArrowUpRight className="size-3" />
-        </div>
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-4 text-caption">
+        <span className="truncate text-muted-foreground">
+          {timetable.updatedAt
+            ? `Updated ${updatedFormat.format(new Date(timetable.updatedAt))}`
+            : "Never updated"}
+        </span>
+        <span className="flex shrink-0 items-center gap-1 font-medium text-primary">
+          {canManage ? "Edit week" : "View week"}
+          <ArrowRight
+            aria-hidden="true"
+            className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+          />
+        </span>
       </div>
     </Link>
+  );
+}
+
+function ListSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <Skeleton className="h-7 w-40" />
+      <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <TimetableCardSkeleton key={`skeleton-${i.toString()}`} />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -24,7 +24,11 @@ import {
   ReferencesSection,
   UnitsSection,
 } from "./course-sections";
-import { type CourseFormValues, courseFormSchema, EMPTY_COURSE } from "./schema";
+import {
+  type CourseFormValues,
+  courseFormSchema,
+  EMPTY_COURSE,
+} from "./schema";
 import { useUnsavedGuard } from "./use-unsaved-guard";
 
 const ImportCourses = dynamic(() => import("./import-courses"), {
@@ -333,7 +337,10 @@ export function CourseEditor(props: CourseEditorProps) {
                     </span>
                     {sectionErrors > 0 ? (
                       <span className="flex items-center gap-1 text-caption font-medium text-destructive">
-                        <TriangleAlert className="size-3.5" aria-hidden="true" />
+                        <TriangleAlert
+                          className="size-3.5"
+                          aria-hidden="true"
+                        />
                         {sectionErrors}
                         <span className="sr-only"> to fix</span>
                       </span>

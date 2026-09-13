@@ -84,8 +84,8 @@ export function DeleteCourse({
               Delete {code}?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-body">
-              Students lose the syllabus, references and papers for this
-              course. Type the course code to confirm.
+              Students lose the syllabus, references and papers for this course.
+              Type the course code to confirm.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-2">
@@ -102,13 +102,17 @@ export function DeleteCourse({
             />
           </div>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel disabled={isPending}>Keep course</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>
+              Keep course
+            </AlertDialogCancel>
             <Button
               variant="destructive"
               disabled={!confirmed || isPending}
               onClick={onDelete}
             >
-              {isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
+              {isPending && (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              )}
               Delete permanently
             </Button>
           </AlertDialogFooter>

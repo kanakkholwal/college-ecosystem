@@ -22,22 +22,6 @@ import PollModel from "~/models/poll";
 
 type User = InferSelectModel<typeof users>;
 
-export async function getUserByUsername(
-  username: string
-): Promise<User | null> {
-  const user = await db
-    .select()
-    .from(users)
-    .where(
-      or(
-        eq(users.username, username),
-        eq(users.id, username) // Allow ID as username for legacy support
-      )
-    )
-    .limit(1);
-  return user.length > 0 ? user[0] : null;
-}
-
 /** Deletes a user and everything they own. Admins only, and never their own account. */
 export async function deleteUserResourcesById(userId: string): Promise<void> {
   // Matches the better-auth admin plugin's adminRole, which gates removeUser.
@@ -48,6 +32,12 @@ export async function deleteUserResourcesById(userId: string): Promise<void> {
   if (session?.user.id === userId) {
     return Promise.reject("You cannot delete your own account");
   }
+  // Polls store the author's username, not the id, so read it before the row is gone.
+  const [target] = await db
+    .select({ username: users.username })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   try {
     await db.transaction(async (tx) => {
       await tx
@@ -74,7 +64,9 @@ export async function deleteUserResourcesById(userId: string): Promise<void> {
           CommunityPost.deleteMany({ "author.id": userId }),
           CommunityComment.deleteMany({ "author.id": userId }),
           HostelStudentModel.deleteMany({ userId }),
-          PollModel.deleteMany({ createdBy: userId }),
+          ...(target
+            ? [PollModel.deleteMany({ createdBy: target.username })]
+            : []),
         ]);
       } catch (error) {
         console.error("Error deleting mongoose models:", error);
@@ -93,7 +85,7 @@ export async function getUserPlatformActivities(
   try {
     await dbConnect();
     const activitiesPromise = [
-      PollModel.countDocuments({ createdBy: userId }),
+      PollModel.countDocuments({ createdBy: username }),
       Announcement.countDocuments({ "createdBy.id": userId }),
       CommunityPost.countDocuments({ "author.id": userId }),
       CommunityComment.countDocuments({ "author.id": userId }),

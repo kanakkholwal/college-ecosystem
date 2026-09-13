@@ -1,110 +1,154 @@
+import { BedDouble, Circle, CircleCheck, DoorOpen } from "lucide-react";
+import { Suspense } from "react";
 import {
-  getAllotmentProcess,
-  getHostRoom,
+  EmptyNote,
+  PanelSkeleton,
+} from "@/components/application/dashboard/primitives";
+import { campusFormat } from "@/components/application/hostel/ui";
+import { HeaderBar } from "@/components/common/header-bar";
+import { cn } from "@/lib/utils";
+import {
   getHostelRooms,
-  getUpcomingSlots,
+  getMyAllotment,
+  type MyAllotment,
 } from "~/actions/hostel.allotment-process";
-import { getHostelForStudent } from "~/actions/hostel.core";
+import { ALLOTMENT_STATUS_COPY } from "~/constants/hostel.allotment-process";
+import { MyRoomPanel, RoomPicker } from "./client";
 
-// UI Components
-import EmptyArea from "@/components/common/empty-area";
-import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
-import { SkeletonCardArea } from "@/components/utils/skeleton-cards";
-import { AllotmentHeader, RoomGrid } from "./client"; // We will create these
+const when = (iso: string) =>
+  campusFormat(iso, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
-export default async function HostelRoomAllotmentPage() {
-  // 1. Fetch Core Data
-  const hostelResponse = await getHostelForStudent();
-
-  if (
-    !hostelResponse.success ||
-    !hostelResponse.hosteler ||
-    !hostelResponse.hostel
-  ) {
-    return (
-      <div className="w-full min-h-[50vh] flex items-center justify-center">
-        <EmptyArea
-          title={hostelResponse.message || "No Hostel Assigned"}
-          description="Please contact the administration to resolve your hostel allocation."
-        />
-      </div>
-    );
-  }
-
-  const { hostel, hosteler } = hostelResponse;
-
-  // 2. Fetch Process Status & User's Current Room
-  const [allotmentProcess, userRoomData] = await Promise.all([
-    getAllotmentProcess(hosteler._id),
-    getHostRoom(hosteler._id as string),
-  ]);
-
-  const hostJoinedRoom = userRoomData?.data?.room;
-
-  // 3. Conditional Data Fetching (Only if open)
-  let rooms = [];
-  let slots = [];
-
-  if (allotmentProcess?.status === "open") {
-    const [roomsRes, slotsRes] = await Promise.all([
-      getHostelRooms(hostel._id),
-      getUpcomingSlots(hostel._id),
-    ]);
-    rooms = roomsRes.data || [];
-    slots = slotsRes.data || [];
-  }
-
+export default function HostelRoomAllotmentPage() {
   return (
-    <div className="space-y-8 my-6 max-w-7xl mx-auto px-4 sm:px-6">
-      {/* Header Section */}
-      <AllotmentHeader
-        status={allotmentProcess?.status}
-        joinedRoom={hostJoinedRoom?.roomNumber}
+    <div className="@container flex flex-col gap-6">
+      <HeaderBar
+        Icon={BedDouble}
+        titleNode="Room selection"
+        descriptionNode="Pick a room when your slot opens. Residents with a higher CGPI choose first."
       />
-
-      <ErrorBoundaryWithSuspense
-        loadingFallback={<SkeletonCardArea count={8} />}
-      >
-        {/* State Handling */}
-        {allotmentProcess?.status !== "open" ? (
-          <StatusMessage status={allotmentProcess?.status} />
-        ) : (
-          <RoomGrid
-            rooms={rooms}
-            hostId={hosteler._id as string}
-            userRoomId={hostJoinedRoom?._id}
-          />
-        )}
-      </ErrorBoundaryWithSuspense>
+      <Suspense fallback={<PanelSkeleton rows={4} />}>
+        <AllotmentBody />
+      </Suspense>
     </div>
   );
 }
 
-function StatusMessage({ status }: { status: string }) {
-  const messages = {
-    closed: {
-      title: "Allotment Closed",
-      desc: "The allocation window has ended.",
-    },
-    paused: {
-      title: "Process Paused",
-      desc: "Admin has temporarily paused allocation.",
-    },
-    waiting: {
-      title: "Starting Soon",
-      desc: "The allocation window has not opened yet.",
-    },
-    completed: {
-      title: "Allotment Done",
-      desc: "The process is complete for this semester.",
-    },
-  };
-
-  const msg = messages[status as keyof typeof messages] || messages.waiting;
+async function AllotmentBody() {
+  const res = await getMyAllotment();
+  if (res.error || !res.data) {
+    return (
+      <EmptyNote
+        icon={<DoorOpen />}
+        title={res.message || "No hostel assigned"}
+        description="Room selection opens once the warden adds you to a hostel. Contact the hostel office if this looks wrong."
+      />
+    );
+  }
+  const me = res.data;
+  const roomsRes = me.eligible
+    ? await getHostelRooms(me.hostel._id)
+    : { error: false, data: [] };
 
   return (
-    <div className="p-12">
-      <EmptyArea title={msg.title} description={msg.desc} />
+    <div className="flex flex-col gap-6">
+      <Steps me={me} />
+      {me.room ? (
+        <MyRoomPanel room={me.room} selectionOpen={me.process === "open"} />
+      ) : me.eligible ? (
+        roomsRes.error ? (
+          <EmptyNote
+            title="Rooms couldn't load"
+            description="Refresh the page to try again."
+          />
+        ) : (
+          <RoomPicker rooms={roomsRes.data} cgpi={me.hosteler.cgpi} />
+        )
+      ) : (
+        <EmptyNote
+          icon={<DoorOpen />}
+          title={me.reason ?? "You can't pick a room yet"}
+          description={waitingCopy(me)}
+        />
+      )}
     </div>
+  );
+}
+
+function waitingCopy(me: MyAllotment) {
+  if (me.process !== "open") return ALLOTMENT_STATUS_COPY[me.process].effect;
+  if (me.slot)
+    return `Your slot opens ${when(me.slot.startingTime)}. Come back then.`;
+  return "Ask the hostel office to add you to a selection slot.";
+}
+
+function Steps({ me }: { me: MyAllotment }) {
+  const slotStarted =
+    !me.hasSlots || (!!me.slot && new Date(me.slot.startingTime) <= new Date());
+  const steps = [
+    {
+      label: "Selection open",
+      done: me.process === "open",
+      detail: ALLOTMENT_STATUS_COPY[me.process].label,
+    },
+    {
+      label: "Your slot",
+      done: slotStarted,
+      detail: !me.hasSlots
+        ? "No slots, open to all"
+        : me.slot
+          ? `${when(me.slot.startingTime)} to ${campusFormat(me.slot.endingTime, { hour: "numeric", minute: "2-digit" })}`
+          : "Not in a slot",
+    },
+    {
+      label: "Pick a room",
+      done: !!me.room,
+      detail: me.room
+        ? `Room ${me.room.roomNumber}`
+        : `CGPI ${me.hosteler.cgpi.toFixed(2)}`,
+    },
+  ];
+
+  return (
+    <ol
+      aria-label="Your progress"
+      className="grid grid-cols-1 gap-3 @2xl:grid-cols-3"
+    >
+      {steps.map((step, i) => (
+        <li
+          key={step.label}
+          className={cn(
+            "flex items-start gap-3 rounded-2xl border bg-card p-4 dark:bg-background",
+            step.done ? "border-border" : "border-dashed border-border-strong"
+          )}
+        >
+          {step.done ? (
+            <CircleCheck
+              className="mt-0.5 size-5 shrink-0 text-success"
+              aria-hidden="true"
+            />
+          ) : (
+            <Circle
+              className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="text-body font-medium text-foreground">
+              {i + 1}. {step.label}
+              <span className="sr-only">
+                {step.done ? ", done" : ", not yet"}
+              </span>
+            </p>
+            <p className="text-caption text-muted-foreground">{step.detail}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }

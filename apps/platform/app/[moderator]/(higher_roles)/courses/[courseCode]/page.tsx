@@ -16,12 +16,12 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { courseCode } = await params;
-  return { title: `Edit ${decodeURIComponent(courseCode)}` };
+  return { title: `Edit ${courseCode}` };
 }
 
 export default async function EditCoursePage({ params }: Props) {
   const { moderator, courseCode } = await params;
-  const code = decodeURIComponent(courseCode);
+  const code = courseCode;
   const [data, session] = await Promise.all([
     getCourseByCode(code),
     getSession(),

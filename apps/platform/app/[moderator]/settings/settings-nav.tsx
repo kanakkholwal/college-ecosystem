@@ -1,32 +1,51 @@
 "use client";
 
-import { Palette, User } from "lucide-react"; // Import icons here (Client side)
-import { SidebarNav } from "./sidenav"; // Import your generic component
+import { ButtonLink } from "@/components/utils/link";
+import { ChevronLeft, Palette, UserRound } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { SidebarNav } from "./sidenav";
 
-// Define the items here, inside the client boundary
-const navItems = [
+const NAV_ITEMS = [
   {
     title: "Account",
     href: "account",
-    icon: User, // Functions/Components are allowed here because we are already on the client
+    description: "Gender, linked emails and password",
+    icon: UserRound,
   },
   {
     title: "Appearance",
     href: "appearance",
+    description: "Light or dark mode and accent colour",
     icon: Palette,
   },
 ];
 
-interface SettingsNavProps {
-  basePath: string; // We just pass the string path, which IS serializable
+const itemsFor = (basePath: string) =>
+  NAV_ITEMS.map((item) => ({ ...item, href: `${basePath}/${item.href}` }));
+
+/** Desktop side nav. On mobile it becomes a back link on section pages. */
+export function SettingsNav({ basePath }: { basePath: string }) {
+  const pathname = usePathname();
+  const onIndex = pathname === basePath;
+
+  return (
+    <>
+      <SidebarNav items={itemsFor(basePath)} className="hidden md:block" />
+      {!onIndex && (
+        <ButtonLink
+          href={basePath}
+          variant="ghost"
+          size="sm"
+          className="-ml-3 w-fit text-muted-foreground md:hidden"
+        >
+          <ChevronLeft aria-hidden="true" />
+          All settings
+        </ButtonLink>
+      )}
+    </>
+  );
 }
 
-export function SettingsNav({ basePath }: SettingsNavProps) {
-  // We map the items to add the full path
-  const items = navItems.map((item) => ({
-    ...item,
-    href: `${basePath}/${item.href}`,
-  }));
-
-  return <SidebarNav items={items} />;
+export function SettingsList({ basePath }: { basePath: string }) {
+  return <SidebarNav items={itemsFor(basePath)} variant="list" />;
 }

@@ -158,10 +158,7 @@ async function findHostelerByEmail(email: string) {
     .lean<HostelStudentType | null>();
 }
 
-/**
- * Staff get the hostel that lists their account id or primary email (inCharge);
- * students get the hostel on their own hostel record.
- */
+/** Staff: the hostel listing their account id or primary email. Students: their own record's hostel. */
 export async function getHostelByUser(
   slug?: string
 ): Promise<getHostelByUserType> {
@@ -589,7 +586,11 @@ async function planResidentImport(
 export async function previewResidentImport(
   slug: string,
   rows: ResidentImportRow[]
-): Promise<{ success: boolean; rows: ResidentImportRowResult[]; error?: string }> {
+): Promise<{
+  success: boolean;
+  rows: ResidentImportRowResult[];
+  error?: string;
+}> {
   const access = await authorizeHostelManager(slug);
   if (!access.ok) return { success: false, rows: [], error: access.error };
   if (!Array.isArray(rows) || rows.length === 0 || rows.length > 2000) {

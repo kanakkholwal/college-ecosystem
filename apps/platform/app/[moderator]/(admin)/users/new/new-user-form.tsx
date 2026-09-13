@@ -1,6 +1,9 @@
 "use client";
 
-import { Panel, PanelTitle } from "@/components/application/dashboard/primitives";
+import {
+  Panel,
+  PanelTitle,
+} from "@/components/application/dashboard/primitives";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -195,7 +198,10 @@ export function NewUserForm({ basePath }: { basePath: string }) {
                       variant="outline"
                     >
                       {GENDERS.map((gender) => (
-                        <ToggleGroupItem key={gender.value} value={gender.value}>
+                        <ToggleGroupItem
+                          key={gender.value}
+                          value={gender.value}
+                        >
                           {field.value === gender.value && (
                             <Check aria-hidden="true" />
                           )}

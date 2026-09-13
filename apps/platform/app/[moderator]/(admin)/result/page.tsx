@@ -112,7 +112,9 @@ export default async function AdminResultPage({ params }: PageProps) {
       >
         <Panel>
           <ErrorBoundaryWithSuspense
-            loadingFallback={<PanelSkeleton rows={4} className="border-0 p-0" />}
+            loadingFallback={
+              <PanelSkeleton rows={4} className="border-0 p-0" />
+            }
             fallback={<SectionError what="Flagged records" />}
           >
             <FlaggedLoader />

@@ -1,5 +1,6 @@
 "use client";
 
+import { Panel } from "@/components/application/dashboard/primitives";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -9,121 +10,172 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator"; // Ensure you have this or use a <div className="h-px bg-border" />
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ButtonLink } from "@/components/utils/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, Mail, Save } from "lucide-react";
-import { useState } from "react";
+import { Check, Eye, EyeOff, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
 import { changeUserPassword, updateUser } from "~/actions/dashboard.admin";
-import type { Session } from "~/auth/client";
 import { emailSchema } from "~/constants";
 
-// --- Types & Schemas ---
-interface Props {
-  currentUser: Session["user"];
-}
+type AccountUser = {
+  id: string;
+  email: string;
+  role: string;
+  gender: string;
+  other_emails: string[];
+};
+
+const GENDERS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "not_specified", label: "Not specified" },
+] as const;
 
 const profileSchema = z.object({
   gender: z.enum(["male", "female", "not_specified"]),
-  other_emails: z
-    .array(z.union([emailSchema, z.string().email()]))
-    .optional()
-    .default([]),
+  other_emails: z.array(z.union([emailSchema, z.string().email()])),
 });
 
 const passwordSchema = z.object({
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters long")
-    .max(128, "Password must be at most 128 characters long")
+    .min(8, "Use at least 8 characters")
+    .max(128, "Use at most 128 characters")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/, {
-      message:
-        "Password must contain uppercase, lowercase, and numeric characters.",
+      message: "Include an uppercase letter, a lowercase letter and a number.",
     }),
 });
 
-// --- Components ---
-
-export function AccountForm({ currentUser }: Props) {
+function SettingRow({
+  label,
+  description,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  description: React.ReactNode;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  const Label = htmlFor ? "label" : "p";
   return (
-    <div className="space-y-10">
+    <div className="grid grid-cols-1 gap-3 border-t border-border py-5 first:border-t-0 first:pt-0 last:pb-0 @xl:grid-cols-[14rem_minmax(0,1fr)] @xl:gap-6">
+      <div className="space-y-1">
+        <Label
+          htmlFor={htmlFor}
+          className="block text-body font-medium text-foreground"
+        >
+          {label}
+        </Label>
+        <p className="text-caption text-muted-foreground">{description}</p>
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function useUnsavedWarning(dirty: boolean) {
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+}
+
+export function AccountForm({ currentUser }: { currentUser: AccountUser }) {
+  return (
+    <div className="flex flex-col gap-6">
       <ProfileSection currentUser={currentUser} />
-      <Separator />
       <SecuritySection currentUser={currentUser} />
     </div>
   );
 }
 
-function ProfileSection({ currentUser }: Props) {
-  const isGenderLocked = currentUser.gender !== "not_specified";
+function ProfileSection({ currentUser }: { currentUser: AccountUser }) {
+  const router = useRouter();
+  const emailsId = useId();
+  const genderLabelId = useId();
+  const [genderLocked, setGenderLocked] = useState(
+    currentUser.gender !== "not_specified"
+  );
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      other_emails: currentUser.other_emails || [],
-      gender: currentUser.gender as "male" | "female" | "not_specified",
+      gender: currentUser.gender as z.infer<typeof profileSchema>["gender"],
+      other_emails: currentUser.other_emails,
     },
   });
+  const { isDirty, isSubmitting } = form.formState;
+  useUnsavedWarning(isDirty);
 
   const onSubmit = async (data: z.infer<typeof profileSchema>) => {
-    toast.promise(
-      updateUser(currentUser.id, {
-        ...data,
-      }),
-      {
-        loading: "Saving profile...",
-        success: "Profile updated successfully",
-        error: "Failed to update profile",
-      }
-    );
+    const result = await updateUser(currentUser.id, data);
+    if (!result) {
+      toast.error("Your profile wasn't saved. Try again.");
+      return;
+    }
+    form.reset({
+      gender: result.gender,
+      other_emails: result.other_emails ?? [],
+    });
+    setGenderLocked(result.gender !== "not_specified");
+    toast.success("Profile saved");
+    router.refresh();
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-medium">Profile</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage your public profile and personal details.
-          </p>
-        </div>
-
-        {/* Gender Field */}
-        <div className="grid gap-4 md:grid-cols-3 md:gap-8">
-          <div className="space-y-1">
-            <h4 className="text-sm font-medium leading-none">
-              Gender Identity
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              {isGenderLocked
-                ? "This field is locked as it has already been set."
-                : "Please select your gender. This cannot be changed later."}
-            </p>
-          </div>
-          <div className="md:col-span-2">
+    <Panel as="section" className="@container">
+      <div className="mb-5 space-y-1">
+        <h2 className="text-subheading font-medium text-foreground">Profile</h2>
+        <p className="text-body text-muted-foreground">
+          Signed in as{" "}
+          <span className="text-foreground">{currentUser.email}</span>
+        </p>
+      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <SettingRow
+            label="Gender"
+            description={
+              genderLocked
+                ? "Already set, so it can't be changed here. Ask an admin if it's wrong."
+                : "Used for hostel features. Once saved, only an admin can change it."
+            }
+          >
             <FormField
               control={form.control}
               name="gender"
               render={({ field }) => (
                 <FormItem>
+                  <span id={genderLabelId} className="sr-only">
+                    Gender
+                  </span>
                   <FormControl>
                     <ToggleGroup
                       type="single"
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                      disabled={isGenderLocked}
-                      className="justify-start"
+                      variant="outline"
+                      aria-labelledby={genderLabelId}
+                      value={field.value}
+                      onValueChange={(value) => value && field.onChange(value)}
+                      disabled={genderLocked}
+                      className="flex-wrap justify-start"
                     >
-                      {["male", "female", "not_specified"].map((option) => (
+                      {GENDERS.map((option) => (
                         <ToggleGroupItem
-                          key={option}
-                          value={option}
-                          className="h-9 px-4 text-sm capitalize data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-input bg-transparent hover:bg-accent hover:text-accent-foreground"
+                          key={option.value}
+                          value={option.value}
                         >
-                          {option.replace("_", " ")}
+                          {field.value === option.value && (
+                            <Check aria-hidden="true" />
+                          )}
+                          {option.label}
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
@@ -132,163 +184,166 @@ function ProfileSection({ currentUser }: Props) {
                 </FormItem>
               )}
             />
-          </div>
-        </div>
+          </SettingRow>
 
-        {/* Emails Field */}
-        <div className="grid gap-4 md:grid-cols-3 md:gap-8 border-t pt-6">
-          <div className="space-y-1">
-            <h4 className="text-sm font-medium leading-none">
-              Alternative Emails
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Add comma-separated emails for account recovery.
-            </p>
-          </div>
-          <div className="md:col-span-2 space-y-4">
+          <SettingRow
+            label="Other emails"
+            htmlFor={emailsId}
+            description="Other addresses linked to your account. Separate them with commas."
+          >
             <FormField
               control={form.control}
               name="other_emails"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="alt@example.com, work@example.com"
-                        className="pl-9"
-                        value={field.value?.join(", ")}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value
-                              .split(",")
-                              .map((email) => email.trim())
-                          )
-                        }
-                      />
-                    </div>
+                    <Input
+                      id={emailsId}
+                      type="text"
+                      inputMode="email"
+                      autoComplete="off"
+                      placeholder="None"
+                      defaultValue={field.value.join(", ")}
+                      onBlur={field.onBlur}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value
+                            .split(",")
+                            .map((email) => email.trim())
+                            .filter(Boolean)
+                        )
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                size="sm"
-                disabled={form.formState.isSubmitting}
-              >
-                {form.formState.isSubmitting ? (
-                  "Saving..."
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" /> Save Preferences
-                  </>
-                )}
-              </Button>
-            </div>
+          </SettingRow>
+
+          <div className="mt-5 flex flex-wrap items-center justify-end gap-3 border-t border-border pt-5">
+            <p
+              className="mr-auto text-body text-muted-foreground"
+              aria-live="polite"
+            >
+              {isDirty ? "You have unsaved changes." : "All changes saved."}
+            </p>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!isDirty || isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save profile"}
+            </Button>
           </div>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </Panel>
   );
 }
 
-function SecuritySection({ currentUser }: Props) {
+function SecuritySection({ currentUser }: { currentUser: AccountUser }) {
+  // changeUserPassword only accepts admins changing their own password.
+  const canChangeHere = currentUser.role === "admin";
+  const passwordId = useId();
   const [showPassword, setShowPassword] = useState(false);
 
-  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+  const form = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      password: "",
-    },
+    defaultValues: { password: "" },
   });
+  const { isDirty, isSubmitting } = form.formState;
 
-  const onChangePassword = async (data: z.infer<typeof passwordSchema>) => {
-    toast
-      .promise(changeUserPassword(currentUser.id, data.password), {
-        loading: "Updating password...",
-        success: "Password updated successfully",
-        error: "Failed to update password",
-      })
-      .finally(() => {
-        passwordForm.reset();
-      });
+  const onSubmit = async (data: z.infer<typeof passwordSchema>) => {
+    const ok = await changeUserPassword(currentUser.id, data.password);
+    if (!ok) {
+      toast.error("Your password wasn't changed. Try again.");
+      return;
+    }
+    form.reset();
+    setShowPassword(false);
+    toast.success("Password changed");
   };
 
   return (
-    <Form {...passwordForm}>
-      <form
-        onSubmit={passwordForm.handleSubmit(onChangePassword)}
-        className="space-y-8"
-      >
-        <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-medium">Security</h3>
-          <p className="text-sm text-muted-foreground">
-            Update your password and security settings.
-          </p>
-        </div>
+    <Panel as="section" className="@container">
+      <div className="mb-5 space-y-1">
+        <h2 className="text-subheading font-medium text-foreground">
+          Password
+        </h2>
+        <p className="text-body text-muted-foreground">
+          Other devices stay signed in after a change.
+        </p>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-3 md:gap-8">
-          <div className="space-y-1">
-            <h4 className="text-sm font-medium leading-none">New Password</h4>
-            <p className="text-xs text-muted-foreground">
-              Please use at least 8 characters, including one uppercase, one
-              lowercase, and a number.
-            </p>
-          </div>
-          <div className="md:col-span-2 space-y-4">
-            <FormField
-              control={passwordForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
+      {canChangeHere ? (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+            <SettingRow
+              label="New password"
+              htmlFor={passwordId}
+              description="At least 8 characters, with an uppercase letter, a lowercase letter and a number."
+            >
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        {...field}
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter new password"
-                        className="pl-9 pr-10"
-                        autoComplete="new-password"
-                      />
+                      <FormControl>
+                        <Input
+                          {...field}
+                          id={passwordId}
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          className="pr-11"
+                        />
+                      </FormControl>
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
+                        size="icon_sm"
+                        className="absolute top-0.5 right-0.5"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPassword}
+                        onClick={() => setShowPassword((prev) => !prev)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          <EyeOff aria-hidden="true" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <Eye aria-hidden="true" />
                         )}
                       </Button>
                     </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end">
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </SettingRow>
+            <div className="mt-5 flex justify-end border-t border-border pt-5">
               <Button
                 type="submit"
-                variant="destructive"
-                size="sm"
-                disabled={passwordForm.formState.isSubmitting}
+                variant="default"
+                disabled={!isDirty || isSubmitting}
               >
-                {passwordForm.formState.isSubmitting ? (
-                  "Updating..."
-                ) : (
-                  <>Update Password</>
-                )}
+                {isSubmitting ? "Changing..." : "Change password"}
               </Button>
             </div>
-          </div>
-        </div>
-      </form>
-    </Form>
+          </form>
+        </Form>
+      ) : (
+        <SettingRow
+          label="Change password"
+          description="We email you a link to set a new one."
+        >
+          <ButtonLink href="/auth/forgot-password" variant="outline">
+            <Lock aria-hidden="true" />
+            Send reset link
+          </ButtonLink>
+        </SettingRow>
+      )}
+    </Panel>
   );
 }

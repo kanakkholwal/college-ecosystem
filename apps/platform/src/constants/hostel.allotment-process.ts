@@ -10,3 +10,29 @@ export const ALLOTMENT_STATUSES = [
   "completed",
 ] as const;
 export type AllotmentStatus = (typeof ALLOTMENT_STATUSES)[number];
+
+export const ALLOTMENT_STATUS_COPY: Record<
+  AllotmentStatus,
+  { label: string; effect: string }
+> = {
+  waiting: {
+    label: "Not started",
+    effect: "Residents see that selection hasn't opened.",
+  },
+  open: {
+    label: "Open",
+    effect: "Residents whose slot has started can pick rooms.",
+  },
+  paused: {
+    label: "Paused",
+    effect: "Nobody can pick or change rooms until you reopen.",
+  },
+  closed: {
+    label: "Closed",
+    effect: "Selection has ended. Rooms stay as they are.",
+  },
+  completed: {
+    label: "Completed",
+    effect: "Marks this round as finished for residents.",
+  },
+};

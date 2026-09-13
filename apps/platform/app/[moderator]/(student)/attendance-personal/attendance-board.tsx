@@ -78,7 +78,8 @@ export function AttendanceBoard({
         run({ id: subject.id, isPresent, delta: -1 }, async () => {
           const undo = await deleteAttendanceLog(res.data.id);
           if (!undo.ok) toast.error(undo.error);
-          else setAnnouncement(`Removed that class from ${subject.subjectName}.`);
+          else
+            setAnnouncement(`Removed that class from ${subject.subjectName}.`);
           return undo.ok;
         })
       );
@@ -142,7 +143,10 @@ export function AttendanceBoard({
         />
       </KpiGrid>
 
-      <section aria-labelledby="subjects-heading" className="flex flex-col gap-4">
+      <section
+        aria-labelledby="subjects-heading"
+        className="flex flex-col gap-4"
+      >
         <div className="space-y-1">
           <h2
             id="subjects-heading"

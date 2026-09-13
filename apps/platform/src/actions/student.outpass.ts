@@ -21,7 +21,8 @@ export async function requestOutpass(
   } catch (err) {
     return {
       ok: false,
-      error: typeof err === "string" ? err : "Couldn't send the request. Try again.",
+      error:
+        typeof err === "string" ? err : "Couldn't send the request. Try again.",
     };
   }
 }

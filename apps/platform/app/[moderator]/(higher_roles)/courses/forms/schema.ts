@@ -118,10 +118,7 @@ export type CourseFormValues = z.infer<typeof courseFormSchema>;
 
 export const paperYears = () => {
   const now = new Date().getFullYear();
-  return Array.from(
-    { length: now - FIRST_PAPER_YEAR + 1 },
-    (_, i) => now - i
-  );
+  return Array.from({ length: now - FIRST_PAPER_YEAR + 1 }, (_, i) => now - i);
 };
 
 /** Topics are edited one per line; commas stay inside a topic. */

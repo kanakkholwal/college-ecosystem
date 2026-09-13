@@ -76,7 +76,10 @@ async function OutpassOverview({ base }: { base: string }) {
   if (!passes) return <SectionError what="Your outpasses" />;
 
   const now = new Date();
-  const withState = passes.map((pass) => ({ pass, state: passState(pass, now) }));
+  const withState = passes.map((pass) => ({
+    pass,
+    state: passState(pass, now),
+  }));
   const open = withState.filter((p) => OPEN.includes(p.state));
   const blocking = withState.find(
     (p) => p.state === "pending" || p.state === "in_use"
@@ -96,9 +99,14 @@ async function OutpassOverview({ base }: { base: string }) {
             {resident.hostelName}
           </h2>
           <p className="text-body text-muted-foreground">
-            Room <span className="font-mono text-foreground">{resident.roomNumber}</span>
+            Room{" "}
+            <span className="font-mono text-foreground">
+              {resident.roomNumber}
+            </span>
             , roll no{" "}
-            <span className="font-mono text-foreground">{resident.rollNumber}</span>
+            <span className="font-mono text-foreground">
+              {resident.rollNumber}
+            </span>
           </p>
         </div>
         {resident.ban ? null : blocking ? (
@@ -152,14 +160,21 @@ async function OutpassOverview({ base }: { base: string }) {
           <ul className="grid grid-cols-1 gap-3 @3xl:grid-cols-2">
             {open.map(({ pass, state }) => (
               <li key={pass._id}>
-                <OpenPassCard pass={pass} state={state} href={`${base}/${pass._id}`} />
+                <OpenPassCard
+                  pass={pass}
+                  state={state}
+                  href={`${base}/${pass._id}`}
+                />
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section aria-labelledby="history-heading" className="flex flex-col gap-4">
+      <section
+        aria-labelledby="history-heading"
+        className="flex flex-col gap-4"
+      >
         <div className="space-y-1">
           <h2
             id="history-heading"

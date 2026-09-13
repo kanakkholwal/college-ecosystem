@@ -1,13 +1,9 @@
 import { HeaderBar } from "@/components/common/header-bar";
-import { Settings2 } from "lucide-react";
-import { ALLOWED_ROLES } from "~/constants";
-import { SettingsNav } from "./settings-nav"; // Import the new wrapper
+import { SettingsNav } from "./settings-nav";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
-  params: Promise<{
-    moderator: (typeof ALLOWED_ROLES)[number];
-  }>;
+  params: Promise<{ moderator: string }>;
 }
 
 export default async function SettingsLayout({
@@ -17,29 +13,16 @@ export default async function SettingsLayout({
   const { moderator } = await params;
 
   return (
-    <div className="container max-w-7xl mx-auto py-6 lg:py-10">
+    <div className="flex flex-col gap-6">
       <HeaderBar
-        Icon={Settings2}
         titleNode="Settings"
-        descriptionNode="Manage your account preferences and workspace configuration."
-        className="mb-8"
+        descriptionNode="Your account details and how the platform looks on this device."
       />
-
-      <div className="flex flex-col lg:flex-row lg:space-x-12 space-y-8 lg:space-y-0">
-        <aside className="lg:w-1/5 relative">
-          <div className="lg:sticky lg:top-10">
-            {/* FIX: We pass only the path prefix string.
-               The Client Component (SettingsNav) handles the icons.
-            */}
-            <SettingsNav basePath={`/${moderator}/settings`} />
-          </div>
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[12rem_minmax(0,1fr)] md:gap-8">
+        <aside className="md:sticky md:top-0">
+          <SettingsNav basePath={`/${moderator}/settings`} />
         </aside>
-
-        <div className="flex-1 lg:max-w-3xl">
-          <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
-            {children}
-          </div>
-        </div>
+        <div className="@container min-w-0 max-w-3xl">{children}</div>
       </div>
     </div>
   );

@@ -99,6 +99,34 @@ export function createScene() {
   /** Maps flat 2D decal coordinates onto the plane at height z. */
   const plane = (z: number) => `matrix(${C} ${S} ${-C} ${S} 0 ${-z})`;
 
+  /** Decal space on a box's right face (x fixed): u runs along +y, v runs up from (x, y0, z0). */
+  function rightFace(x: number, y0: number, z0: number) {
+    const [ex, ey] = project([x, y0, z0]);
+    return `matrix(${-C} ${S} 0 -1 ${ex.toFixed(1)} ${ey.toFixed(1)})`;
+  }
+
+  /** Decal space on a box's left face (y fixed): u runs along +x, v runs up from (x0, y, z0). */
+  function leftFace(x0: number, y: number, z0: number) {
+    const [ex, ey] = project([x0, y, z0]);
+    return `matrix(${C} ${S} 0 -1 ${ex.toFixed(1)} ${ey.toFixed(1)})`;
+  }
+
+  /** Four-sided roof; only the two viewer-facing triangles are drawn. */
+  function pyramid(
+    x: number,
+    y: number,
+    z: number,
+    w: number,
+    d: number,
+    h: number
+  ) {
+    const apex: V = [x + w / 2, y + d / 2, z + h];
+    return {
+      left: poly([[x, y + d, z], [x + w, y + d, z], apex]),
+      right: poly([[x + w, y, z], [x + w, y + d, z], apex]),
+    };
+  }
+
   function delta(from: V, to: V) {
     const [ax, ay] = project(from);
     const [bx, by] = project(to);
@@ -116,5 +144,16 @@ export function createScene() {
       .join(" ");
   }
 
-  return { project, poly, box, ramp, plane, delta, viewBox };
+  return {
+    project,
+    poly,
+    box,
+    ramp,
+    plane,
+    rightFace,
+    leftFace,
+    pyramid,
+    delta,
+    viewBox,
+  };
 }

@@ -38,11 +38,7 @@ import {
   JobProgress,
   StepIndicator,
 } from "../_components/job-ui";
-import {
-  clearScrapeTasks,
-  deleteScrapeTask,
-  listScrapeTasks,
-} from "./actions";
+import { clearScrapeTasks, deleteScrapeTask, listScrapeTasks } from "./actions";
 import {
   EVENTS,
   LIST_LABELS,
@@ -287,7 +283,9 @@ export function ScrapeConsole({
         : { processed: 0, total: null }
     );
     setPhase("running");
-    toast.info(runMode === "start" ? "Building the queue" : "Reconnecting to the task");
+    toast.info(
+      runMode === "start" ? "Building the queue" : "Reconnecting to the task"
+    );
     if (runMode === "start") open(EVENTS.STREAM_SCRAPING, list);
     else
       open(
@@ -395,9 +393,7 @@ export function ScrapeConsole({
               <CountTile
                 label="Roll numbers to scrape"
                 value={
-                  typeof estimate === "number"
-                    ? estimate
-                    : "Known after start"
+                  typeof estimate === "number" ? estimate : "Known after start"
                 }
               />
               <CountTile label="Scraped in parallel" value={5} />
@@ -416,8 +412,8 @@ export function ScrapeConsole({
             </ul>
             {estimate === 0 && (
               <InlineError>
-                No records match this list right now, so the server will
-                refuse to start.
+                No records match this list right now, so the server will refuse
+                to start.
               </InlineError>
             )}
             {resumable && (
@@ -428,7 +424,9 @@ export function ScrapeConsole({
                 <button
                   type="button"
                   className="font-medium text-primary underline-offset-4 hover:underline"
-                  onClick={() => begin("resume", resumable, resumable.list_type)}
+                  onClick={() =>
+                    begin("resume", resumable, resumable.list_type)
+                  }
                 >
                   Resume it instead
                 </button>
@@ -476,7 +474,10 @@ export function ScrapeConsole({
         )}
       </Panel>
 
-      <section aria-labelledby="history-heading" className="flex flex-col gap-4">
+      <section
+        aria-labelledby="history-heading"
+        className="flex flex-col gap-4"
+      >
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
             <h2
@@ -536,7 +537,9 @@ export function ScrapeConsole({
         open={confirm?.kind === "resume" || confirm?.kind === "retry"}
         onOpenChange={(o) => !o && setConfirm(null)}
         title={
-          confirm?.kind === "retry" ? "Retry failed roll numbers?" : "Resume this task?"
+          confirm?.kind === "retry"
+            ? "Retry failed roll numbers?"
+            : "Resume this task?"
         }
         description={
           confirm && "task" in confirm
@@ -621,8 +624,7 @@ function RunView({
   reconnecting: number | null;
   onStop: () => void;
 }) {
-  const total =
-    mode === "retry" ? baseline.total : task?.processable || null;
+  const total = mode === "retry" ? baseline.total : task?.processable || null;
   const done = task
     ? Math.max(0, task.processed - (mode === "retry" ? baseline.processed : 0))
     : 0;
@@ -638,9 +640,7 @@ function RunView({
     <div className="flex flex-col gap-4" aria-live="polite">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-body-lg font-medium text-foreground">
-            {label}
-          </h2>
+          <h2 className="text-body-lg font-medium text-foreground">{label}</h2>
           <p className="font-mono text-caption text-muted-foreground">
             {task?._id ? `Task ${task._id}` : "Waiting for the server"}
           </p>
@@ -653,7 +653,11 @@ function RunView({
       <dl className="grid grid-cols-2 gap-2 @xl:grid-cols-4">
         <CountTile label="In queue" value={task?.queue?.length ?? 0} />
         <CountTile label="Processed" value={done} />
-        <CountTile label="Succeeded" value={task?.success ?? 0} tone="success" />
+        <CountTile
+          label="Succeeded"
+          value={task?.success ?? 0}
+          tone="success"
+        />
         <CountTile
           label="Failed"
           value={task?.failed ?? 0}
@@ -661,8 +665,8 @@ function RunView({
         />
       </dl>
       <p className="text-caption text-muted-foreground">
-        Counts update after every 5 roll numbers. Failure reasons appear in
-        the summary.
+        Counts update after every 5 roll numbers. Failure reasons appear in the
+        summary.
       </p>
     </div>
   );
@@ -759,29 +763,31 @@ function SummaryView({
 }
 
 function StatusLabel({ status }: { status: string }) {
-  const map: Record<string, { label: string; Icon: typeof Clock; tone: string }> =
-    {
-      [TASK_STATUS.COMPLETED]: {
-        label: "Completed",
-        Icon: CheckCircle2,
-        tone: "text-success",
-      },
-      [TASK_STATUS.SCRAPING]: {
-        label: "Running",
-        Icon: Loader2,
-        tone: "text-primary",
-      },
-      [TASK_STATUS.CANCELLED]: {
-        label: "Stopped",
-        Icon: CircleSlash,
-        tone: "text-muted-foreground",
-      },
-      [TASK_STATUS.FAILED]: {
-        label: "Failed",
-        Icon: XCircle,
-        tone: "text-destructive",
-      },
-    };
+  const map: Record<
+    string,
+    { label: string; Icon: typeof Clock; tone: string }
+  > = {
+    [TASK_STATUS.COMPLETED]: {
+      label: "Completed",
+      Icon: CheckCircle2,
+      tone: "text-success",
+    },
+    [TASK_STATUS.SCRAPING]: {
+      label: "Running",
+      Icon: Loader2,
+      tone: "text-primary",
+    },
+    [TASK_STATUS.CANCELLED]: {
+      label: "Stopped",
+      Icon: CircleSlash,
+      tone: "text-muted-foreground",
+    },
+    [TASK_STATUS.FAILED]: {
+      label: "Failed",
+      Icon: XCircle,
+      tone: "text-destructive",
+    },
+  };
   const entry = map[status] ?? {
     label: status.replaceAll("_", " "),
     Icon: Clock,
@@ -838,7 +844,8 @@ function HistoryTable({
         <tbody className="divide-y divide-border">
           {tasks.map((task) => {
             const queued = task.queue?.length ?? 0;
-            const canResume = task.status !== TASK_STATUS.COMPLETED && queued > 0;
+            const canResume =
+              task.status !== TASK_STATUS.COMPLETED && queued > 0;
             const canRetry = (task.failedRollNos?.length ?? 0) > 0;
             return (
               <tr key={task._id}>
@@ -868,7 +875,9 @@ function HistoryTable({
                       onClick={() => onShowFailures(task)}
                     >
                       {task.failed.toLocaleString("en-IN")}
-                      <span className="sr-only">, show failed roll numbers</span>
+                      <span className="sr-only">
+                        , show failed roll numbers
+                      </span>
                     </button>
                   ) : (
                     <span className="text-muted-foreground">0</span>

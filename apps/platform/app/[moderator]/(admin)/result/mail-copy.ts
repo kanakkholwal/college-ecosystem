@@ -19,7 +19,9 @@ export function parseRecipients(input: string) {
   for (const raw of input.split(/[\s,;]+/)) {
     const token = raw.trim().toLowerCase();
     if (!token) continue;
-    const email = token.includes("@") ? token : `${token}${orgConfig.mailSuffix}`;
+    const email = token.includes("@")
+      ? token
+      : `${token}${orgConfig.mailSuffix}`;
     if (seen.has(email)) continue;
     seen.add(email);
     (LOOSE_EMAIL.test(email) ? valid : invalid).push(email);

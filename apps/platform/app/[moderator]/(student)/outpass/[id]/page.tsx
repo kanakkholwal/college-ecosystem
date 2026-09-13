@@ -1,234 +1,253 @@
-import OutpassRender from "@/components/application/hostel/outpass-render";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PreviousPageLink } from "@/components/utils/link";
+import {
+  Panel,
+  PanelTitle,
+} from "@/components/application/dashboard/primitives";
+import { HeaderBar } from "@/components/common/header-bar";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   ArrowLeft,
-  CheckCircle2,
-  Clock,
-  DoorOpen,
-  MapPin,
-  ShieldCheck,
-  XCircle,
+  CircleCheck,
+  CircleDashed,
+  CircleX,
+  Ticket,
 } from "lucide-react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getOutPassById } from "~/actions/hostel.outpass";
+import type { OutPassType } from "~/models/hostel_n_outpass";
+import { getResidentContext } from "../data";
+import {
+  formatIst,
+  PASS_META,
+  PassStatus,
+  type PassState,
+  passRef,
+  passState,
+  REASON_LABEL,
+} from "../status";
+import { GatePassCode } from "./gate-pass";
 
-export default async function OutPassDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const outpass = await getOutPassById(id);
+export const metadata: Metadata = {
+  title: "Outpass",
+  description: "Your gate pass and its approval timeline.",
+};
 
-  if (!outpass) {
-    return notFound();
+type Props = { params: Promise<{ id: string; moderator: string }> };
+
+type Pass = OutPassType & {
+  rejectionReason?: string | null;
+  reviewedAt?: string | Date | null;
+};
+
+export default async function OutpassDetailPage({ params }: Props) {
+  const { id, moderator } = await params;
+  const [resident, pass] = await Promise.all([
+    getResidentContext(),
+    getOutPassById(id).catch(() => null) as Promise<Pass | null>,
+  ]);
+  // Staff can read any pass through the action; this page only shows the viewer's own.
+  if (
+    !resident.ok ||
+    !pass ||
+    pass.student?.rollNumber !== resident.rollNumber
+  ) {
+    notFound();
   }
 
-  return (
-    <div className="container max-w-6xl py-8 space-y-6">
-      {/* Navigation Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <PreviousPageLink variant="ghost" size="sm">
-          <ArrowLeft />
-          Back to Dashboard
-        </PreviousPageLink>
-      </div>
+  const base = `/${moderator}/outpass`;
+  const state = passState(pass);
+  const scannable = state === "approved" || state === "in_use";
 
-      <div className="grid gap-8 lg:grid-cols-12">
-        {/* Left Column: The Digital Ticket (Takes 7/12 width) */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">
-              Outpass Ticket
-            </h1>
-            <p className="text-muted-foreground">
-              Present this digital ticket to the security guard at the main
-              gate.
+  return (
+    <div className="@container flex w-full flex-col gap-8">
+      <HeaderBar
+        Icon={Ticket}
+        titleNode={`${REASON_LABEL[pass.reason]}, ${pass.address}`}
+        descriptionNode={
+          <p>
+            Pass <span className="font-mono">{passRef(pass._id)}</span>,
+            requested {pass.createdAt ? formatIst(pass.createdAt) : "earlier"}.
+          </p>
+        }
+        actionNode={
+          <ButtonLink href={base} variant="outline">
+            <ArrowLeft aria-hidden="true" />
+            All outpasses
+          </ButtonLink>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-3 @3xl:grid-cols-5">
+        <article
+          id="gate-pass"
+          aria-label="Gate pass"
+          className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card p-6 text-center dark:bg-background @3xl:col-span-3"
+        >
+          <PassStatus
+            state={state}
+            className="px-3 py-1 text-body-lg [&_svg]:size-5"
+          />
+          <div className="space-y-1">
+            <p className="text-heading-sm font-medium text-foreground">
+              {pass.student.name}
+            </p>
+            <p className="font-mono text-body-lg text-foreground">
+              {pass.student.rollNumber}
+            </p>
+            <p className="text-body text-muted-foreground">
+              {pass.hostel?.name}, room {pass.roomNumber}
             </p>
           </div>
+          <dl className="grid w-full grid-cols-1 gap-3 text-left @md:grid-cols-2">
+            <div className="rounded-xl border border-border p-4">
+              <dt className="text-caption text-muted-foreground">Leaving</dt>
+              <dd className="text-body-lg font-medium tabular-nums text-foreground">
+                {formatIst(pass.expectedOutTime)}
+              </dd>
+            </div>
+            <div className="rounded-xl border border-border p-4">
+              <dt className="text-caption text-muted-foreground">Back by</dt>
+              <dd className="text-body-lg font-medium tabular-nums text-foreground">
+                {formatIst(pass.expectedInTime)}
+              </dd>
+            </div>
+          </dl>
+          {scannable ? (
+            <GatePassCode
+              value={pass._id}
+              targetId="gate-pass"
+              fileName={`outpass-${pass.student.rollNumber}-${passRef(pass._id)}.png`}
+            />
+          ) : (
+            <p className="w-full rounded-xl border border-dashed border-border px-4 py-6 text-body text-muted-foreground">
+              {GATE_NOTE[state]}
+            </p>
+          )}
+        </article>
 
-          {/* We reuse the component we built earlier. 
-              We pass viewOnly={false} so the user gets the Download controls. */}
-          <OutpassRender
-            outpass={outpass}
-            viewOnly={false}
-            requestNewPath="/student/outpass/request"
-          />
-        </div>
-
-        {/* Right Column: Timeline & Context (Takes 5/12 width) */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* 1. Activity Log Card */}
-          <Card className="h-fit">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Request Lifecycle
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative pl-6 border-l-2 border-muted ml-6 my-2 space-y-10">
-              {/* Step 1: Created */}
-              <TimelineStep
-                title="Request Submitted"
-                date={outpass.createdAt}
-                Icon={Clock}
-                status="completed"
-                description="Waiting for approval from warden."
-              />
-
-              {/* Step 2: Approval Status */}
-              <TimelineStep
-                title={
-                  outpass.status === "rejected"
-                    ? "Request Rejected"
-                    : "Warden Approval"
-                }
-                date={
-                  outpass.status !== "pending"
-                    ? outpass.updatedAt || new Date()
-                    : undefined
-                }
-                Icon={outpass.status === "rejected" ? XCircle : ShieldCheck}
-                status={
-                  outpass.status === "pending"
-                    ? "current"
-                    : outpass.status === "rejected"
-                      ? "error"
-                      : "completed"
-                }
-                description={
-                  outpass.status === "pending"
-                    ? "Review in progress..."
-                    : outpass.status === "rejected"
-                      ? "Your request was denied."
-                      : "Approved by Hostel Administration."
-                }
-              />
-
-              {/* Step 3: Exit */}
-              <TimelineStep
-                title="Exited Campus"
-                date={outpass.actualOutTime}
-                Icon={DoorOpen}
-                status={
-                  ["in_use", "processed"].includes(outpass.status)
-                    ? "completed"
-                    : outpass.status === "approved"
-                      ? "upcoming"
-                      : "locked"
-                }
-                description="Verified by Security Guard."
-              />
-
-              {/* Step 4: Return */}
-              <TimelineStep
-                title="Returned to Campus"
-                date={outpass.actualInTime}
-                Icon={MapPin}
-                status={outpass.status === "processed" ? "completed" : "locked"}
-                description="Outpass closed."
-                isLast
-              />
-            </CardContent>
-          </Card>
-
-          {/* 2. Quick Tips Card */}
-          <div className="rounded-xl bg-primary/20 p-6 border border-primary text-sm text-primary">
-            <h4 className="font-semibold mb-2 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              Before you leave:
-            </h4>
-            <ul className="list-disc list-inside space-y-1 opacity-80 ml-1">
-              <li>Ensure your phone battery is charged.</li>
-              <li>Keep your ID card handy along with this pass.</li>
-              <li>
-                Return before{" "}
-                {format(new Date(outpass.expectedInTime), "hh:mm a")} to avoid
-                penalties.
-              </li>
-            </ul>
-          </div>
-        </div>
+        <Panel as="section" className="@3xl:col-span-2">
+          <PanelTitle>Timeline</PanelTitle>
+          <Timeline pass={pass} state={state} />
+        </Panel>
       </div>
     </div>
   );
 }
 
-/* --- Timeline Micro-Component --- */
+const GATE_NOTE: Partial<Record<PassState, string>> = {
+  pending: "The gate code appears here once your warden approves the request.",
+  rejected: "This request was rejected, so there is no gate code.",
+  expired:
+    "The return time passed before you checked out, so the gate won't accept this pass. Request a new one.",
+  processed: "You're back. This pass is closed and can't be used again.",
+};
 
-interface TimelineStepProps {
+type Step = {
   title: string;
-  date?: Date | string | null;
-  Icon: React.ElementType;
-  status: "completed" | "current" | "upcoming" | "locked" | "error";
-  description?: string;
-  isLast?: boolean;
-}
+  done: boolean;
+  failed?: boolean;
+  when?: string | Date | null;
+  note?: string;
+};
 
-function TimelineStep({
-  title,
-  date,
-  Icon,
-  status,
-  description,
-  isLast,
-}: TimelineStepProps) {
-  const statusStyles = {
-    completed: "bg-primary/20 text-primary border-transparent",
-    current: "bg-background text-primary border-primary ring-4 ring-primary/10",
-    upcoming: "bg-background text-muted-foreground border-muted-foreground",
-    locked: "bg-muted text-muted-foreground border-transparent",
-    error: "bg-red-500 text-white border-red-500",
-  };
+function Timeline({ pass, state }: { pass: Pass; state: PassState }) {
+  const decided = pass.status !== "pending";
+  const rejected = pass.status === "rejected";
+  const steps: Step[] = [
+    { title: "Requested", done: true, when: pass.createdAt },
+    {
+      title: rejected
+        ? "Rejected"
+        : decided
+          ? "Approved"
+          : "Waiting for approval",
+      done: decided && !rejected,
+      failed: rejected,
+      when: decided ? pass.reviewedAt : null,
+      note: rejected
+        ? pass.rejectionReason
+          ? `Reason: ${pass.rejectionReason}`
+          : "No reason was recorded. Ask your hostel office."
+        : decided
+          ? undefined
+          : "Your warden reviews it. Nothing to do yet.",
+    },
+  ];
+  if (!rejected) {
+    steps.push(
+      {
+        title: "Checked out at the gate",
+        done: Boolean(pass.actualOutTime),
+        when: pass.actualOutTime,
+        note:
+          !pass.actualOutTime && state === "expired"
+            ? "Not used before the return time."
+            : undefined,
+      },
+      {
+        title: "Checked back in",
+        done: Boolean(pass.actualInTime),
+        when: pass.actualInTime,
+        note:
+          state === "in_use"
+            ? `Due by ${formatIst(pass.expectedInTime)}.`
+            : undefined,
+      }
+    );
+  }
 
   return (
-    <div className="relative group">
-      {/* The Dot Icon */}
-      <div
-        className={cn(
-          "absolute -left-[35px] top-0 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all",
-          statusStyles[status]
-        )}
-      >
-        <div className="relative size-full flex items-center justify-center">
-          <div
-            className={cn(
-              "absolute inset-0 rounded-full border-2 border-primary",
-              // animate ring for current step
-              status === "current" ? "animate-ping" : " hidden"
+    <ol className="flex flex-col">
+      {steps.map((step, i) => {
+        const Glyph = step.failed
+          ? CircleX
+          : step.done
+            ? CircleCheck
+            : CircleDashed;
+        return (
+          <li key={step.title} className="relative flex gap-3 pb-5 last:pb-0">
+            {i < steps.length - 1 && (
+              <span
+                className="absolute left-2.5 top-6 bottom-0 w-px bg-border"
+                aria-hidden="true"
+              />
             )}
-          />
-          <Icon className="size-4" />
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          "space-y-1 pl-2",
-          status === "locked" && "opacity-50 grayscale"
-        )}
-      >
-        <p
-          className={cn(
-            "text-sm font-semibold leading-none",
-            status === "error" && "text-red-600"
-          )}
-        >
-          {title}
-        </p>
-        <p className="text-sm text-muted-foreground">{description}</p>
-
-        {date && (
-          <p className="text-xs font-mono font-medium text-foreground/70 mt-1.5 flex items-center gap-1">
-            {format(new Date(date), "h:mm a")}
-            <span className="text-muted-foreground">•</span>
-            {format(new Date(date), "MMM d")}
-          </p>
-        )}
-      </div>
-    </div>
+            <Glyph
+              className={cn(
+                "mt-0.5 size-5 shrink-0",
+                step.failed
+                  ? "text-destructive"
+                  : step.done
+                    ? "text-success"
+                    : "text-muted-foreground"
+              )}
+              aria-hidden="true"
+            />
+            <div className="min-w-0 space-y-0.5">
+              <p className="text-body font-medium text-foreground">
+                {step.title}
+                <span className="sr-only">
+                  {step.failed
+                    ? ", rejected"
+                    : step.done
+                      ? ", done"
+                      : ", not yet"}
+                </span>
+              </p>
+              {step.when && (
+                <p className="text-caption tabular-nums text-muted-foreground">
+                  {formatIst(step.when)}
+                </p>
+              )}
+              {step.note && (
+                <p className="text-body text-muted-foreground">{step.note}</p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+      <li className="sr-only">Current status: {PASS_META[state].label}</li>
+    </ol>
   );
 }

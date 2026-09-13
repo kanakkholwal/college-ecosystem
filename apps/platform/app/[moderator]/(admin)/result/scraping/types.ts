@@ -68,7 +68,8 @@ export const LIST_OPTIONS: {
   {
     value: LIST_TYPE.ALL,
     label: "Every record",
-    description: "Re-scrapes the whole database. Slowest; hits the college site once per record.",
+    description:
+      "Re-scrapes the whole database. Slowest; hits the college site once per record.",
   },
 ];
 

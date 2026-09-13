@@ -41,7 +41,10 @@ export async function saveCourse(
 ): Promise<SaveCourseResult> {
   const session = await getSession();
   if (!canEditCourses(session?.user)) {
-    return { ok: false, error: "Only admins, faculty and CRs can edit courses" };
+    return {
+      ok: false,
+      error: "Only admins, faculty and CRs can edit courses",
+    };
   }
 
   const parsed = courseFormSchema.safeParse(values);
@@ -122,7 +125,9 @@ export async function saveCourse(
               )
             );
         } else {
-          await tx.insert(booksAndReferences).values({ ...book, courseId: cid });
+          await tx
+            .insert(booksAndReferences)
+            .values({ ...book, courseId: cid });
         }
       }
 

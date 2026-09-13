@@ -7,12 +7,10 @@
 }
 
 .iso .solid polygon,
-.iso .hatch,
 .iso .decal,
 .iso .bell-shape,
 .iso .dash,
-.iso .line,
-.iso .drop {
+.iso .line {
   stroke: var(--iso-ink);
   stroke-width: 1.25;
   stroke-linejoin: round;
@@ -29,10 +27,6 @@
 .iso .face-right {
   fill: var(--iso-right);
 }
-.iso .hatch {
-  fill: none;
-  stroke-width: 1;
-}
 .iso .decal {
   fill: none;
 }
@@ -42,89 +36,22 @@
 .iso .accent-side {
   fill: var(--primary-active);
 }
-.iso .tile-label {
-  fill: var(--primary-foreground);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
 .iso .check-dot,
 .iso .drop-dot {
   fill: var(--primary);
   stroke: none;
 }
-.iso .check-mark {
-  stroke: var(--primary-foreground);
-  stroke-width: 1.5;
-}
 .iso .bell-shape {
   fill: var(--iso-top);
 }
-.iso .drop,
 .iso .dash {
   fill: none;
   stroke-dasharray: 3 5;
 }
-.iso .doc {
-  transform-box: view-box;
-}
 
 @media (prefers-reduced-motion: no-preference) {
-  .iso .doc-in {
-    animation: iso-doc-in 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  }
-  .iso .doc-out {
-    animation: iso-doc-out 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  }
   .iso .glow {
     animation: iso-glow 7s ease-in-out infinite;
-  }
-}
-
-@keyframes iso-doc-in {
-  0%,
-  8% {
-    transform: translate(0, 0);
-    opacity: 1;
-  }
-  36% {
-    transform: translate(var(--dx), var(--dy));
-    opacity: 1;
-  }
-  40%,
-  90% {
-    transform: translate(var(--dx), var(--dy));
-    opacity: 0;
-  }
-  91% {
-    transform: translate(0, 0);
-    opacity: 0;
-  }
-  100% {
-    transform: translate(0, 0);
-    opacity: 1;
-  }
-}
-
-@keyframes iso-doc-out {
-  0%,
-  52% {
-    transform: translate(calc(var(--dx) * -1), calc(var(--dy) * -1));
-    opacity: 0;
-  }
-  56% {
-    transform: translate(calc(var(--dx) * -1), calc(var(--dy) * -1));
-    opacity: 1;
-  }
-  82%,
-  92% {
-    transform: translate(0, 0);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(0, 0);
-    opacity: 0;
   }
 }
 
@@ -194,5 +121,53 @@
   }
   100% {
     opacity: 0;
+  }
+}
+
+.iso .decal-fill rect,
+.iso .decal-fill circle {
+  fill: var(--iso-top);
+}
+.iso .screen rect {
+  fill: var(--background);
+}
+.iso .tree {
+  fill: var(--iso-top);
+  stroke: var(--iso-ink);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+.iso .accent-fill {
+  fill: var(--primary);
+}
+.iso .notify {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .iso .flow {
+    animation: iso-flow 1.4s linear infinite;
+  }
+  .iso .notify {
+    animation: iso-notify 2.8s var(--ease-craft) infinite;
+  }
+}
+
+/* Dash pattern is 3 + 5; shifting by one period makes the tether flow toward the phone. */
+@keyframes iso-flow {
+  to {
+    stroke-dashoffset: -8;
+  }
+}
+
+@keyframes iso-notify {
+  0%,
+  70%,
+  100% {
+    transform: scale(1);
+  }
+  80% {
+    transform: scale(1.35);
   }
 }

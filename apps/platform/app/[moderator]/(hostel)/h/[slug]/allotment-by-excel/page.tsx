@@ -1,31 +1,18 @@
 "use client";
 
 import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
+  Circle,
+  CircleCheck,
   FileSpreadsheet,
+  LoaderCircle,
   Plus,
-  Settings2,
   Trash2,
-  UploadCloud,
-  Users,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { readSheet as readXlsxFile } from "read-excel-file/browser";
-
-// UI Components
-import { Badge } from "@/components/ui/badge";
+import { HeaderBar } from "@/components/common/header-bar";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,151 +22,129 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-
-// Logic Imports
+import { cn } from "@/lib/utils";
 import { baseUrl, serverIdentity } from "~/lib/fetch-client";
 import { hostels } from "~/lib/server-apis/endpoints";
 import { downloadAllotmentAsExcelNative } from "./utils";
 
-// --- Types ---
-const GENDER_VALUES = ["male", "female"];
-const REQUIRED_FIELDS = ["name", "rollNo", "gender", "soe"];
-const OPTIONAL_FIELDS = ["fatherName", "motherName", "program"];
+const GENDER_VALUES = [
+  { value: "male", label: "Boys" },
+  { value: "female", label: "Girls" },
+];
+const REQUIRED_FIELDS = [
+  { key: "rollNo", label: "Roll number" },
+  { key: "name", label: "Name" },
+  { key: "gender", label: "Gender" },
+  { key: "soe", label: "State of eligibility" },
+] as const;
+const OPTIONAL_FIELDS = [
+  { key: "fatherName", label: "Father's name" },
+  { key: "motherName", label: "Mother's name" },
+  { key: "program", label: "Programme" },
+] as const;
 
-type FieldRole =
-  | "ignore"
-  | "rollNo"
-  | "name"
-  | "gender"
-  | "soe"
-  | "fatherName"
-  | "motherName"
-  | "program";
-type AllottedRoom = { capacity: number; students: any[] };
+type RoomType = { id: number; capacity: number; count: number };
 
-export default function AllotmentPage() {
-  // --- State ---
+export default function AllotmentByExcelPage() {
+  const fileId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [sheetData, setSheetData] = useState<string[][]>([]);
   const [headerKeys, setHeaderKeys] = useState<string[]>([]);
-
-  // Configuration State
-  const [targetGender, setTargetGender] = useState<string>("");
-  const [soePriority, setSoePriority] = useState<string>("");
-
-  // Room Distribution State (Visual -> JSON)
-  const [roomTypes, setRoomTypes] = useState<
-    { capacity: number; count: number }[]
-  >([
-    { capacity: 4, count: 94 },
-    { capacity: 3, count: 110 },
+  const [targetGender, setTargetGender] = useState("");
+  const [soePriority, setSoePriority] = useState("");
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([
+    { id: 1, capacity: 2, count: 0 },
   ]);
-
-  // Mapping State: Key = System Field, Value = Excel Header Index
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
 
-  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFile(file);
-
+  const handleExcelUpload = async (picked: File | undefined) => {
+    if (!picked) return;
     try {
-      const [headers, ...rows] = await readXlsxFile(file);
+      const [headers, ...rows] = await readXlsxFile(picked);
       const validHeaders = headers.filter(
         (h) => typeof h === "string" && h.trim()
       ) as string[];
-      setHeaderKeys(validHeaders);
-      setSheetData(rows as string[][]);
-
-      // Auto-Heuristics for Mapping
-      const newMapping: Record<string, string> = {};
-      validHeaders.forEach((header) => {
+      const mapping: Record<string, string> = {};
+      for (const header of validHeaders) {
         const lower = header.toLowerCase();
-        if (lower.includes("roll")) newMapping["rollNo"] = header;
+        if (lower.includes("roll")) mapping.rollNo ??= header;
         else if (
           lower.includes("name") &&
           !lower.includes("father") &&
           !lower.includes("mother")
         )
-          newMapping["name"] = header;
+          mapping.name ??= header;
         else if (lower.includes("gender") || lower.includes("sex"))
-          newMapping["gender"] = header;
+          mapping.gender ??= header;
         else if (lower.includes("soe") || lower.includes("state"))
-          newMapping["soe"] = header;
-      });
-      setFieldMapping(newMapping);
-      toast.success("File loaded and columns auto-detected");
-    } catch (err) {
-      toast.error("Failed to parse Excel file");
+          mapping.soe ??= header;
+      }
+      setFile(picked);
+      setHeaderKeys(validHeaders);
+      setSheetData(rows as string[][]);
+      setFieldMapping(mapping);
+    } catch {
+      toast.error("Couldn't read that file. Upload an .xlsx sheet.");
     }
   };
 
-  const handleRoomChange = (
-    index: number,
-    field: "capacity" | "count",
-    value: string
-  ) => {
-    const newTypes = [...roomTypes];
-    newTypes[index][field] = Number(value);
-    setRoomTypes(newTypes);
-  };
+  const updateRoom = (id: number, field: "capacity" | "count", value: string) =>
+    setRoomTypes((types) =>
+      types.map((t) =>
+        t.id === id ? { ...t, [field]: Math.max(0, Number(value) || 0) } : t
+      )
+    );
 
-  const addRoomType = () =>
-    setRoomTypes([...roomTypes, { capacity: 2, count: 0 }]);
-  const removeRoomType = (index: number) =>
-    setRoomTypes(roomTypes.filter((_, i) => i !== index));
+  const uniqueSoeValues = useMemo(() => {
+    const col = headerKeys.indexOf(fieldMapping.soe ?? "");
+    if (col === -1) return [];
+    return Array.from(new Set(sheetData.map((row) => row[col]))).filter(
+      Boolean
+    );
+  }, [fieldMapping, headerKeys, sheetData]);
 
-  // --- Submission Logic ---
+  const totalCapacity = roomTypes.reduce((a, r) => a + r.capacity * r.count, 0);
+  const missing = REQUIRED_FIELDS.filter((f) => !fieldMapping[f.key]);
+  const checks = [
+    {
+      done: !!file,
+      label: `Student list uploaded${file ? ` (${sheetData.length} rows)` : ""}`,
+    },
+    { done: !!file && missing.length === 0, label: "Required columns matched" },
+    { done: !!targetGender, label: "Hostel gender chosen" },
+    { done: totalCapacity > 0, label: `Rooms defined (${totalCapacity} beds)` },
+  ];
+  const ready = checks.every((c) => c.done);
 
   const handleSubmit = async () => {
-    if (!file) return;
-
-    // 1. Validation
-    const missingFields = REQUIRED_FIELDS.filter((f) => !fieldMapping[f]);
-    if (missingFields.length > 0) {
-      toast.error(
-        `Please map the following required fields: ${missingFields.join(", ")}`
-      );
-      return;
-    }
-    if (!targetGender) {
-      toast.error("Please select a target gender for this batch.");
-      return;
-    }
-
-    // 2. Prepare Data
-    // Convert mapping format back to what API expects (Header -> Role)
-    // The API expects: { "Column A": "name", "Column B": "rollNo" }
+    if (!file || !ready) return;
     const apiMapping: Record<string, string> = {};
-    Object.entries(fieldMapping).forEach(([role, header]) => {
-      apiMapping[header] = role;
-    });
-
-    // Convert room types array to object: { "4": 94, "3": 110 }
-    const roomDistObj: Record<string, number> = {};
-    roomTypes.forEach((r) => {
-      if (r.count > 0) roomDistObj[r.capacity.toString()] = r.count;
-    });
+    for (const [role, header] of Object.entries(fieldMapping)) {
+      if (header) apiMapping[header] = role;
+    }
+    const roomDistribution: Record<string, number> = {};
+    for (const r of roomTypes) {
+      if (r.count > 0 && r.capacity > 0) {
+        roomDistribution[String(r.capacity)] =
+          (roomDistribution[String(r.capacity)] ?? 0) + r.count;
+      }
+    }
 
     const formData = new FormData();
     formData.append("fieldMapping", JSON.stringify(apiMapping));
     formData.append("file", file);
-    formData.append("roomDistribution", JSON.stringify(roomDistObj));
-
-    // Find keys for specific logic
-    const genderHeader = fieldMapping["gender"];
-    const soeHeader = fieldMapping["soe"];
-
-    formData.append("genderKey", genderHeader);
+    formData.append("roomDistribution", JSON.stringify(roomDistribution));
+    formData.append("genderKey", fieldMapping.gender);
     formData.append("gender", targetGender);
-    formData.append("soeKey", soeHeader);
+    formData.append("soeKey", fieldMapping.soe);
     if (soePriority) formData.append("soePriority", soePriority);
-    formData.append("extraFields", JSON.stringify([genderHeader, soeHeader]));
+    formData.append(
+      "extraFields",
+      JSON.stringify([fieldMapping.gender, fieldMapping.soe])
+    );
 
     setLoading(true);
-
     try {
       const res = await fetch(
         process.env.NEXT_PUBLIC_BASE_SERVER_URL +
@@ -187,182 +152,109 @@ export default function AllotmentPage() {
         {
           method: "POST",
           body: formData,
-          headers: {
-            "X-Authorization": serverIdentity,
-            Origin: baseUrl,
-          },
+          headers: { "X-Authorization": serverIdentity, Origin: baseUrl },
         }
       );
-
-      if (!res.ok) throw new Error("Server Error");
+      if (!res.ok) throw new Error("The allotment server returned an error");
       const data = await res.json();
-
-      if (!data.success) throw new Error(data.message || "Failed");
-
+      if (!data.success) throw new Error(data.message || "Allotment failed");
       await downloadAllotmentAsExcelNative(data.allocation, targetGender, []);
-      toast.success("Allotment complete! Downloading results...");
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "Failed to allot rooms");
+      toast.success("Allotment done. The sheet is downloading.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Allotment failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Computed ---
-  const uniqueSoeValues = useMemo(() => {
-    if (!fieldMapping["soe"]) return [];
-    const colIndex = headerKeys.indexOf(fieldMapping["soe"]);
-    if (colIndex === -1) return [];
-    return Array.from(new Set(sheetData.map((row) => row[colIndex]))).filter(
-      Boolean
-    );
-  }, [fieldMapping, headerKeys, sheetData]);
-
-  const totalCapacity = roomTypes.reduce(
-    (acc, curr) => acc + curr.capacity * curr.count,
-    0
-  );
+  const panel =
+    "flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background";
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Room Allocation Engine
-        </h1>
-        <p className="text-muted-foreground">
-          Bulk allot rooms to freshers based on Excel data, gender, and state
-          priority.
-        </p>
-      </div>
+    <div className="@container flex flex-col gap-6">
+      <HeaderBar
+        Icon={FileSpreadsheet}
+        titleNode="Allot rooms from a sheet"
+        descriptionNode="Upload a fresher list, describe the rooms, and download a room-wise allotment grouped by state."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-green-600" />
-                Source Data
-              </CardTitle>
-              <CardDescription>Upload the student list (.xlsx)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!file ? (
-                <div className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-                  <div className="bg-muted p-4 rounded-full mb-4">
-                    <UploadCloud className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-semibold text-lg">
-                    Click to upload student list
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Excel files only (.xlsx)
+      <div className="grid grid-cols-1 gap-6 @4xl:grid-cols-3">
+        <div className="flex flex-col gap-6 @4xl:col-span-2">
+          <section className={panel} aria-labelledby="source-heading">
+            <h2
+              id="source-heading"
+              className="text-subheading font-medium text-foreground"
+            >
+              1. Student list
+            </h2>
+            {!file ? (
+              <label
+                htmlFor={fileId}
+                className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border-strong px-4 py-10 text-center transition-colors duration-150 hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring"
+              >
+                <span className="flex size-10 items-center justify-center rounded-lg border border-border text-muted-foreground">
+                  <FileSpreadsheet className="size-5" aria-hidden="true" />
+                </span>
+                <span className="text-body font-medium text-foreground">
+                  Choose an .xlsx file
+                </span>
+                <input
+                  id={fileId}
+                  type="file"
+                  accept=".xlsx"
+                  className="sr-only"
+                  onChange={(e) => handleExcelUpload(e.target.files?.[0])}
+                />
+              </label>
+            ) : (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-body font-medium text-foreground">
+                    {file.name}
                   </p>
-                  <Input
-                    type="file"
-                    accept=".xlsx"
-                    className="hidden"
-                    id="file-upload"
-                    onChange={handleExcelUpload}
-                  />
-                  <Label
-                    htmlFor="file-upload"
-                    className="absolute inset-0 cursor-pointer"
-                  />
+                  <p className="text-caption text-muted-foreground">
+                    {sheetData.length} rows
+                  </p>
                 </div>
-              ) : (
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-green-100 p-2 rounded-md">
-                      <FileSpreadsheet className="w-5 h-5 text-green-700" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {sheetData.length} rows found
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFile(null)}
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                <Button variant="ghost" size="sm" onClick={() => setFile(null)}>
+                  Remove
+                </Button>
+              </div>
+            )}
+          </section>
 
-          {/* Field Mapping (Only shows after upload) */}
           {file && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings2 className="w-5 h-5" />
-                  Data Mapping
-                </CardTitle>
-                <CardDescription>
-                  Match Excel columns to system fields
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {REQUIRED_FIELDS.map((field) => (
-                    <div key={field} className="space-y-2">
-                      <Label className="capitalize flex items-center gap-2">
-                        {field.replace(/([A-Z])/g, " $1").trim()}
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] h-5 bg-red-50 text-red-600 border-red-200"
-                        >
-                          Required
-                        </Badge>
-                      </Label>
-                      <Select
-                        value={fieldMapping[field] || ""}
-                        onValueChange={(val) =>
-                          setFieldMapping((prev) => ({ ...prev, [field]: val }))
-                        }
-                      >
-                        <SelectTrigger
-                          className={
-                            fieldMapping[field]
-                              ? "border-green-500 bg-green-50/20"
-                              : ""
-                          }
-                        >
-                          <SelectValue placeholder="Select Column..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {headerKeys.map((h) => (
-                            <SelectItem key={h} value={h}>
-                              {h}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ))}
-                  {OPTIONAL_FIELDS.map((field) => (
-                    <div key={field} className="space-y-2">
-                      <Label className="capitalize flex items-center gap-2">
-                        {field.replace(/([A-Z])/g, " $1").trim()}
-                        <span className="text-xs text-muted-foreground">
-                          (Optional)
+            <section className={panel} aria-labelledby="mapping-heading">
+              <h2
+                id="mapping-heading"
+                className="text-subheading font-medium text-foreground"
+              >
+                2. Match columns
+              </h2>
+              <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-2">
+                {[...REQUIRED_FIELDS, ...OPTIONAL_FIELDS].map((field) => {
+                  const required = REQUIRED_FIELDS.some(
+                    (f) => f.key === field.key
+                  );
+                  return (
+                    <div key={field.key} className="flex flex-col gap-1.5">
+                      <Label htmlFor={`field-${field.key}`}>
+                        {field.label}{" "}
+                        <span className="font-normal text-muted-foreground">
+                          {required ? "(required)" : "(optional)"}
                         </span>
                       </Label>
                       <Select
-                        value={fieldMapping[field] || ""}
+                        value={fieldMapping[field.key] || ""}
                         onValueChange={(val) =>
-                          setFieldMapping((prev) => ({ ...prev, [field]: val }))
+                          setFieldMapping((prev) => ({
+                            ...prev,
+                            [field.key]: val,
+                          }))
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Column..." />
+                        <SelectTrigger id={`field-${field.key}`}>
+                          <SelectValue placeholder="Pick a column" />
                         </SelectTrigger>
                         <SelectContent>
                           {headerKeys.map((h) => (
@@ -373,184 +265,184 @@ export default function AllotmentPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  );
+                })}
+              </div>
+            </section>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Room Distribution
-              </CardTitle>
-              <CardDescription>
-                Define how many rooms of each capacity are available
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {roomTypes.map((room, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-end gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Capacity (Seater)
-                    </Label>
-                    <Input
-                      type="number"
-                      value={room.capacity}
-                      onChange={(e) =>
-                        handleRoomChange(idx, "capacity", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Count (Rooms)
-                    </Label>
-                    <Input
-                      type="number"
-                      value={room.count}
-                      onChange={(e) =>
-                        handleRoomChange(idx, "count", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="pb-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeRoomType(idx)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addRoomType}
-                className="w-full border-dashed"
+          <section className={panel} aria-labelledby="rooms-heading">
+            <div className="space-y-1">
+              <h2
+                id="rooms-heading"
+                className="text-subheading font-medium text-foreground"
               >
-                <Plus className="w-4 h-4 mr-2" /> Add Room Type
-              </Button>
-            </CardContent>
-            <CardFooter className="bg-muted/30 py-3 border-t flex justify-between">
-              <span className="text-sm text-muted-foreground">
-                Total Capacity Generated:
-              </span>
-              <Badge variant="default_soft">{totalCapacity} Beds</Badge>
-            </CardFooter>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label>Target Gender</Label>
-                <Select value={targetGender} onValueChange={setTargetGender}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENDER_VALUES.map((g) => (
-                      <SelectItem key={g} value={g} className="capitalize">
-                        {g}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[10px] text-muted-foreground">
-                  System will filter rows matching this gender from the file.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>State Priority (SOE)</Label>
-                <Select
-                  value={soePriority}
-                  onValueChange={setSoePriority}
-                  disabled={!fieldMapping["soe"]}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        fieldMapping["soe"]
-                          ? "Select Home State..."
-                          : "Map SOE Column first"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {uniqueSoeValues.map((v) => (
-                      <SelectItem key={v} value={v}>
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[10px] text-muted-foreground">
-                  Students from this state will be grouped together if possible.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-muted/50 border-none shadow-none">
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-sm">
-                  {file ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span>File Uploaded</span>
+                3. Rooms available
+              </h2>
+              <p className="text-body text-muted-foreground">
+                How many rooms of each size this batch can fill.
+              </p>
+            </div>
+            {roomTypes.map((room) => (
+              <div key={room.id} className="flex items-end gap-3">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label htmlFor={`cap-${room.id}`}>Beds per room</Label>
+                  <Input
+                    id={`cap-${room.id}`}
+                    type="number"
+                    min={1}
+                    max={7}
+                    value={room.capacity}
+                    onChange={(e) =>
+                      updateRoom(room.id, "capacity", e.target.value)
+                    }
+                  />
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  {targetGender ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span>Gender Selected</span>
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label htmlFor={`count-${room.id}`}>Number of rooms</Label>
+                  <Input
+                    id={`count-${room.id}`}
+                    type="number"
+                    min={0}
+                    value={room.count}
+                    onChange={(e) =>
+                      updateRoom(room.id, "count", e.target.value)
+                    }
+                  />
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  {totalCapacity > 0 ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span>Rooms Defined</span>
-                </div>
-
-                <Separator />
-
                 <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={handleSubmit}
-                  disabled={
-                    loading || !file || !targetGender || totalCapacity === 0
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remove this room size"
+                  disabled={roomTypes.length === 1}
+                  onClick={() =>
+                    setRoomTypes((types) =>
+                      types.filter((t) => t.id !== room.id)
+                    )
                   }
                 >
-                  {loading ? "Processing..." : "Run Allotment"}
-                  {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+                  <Trash2 aria-hidden="true" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            ))}
+            <Button
+              variant="outline"
+              className="w-fit"
+              onClick={() =>
+                setRoomTypes((types) => [
+                  ...types,
+                  { id: Date.now(), capacity: 2, count: 0 },
+                ])
+              }
+            >
+              <Plus aria-hidden="true" /> Add a room size
+            </Button>
+          </section>
         </div>
+
+        <aside className="flex flex-col gap-6">
+          <section className={panel} aria-labelledby="config-heading">
+            <h2
+              id="config-heading"
+              className="text-subheading font-medium text-foreground"
+            >
+              4. Batch settings
+            </h2>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="target-gender">Hostel gender</Label>
+              <Select value={targetGender} onValueChange={setTargetGender}>
+                <SelectTrigger id="target-gender">
+                  <SelectValue placeholder="Choose" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDER_VALUES.map((g) => (
+                    <SelectItem key={g.value} value={g.value}>
+                      {g.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-caption text-muted-foreground">
+                Only rows with this gender are allotted.
+              </p>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="soe-priority">Home state to group first</Label>
+              <Select
+                value={soePriority}
+                onValueChange={setSoePriority}
+                disabled={!fieldMapping.soe}
+              >
+                <SelectTrigger id="soe-priority">
+                  <SelectValue
+                    placeholder={
+                      fieldMapping.soe
+                        ? "Optional"
+                        : "Match the state column first"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueSoeValues.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          <section className={panel} aria-labelledby="ready-heading">
+            <h2
+              id="ready-heading"
+              className="text-body-lg font-medium text-foreground"
+            >
+              Before you run
+            </h2>
+            <ul className="flex flex-col gap-2 text-body">
+              {checks.map((c) => (
+                <li
+                  key={c.label}
+                  className={cn(
+                    "flex items-center gap-2",
+                    c.done ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {c.done ? (
+                    <CircleCheck
+                      className="size-4 text-success"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Circle className="size-4" aria-hidden="true" />
+                  )}
+                  <span>
+                    {c.label}
+                    <span className="sr-only">
+                      {c.done ? ", done" : ", to do"}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {file && missing.length > 0 && (
+              <p className="text-caption text-muted-foreground">
+                Still to match: {missing.map((m) => m.label).join(", ")}
+              </p>
+            )}
+            <Button
+              variant="primary"
+              onClick={handleSubmit}
+              disabled={loading || !ready}
+            >
+              {loading && (
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
+              )}
+              {loading ? "Allotting" : "Run allotment"}
+            </Button>
+          </section>
+        </aside>
       </div>
     </div>
   );

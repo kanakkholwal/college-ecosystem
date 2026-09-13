@@ -1,112 +1,177 @@
-import EmptyArea from "@/components/common/empty-area"; // Keep your existing
-import { AlertCircle } from "lucide-react";
+import { CalendarClock, ChartNoAxesColumn } from "lucide-react";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import {
+  DashboardSection,
+  EmptyNote,
+  Panel,
+  PanelSkeleton,
+  SectionError,
+} from "@/components/application/dashboard/primitives";
+import {
+  campusFormat,
+  StatTile,
+  TableFrame,
+  Td,
+  Th,
+} from "@/components/application/hostel/ui";
+import { HeaderBar } from "@/components/common/header-bar";
+import { ButtonLink } from "@/components/utils/link";
 import {
   getAllotmentProcess,
   getHostelRooms,
+  getUpcomingSlots,
 } from "~/actions/hostel.allotment-process";
-import { getHostel } from "~/actions/hostel.core";
-import {
-  AdminHeader,
-  ProcessControlCard,
-  RoomsTableWrapper,
-  SlotManagementCard,
-} from "./client";
+import { ALLOTMENT_STATUS_COPY as STATUS_COPY } from "~/constants/hostel.allotment-process";
+import { authorizeHostelManager } from "~/lib/hostel-access";
+import { ProcessControl, SlotActions } from "./client";
 
-export default async function HostelRoomAllotmentPage({
+const slotTime = (iso: string) =>
+  campusFormat(iso, {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+export default async function AllotmentPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ moderator: string; slug: string }>;
 }) {
-  const slug = (await params).slug;
-  const hostelRes = await getHostel(slug);
-
-  if (!hostelRes.success || !hostelRes.hostel) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <EmptyArea
-          title="Hostel Not Found"
-          description={`Could not locate hostel data for slug: ${slug}`}
-        />
-      </div>
-    );
-  }
-
-  const { hostel } = hostelRes;
-
-  // Parallel Fetching for Admin Performance
-  const [allotmentProcess, roomsRes] = await Promise.all([
-    getAllotmentProcess(hostel._id),
-    getHostelRooms(hostel._id),
-  ]);
-
-  const rooms = roomsRes.data || [];
-
-  // Calculate Quick Stats for Dashboard
-  const totalRooms = rooms.length;
-  const totalCapacity = rooms.reduce(
-    (acc: number, r: any) => acc + r.capacity,
-    0
-  );
-  const totalOccupied = rooms.reduce(
-    (acc: number, r: any) => acc + r.occupied_seats,
-    0
-  );
-  const occupancyRate =
-    totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
+  const { moderator, slug } = await params;
+  const access = await authorizeHostelManager(slug);
+  if (!access.ok) notFound();
+  const hostelId = access.hostel._id.toString();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* 1. Dashboard Header */}
-      <AdminHeader
-        hostelName={hostel.name}
-        gender={hostel.gender}
-        stats={{ totalRooms, totalCapacity, totalOccupied, occupancyRate }}
+    <div className="@container flex flex-col gap-10">
+      <HeaderBar
+        Icon={ChartNoAxesColumn}
+        titleNode="Room selection"
+        descriptionNode="Residents pick rooms in CGPI order during their slot. Control when selection is open."
+        actionNode={
+          <ButtonLink href={`/${moderator}/h/${slug}/rooms`} variant="outline">
+            Manage rooms
+          </ButtonLink>
+        }
       />
-
-      {/* 2. Control Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Status Control */}
-        <ProcessControlCard
-          hostelId={hostel._id}
-          currentStatus={allotmentProcess?.status || "waiting"}
-        />
-
-        {/* Slot Operations */}
-        <SlotManagementCard hostelId={hostel._id} />
-
-        {/* Quick Tips / Info (Optional 3rd Column) */}
-        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-muted-foreground" />
-              System Status
-            </h3>
-            <p className="text-sm text-muted-foreground mt-2">
-              System is operating normally. Ensure slots are distributed before
-              opening the process.
-            </p>
-          </div>
-          <div className="mt-4 pt-4 border-t flex justify-between text-sm">
-            <span className="text-muted-foreground">Last Updated</span>
-            <span className="font-mono">Just now</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Rooms Data Table */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">
-              Room Inventory
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Manage locks and view detailed occupancy.
-            </p>
-          </div>
-        </div>
-        <RoomsTableWrapper rooms={rooms} />
-      </div>
+      <Suspense fallback={<PanelSkeleton rows={4} />}>
+        <AllotmentBody hostelId={hostelId} />
+      </Suspense>
     </div>
+  );
+}
+
+async function AllotmentBody({ hostelId }: { hostelId: string }) {
+  const [process, slotsRes, roomsRes] = await Promise.all([
+    getAllotmentProcess(hostelId).catch(() => null),
+    getUpcomingSlots(hostelId),
+    getHostelRooms(hostelId),
+  ]);
+  if (!process || slotsRes.error || roomsRes.error) {
+    return <SectionError what="Room selection" />;
+  }
+  const slots = slotsRes.data;
+  const rooms = roomsRes.data;
+  const beds = rooms.reduce((a, r) => a + r.capacity, 0);
+  const taken = rooms.reduce((a, r) => a + r.occupied_seats, 0);
+  const inSlots = slots.reduce((a, s) => a + s.students, 0);
+  const now = Date.now();
+
+  return (
+    <>
+      <Panel as="section" className="flex flex-col gap-5">
+        <div className="space-y-1">
+          <h2 className="text-subheading font-medium text-foreground">
+            Status: {STATUS_COPY[process.status].label}
+          </h2>
+          <p className="text-body text-muted-foreground">
+            {STATUS_COPY[process.status].effect}
+          </p>
+        </div>
+        <ProcessControl hostelId={hostelId} current={process.status} />
+      </Panel>
+
+      <section
+        aria-label="Selection totals"
+        className="grid grid-cols-2 gap-3 @3xl:grid-cols-4"
+      >
+        <StatTile label="Rooms" value={rooms.length} />
+        <StatTile label="Free beds" value={Math.max(0, beds - taken)} />
+        <StatTile label="Slots" value={slots.length} />
+        <StatTile label="Residents in slots" value={inSlots} />
+      </section>
+
+      <DashboardSection
+        id="slots"
+        title="Selection slots"
+        description="Each slot opens selection for a group of residents; earlier slots go to higher CGPI."
+        action={
+          <SlotActions
+            hostelId={hostelId}
+            hasSlots={slots.length > 0}
+            processOpen={process.status === "open"}
+          />
+        }
+      >
+        {slots.length === 0 ? (
+          <EmptyNote
+            icon={<CalendarClock />}
+            title="No slots yet"
+            description={
+              rooms.length === 0
+                ? "Import rooms first, then generate slots from the resident list."
+                : "Without slots, every resident can pick as soon as selection opens."
+            }
+          />
+        ) : (
+          <TableFrame caption="Selection slots">
+            <thead>
+              <tr>
+                <Th className="w-16">Slot</Th>
+                <Th>Starts</Th>
+                <Th>Ends</Th>
+                <Th>Residents</Th>
+                <Th>State</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {slots.map((slot, i) => {
+                const start = new Date(slot.startingTime).getTime();
+                const end = new Date(slot.endingTime).getTime();
+                const state =
+                  now < start
+                    ? "Upcoming"
+                    : now <= end
+                      ? "Running"
+                      : "Started earlier";
+                return (
+                  <tr key={slot._id} className="group/row">
+                    <Td className="tabular-nums">{i + 1}</Td>
+                    <Td className="whitespace-nowrap tabular-nums">
+                      {slotTime(slot.startingTime)}
+                    </Td>
+                    <Td className="whitespace-nowrap tabular-nums">
+                      {slotTime(slot.endingTime)}
+                    </Td>
+                    <Td className="tabular-nums">{slot.students}</Td>
+                    <Td
+                      className={
+                        state === "Running"
+                          ? "font-medium text-primary"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {state}
+                    </Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </TableFrame>
+        )}
+      </DashboardSection>
+    </>
   );
 }

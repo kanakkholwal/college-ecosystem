@@ -1,73 +1,147 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
 import { Check, LoaderCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { approveRejectOutPass } from "~/actions/hostel.outpass";
 
 interface OutpassActionFooterProps {
   className?: string;
   outpassId: string;
+  studentName?: string;
+  /** Called once the server has recorded the decision. */
+  onDone?: (decision: "approved" | "rejected") => void;
 }
-const ACTIONS = {
-  approve: "approve",
-  reject: "reject",
-} as const;
 
+const QUICK_REASONS = [
+  "Return time is past the hostel curfew",
+  "Destination address is incomplete",
+  "Parent confirmation needed",
+];
+
+// Never optimistic: the row only leaves the queue after the server confirms.
 export function OutpassActionFooter({
   className,
   outpassId,
+  studentName,
+  onDone,
 }: OutpassActionFooterProps) {
-  const [isApproving, setIsApproving] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
+  const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const reasonId = useId();
 
-  const handleApprove = () => {
-    setIsApproving(true);
-    toast
-      .promise(approveRejectOutPass(outpassId, ACTIONS.approve), {
-        loading: "Approving...",
-        success: "Approved successfully",
-        error: "An error occurred while approving",
-      })
-      .finally(() => {
-        setIsApproving(false);
-      });
+  const decide = async (action: "approve" | "reject") => {
+    setBusy(action);
+    try {
+      const message = await approveRejectOutPass(
+        outpassId,
+        action,
+        action === "reject" ? reason : undefined
+      );
+      toast.success(message);
+      setRejectOpen(false);
+      onDone?.(action === "approve" ? "approved" : "rejected");
+    } catch (error) {
+      toast.error(typeof error === "string" ? error : "Couldn't save that");
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const handleReject = () => {
-    setIsRejecting(true);
-    toast
-      .promise(approveRejectOutPass(outpassId, ACTIONS.reject), {
-        loading: "Rejecting...",
-        success: "Rejected successfully",
-        error: "An error occurred while rejecting",
-      })
-      .finally(() => {
-        setIsRejecting(false);
-      });
-  };
+  const who = studentName ? ` for ${studentName}` : "";
 
   return (
-    <div className={cn("flex space-x-2 mt-2", className)}>
+    <div className={cn("flex flex-wrap gap-2", className)}>
       <Button
-        size="sm"
-        variant="default_soft"
-        onClick={handleApprove}
-        disabled={isApproving || isRejecting}
+        variant="primary"
+        onClick={() => decide("approve")}
+        disabled={busy !== null}
+        aria-label={`Approve outpass${who}`}
       >
-        {isApproving ? <LoaderCircle className="animate-spin" /> : <Check />}
-        {isApproving ? "Approving..." : "Approve"}
+        {busy === "approve" ? (
+          <LoaderCircle className="animate-spin" aria-hidden="true" />
+        ) : (
+          <Check aria-hidden="true" />
+        )}
+        {busy === "approve" ? "Approving" : "Approve"}
       </Button>
       <Button
-        size="sm"
-        variant="destructive_soft"
-        onClick={handleReject}
-        disabled={isApproving || isRejecting}
+        variant="outline"
+        onClick={() => setRejectOpen(true)}
+        disabled={busy !== null}
+        aria-label={`Reject outpass${who}`}
       >
-        {isRejecting ? <LoaderCircle className="animate-spin" /> : <X />}
-        {isRejecting ? "Rejecting..." : "Reject"}
+        <X aria-hidden="true" />
+        Reject
       </Button>
+
+      <ControlledResponsiveDialog
+        open={rejectOpen}
+        onOpenChange={(open) => busy === null && setRejectOpen(open)}
+        title={`Reject this outpass${who}?`}
+        description="The student sees your reason and can send a new request."
+      >
+        <form
+          className="flex flex-col gap-3 pb-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            decide("reject");
+          }}
+        >
+          <label
+            htmlFor={reasonId}
+            className="text-body font-medium text-foreground"
+          >
+            Reason
+          </label>
+          <Textarea
+            id={reasonId}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            maxLength={500}
+            rows={3}
+            required
+            placeholder="Tell the student what to change"
+          />
+          <div className="flex flex-wrap gap-2">
+            {QUICK_REASONS.map((text) => (
+              <button
+                key={text}
+                type="button"
+                onClick={() => setReason(text)}
+                className="h-8 rounded-lg border border-border px-2.5 text-caption text-foreground outline-none transition-colors duration-150 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setRejectOpen(false)}
+              disabled={busy !== null}
+            >
+              Keep pending
+            </Button>
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={busy !== null || reason.trim().length < 3}
+            >
+              {busy === "reject" && (
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
+              )}
+              Reject outpass
+            </Button>
+          </div>
+        </form>
+      </ControlledResponsiveDialog>
     </div>
   );
 }

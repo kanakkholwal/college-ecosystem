@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const page = Math.max(1, toInt(searchParams.get("page"), 1));
-    const limit = Math.min(100, Math.max(1, toInt(searchParams.get("limit"), 10)));
+    const limit = Math.min(
+      100,
+      Math.max(1, toInt(searchParams.get("limit"), 10))
+    );
     const hostelId = access.hostel._id;
 
     const [outPasses, totalCount] = await Promise.all([

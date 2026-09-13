@@ -38,7 +38,6 @@ const fail = <T>(message: string, data: T): Result<T> => ({
 
 // --- Process state ---
 
-
 const allotmentProcessSchema = z.object({
   status: z.enum(ALLOTMENT_STATUSES),
   hostelId: z.string(),
@@ -78,7 +77,11 @@ export async function updateAllotmentProcess(
   const saved = await redisSet(processKey(hostelId), parsed.data);
   if (!saved) return fail("Couldn't save the status. Try again.", null);
   revalidatePath("/[moderator]/h/[slug]/allotment", "page");
-  return { error: false, message: "Allotment status updated", data: parsed.data };
+  return {
+    error: false,
+    message: "Allotment status updated",
+    data: parsed.data,
+  };
 }
 
 // --- Slots ---
@@ -182,13 +185,19 @@ export async function addHostelRooms(
   hostelId: string,
   rooms: RoomImportRow[]
 ): Promise<
-  Result<{ added: number; skipped: { roomNumber: string; reason: string }[] } | null>
+  Result<{
+    added: number;
+    skipped: { roomNumber: string; reason: string }[];
+  } | null>
 > {
   const access = await authorizeHostelManager(hostelId, "id");
   if (!access.ok) return fail(access.error, null);
   const parsed = z.array(importRoomSchema).max(2000).safeParse(rooms);
   if (!parsed.success || parsed.data.length === 0) {
-    return fail("Every row needs a room number and a capacity from 1 to 7", null);
+    return fail(
+      "Every row needs a room number and a capacity from 1 to 7",
+      null
+    );
   }
 
   try {
@@ -208,7 +217,10 @@ export async function addHostelRooms(
         return false;
       }
       if (seen.has(room.roomNumber)) {
-        skipped.push({ roomNumber: room.roomNumber, reason: "Repeated in file" });
+        skipped.push({
+          roomNumber: room.roomNumber,
+          reason: "Repeated in file",
+        });
         return false;
       }
       seen.add(room.roomNumber);
@@ -261,7 +273,11 @@ export async function getHostelRooms(
   }
   if (!id) return fail("Unauthorized", []);
   try {
-    return { error: false, message: "Rooms fetched", data: await listRooms(id) };
+    return {
+      error: false,
+      message: "Rooms fetched",
+      data: await listRooms(id),
+    };
   } catch {
     return fail("Couldn't load rooms", []);
   }
@@ -312,7 +328,12 @@ export type MyAllotment = {
     capacity: number;
     occupied: number;
     isHost: boolean;
-    members: { name: string; rollNumber: string; isHost: boolean; isYou: boolean }[];
+    members: {
+      name: string;
+      rollNumber: string;
+      isHost: boolean;
+      isYou: boolean;
+    }[];
   } | null;
 };
 
@@ -357,7 +378,15 @@ async function roomOf(hosteler: HostelerLean) {
       }>(),
     RoomMemberModel.find({ room: membership.room })
       .populate("student", "name rollNumber")
-      .lean<{ student: { _id: mongoose.Types.ObjectId; name: string; rollNumber: string } | null }[]>(),
+      .lean<
+        {
+          student: {
+            _id: mongoose.Types.ObjectId;
+            name: string;
+            rollNumber: string;
+          } | null;
+        }[]
+      >(),
   ]);
   if (!room) return null;
   const hostId = room.hostStudent?.toString();
@@ -393,9 +422,7 @@ export async function getMyAllotment(): Promise<Result<MyAllotment | null>> {
       slotFor(hostel._id, hosteler.email),
       roomOf(hosteler),
     ]);
-    const reason = room
-      ? null
-      : eligibility(process.status, slot, hasSlots);
+    const reason = room ? null : eligibility(process.status, slot, hasSlots);
     return {
       error: false,
       message: "Fetched",
@@ -430,10 +457,7 @@ export async function getMyAllotment(): Promise<Result<MyAllotment | null>> {
   }
 }
 
-/**
- * Joins as the signed-in resident; `joinerId` is ignored and kept only for older callers.
- * Runs in a transaction so concurrent joins on one room conflict instead of overbooking.
- */
+/** Joins as the session's resident (`_joinerId` is ignored); the transaction stops overbooking. */
 export async function joinRoom(
   roomId: string,
   _joinerId?: string
@@ -481,7 +505,10 @@ export async function joinRoom(
         const weakestStudent = weakest?.student as
           | { _id: mongoose.Types.ObjectId; cgpi?: number; email: string }
           | undefined;
-        if (!weakestStudent || (hosteler.cgpi ?? 0) <= (weakestStudent.cgpi ?? 0)) {
+        if (
+          !weakestStudent ||
+          (hosteler.cgpi ?? 0) <= (weakestStudent.cgpi ?? 0)
+        ) {
           throw new Error(
             "This room is full and every member has an equal or higher CGPI"
           );
@@ -582,7 +609,9 @@ export async function addRoomMembers(
       })
         .select("_id name email")
         .session(session)
-        .lean<{ _id: mongoose.Types.ObjectId; name: string; email: string }[]>();
+        .lean<
+          { _id: mongoose.Types.ObjectId; name: string; email: string }[]
+        >();
       const found = new Set(students.map((s) => s.email.toLowerCase()));
       const missing = emails.filter((e) => !found.has(e));
       if (missing.length) {
@@ -603,7 +632,11 @@ export async function addRoomMembers(
       }
 
       await RoomMemberModel.insertMany(
-        students.map((s) => ({ student: s._id, room: room._id, hostel: hostel._id })),
+        students.map((s) => ({
+          student: s._id,
+          room: room._id,
+          hostel: hostel._id,
+        })),
         { session }
       );
       room.occupied_seats += students.length;

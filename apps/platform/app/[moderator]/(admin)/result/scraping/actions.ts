@@ -24,7 +24,8 @@ export async function deleteScrapeTask(taskId: string) {
     const { error } = await serverFetch(
       `${TASKS_PATH}?action=${EVENTS.TASK_DELETE}&deleteTaskId=${taskId}`
     );
-    if (error) throw new Error(error.message || "Couldn't delete that task log");
+    if (error)
+      throw new Error(error.message || "Couldn't delete that task log");
     return taskId;
   });
 }
@@ -41,6 +42,12 @@ export async function clearScrapeTasks() {
 
 const semesterCount = { $size: { $ifNull: ["$semesters", []] } };
 
+const semesterCase = (programme: string, semesters: number) => ({
+  case: { $eq: ["$programme", programme] },
+  // biome-ignore lint/suspicious/noThenProperty: MongoDB $switch requires a `then` key
+  then: semesters,
+});
+
 async function latestBatch() {
   const [row] = await ResultModel.aggregate<{ maxBatch: number }>([
     { $group: { _id: null, maxBatch: { $max: "$batch" } } },
@@ -49,7 +56,9 @@ async function latestBatch() {
 }
 
 /** Queue sizes the server would build, from the same filters as apps/server getListOfRollNos. */
-export async function getScrapeEstimates(): Promise<Record<string, number | null>> {
+export async function getScrapeEstimates(): Promise<
+  Record<string, number | null>
+> {
   await assertAdmin();
   await dbConnect();
   const safe = (p: Promise<number>) => p.catch(() => null);
@@ -64,9 +73,9 @@ export async function getScrapeEstimates(): Promise<Record<string, number | null
             {
               $switch: {
                 branches: [
-                  { case: { $eq: ["$programme", "B.Tech"] }, then: 8 },
-                  { case: { $eq: ["$programme", "B.Arch"] }, then: 10 },
-                  { case: { $eq: ["$programme", "Dual Degree"] }, then: 12 },
+                  semesterCase("B.Tech", 8),
+                  semesterCase("B.Arch", 10),
+                  semesterCase("Dual Degree", 12),
                 ],
                 default: 0,
               },

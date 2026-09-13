@@ -1,63 +1,95 @@
 "use client";
 
-import { buttonVariants } from "@/components/ui/button"; // Assuming shadcn button
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  items: {
-    href: string;
-    title: string;
-    icon?: React.ComponentType<{ className?: string }>;
-  }[];
-}
+export type SettingsNavItem = {
+  href: string;
+  title: string;
+  description: string;
+  icon?: React.ComponentType<{ className?: string }>;
+};
 
-export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
+/** Settings section list. `variant="rail"` is the desktop side nav; `"list"` is the mobile index. */
+export function SidebarNav({
+  className,
+  items,
+  variant = "rail",
+  ...props
+}: React.HTMLAttributes<HTMLElement> & {
+  items: SettingsNavItem[];
+  variant?: "rail" | "list";
+}) {
   const pathname = usePathname();
 
+  if (variant === "list") {
+    return (
+      <nav aria-label="Settings sections" className={className} {...props}>
+        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card dark:bg-background">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="flex min-h-16 items-center gap-3 px-4 py-3 outline-none transition-colors duration-150 hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                >
+                  {Icon && (
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground">
+                      <Icon className="size-5" />
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body font-medium text-foreground">
+                      {item.title}
+                    </span>
+                    <span className="block text-caption text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    );
+  }
+
   return (
-    <nav
-      className={cn(
-        "flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1 overflow-x-auto pb-2 lg:pb-0",
-        className
-      )}
-      {...props}
-    >
-      {items.map((item) => {
-        const isActive = pathname.includes(item.href);
-        const Icon = item.icon;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "relative justify-start hover:bg-transparent hover:text-foreground h-10 px-4",
-              isActive
-                ? "font-semibold text-primary"
-                : "text-muted-foreground font-medium"
-            )}
-          >
-            {/* Active State Background Animation */}
-            {isActive && (
-              <motion.div
-                layoutId="sidebarActive"
-                className="absolute inset-0 rounded-md bg-muted"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-
-            {/* Content Layer */}
-            <span className="relative z-10 flex items-center gap-2">
-              {Icon && <Icon className="size-4" />}
-              {item.title}
-            </span>
-          </Link>
-        );
-      })}
+    <nav aria-label="Settings sections" className={className} {...props}>
+      <ul className="flex flex-col gap-1">
+        {items.map((item) => {
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const Icon = item.icon;
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex h-10 items-center gap-2.5 rounded-lg px-3 text-body outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {Icon && (
+                  <Icon className={cn("size-4", active && "text-primary")} />
+                )}
+                {item.title}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 }

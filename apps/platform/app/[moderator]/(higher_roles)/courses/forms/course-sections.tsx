@@ -601,7 +601,9 @@ export function UnitsSection() {
                         <Textarea
                           {...field}
                           rows={3}
-                          placeholder={"Binary search trees\nAVL rotations\nBFS and DFS"}
+                          placeholder={
+                            "Binary search trees\nAVL rotations\nBFS and DFS"
+                          }
                           className="resize-y aria-invalid:border-destructive"
                         />
                       </FormControl>

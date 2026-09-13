@@ -12,7 +12,11 @@ import type {
 import ResultModel from "~/models/result";
 import { isValidRollNumber } from "~/constants";
 import { assertAdmin, guarded, unwrap } from "./guard";
-import { academicYearLabel, parseRecipients, resultMailSubject } from "./mail-copy";
+import {
+  academicYearLabel,
+  parseRecipients,
+  resultMailSubject,
+} from "./mail-copy";
 
 export async function getResultOverview() {
   await assertAdmin();
@@ -42,7 +46,9 @@ export async function getResultOverview() {
 export async function getAbnormalResults(): Promise<AbNormalResult[]> {
   await assertAdmin();
   const res = await serverApis.results.getAbnormalResults(undefined);
-  return unwrap<AbNormalResult[] | null>(res, "Couldn't load flagged records") ?? [];
+  return (
+    unwrap<AbNormalResult[] | null>(res, "Couldn't load flagged records") ?? []
+  );
 }
 
 export type ResultSummary = {
@@ -71,14 +77,18 @@ function summarise(
     semesters: result.semesters?.length ?? 0,
     latestCgpi: result.semesters?.at(-1)?.cgpi ?? null,
     collegeRank: result.rank?.college ?? null,
-    updatedAt: result.updatedAt ? new Date(result.updatedAt).toISOString() : null,
+    updatedAt: result.updatedAt
+      ? new Date(result.updatedAt).toISOString()
+      : null,
   };
 }
 
 function normaliseRollNo(rollNo: string) {
   const value = rollNo.trim().toLowerCase();
   if (!isValidRollNumber(value)) {
-    throw new Error(`"${rollNo}" isn't a roll number (expected e.g. 21bcs001).`);
+    throw new Error(
+      `"${rollNo}" isn't a roll number (expected e.g. 21bcs001).`
+    );
   }
   return value;
 }
@@ -89,7 +99,9 @@ export async function findStoredResult(rollNo: string) {
     const value = normaliseRollNo(rollNo);
     await dbConnect();
     const doc = await ResultModel.findOne({ rollNo: value })
-      .select("name rollNo branch batch programme semesters.cgpi rank updatedAt")
+      .select(
+        "name rollNo branch batch programme semesters.cgpi rank updatedAt"
+      )
       .lean();
     return doc ? summarise(JSON.parse(JSON.stringify(doc))) : null;
   });
@@ -107,7 +119,9 @@ export async function previewResultFromSite(rollNo: string) {
 
 export async function addResultFromSite(rollNo: string) {
   return guarded("Couldn't add that result", async () => {
-    const res = await serverApis.results.addResultByRollNo(normaliseRollNo(rollNo));
+    const res = await serverApis.results.addResultByRollNo(
+      normaliseRollNo(rollNo)
+    );
     return summarise(unwrap(res, "Couldn't add that result"));
   });
 }
@@ -161,7 +175,10 @@ export async function recalculateRanks() {
 export async function syncBranchChanges() {
   return guarded("Branch sync failed", async () => {
     const res = await serverApis.results.assignBranchChange(undefined);
-    const data = unwrap<Record<string, unknown> | null>(res, "Branch sync failed");
+    const data = unwrap<Record<string, unknown> | null>(
+      res,
+      "Branch sync failed"
+    );
     return {
       timeTaken: typeof data?.timeTaken === "string" ? data.timeTaken : null,
     };
@@ -172,10 +189,13 @@ const MAX_BULK = 16;
 
 function validRollNos(rollNos: string[], max: number) {
   const valid = Array.from(
-    new Set(rollNos.map((r) => r.trim().toLowerCase()).filter(isValidRollNumber))
+    new Set(
+      rollNos.map((r) => r.trim().toLowerCase()).filter(isValidRollNumber)
+    )
   );
   if (valid.length === 0) throw new Error("No valid roll numbers to process.");
-  if (valid.length > max) throw new Error(`Send at most ${max} roll numbers per request.`);
+  if (valid.length > max)
+    throw new Error(`Send at most ${max} roll numbers per request.`);
   return valid;
 }
 
@@ -185,7 +205,11 @@ export async function refreshResultsChunk(rollNos: string[]) {
     const valid = validRollNos(rollNos, MAX_BULK);
     // endpoints.ts points at /bulk-update, which Express routes to POST /:rollNo instead.
     const { data, error } = await serverFetch<{
-      data: { total: number; updated: number; errors: { rollNo: string; error: string }[] };
+      data: {
+        total: number;
+        updated: number;
+        errors: { rollNo: string; error: string }[];
+      };
     }>("/api/results/bulk/update", {
       method: "POST",
       body: JSON.stringify({ rollNos: valid }),
@@ -217,7 +241,8 @@ const MAX_RECIPIENTS = 500;
 export async function sendResultUpdateMail(input: string) {
   return guarded("Couldn't send the email", async () => {
     const { valid } = parseRecipients(input);
-    if (valid.length === 0) throw new Error("Add at least one valid email address.");
+    if (valid.length === 0)
+      throw new Error("Add at least one valid email address.");
     if (valid.length > MAX_RECIPIENTS) {
       throw new Error(`Send to at most ${MAX_RECIPIENTS} addresses at a time.`);
     }
@@ -234,7 +259,9 @@ export async function sendResultUpdateMail(input: string) {
       }),
     });
     if (error || !data?.data || data.error) {
-      throw new Error(error?.message || "The mail server rejected the request.");
+      throw new Error(
+        error?.message || "The mail server rejected the request."
+      );
     }
     return {
       accepted: data.data.accepted?.length ?? 0,

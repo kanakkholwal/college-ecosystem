@@ -1,413 +1,230 @@
 "use client";
 
-import {
-  CheckCircle2,
-  Clock,
-  Download,
-  Lock,
-  MoreHorizontal,
-  PauseCircle,
-  PlayCircle,
-  RefreshCw,
-  Search,
-  StopCircle,
-  Unlock,
-} from "lucide-react";
+import { Download, LoaderCircle, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner"; // Or react-hot-toast
-
-// Actions
+import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { cn } from "@/lib/utils";
 import {
   distributeSlots,
-  lockToggleRoom,
   updateAllotmentProcess,
 } from "~/actions/hostel.allotment-process";
-import type { HostelRoomJson } from "~/models/allotment";
-
-// Shadcn UI (Assumed available based on your codebase)
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+  ALLOTMENT_STATUSES,
+  type AllotmentStatus,
+  ALLOTMENT_STATUS_COPY as STATUS_COPY,
+} from "~/constants/hostel.allotment-process";
 
-// --- 1. Header Component ---
-export function AdminHeader({ hostelName, gender, stats }: any) {
-  return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b pb-6">
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            {hostelName}
-          </h1>
-          <Badge
-            variant={gender === "male" ? "default" : "secondary"}
-            className="capitalize px-3"
-          >
-            {gender}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground">
-          Hostel Administration & Allotment Dashboard
-        </p>
-      </div>
-
-      {/* Quick Stats Pill */}
-      <div className="flex gap-6 bg-secondary/30 px-6 py-3 rounded-lg border">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase">
-            Occupancy
-          </p>
-          <p className="text-2xl font-mono font-bold">{stats.occupancyRate}%</p>
-        </div>
-        <div className="w-px bg-border" />
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase">
-            Vacant Beds
-          </p>
-          <p className="text-2xl font-mono font-bold text-green-600">
-            {stats.totalCapacity - stats.totalOccupied}
-          </p>
-        </div>
-        <div className="w-px bg-border" />
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase">
-            Total Rooms
-          </p>
-          <p className="text-2xl font-mono font-bold">{stats.totalRooms}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- 2. Process Control Card ---
-const statusConfig = {
-  open: {
-    label: "Live / Open",
-    color: "text-green-600",
-    icon: PlayCircle,
-    bg: "bg-green-100",
-  },
-  closed: {
-    label: "Closed",
-    color: "text-red-600",
-    icon: StopCircle,
-    bg: "bg-red-100",
-  },
-  paused: {
-    label: "Paused",
-    color: "text-amber-600",
-    icon: PauseCircle,
-    bg: "bg-amber-100",
-  },
-  waiting: {
-    label: "Waiting",
-    color: "text-gray-600",
-    icon: Clock,
-    bg: "bg-gray-100",
-  },
-  completed: {
-    label: "Completed",
-    color: "text-blue-600",
-    icon: CheckCircle2,
-    bg: "bg-blue-100",
-  },
-};
-
-export function ProcessControlCard({
+export function ProcessControl({
   hostelId,
-  currentStatus,
+  current,
 }: {
   hostelId: string;
-  currentStatus: string;
+  current: AllotmentStatus;
 }) {
-  const [loading, setLoading] = useState(false);
-  const statusInfo =
-    statusConfig[currentStatus as keyof typeof statusConfig] ||
-    statusConfig.waiting;
-  const StatusIcon = statusInfo.icon;
+  const router = useRouter();
+  const [target, setTarget] = useState<AllotmentStatus | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const handleStatusChange = async (newStatus: string) => {
-    setLoading(true);
+  const confirm = async () => {
+    if (!target) return;
+    setBusy(true);
     try {
-      await updateAllotmentProcess(hostelId, {
-        status: newStatus as any,
+      const res = await updateAllotmentProcess(hostelId, {
+        status: target,
         hostelId,
       });
-      toast.success(`Process marked as ${newStatus}`);
-    } catch (e) {
-      toast.error("Failed to update status");
+      if (res.error) toast.error(res.message);
+      else {
+        toast.success(
+          `Room selection is now ${STATUS_COPY[target].label.toLowerCase()}`
+        );
+        setTarget(null);
+        router.refresh();
+      }
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium text-muted-foreground">
-          Process Status
-        </CardTitle>
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold tracking-tight capitalize">
-            {currentStatus}
-          </span>
-          <div className={cn("p-2 rounded-full", statusInfo.bg)}>
-            <StatusIcon className={cn("w-5 h-5", statusInfo.color)} />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+    <>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-body font-medium text-foreground">
+          Change status
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {ALLOTMENT_STATUSES.map((status) => (
             <Button
-              variant="outline"
-              className="w-full justify-between"
-              disabled={loading}
+              key={status}
+              variant={status === current ? "outline" : "ghost"}
+              aria-pressed={status === current}
+              disabled={status === current}
+              onClick={() => setTarget(status)}
+              className={cn(
+                status === current &&
+                  "border-primary bg-primary/10 text-primary disabled:opacity-100"
+              )}
             >
-              {loading ? "Updating..." : "Change Status"}
-              <MoreHorizontal className="w-4 h-4 ml-2 opacity-50" />
+              {STATUS_COPY[status].label}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Select Status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {Object.keys(statusConfig).map((key) => (
-              <DropdownMenuCheckboxItem
-                key={key}
-                checked={currentStatus === key}
-                onCheckedChange={() => handleStatusChange(key)}
-                className="capitalize"
-              >
-                {key}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardContent>
-    </Card>
-  );
-}
-
-// --- 3. Slot Management Card ---
-export function SlotManagementCard({ hostelId }: { hostelId: string }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleDistribute = async () => {
-    if (
-      !confirm(
-        "This will regenerate all time slots based on current ranking. Continue?"
-      )
-    )
-      return;
-    setLoading(true);
-    try {
-      await distributeSlots(hostelId);
-      toast.success("Slots distributed successfully");
-    } catch (e) {
-      toast.error("Distribution failed");
-    }
-    setLoading(false);
-  };
-
-  return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium text-muted-foreground">
-          Slot Management
-        </CardTitle>
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold tracking-tight">
-            Configuration
-          </span>
-          <div className="p-2 rounded-full bg-primary/10">
-            <Clock className="w-5 h-5 text-foreground" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex gap-3">
-        <Button
-          className="flex-1"
-          variant="default"
-          onClick={handleDistribute}
-          disabled={loading}
-        >
-          <RefreshCw
-            className={cn("w-4 h-4 mr-2", loading && "animate-spin")}
-          />
-          Generate Slots
-        </Button>
-        <Button
-          variant="default_soft"
-          size="icon"
-          title="Download Schedule"
-          onClick={() => toast.success("Download started...")}
-        >
-          <Download className="w-4 h-4" />
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-// --- 4. Rooms Table (Redesigned) ---
-export function RoomsTableWrapper({ rooms }: { rooms: HostelRoomJson[] }) {
-  const [filter, setFilter] = useState("");
-
-  const filteredRooms = rooms.filter((r) =>
-    r.roomNumber.toLowerCase().includes(filter.toLowerCase())
-  );
-
-  return (
-    <Card className="shadow-sm">
-      <div className="p-4 border-b flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search room number..."
-            className="pl-9 bg-muted/50 border-none"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Showing {filteredRooms.length} rooms
-        </div>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="w-[120px]">Room No</TableHead>
-            <TableHead className="w-[200px]">Occupancy</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Access</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredRooms.slice(0, 50).map((room) => (
-            <RoomRow key={room._id} room={room} />
           ))}
-          {filteredRooms.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
-                No rooms found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </Card>
+        </div>
+      </fieldset>
+      <ControlledResponsiveDialog
+        open={target !== null}
+        onOpenChange={(open) => !busy && !open && setTarget(null)}
+        title={
+          target
+            ? `Set selection to ${STATUS_COPY[target].label.toLowerCase()}?`
+            : ""
+        }
+        description={target ? STATUS_COPY[target].effect : undefined}
+        hideClose
+      >
+        <div className="flex justify-end gap-2 pb-4">
+          <Button
+            variant="ghost"
+            onClick={() => setTarget(null)}
+            disabled={busy}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={confirm} disabled={busy}>
+            {busy && (
+              <LoaderCircle className="animate-spin" aria-hidden="true" />
+            )}
+            Confirm
+          </Button>
+        </div>
+      </ControlledResponsiveDialog>
+    </>
   );
 }
 
-function RoomRow({ room }: { room: HostelRoomJson }) {
-  const [loading, setLoading] = useState(false);
-  const occupancyPercent = (room.occupied_seats / room.capacity) * 100;
+export function SlotActions({
+  hostelId,
+  hasSlots,
+  processOpen,
+}: {
+  hostelId: string;
+  hasSlots: boolean;
+  processOpen: boolean;
+}) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState<"generate" | "download" | null>(null);
 
-  // Status Logic
-  const isFull = room.occupied_seats >= room.capacity;
-  const isEmpty = room.occupied_seats === 0;
-
-  const toggleLock = async () => {
-    setLoading(true);
+  const generate = async () => {
+    setBusy("generate");
     try {
-      await lockToggleRoom(room._id);
-      toast.success(
-        `Room ${room.roomNumber} ${room.isLocked ? "Unlocked" : "Locked"}`
-      );
-    } catch (e) {
-      toast.error("Action failed");
+      const res = await distributeSlots(hostelId);
+      if (res.error) toast.error(res.message);
+      else {
+        toast.success(res.message);
+        setConfirming(false);
+        router.refresh();
+      }
+    } finally {
+      setBusy(null);
     }
-    setLoading(false);
+  };
+
+  const download = async () => {
+    setBusy("download");
+    try {
+      const res = await fetch(
+        `/api/hostel/allotment-slot?hostelId=${encodeURIComponent(hostelId)}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) throw new Error();
+      const body = (await res.json()) as {
+        hostel: string;
+        data: {
+          slotNumber: number;
+          slotTiming: string;
+          slotRollNumbers: string[];
+          slotNames: string[];
+        }[];
+      };
+      const quote = (v: string | number) =>
+        `"${String(v).replace(/"/g, '""')}"`;
+      const lines = [
+        ["Slot", "Timing", "Roll number", "Name"].map(quote).join(","),
+      ];
+      for (const slot of body.data) {
+        slot.slotRollNumbers.forEach((roll, i) => {
+          lines.push(
+            [slot.slotNumber, slot.slotTiming, roll, slot.slotNames[i] ?? ""]
+              .map(quote)
+              .join(",")
+          );
+        });
+      }
+      const url = URL.createObjectURL(
+        new Blob([lines.join("\n")], { type: "text/csv" })
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${body.hostel.replace(/\s+/g, "_")}_slots.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Couldn't download the schedule");
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
-    <TableRow className="group">
-      <TableCell className="font-medium font-mono">{room.roomNumber}</TableCell>
-
-      <TableCell>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>
-              {room.occupied_seats} / {room.capacity}
-            </span>
-            <span>{Math.round(occupancyPercent)}%</span>
-          </div>
-          <Progress
-            value={occupancyPercent}
-            className="h-2"
-            // Dynamic coloring based on fullness
-            indicatorClassName={cn(
-              isFull ? "bg-amber-500" : "bg-green-500",
-              room.isLocked && "bg-gray-300"
-            )}
-          />
-        </div>
-      </TableCell>
-
-      <TableCell>
-        {isFull ? (
-          <Badge variant="warning_soft" className="text-xs">
-            Full
-          </Badge>
-        ) : isEmpty ? (
-          <Badge variant="success_soft" className="text-xs">
-            Vacant
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="text-xs">
-            Partial
-          </Badge>
-        )}
-      </TableCell>
-
-      <TableCell>
-        {room.isLocked ? (
-          <div className="flex items-center text-red-600 text-xs font-medium">
-            <Lock className="w-3 h-3 mr-1" /> Locked
-          </div>
-        ) : (
-          <div className="flex items-center text-muted-foreground text-xs">
-            <Unlock className="w-3 h-3 mr-1" /> Open
-          </div>
-        )}
-      </TableCell>
-
-      <TableCell className="text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={toggleLock}
-          disabled={loading}
-        >
-          <span className="sr-only">Toggle Lock</span>
-          {room.isLocked ? (
-            <Lock className="h-4 w-4 text-muted-foreground group-hover:text-red-600 transition-colors" />
+    <div className="flex flex-wrap gap-2">
+      <Button
+        variant={hasSlots ? "outline" : "primary"}
+        onClick={() => setConfirming(true)}
+        disabled={busy !== null}
+      >
+        <RefreshCw aria-hidden="true" />
+        {hasSlots ? "Regenerate slots" : "Generate slots"}
+      </Button>
+      {hasSlots && (
+        <Button variant="outline" onClick={download} disabled={busy !== null}>
+          {busy === "download" ? (
+            <LoaderCircle className="animate-spin" aria-hidden="true" />
           ) : (
-            <Unlock className="h-4 w-4 text-muted-foreground group-hover:text-green-600 transition-colors" />
+            <Download aria-hidden="true" />
           )}
+          Download schedule
         </Button>
-      </TableCell>
-    </TableRow>
+      )}
+      <ControlledResponsiveDialog
+        open={confirming}
+        onOpenChange={(open) => busy === null && setConfirming(open)}
+        title={hasSlots ? "Replace every slot?" : "Generate slots?"}
+        description={
+          processOpen
+            ? "Selection is open. New slots start from the next half hour, so residents mid-slot may have to wait."
+            : "Residents are ordered by CGPI, highest first, and grouped into slots starting from the next half hour."
+        }
+        hideClose
+      >
+        <div className="flex justify-end gap-2 pb-4">
+          <Button
+            variant="ghost"
+            onClick={() => setConfirming(false)}
+            disabled={busy !== null}
+          >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={generate} disabled={busy !== null}>
+            {busy === "generate" && (
+              <LoaderCircle className="animate-spin" aria-hidden="true" />
+            )}
+            {hasSlots ? "Replace slots" : "Generate"}
+          </Button>
+        </div>
+      </ControlledResponsiveDialog>
+    </div>
   );
 }

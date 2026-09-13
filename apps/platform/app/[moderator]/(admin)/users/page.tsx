@@ -14,7 +14,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Users",
-  description: "Find accounts, check their access and open a user to manage it.",
+  description:
+    "Find accounts, check their access and open a user to manage it.",
 };
 
 type RawParams = Record<string, string | string[] | undefined>;

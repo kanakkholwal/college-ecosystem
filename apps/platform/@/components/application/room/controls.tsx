@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useId, useOptimistic, useTransition } from "react";
+import { useId, useOptimistic, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { deleteRoom, updateRoom } from "~/actions/common.room";
 
@@ -26,7 +26,14 @@ export function RoomControls({
   const id = useId();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [optimistic, setOptimistic] = useOptimistic(status);
+  // The confirmed value keeps a success from flashing back before the refresh lands.
+  const [confirmed, setConfirmed] = useState(status);
+  const [seen, setSeen] = useState(status);
+  if (status !== seen) {
+    setSeen(status);
+    setConfirmed(status);
+  }
+  const [optimistic, setOptimistic] = useOptimistic(confirmed);
   const occupied = optimistic === "occupied";
 
   const setStatus = (checked: boolean) => {
@@ -46,9 +53,10 @@ export function RoomControls({
             error: "Couldn't update the room",
           }
         );
+        startTransition(() => setConfirmed(next));
         router.refresh();
       } catch {
-        // toast already reported it; the optimistic value reverts with the transition
+        // toast already reported it; the optimistic value rolls back with the transition
       }
     });
   };

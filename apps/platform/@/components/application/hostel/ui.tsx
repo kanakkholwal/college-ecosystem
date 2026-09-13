@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { ButtonLink } from "@/components/utils/link";
-import { cn } from "@/lib/utils";
 import {
   CheckCheck,
   CircleCheck,
@@ -9,6 +6,9 @@ import {
   LogOut,
   ShieldAlert,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/utils/link";
+import { cn } from "@/lib/utils";
 import type { OutPassType } from "~/models/hostel_n_outpass";
 
 export const campusFormat = (

@@ -44,7 +44,11 @@ export async function previewFreshersImport(input: ImportRow[]) {
         rollNo: raw.rollNo.trim().toLowerCase(),
       };
       if (!row.rollNo) {
-        skipped.push({ row: row.row, rollNo: "", reason: "Roll number is empty" });
+        skipped.push({
+          row: row.row,
+          rollNo: "",
+          reason: "Roll number is empty",
+        });
       } else if (!isValidRollNumber(row.rollNo)) {
         skipped.push({
           row: row.row,
@@ -52,7 +56,11 @@ export async function previewFreshersImport(input: ImportRow[]) {
           reason: "Roll number should look like 25bcs001",
         });
       } else if (!row.name) {
-        skipped.push({ row: row.row, rollNo: row.rollNo, reason: "Name is empty" });
+        skipped.push({
+          row: row.row,
+          rollNo: row.rollNo,
+          reason: "Name is empty",
+        });
       } else if (firstSeen.has(row.rollNo)) {
         skipped.push({
           row: row.row,
@@ -69,7 +77,11 @@ export async function previewFreshersImport(input: ImportRow[]) {
     const fresh = ready.filter((r) => !existing.has(r.rollNo));
     for (const r of ready) {
       if (existing.has(r.rollNo)) {
-        skipped.push({ row: r.row, rollNo: r.rollNo, reason: "Already in the database" });
+        skipped.push({
+          row: r.row,
+          rollNo: r.rollNo,
+          reason: "Already in the database",
+        });
       }
     }
     skipped.sort((a, b) => a.row - b.row);
@@ -81,7 +93,9 @@ export async function previewFreshersImport(input: ImportRow[]) {
 export async function importFreshersChunk(input: ImportRow[]) {
   return guarded("Import request failed", async () => {
     const rows = z.array(rowSchema).min(1).max(MAX_CHUNK).parse(input);
-    const valid = rows.filter((r) => isValidRollNumber(r.rollNo) && r.name.trim());
+    const valid = rows.filter(
+      (r) => isValidRollNumber(r.rollNo) && r.name.trim()
+    );
     const existing = await existingRollNos(valid.map((r) => r.rollNo));
     const toInsert = valid.filter((r) => !existing.has(r.rollNo));
     const skipped: SkippedRow[] = rows
@@ -89,7 +103,9 @@ export async function importFreshersChunk(input: ImportRow[]) {
       .map((r) => ({
         row: r.row,
         rollNo: r.rollNo,
-        reason: existing.has(r.rollNo) ? "Already in the database" : "Invalid row",
+        reason: existing.has(r.rollNo)
+          ? "Already in the database"
+          : "Invalid row",
       }));
 
     if (toInsert.length > 0) {
