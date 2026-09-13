@@ -1,228 +1,262 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  EmptyNote,
+  SectionError,
+} from "@/components/application/dashboard/primitives";
+import { HeaderBar } from "@/components/common/header-bar";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { AlertCircle, ArrowRight, History, MapPin, Ticket } from "lucide-react";
+import { ArrowRight, BedDouble, CircleAlert, Plus, Ticket } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getHostelForStudent } from "~/actions/hostel.core";
 import { getOutPassForHosteler } from "~/actions/hostel.outpass";
-import { OutPassType } from "~/models/hostel_n_outpass";
+import type { OutPassType } from "~/models/hostel_n_outpass";
+import { getResidentContext } from "./data";
+import { OutpassListSkeleton } from "./skeletons";
+import {
+  formatIst,
+  PASS_META,
+  PassStatus,
+  type PassState,
+  passRef,
+  passState,
+  REASON_LABEL,
+} from "./status";
 
-interface PageProps {
-  searchParams: Promise<{ slug?: string }>;
-}
+export const metadata: Metadata = {
+  title: "Outpasses",
+  description: "Request an outpass and track its approval.",
+};
 
-export default async function HostelPage(props: PageProps) {
-  const { slug } = await props.searchParams;
-  const response = await getHostelForStudent(slug);
+type Props = { params: Promise<{ moderator: string }> };
 
-  if (!response.hosteler) return null; // Handled by layout mostly
+const OPEN: PassState[] = ["pending", "approved", "in_use"];
 
-  const hosteler = response.hosteler;
-  const outPasses = await getOutPassForHosteler();
-
-  // Logic: The first item is usually the active/latest one
-  const latestOutpass = outPasses.length > 0 ? outPasses[0] : null;
-  const isBanned = !!hosteler.banned;
-  const hasActivePass =
-    latestOutpass &&
-    ["pending", "approved", "in_use"].includes(latestOutpass.status);
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      {/* --- Column 1: Active Status & Actions (Takes up 2 cols on large screens) --- */}
-      <div className="lg:col-span-2 space-y-6">
-        {/* Banned Alert - High Visibility */}
-        {isBanned && (
-          <Alert
-            variant="destructive"
-            className="border-red-500/50 bg-red-500/10 text-red-600"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Outpass Privileges Suspended</AlertTitle>
-            <AlertDescription>
-              Reason: {hosteler.bannedReason}. Suspension ends on{" "}
-              {hosteler.bannedTill
-                ? format(new Date(hosteler.bannedTill), "PPP")
-                : "Unknown"}
-              .
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* The "Active Pass" Ticket Card */}
-        {!isBanned && hasActivePass && latestOutpass ? (
-          <ActivePassTicket outpass={latestOutpass} />
-        ) : (
-          /* Call to Action if no active pass */
-          !isBanned && (
-            <div className="rounded-xl border border-dashed p-8 text-center animate-in fade-in zoom-in-95 duration-300 bg-card">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Ticket className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">Ready to go out?</h3>
-              <p className="mb-4 text-sm text-muted-foreground max-w-sm mx-auto">
-                You are currently marked as present in the hostel. Request a new
-                outpass to leave the campus.
-              </p>
-              <Button asChild size="lg" className="rounded-full">
-                <Link href="outpass/request">
-                  Request New Outpass <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )
-        )}
-      </div>
-
-      {/* --- Column 2: History (Sidebar style) --- */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium flex items-center gap-2">
-            <History className="h-4 w-4 text-muted-foreground" /> Recent History
-          </h3>
-        </div>
-
-        <Card className="overflow-hidden">
-          <ScrollArea className="h-[400px]">
-            {outPasses.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                No history found.
-              </div>
-            ) : (
-              <div className="divide-y">
-                {outPasses.map((pass) => (
-                  <HistoryItem key={pass._id} outpass={pass} />
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-/* --- Sub-Components for the "Stripe/Linear" Look --- */
-
-function ActivePassTicket({ outpass }: { outpass: OutPassType }) {
-  const statusColors = {
-    pending: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
-    approved: "bg-green-500/10 text-green-600 border-green-200",
-    rejected: "bg-red-500/10 text-red-600 border-red-200",
-    in_use: "bg-blue-500/10 text-blue-600 border-blue-200",
-    processed: "bg-gray-100 text-gray-500 border-gray-200",
-  };
+export default async function OutpassPage({ params }: Props) {
+  const { moderator } = await params;
+  const base = `/${moderator}/outpass`;
 
   return (
-    <div className="relative overflow-hidden rounded-xl border bg-card shadow-sm">
-      {/* Status Header */}
-      <div
-        className={cn(
-          "flex items-center justify-between px-6 py-3 border-b",
-          statusColors[outpass.status as keyof typeof statusColors]
-        )}
+    <div className="@container flex w-full flex-col gap-8">
+      <HeaderBar
+        Icon={Ticket}
+        titleNode="Outpasses"
+        descriptionNode="Request a pass before you leave the hostel, then show it at the gate on the way out and back."
+      />
+      <ErrorBoundaryWithSuspense
+        loadingFallback={<OutpassListSkeleton />}
+        fallback={<SectionError what="Your outpasses" />}
       >
-        <span className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-          {outpass.status === "in_use" && (
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-          )}
-          {outpass.status.replace("_", " ")}
-        </span>
-        <span className="text-xs font-mono opacity-80">
-          ID: {outpass._id.toString().slice(-6).toUpperCase()}
-        </span>
-      </div>
-
-      <div className="p-6 grid gap-6 md:grid-cols-2">
-        <div className="space-y-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">
-            Destination
-          </span>
-          <div className="flex items-start gap-2">
-            <MapPin className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <p className="font-semibold text-lg leading-tight">
-                {outpass.address}
-              </p>
-              <p className="text-sm text-muted-foreground capitalize">
-                {outpass.reason}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex justify-between">
-            <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Out Time</span>
-              <p className="font-mono font-medium">
-                {format(new Date(outpass.expectedOutTime), "MMM d, HH:mm")}
-              </p>
-            </div>
-            <ArrowRight className="text-muted-foreground mt-4 h-4 w-4" />
-            <div className="space-y-1 text-right">
-              <span className="text-xs text-muted-foreground">In Time</span>
-              <p className="font-mono font-medium">
-                {format(new Date(outpass.expectedInTime), "MMM d, HH:mm")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Ticket Footer / Action */}
-      <div className="bg-muted/30 p-4 border-t flex justify-between items-center">
-        <p className="text-xs text-muted-foreground">
-          Show this QR code at the security gate.
-        </p>
-        {/* Placeholder for QR Code or Detail Link */}
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`outpass/${outpass._id}`}>View Details</Link>
-        </Button>
-      </div>
+        <OutpassOverview base={base} />
+      </ErrorBoundaryWithSuspense>
     </div>
   );
 }
 
-function HistoryItem({ outpass }: { outpass: OutPassType }) {
-  const statusInfo = {
-    pending: { color: "bg-yellow-500", label: "Wait" },
-    approved: { color: "bg-green-500", label: "Ok" },
-    rejected: { color: "bg-red-500", label: "No" },
-    in_use: { color: "bg-blue-500", label: "Out" },
-    processed: { color: "bg-gray-500", label: "Done" },
-  };
+async function OutpassOverview({ base }: { base: string }) {
+  const [resident, passes] = await Promise.all([
+    getResidentContext(),
+    getOutPassForHosteler().catch(() => null),
+  ]);
 
-  const meta =
-    statusInfo[outpass.status as keyof typeof statusInfo] ||
-    statusInfo.processed;
+  if (!resident.ok) {
+    return (
+      <EmptyNote
+        icon={<BedDouble />}
+        title="No hostel on your account"
+        description={`${resident.error}. Outpasses are for hostel residents; contact your hostel office if you should have a room.`}
+        action={
+          <ButtonLink href="/" variant="outline" size="sm">
+            Back to home
+          </ButtonLink>
+        }
+      />
+    );
+  }
+  if (!passes) return <SectionError what="Your outpasses" />;
+
+  const now = new Date();
+  const withState = passes.map((pass) => ({ pass, state: passState(pass, now) }));
+  const open = withState.filter((p) => OPEN.includes(p.state));
+  const blocking = withState.find(
+    (p) => p.state === "pending" || p.state === "in_use"
+  );
 
   return (
-    <div className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors text-sm">
-      <div className={cn("h-2 w-2 rounded-full shrink-0", meta.color)} />
+    <div className="flex flex-col gap-10">
+      <section
+        aria-labelledby="hostel-heading"
+        className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background @2xl:flex-row @2xl:items-center @2xl:justify-between"
+      >
+        <div className="min-w-0 space-y-1">
+          <h2
+            id="hostel-heading"
+            className="text-body-lg font-medium text-foreground"
+          >
+            {resident.hostelName}
+          </h2>
+          <p className="text-body text-muted-foreground">
+            Room <span className="font-mono text-foreground">{resident.roomNumber}</span>
+            , roll no{" "}
+            <span className="font-mono text-foreground">{resident.rollNumber}</span>
+          </p>
+        </div>
+        {resident.ban ? null : blocking ? (
+          <p className="max-w-sm text-body text-muted-foreground">
+            {blocking.state === "pending"
+              ? "You can request a new pass once your warden reviews the one waiting."
+              : "You can request a new pass after you check back in."}
+          </p>
+        ) : (
+          <ButtonLink href={`${base}/request`} variant="primary" size="lg">
+            <Plus aria-hidden="true" />
+            Request outpass
+          </ButtonLink>
+        )}
+      </section>
 
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{outpass.reason}</p>
-        <p className="text-xs text-muted-foreground truncate">
-          {outpass.address}
-        </p>
-      </div>
+      {resident.ban && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-destructive/40 bg-card p-5 dark:bg-background"
+        >
+          <CircleAlert
+            className="mt-0.5 size-5 shrink-0 text-destructive"
+            aria-hidden="true"
+          />
+          <div className="space-y-1">
+            <p className="text-body font-medium text-foreground">
+              Outpasses are blocked
+              {resident.ban.till
+                ? ` until ${formatIst(resident.ban.till)}`
+                : " until your warden lifts the block"}
+            </p>
+            <p className="text-body text-muted-foreground">
+              {resident.ban.reason
+                ? `Reason given: ${resident.ban.reason}.`
+                : "No reason was recorded."}{" "}
+              Talk to your hostel office if this looks wrong.
+            </p>
+          </div>
+        </div>
+      )}
 
-      <div className="text-right shrink-0">
-        <p className="font-mono text-xs">
-          {format(new Date(outpass.createdAt || new Date()), "MM/dd")}
-        </p>
-        <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal">
-          {outpass.status}
-        </Badge>
-      </div>
+      {open.length > 0 && (
+        <section aria-labelledby="open-heading" className="flex flex-col gap-4">
+          <h2
+            id="open-heading"
+            className="text-subheading font-medium text-foreground"
+          >
+            In progress
+          </h2>
+          <ul className="grid grid-cols-1 gap-3 @3xl:grid-cols-2">
+            {open.map(({ pass, state }) => (
+              <li key={pass._id}>
+                <OpenPassCard pass={pass} state={state} href={`${base}/${pass._id}`} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section aria-labelledby="history-heading" className="flex flex-col gap-4">
+        <div className="space-y-1">
+          <h2
+            id="history-heading"
+            className="text-subheading font-medium text-foreground"
+          >
+            Your requests
+          </h2>
+          {passes.length > 0 && (
+            <p className="text-body text-muted-foreground">
+              Your {passes.length === 10 ? "10 most recent" : passes.length}{" "}
+              {passes.length === 1 ? "request" : "requests"}, newest first.
+            </p>
+          )}
+        </div>
+        {passes.length === 0 ? (
+          <EmptyNote
+            icon={<Ticket />}
+            title="No requests yet"
+            description="Each outpass you request shows up here with its approval and gate times."
+          />
+        ) : (
+          <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card dark:bg-background">
+            {withState.map(({ pass, state }) => (
+              <li key={pass._id}>
+                <Link
+                  href={`${base}/${pass._id}`}
+                  className="flex min-h-14 items-center gap-3 px-5 py-3 outline-none transition-colors duration-150 hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-body font-medium text-foreground">
+                      {REASON_LABEL[pass.reason]}, {pass.address}
+                    </span>
+                    <span className="block truncate text-caption text-muted-foreground">
+                      Leaving {formatIst(pass.expectedOutTime)}
+                    </span>
+                  </span>
+                  <PassStatus state={state} />
+                  <ArrowRight
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
+  );
+}
+
+const NEXT_STEP: Partial<Record<PassState, (p: OutPassType) => string>> = {
+  pending: () => "Waiting for your warden. You'll see the decision here.",
+  approved: (p) =>
+    `Show the pass at the gate when you leave. Be back by ${formatIst(p.expectedInTime)}.`,
+  in_use: (p) =>
+    `You're checked out. Check in at the gate by ${formatIst(p.expectedInTime)}.`,
+};
+
+function OpenPassCard({
+  pass,
+  state,
+  href,
+}: {
+  pass: OutPassType;
+  state: PassState;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group flex h-full flex-col gap-3 rounded-2xl border bg-card p-5 outline-none transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring dark:bg-background",
+        state === "approved" ? "border-success/40" : "border-border"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="truncate text-body-lg font-medium text-foreground">
+            {REASON_LABEL[pass.reason]}, {pass.address}
+          </h3>
+          <p className="font-mono text-caption text-muted-foreground">
+            Pass {passRef(pass._id)}
+          </p>
+        </div>
+        <PassStatus state={state} />
+      </div>
+      <p className="text-body text-muted-foreground">
+        {NEXT_STEP[state]?.(pass) ?? PASS_META[state].label}
+      </p>
+      <span className="mt-auto inline-flex items-center gap-1.5 text-body font-medium text-primary">
+        {state === "approved" ? "Open gate pass" : "View details"}
+        <ArrowRight
+          className="size-4 transition-transform duration-150 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </span>
+    </Link>
   );
 }

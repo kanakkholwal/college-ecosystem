@@ -129,6 +129,11 @@ export interface rawOutPassType {
   actualInTime: Date | null;
   status: (typeof OUTPASS_STATUS)[number];
   validTill: Date;
+  rejectionReason?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: Date | null;
+  exitLoggedBy?: string | null;
+  entryLoggedBy?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -170,9 +175,17 @@ const OutPassSchema = new Schema(
       enum: ["pending", "approved", "rejected", "in_use", "processed"],
       default: "pending",
     },
+    rejectionReason: { type: String, default: null, maxlength: 500 },
+    reviewedBy: { type: String, default: null },
+    reviewedAt: { type: Date, default: null },
+    exitLoggedBy: { type: String, default: null },
+    entryLoggedBy: { type: String, default: null },
   },
   { timestamps: true }
 );
+
+OutPassSchema.index({ hostel: 1, status: 1, createdAt: 1 });
+OutPassSchema.index({ student: 1, createdAt: -1 });
 
 // 🟢 Pre-remove hook to clean up students if hostel is deleted
 HostelSchema.pre(

@@ -66,7 +66,11 @@ const PERIOD_COPY: Record<
     previous: "vs last month",
     bucket: "date",
   },
-  last_year: { current: "this year", previous: "vs last year", bucket: "month" },
+  last_year: {
+    current: "this year",
+    previous: "vs last year",
+    bucket: "month",
+  },
 };
 
 function parsePeriod(value?: string): TimeInterval {
@@ -163,7 +167,10 @@ export default async function AdminDashboard({
   );
 }
 
-function currentSeries(stats: { graphData: UserCountAndGrowthResult["graphData"]; periodStart: Date }) {
+function currentSeries(stats: {
+  graphData: UserCountAndGrowthResult["graphData"];
+  periodStart: Date;
+}) {
   const start = new Date(stats.periodStart).getTime();
   return stats.graphData
     .filter((point) => new Date(point.timestamp).getTime() >= start)
@@ -247,7 +254,8 @@ async function GrowthCharts({ period }: { period: TimeInterval }) {
   const toPoints = (
     graph: UserCountAndGrowthResult["graphData"],
     key: string
-  ) => graph.map((point) => ({ timestamp: point.timestamp, [key]: point.count }));
+  ) =>
+    graph.map((point) => ({ timestamp: point.timestamp, [key]: point.count }));
 
   return (
     <div className="grid grid-cols-1 gap-3 @3xl:grid-cols-2">
@@ -257,7 +265,9 @@ async function GrowthCharts({ period }: { period: TimeInterval }) {
         description={`${usersStats.currentPeriodCount.toLocaleString("en-IN")} in ${copy.current}, ${usersStats.previousPeriodCount.toLocaleString("en-IN")} before`}
         summary={`${usersStats.currentPeriodCount} new users in ${copy.current}, compared with ${usersStats.previousPeriodCount} in the previous period.`}
         data={toPoints(usersStats.graphData, "users")}
-        series={[{ dataKey: "users", label: "New users", color: "var(--chart-1)" }]}
+        series={[
+          { dataKey: "users", label: "New users", color: "var(--chart-1)" },
+        ]}
         xAxisFormat={copy.bucket}
         showYAxis
         showLegend={false}
@@ -338,7 +348,11 @@ async function ContentTotals({ role }: { role: string }) {
   const tiles = [
     { label: "Results", value: stats.results, href: `/${role}/result` },
     { label: "Polls", value: stats.polls, href: "/polls" },
-    { label: "Community posts", value: stats.communityPosts, href: "/community" },
+    {
+      label: "Community posts",
+      value: stats.communityPosts,
+      href: "/community",
+    },
     { label: "Events", value: stats.events, href: `/${role}/events` },
     { label: "Site visits", value: visits, href: undefined },
   ];
@@ -355,7 +369,9 @@ async function ContentTotals({ role }: { role: string }) {
               )}
             </span>
             <span className="font-heading text-subheading font-medium tabular-nums text-foreground">
-              {tile.value > 0 ? tile.value.toLocaleString("en-IN") : "No data yet"}
+              {tile.value > 0
+                ? tile.value.toLocaleString("en-IN")
+                : "No data yet"}
             </span>
           </>
         );

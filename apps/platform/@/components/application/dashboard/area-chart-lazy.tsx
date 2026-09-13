@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 
 /** Keeps recharts out of the dashboard's first bundle. */
 export const AreaChartLazy = dynamic(
-  () => import("@/components/extended/chart.area").then((m) => m.GenericAreaChart),
+  () =>
+    import("@/components/extended/chart.area").then((m) => m.GenericAreaChart),
   {
     ssr: false,
     loading: () => (

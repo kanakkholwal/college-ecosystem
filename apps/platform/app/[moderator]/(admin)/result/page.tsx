@@ -1,309 +1,240 @@
-import { NumberTicker } from "@/components/animation/number-ticker";
-import { ActionBar } from "@/components/application/action-bar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button"; // If you use the footer button
-import { cn } from "@/lib/utils";
 import {
-  Activity,
-  AlertTriangle,
-  CheckCircle2,
+  DashboardRoot,
+  DashboardSection,
+  Panel,
+  PanelSkeleton,
+  SectionError,
+} from "@/components/application/dashboard/primitives";
+import {
+  KpiCard,
+  KpiGrid,
+  KpiGridSkeleton,
+} from "@/components/application/stats-card";
+import { HeaderBar } from "@/components/common/header-bar";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { formatDistanceToNow } from "date-fns";
+import {
+  ArrowRight,
   Database,
+  FileSpreadsheet,
   GitBranch,
   Mail,
-  RefreshCw,
-  ShieldCheck,
-  Trash2,
+  RadioTower,
   Trophy,
 } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { cache } from "react";
+import { getAbnormalResults, getResultOverview } from "./actions";
 import {
-  assignBranchChange,
-  assignRank,
-  getAbnormalResults,
-  getBasicInfo,
-} from "./actions";
-import {
-  AbnormalResultsDiv,
-  DeleteResultDiv,
-  GetResultDiv,
-  MailResultUpdateDiv,
+  FlaggedRecords,
+  RecalculateRanksJob,
+  ResultLookup,
+  ResultMailer,
+  SyncBranchesJob,
 } from "./client";
-export default async function AdminResultPage() {
-  const { counts, asOf } = await getBasicInfo();
-  const abnormalsResults = await getAbnormalResults();
+
+// Two boundaries read the totals; dedupe them within one request.
+const loadOverview = cache(getResultOverview);
+
+export const metadata: Metadata = { title: "Results admin" };
+
+type PageProps = { params: Promise<{ moderator: string }> };
+
+export default async function AdminResultPage({ params }: PageProps) {
+  const { moderator } = await params;
+  const base = `/${moderator}/result`;
 
   return (
-    <div className="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b pb-8">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Result Administration
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Manage academic records, ranks, and data integrity.
-          </p>
+    <DashboardRoot>
+      <HeaderBar
+        Icon={Database}
+        titleNode="Results"
+        descriptionNode="Keep stored semester results complete, ranked and correct."
+      />
+
+      <ErrorBoundaryWithSuspense
+        loadingFallback={<KpiGridSkeleton />}
+        fallback={<SectionError what="Result totals" />}
+      >
+        <OverviewKpis />
+      </ErrorBoundaryWithSuspense>
+
+      <DashboardSection
+        id="jobs"
+        title="Bulk jobs"
+        description="Scrape and import add records; the two maintenance jobs rewrite existing ones."
+      >
+        <div className="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
+          <JobLink
+            href={`${base}/scraping`}
+            icon={<RadioTower />}
+            title="Scrape results"
+            description="Pull fresh results from the college site for a list of students, with live progress and resume."
+          />
+          <JobLink
+            href={`${base}/import`}
+            icon={<FileSpreadsheet />}
+            title="Import freshers"
+            description="Create records for a new batch from an Excel sheet of names, roll numbers and genders."
+          />
+          <ErrorBoundaryWithSuspense
+            loadingFallback={<PanelSkeleton rows={1} />}
+            fallback={<SectionError what="Rank job" />}
+          >
+            <RankJobPanel />
+          </ErrorBoundaryWithSuspense>
+          <Panel className="flex flex-col gap-4">
+            <JobHeading
+              icon={<GitBranch />}
+              title="Sync branch changes"
+              description="Moves students whose courses show they changed branch."
+            />
+            <SyncBranchesJob />
+          </Panel>
         </div>
+      </DashboardSection>
 
-        <div className="flex items-center gap-4 bg-card border rounded-2xl p-4 shadow-sm min-w-[240px]">
-          <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-            <Database className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Total Records
-            </p>
-            <div className="flex items-baseline gap-2">
-              <NumberTicker
-                value={counts.results}
-                className="text-3xl font-bold text-foreground"
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Synced: {asOf}
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardSection
+        id="lookup"
+        title="One student"
+        description="Look up, preview, add, refresh or delete a single record by roll number."
+      >
+        <Panel className="@container">
+          <ResultLookup />
+        </Panel>
+      </DashboardSection>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="xl:col-span-2 space-y-8">
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" /> Batch Operations
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <OperationCard
-                Icon={Trophy}
-                title="Calculate Ranks"
-                description="Re-evaluates CGPI and assigns ranks to all students across batches."
-                color="text-amber-600 bg-amber-50 dark:bg-amber-950/20"
-              >
-                <ActionBar
-                  description="" // Hidden in this layout
-                  btnProps={{
-                    variant: "default_soft",
-                    size: "sm",
-                    className: "w-full",
-                    children: "Run Rank Assignment",
-                  }}
-                  action={assignRank}
-                />
-              </OperationCard>
+      <DashboardSection
+        id="flagged"
+        title="Flagged records"
+        description="Semester count is 2 or more away from the average for the same programme and batch, usually a partial scrape."
+      >
+        <Panel>
+          <ErrorBoundaryWithSuspense
+            loadingFallback={<PanelSkeleton rows={4} className="border-0 p-0" />}
+            fallback={<SectionError what="Flagged records" />}
+          >
+            <FlaggedLoader />
+          </ErrorBoundaryWithSuspense>
+        </Panel>
+      </DashboardSection>
 
-              <OperationCard
-                Icon={GitBranch}
-                title="Fix Branch Changes"
-                description="Updates student records based on approved branch change requests."
-                color="text-blue-600 bg-blue-50 dark:bg-blue-950/20"
-              >
-                <ActionBar
-                  description=""
-                  btnProps={{
-                    variant: "default_soft",
-                    size: "sm",
-                    className: "w-full",
-                    children: "Sync Branches",
-                  }}
-                  action={assignBranchChange}
-                />
-              </OperationCard>
-            </div>
-          </div>
+      <DashboardSection
+        id="notify"
+        title="Notify students"
+        description="Email students that new results are up."
+      >
+        <Panel className="flex flex-col gap-4">
+          <JobHeading
+            icon={<Mail />}
+            title="Result update email"
+            description="Uses the result_update template on the mail server."
+          />
+          <ResultMailer />
+        </Panel>
+      </DashboardSection>
+    </DashboardRoot>
+  );
+}
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Database className="h-4 w-4" /> Data Management
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-card border rounded-xl p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-600">
-                    <RefreshCw className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Fetch Results</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Scrape or update from source.
-                    </p>
-                  </div>
-                </div>
-                <div className="pt-2">
-                  <GetResultDiv />
-                </div>
-              </div>
+async function OverviewKpis() {
+  const overview = await loadOverview();
+  return (
+    <KpiGrid label="Result totals">
+      <KpiCard
+        label="Stored results"
+        value={overview.total}
+        hint={
+          overview.lastUpdatedAt
+            ? `Last change ${formatDistanceToNow(new Date(overview.lastUpdatedAt), { addSuffix: true })}`
+            : "No records yet"
+        }
+      />
+      <KpiCard
+        label="Batches"
+        value={overview.batches}
+        hint="Distinct batch years"
+      />
+      <KpiCard
+        label="Branches"
+        value={overview.branches}
+        hint="Distinct branch names"
+      />
+      <KpiCard
+        label="With a failed course"
+        value={overview.withFailedCourse}
+        hint="Records the backlog scrape list picks up"
+      />
+    </KpiGrid>
+  );
+}
 
-              <div className="bg-card border rounded-xl p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-purple-50 dark:bg-purple-950/20 flex items-center justify-center text-purple-600">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Notifications</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Notify students of updates.
-                    </p>
-                  </div>
-                </div>
-                <div className="pt-2">
-                  <MailResultUpdateDiv />
-                </div>
-              </div>
-            </div>
-          </div>
+async function RankJobPanel() {
+  const overview = await loadOverview();
+  return (
+    <Panel className="flex flex-col gap-4">
+      <JobHeading
+        icon={<Trophy />}
+        title="Recalculate ranks"
+        description="Rebuilds college, batch, branch and class ranks from the latest CGPI."
+      />
+      <RecalculateRanksJob total={overview.total} />
+    </Panel>
+  );
+}
 
-          {/* Section: Danger Zone */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-destructive uppercase tracking-wider flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" /> Danger Zone
-            </h3>
-            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center text-destructive shrink-0">
-                  <Trash2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-destructive">
-                    Delete Result Data
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Permanently remove result records.
-                  </p>
-                </div>
-              </div>
-              <div className="w-full sm:w-auto">
-                <DeleteResultDiv />
-              </div>
-            </div>
-          </div>
-        </div>
+async function FlaggedLoader() {
+  const records = await getAbnormalResults();
+  return <FlaggedRecords records={records} />;
+}
 
-        {/* 3. Right Column: Data Integrity Monitor */}
-        <div className="xl:col-span-1 space-y-6">
-          {/* Section Header */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4" /> System Health
-            </h3>
-            {abnormalsResults.length > 0 ? (
-              <Badge
-                variant="default_soft"
-                className="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/20 gap-1.5"
-              >
-                <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Attention Needed
-              </Badge>
-            ) : (
-              <Badge
-                variant="default_soft"
-                className="text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 gap-1.5"
-              >
-                <CheckCircle2 className="h-3 w-3" />
-                Healthy
-              </Badge>
-            )}
-          </div>
-
-          {/* Monitor Card */}
-          <div className="rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col h-full max-h-[600px]">
-            {/* Status Banner */}
-            <div
-              className={cn(
-                "px-5 py-4 border-b flex items-start gap-3",
-                abnormalsResults.length > 0
-                  ? "bg-amber-300/50 dark:bg-amber-950/10"
-                  : "bg-muted/30"
-              )}
-            >
-              <div
-                className={cn(
-                  "mt-0.5 shrink-0",
-                  abnormalsResults.length > 0
-                    ? "text-amber-600"
-                    : "text-muted-foreground"
-                )}
-              >
-                {abnormalsResults.length > 0 ? (
-                  <AlertTriangle className="h-5 w-5" />
-                ) : (
-                  <Activity className="h-5 w-5" />
-                )}
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-semibold text-foreground">
-                  {abnormalsResults.length > 0
-                    ? "Data Anomalies Detected"
-                    : "No Anomalies Found"}
-                </h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {abnormalsResults.length > 0
-                    ? `${abnormalsResults.length} student records have inconsistent CGPI or missing fields that require manual review.`
-                    : "All student result records pass the integrity checks."}
-                </p>
-              </div>
-            </div>
-
-            {/* Content Area (Scrollable if list is long) */}
-            <div className="flex-1 overflow-y-auto p-0">
-              {/* We pass the styling responsibility to the wrapper, 
-                   assuming AbnormalResultsDiv renders a clean list.
-                */}
-              <AbnormalResultsDiv abnormalsResults={abnormalsResults} />
-            </div>
-
-            {/* Footer Action (Contextual) */}
-            {abnormalsResults.length > 0 && (
-              <div className="p-3 border-t bg-muted/20">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-xs text-muted-foreground hover:text-foreground"
-                >
-                  View Detailed Report
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+function JobHeading({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border text-muted-foreground [&_svg]:size-5">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <h3 className="text-body-lg font-medium text-foreground">{title}</h3>
+        <p className="text-body text-muted-foreground">{description}</p>
       </div>
     </div>
   );
 }
 
-// ----------------------------------------------------------------------
-// Helper Component for Batch Operations
-// ----------------------------------------------------------------------
-
-function OperationCard({
-  Icon,
+function JobLink({
+  href,
+  icon,
   title,
   description,
-  color,
-  children,
 }: {
-  Icon: React.ElementType;
+  href: string;
+  icon: React.ReactNode;
   title: string;
   description: string;
-  color: string;
-  children: React.ReactNode;
 }) {
   return (
-    <div className="bg-card border rounded-xl p-5 flex flex-col justify-between h-full hover:border-primary/30 transition-colors">
-      <div className="space-y-4 mb-6">
-        <div
-          className={cn(
-            "h-10 w-10 rounded-lg flex items-center justify-center",
-            color
-          )}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <h4 className="font-semibold text-base">{title}</h4>
-          <p className="text-sm text-muted-foreground mt-1 leading-snug">
-            {description}
-          </p>
-        </div>
-      </div>
-      <div className="mt-auto">{children}</div>
-    </div>
+    <Link
+      href={href}
+      className="group flex h-full flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 outline-none transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring dark:bg-background"
+    >
+      <JobHeading icon={icon} title={title} description={description} />
+      <span className="flex items-center gap-1 text-body font-medium text-primary">
+        Open
+        <ArrowRight
+          className="size-4 transition-transform duration-150 group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </span>
+    </Link>
   );
 }

@@ -52,10 +52,14 @@ const percent = (present: number, total: number) =>
   total > 0 ? Math.round((present / total) * 100) : null;
 
 // Server renders in UTC; campus dates and times are always IST.
-const campusFormat = (date: Date | string, options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("en-IN", { ...options, timeZone: "Asia/Kolkata" }).format(
-    new Date(date)
-  );
+const campusFormat = (
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions
+) =>
+  new Intl.DateTimeFormat("en-IN", {
+    ...options,
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(date));
 
 export default async function StudentDashboard({ role }: { role: string }) {
   const viewer = await getViewer();
@@ -77,13 +81,17 @@ export default async function StudentDashboard({ role }: { role: string }) {
       <DashboardSection id="today" title="Today">
         <div className="grid grid-cols-1 gap-3 @3xl:grid-cols-5">
           <ErrorBoundaryWithSuspense
-            loadingFallback={<PanelSkeleton className="@3xl:col-span-3" rows={4} />}
+            loadingFallback={
+              <PanelSkeleton className="@3xl:col-span-3" rows={4} />
+            }
             fallback={<SectionError what="Today's classes" />}
           >
             <TodayClasses />
           </ErrorBoundaryWithSuspense>
           <ErrorBoundaryWithSuspense
-            loadingFallback={<PanelSkeleton className="@3xl:col-span-2" rows={3} />}
+            loadingFallback={
+              <PanelSkeleton className="@3xl:col-span-2" rows={3} />
+            }
             fallback={<SectionError what="Attendance" />}
           >
             <AttendancePanel role={role} />
@@ -165,7 +173,11 @@ async function StudentKpis({ role }: { role: string }) {
               }
             : undefined
         }
-        hint={latest ? `After semester ${latest.semester}` : "No result published yet"}
+        hint={
+          latest
+            ? `After semester ${latest.semester}`
+            : "No result published yet"
+        }
         trend={semesters.length > 1 ? semesters.map((s) => s.cgpi) : undefined}
         href={academics ? `/results/${academics.rollNo}` : undefined}
       />
@@ -207,7 +219,9 @@ async function StudentKpis({ role }: { role: string }) {
                 }
               : undefined
           }
-          hint={latest ? `Semester ${latest.semester}` : "No result published yet"}
+          hint={
+            latest ? `Semester ${latest.semester}` : "No result published yet"
+          }
         />
       )}
     </KpiGrid>
@@ -227,7 +241,10 @@ async function TodayClasses() {
       <PanelTitle
         meta={
           academics?.timetable && (
-            <ViewAllLink href={academics.timetable.href} label="Full timetable" />
+            <ViewAllLink
+              href={academics.timetable.href}
+              label="Full timetable"
+            />
           )
         }
       >
@@ -401,7 +418,10 @@ async function LatestResultPanel() {
         meta={
           academics &&
           latest && (
-            <ViewAllLink href={`/results/${academics.rollNo}`} label="Full result" />
+            <ViewAllLink
+              href={`/results/${academics.rollNo}`}
+              label="Full result"
+            />
           )
         }
       >
@@ -463,7 +483,9 @@ async function HostelPanel({ role }: { role: string }) {
   return (
     <Panel as="section">
       <PanelTitle
-        meta={hostel && <ViewAllLink href={`/${role}/outpass`} label="Outpasses" />}
+        meta={
+          hostel && <ViewAllLink href={`/${role}/outpass`} label="Outpasses" />
+        }
       >
         Hostel
       </PanelTitle>
@@ -516,7 +538,10 @@ async function HostelPanel({ role }: { role: string }) {
                 </span>
               </span>
               <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-caption font-medium text-foreground">
-                {changeCase(hostel.latestOutpass.status.replaceAll("_", " "), "title")}
+                {changeCase(
+                  hostel.latestOutpass.status.replaceAll("_", " "),
+                  "title"
+                )}
               </span>
             </Link>
           ) : (
@@ -562,7 +587,9 @@ async function ActivityRow() {
             href={item.href}
             className="flex h-full items-baseline justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 outline-none transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring dark:bg-background"
           >
-            <span className="text-body text-muted-foreground">{item.label}</span>
+            <span className="text-body text-muted-foreground">
+              {item.label}
+            </span>
             <span className="font-heading text-subheading font-medium tabular-nums text-foreground">
               {item.value.toLocaleString("en-IN")}
             </span>

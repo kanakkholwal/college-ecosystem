@@ -313,7 +313,9 @@ export function UserGrowthChart({
   return (
     <GenericAreaChart
       data={chartData}
-      series={[{ dataKey: "users", label: "New users", color: "var(--chart-1)" }]}
+      series={[
+        { dataKey: "users", label: "New users", color: "var(--chart-1)" },
+      ]}
       title="User growth"
       description="New registrations over time"
       chartHeight={300}

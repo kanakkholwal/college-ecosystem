@@ -98,13 +98,21 @@ async function CrOverview({ role }: { role: string }) {
         <KpiCard
           label="Timetables"
           value={stats.totalSchedules}
-          hint={dept ? `${dept}, year ${studentInfo?.currentYear}` : "Class not found"}
+          hint={
+            dept
+              ? `${dept}, year ${studentInfo?.currentYear}`
+              : "Class not found"
+          }
           href={`/${role}/schedules`}
         />
         <KpiCard
           label="Drafts to publish"
           value={stats.drafts}
-          hint={stats.drafts > 0 ? "Students can't see these yet" : "Nothing waiting"}
+          hint={
+            stats.drafts > 0
+              ? "Students can't see these yet"
+              : "Nothing waiting"
+          }
         />
         <KpiCard
           label="Last updated"
@@ -129,7 +137,10 @@ async function CrOverview({ role }: { role: string }) {
         }
         viewAll={
           timetables.length > PREVIEW
-            ? { href: `/${role}/schedules`, label: `View all ${timetables.length}` }
+            ? {
+                href: `/${role}/schedules`,
+                label: `View all ${timetables.length}`,
+              }
             : undefined
         }
       >
@@ -145,7 +156,11 @@ async function CrOverview({ role }: { role: string }) {
             title="No timetables yet"
             description="Create the timetable for your section so classmates can see it."
             action={
-              <ButtonLink href={`/${role}/schedules/create`} variant="primary" size="sm">
+              <ButtonLink
+                href={`/${role}/schedules/create`}
+                variant="primary"
+                size="sm"
+              >
                 Create timetable
               </ButtonLink>
             }
@@ -213,10 +228,16 @@ function TimetableCard({
       </div>
       <p className="text-caption text-muted-foreground">
         Updated{" "}
-        {formatDistanceToNow(new Date(timetable.updatedAt), { addSuffix: true })}
+        {formatDistanceToNow(new Date(timetable.updatedAt), {
+          addSuffix: true,
+        })}
       </p>
       <div className="mt-auto flex items-center gap-2">
-        <ButtonLink href={`/${role}/schedules/${path}`} variant="outline" size="sm">
+        <ButtonLink
+          href={`/${role}/schedules/${path}`}
+          variant="outline"
+          size="sm"
+        >
           Edit
         </ButtonLink>
         <Link

@@ -69,7 +69,11 @@ function RouterCard({
       <div
         aria-disabled="true"
         style={style}
-        className={cn(base, "cursor-not-allowed bg-muted dark:bg-muted", className)}
+        className={cn(
+          base,
+          "cursor-not-allowed bg-muted dark:bg-muted",
+          className
+        )}
       >
         {body}
       </div>

@@ -102,7 +102,9 @@ export async function getPendingOutpasses(
       hostel: access.hostelId,
       status: "pending",
     })
-      .select("reason roomNumber expectedOutTime expectedInTime createdAt student")
+      .select(
+        "reason roomNumber expectedOutTime expectedInTime createdAt student"
+      )
       .populate("student", "name rollNumber")
       .sort({ createdAt: 1 })
       .skip((Math.max(1, page) - 1) * safeLimit)

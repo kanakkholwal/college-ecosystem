@@ -1,219 +1,243 @@
 "use server";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
 import { getSession } from "~/auth/server";
+import {
+  type AttendanceSubjectInput,
+  attendanceSubjectSchema,
+} from "~/constants/attendance.personal";
 import { db } from "~/db/connect";
 import {
   personalAttendance,
   personalAttendanceRecords,
 } from "~/db/schema/attendance_record";
 
-export type PersonalAttendanceRecord = InferSelectModel<
-  typeof personalAttendanceRecords
->;
-export type InsertPersonalAttendanceRecord = InferInsertModel<
-  typeof personalAttendanceRecords
->;
+export type ActionResult<T = null> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
 
-export type PersonalAttendance = InferSelectModel<typeof personalAttendance>;
-export type InsertPersonalAttendance = InferInsertModel<
-  typeof personalAttendance
->;
+export type AttendanceSubject = {
+  id: string;
+  subjectCode: string;
+  subjectName: string;
+  present: number;
+  total: number;
+};
 
-// Create a new attendance record
+export type AttendanceLog = { id: string; date: string; isPresent: boolean };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Revalidates the list and every [id] page under it.
+const refresh = () =>
+  revalidatePath("/[moderator]/attendance-personal", "layout");
+
+async function requireUserId() {
+  const session = await getSession();
+  return session?.user.id ?? null;
+}
+
+async function ownsSubject(userId: string, recordId: string) {
+  if (!UUID.test(recordId)) return false;
+  const [row] = await db
+    .select({ id: personalAttendance.id })
+    .from(personalAttendance)
+    .where(
+      and(
+        eq(personalAttendance.id, recordId),
+        eq(personalAttendance.userId, userId)
+      )
+    )
+    .limit(1);
+  return Boolean(row);
+}
+
 export async function createAttendance(
-  recordData: Omit<
-    PersonalAttendance,
-    "id" | "userId" | "createdAt" | "updatedAt"
-  >
-) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    throw new Error("You need to be logged in to create an attendance record.");
+  input: AttendanceSubjectInput
+): Promise<ActionResult<{ id: string }>> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, error: "Sign in again to add a subject." };
+
+  const parsed = attendanceSubjectSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0].message };
   }
 
   try {
-    await db.insert(personalAttendance).values({
-      ...recordData,
-      userId: session.user.id,
-    });
-    revalidatePath("/attendance");
-    return "Attendance record created successfully.";
+    const [row] = await db
+      .insert(personalAttendance)
+      .values({ ...parsed.data, userId })
+      .returning({ id: personalAttendance.id });
+    refresh();
+    return { ok: true, data: { id: row.id } };
   } catch (err) {
     console.error(err);
-    throw new Error("Failed to create attendance record.");
+    return { ok: false, error: "Couldn't add the subject. Try again." };
   }
 }
 
-// Fetch all attendance records for the logged-in user
-export async function getAttendanceRecords() {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    throw new Error("You need to be logged in to fetch attendance records.");
-  }
+/** Subjects of the signed-in user with present and total class counts. */
+export async function getAttendanceSubjects(): Promise<AttendanceSubject[]> {
+  const userId = await requireUserId();
+  if (!userId) throw new Error("Unauthorized");
 
-  try {
-    const records = await db
-      .select()
-      .from(personalAttendanceRecords)
-      .where(eq(personalAttendanceRecords.userId, session.user.id));
-
-    const attendances = await db
-      .select()
-      .from(personalAttendance)
-      .where(eq(personalAttendance.userId, session.user.id));
-
-    const mappedAttendance = attendances.map((attendance) => ({
-      ...attendance,
-      records: records.filter((record) => record.recordId === attendance.id),
-    }));
-
-    return mappedAttendance;
-  } catch (err) {
-    console.error(err);
-    throw new Error("Failed to fetch attendance records.");
-  }
+  const logs = personalAttendanceRecords;
+  return db
+    .select({
+      id: personalAttendance.id,
+      subjectCode: personalAttendance.subjectCode,
+      subjectName: personalAttendance.subjectName,
+      total: sql<number>`COUNT(${logs.id})::int`,
+      present: sql<number>`(COUNT(${logs.id}) FILTER (WHERE ${logs.isPresent}))::int`,
+    })
+    .from(personalAttendance)
+    .leftJoin(logs, eq(logs.recordId, personalAttendance.id))
+    .where(eq(personalAttendance.userId, userId))
+    .groupBy(personalAttendance.id)
+    .orderBy(personalAttendance.createdAt);
 }
 
-// Update attendance (add a class and update present/absent status)
+/** Adds one class to a subject the signed-in user owns. */
 export async function updateAttendanceRecord(
   recordId: string,
   isPresent: boolean
-): Promise<string> {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    throw new Error("Authentication required.");
+): Promise<ActionResult<AttendanceLog>> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, error: "Sign in again to mark a class." };
+  if (!(await ownsSubject(userId, recordId))) {
+    return { ok: false, error: "This subject isn't in your list." };
   }
 
   try {
-    // Add attendance details
-    await db.insert(personalAttendanceRecords).values({
-      recordId,
-      userId: session.user.id,
-      isPresent,
-      date: new Date(),
-    });
-
-    revalidatePath("/attendance");
-    return "Attendance record updated successfully.";
+    const [row] = await db
+      .insert(personalAttendanceRecords)
+      .values({ recordId, userId, isPresent: Boolean(isPresent) })
+      .returning();
+    refresh();
+    return {
+      ok: true,
+      data: {
+        id: row.id,
+        date: (row.date ?? new Date()).toISOString(),
+        isPresent: row.isPresent,
+      },
+    };
   } catch (error) {
     console.error("Error updating attendance record:", error);
-    throw new Error("Failed to update attendance record.");
+    return { ok: false, error: "Couldn't save that class. Try again." };
   }
 }
 
-// Delete an attendance record
+/** Removes one marked class; used for undo and for fixing a wrong mark. */
+export async function deleteAttendanceLog(
+  logId: string
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, error: "Sign in again." };
+  if (!UUID.test(logId)) return { ok: false, error: "Class not found." };
+
+  try {
+    const deleted = await db
+      .delete(personalAttendanceRecords)
+      .where(
+        and(
+          eq(personalAttendanceRecords.id, logId),
+          eq(personalAttendanceRecords.userId, userId)
+        )
+      )
+      .returning({ id: personalAttendanceRecords.id });
+    if (deleted.length === 0) return { ok: false, error: "Class not found." };
+    refresh();
+    return { ok: true, data: null };
+  } catch (error) {
+    console.error("Error deleting attendance log:", error);
+    return { ok: false, error: "Couldn't remove that class. Try again." };
+  }
+}
+
+/** Deletes a subject the signed-in user owns, with all its marked classes. */
 export async function deleteAttendanceRecord(
   recordId: string
-): Promise<string> {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    throw new Error("Authentication required.");
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, error: "Sign in again." };
+  if (!(await ownsSubject(userId, recordId))) {
+    return { ok: false, error: "This subject isn't in your list." };
   }
 
   try {
     await db.transaction(async (tx) => {
-      // Delete related attendance records
       await tx
         .delete(personalAttendanceRecords)
-        .where(eq(personalAttendanceRecords.recordId, recordId));
-
-      // Delete the main attendance entry
+        .where(
+          and(
+            eq(personalAttendanceRecords.recordId, recordId),
+            eq(personalAttendanceRecords.userId, userId)
+          )
+        );
       await tx
         .delete(personalAttendance)
-        .where(eq(personalAttendance.id, recordId));
+        .where(
+          and(
+            eq(personalAttendance.id, recordId),
+            eq(personalAttendance.userId, userId)
+          )
+        );
     });
-
-    revalidatePath("/attendance");
-    return "Attendance record deleted successfully.";
+    refresh();
+    return { ok: true, data: null };
   } catch (error) {
     console.error("Error deleting attendance record:", error);
-    throw new Error("Failed to delete attendance record.");
+    return { ok: false, error: "Couldn't delete the subject. Try again." };
   }
 }
 
-// Force update an attendance record with partial data
-export async function forceUpdateAttendanceRecord(
-  recordId: string,
-  data: Partial<InsertPersonalAttendanceRecord>
-) {
-  const session = await getSession();
-  if (!session) {
-    throw new Error("You need to be logged in to update an attendance record.");
-  }
-
-  try {
-    await db.transaction(async (tx) => {
-      // Delete related attendance records
-      await tx
-        .delete(personalAttendanceRecords)
-        .where(eq(personalAttendanceRecords.recordId, recordId));
-
-      // Delete the main attendance entry
-      await tx
-        .delete(personalAttendance)
-        .where(eq(personalAttendance.id, recordId));
-    });
-
-    revalidatePath("/attendance");
-    return "Attendance record updated successfully.";
-  } catch (err) {
-    console.error(err);
-    throw new Error("Failed to update attendance record.");
-  }
-}
-
+/** One subject of the signed-in user with its classes, newest first. */
 export async function getAttendanceRecordById(recordId: string) {
-  try {
-    const session = await getSession();
-    if (!session) {
-      throw new Error(
-        "You need to be logged in to fetch an attendance record."
-      );
-    }
-    // 1. Fetch the parent record
-    const parent = await db
-      .select()
+  const userId = await requireUserId();
+  if (!userId) throw new Error("Unauthorized");
+  if (!UUID.test(recordId)) return null;
+
+  const [parent, logs] = await Promise.all([
+    db
+      .select({
+        id: personalAttendance.id,
+        subjectCode: personalAttendance.subjectCode,
+        subjectName: personalAttendance.subjectName,
+      })
       .from(personalAttendance)
       .where(
         and(
           eq(personalAttendance.id, recordId),
-          eq(personalAttendance.userId, session.user.id)
+          eq(personalAttendance.userId, userId)
         )
       )
-      .limit(1);
-
-    if (parent.length === 0) return null;
-
-    // 2. Fetch the child records
-    const logs = await db
-      .select()
+      .limit(1),
+    db
+      .select({
+        id: personalAttendanceRecords.id,
+        date: personalAttendanceRecords.date,
+        isPresent: personalAttendanceRecords.isPresent,
+      })
       .from(personalAttendanceRecords)
-      .where(eq(personalAttendanceRecords.recordId, recordId))
-      .orderBy(desc(personalAttendanceRecords.date));
+      .where(
+        and(
+          eq(personalAttendanceRecords.recordId, recordId),
+          eq(personalAttendanceRecords.userId, userId)
+        )
+      )
+      .orderBy(desc(personalAttendanceRecords.date)),
+  ]);
 
-    // 3. Combine them to match the type PersonalAttendanceWithRecords
-    return {
-      ...parent[0],
-      records: logs,
-    };
-  } catch (err) {
-    console.error(err);
-    throw new Error("Failed to fetch attendance record.");
-  }
+  if (parent.length === 0) return null;
+  return {
+    ...parent[0],
+    logs: logs.map(
+      (l): AttendanceLog => ({
+        id: l.id,
+        date: (l.date ?? new Date(0)).toISOString(),
+        isPresent: l.isPresent,
+      })
+    ),
+  };
 }

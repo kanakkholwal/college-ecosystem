@@ -1,345 +1,808 @@
 "use client";
 
-import { ResultCard } from "@/components/application/result/display";
-import EmptyArea from "@/components/common/empty-area";
+import { EmptyNote } from "@/components/application/dashboard/primitives";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { formatDistanceToNow } from "date-fns";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ArrowRight,
+  ArrowUpRight,
   CheckCircle2,
   DownloadCloud,
-  Loader2,
-  Mail,
   RefreshCw,
   Search,
+  Send,
   Trash2,
 } from "lucide-react";
-import { useState, useTransition } from "react";
-import toast from "react-hot-toast";
-import serverApis from "~/lib/server-apis/client";
-import type {
-  AbNormalResult,
-  ResultType,
-  rawResultSchemaType,
-} from "~/lib/server-apis/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import type { AbNormalResult } from "~/lib/server-apis/types";
 import { orgConfig } from "~/project.config";
-import { changeCase } from "~/utils/string";
-import { sendMailUpdate } from "./actions";
+import { ConfirmDialog } from "./_components/confirm-dialog";
+import {
+  CountTile,
+  ErrorTable,
+  InlineError,
+  JobProgress,
+} from "./_components/job-ui";
+import {
+  addResultFromSite,
+  deleteResultsBulk,
+  deleteStoredResult,
+  findStoredResult,
+  previewResultFromSite,
+  type RankJobSummary,
+  recalculateRanks,
+  refreshResultsChunk,
+  refreshStoredResult,
+  type ResultSummary,
+  sendResultUpdateMail,
+  syncBranchChanges,
+} from "./actions";
+import { parseRecipients, resultMailSubject } from "./mail-copy";
 
-//  GET RESULT (Data Fetching)
-const fetchMethods = [
-  "getResultByRollNoFromSite",
-  "getResultByRollNo",
-  "addResultByRollNo",
-  "updateResultByRollNo",
-] as const;
+function useElapsed(running: boolean) {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (!running) return;
+    setSeconds(0);
+    const started = Date.now();
+    const id = setInterval(
+      () => setSeconds(Math.round((Date.now() - started) / 1000)),
+      1000
+    );
+    return () => clearInterval(id);
+  }, [running]);
+  return seconds;
+}
 
-export function GetResultDiv() {
-  const [rollNo, setRollNo] = useState("");
-  const [method, setMethod] = useState<string>("getResultByRollNo");
-  const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<rawResultSchemaType | ResultType | null>(
-    null
-  );
+// --- Maintenance jobs ---
 
-  const handleFetch = () => {
-    if (!rollNo) return toast.error("Enter a Roll Number");
+type JobState<T> =
+  | { status: "idle" }
+  | { status: "running" }
+  | { status: "done"; data: T }
+  | { status: "error"; error: string };
 
-    startTransition(async () => {
-      try {
-        // Your existing fetch logic wrapped here
-        let res;
-        if (method === "getResultByRollNoFromSite")
-          res = await serverApis.results.getResultByRollNoFromSite(rollNo);
-        else if (method === "getResultByRollNo")
-          res = await serverApis.results.getResultByRollNo(rollNo);
-        else if (method === "addResultByRollNo")
-          res = await serverApis.results.addResultByRollNo(rollNo);
-        else res = await serverApis.results.updateResultByRollNo([rollNo, {}]);
+export function RecalculateRanksJob({ total }: { total: number }) {
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<JobState<RankJobSummary>>({
+    status: "idle",
+  });
+  const elapsed = useElapsed(state.status === "running");
 
-        if (res?.error || !res?.data) throw new Error(res?.message || "Failed");
-
-        setResult(res.data);
-        toast.success("Result fetched");
-      } catch (e: any) {
-        toast.error(e.message || "Error fetching result");
-      }
-    });
+  const run = async () => {
+    setState({ status: "running" });
+    toast.info("Rank recalculation started");
+    const res = await recalculateRanks();
+    setState(
+      res.ok
+        ? { status: "done", data: res.data }
+        : { status: "error", error: res.error }
+    );
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
+    <div className="flex flex-col gap-3">
+      {state.status === "running" ? (
+        <JobProgress
+          done={0}
+          total={null}
+          label={`Recalculating ranks, ${elapsed}s`}
+        />
+      ) : (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setOpen(true)}
+        >
+          <RefreshCw aria-hidden="true" />
+          {state.status === "done" ? "Run again" : "Recalculate ranks"}
+        </Button>
+      )}
+      {state.status === "done" && (
+        <dl className="grid grid-cols-3 gap-2">
+          <CountTile label="Matched" value={state.data.matchedCount ?? "N/A"} />
+          <CountTile
+            label="Changed"
+            value={state.data.modifiedCount ?? "N/A"}
+            tone="success"
+          />
+          <CountTile
+            label="Failed"
+            value={state.data.failedCount}
+            tone={state.data.failedCount > 0 ? "destructive" : "neutral"}
+          />
+          {state.data.timeTaken && (
+            <p className="col-span-3 text-caption text-muted-foreground">
+              {state.data.message}, took {state.data.timeTaken}.
+            </p>
+          )}
+        </dl>
+      )}
+      {state.status === "error" && <InlineError>{state.error}</InlineError>}
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Recalculate every rank?"
+        description="Ranks are rebuilt from each student's latest CGPI."
+        consequences={[
+          `Rewrites college, batch, branch and class ranks on all ${total.toLocaleString("en-IN")} records.`,
+          "Students may see their rank change on the public results pages right away.",
+          "Runs on the server and can't be cancelled once started.",
+        ]}
+        confirmLabel="Recalculate ranks"
+        onConfirm={run}
+      />
+    </div>
+  );
+}
+
+export function SyncBranchesJob() {
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<JobState<{ timeTaken: string | null }>>(
+    { status: "idle" }
+  );
+  const elapsed = useElapsed(state.status === "running");
+
+  const run = async () => {
+    setState({ status: "running" });
+    toast.info("Branch sync started");
+    const res = await syncBranchChanges();
+    setState(
+      res.ok
+        ? { status: "done", data: res.data }
+        : { status: "error", error: res.error }
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      {state.status === "running" ? (
+        <JobProgress
+          done={0}
+          total={null}
+          label={`Syncing branches, ${elapsed}s`}
+        />
+      ) : (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setOpen(true)}
+        >
+          <RefreshCw aria-hidden="true" />
+          {state.status === "done" ? "Run again" : "Sync branches"}
+        </Button>
+      )}
+      {state.status === "done" && (
+        <p className="flex items-center gap-2 text-body text-foreground">
+          <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+          Branches synced
+          {state.data.timeTaken ? ` in ${state.data.timeTaken}` : ""}.
+        </p>
+      )}
+      {state.status === "error" && <InlineError>{state.error}</InlineError>}
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Sync branch changes?"
+        description="Each record's branch is inferred from the course codes it has taken most."
+        consequences={[
+          "Overwrites the branch on any record whose courses point to a different department.",
+          "Changes which branch list and branch rank a student appears in.",
+          "Runs on the server and can't be cancelled once started.",
+        ]}
+        confirmLabel="Sync branches"
+        onConfirm={run}
+      />
+    </div>
+  );
+}
+
+// --- Single record lookup ---
+
+type LookupState =
+  | { status: "idle" }
+  | { status: "loading"; message: string }
+  | { status: "stored"; result: ResultSummary }
+  | { status: "preview"; result: ResultSummary }
+  | { status: "missing"; rollNo: string }
+  | { status: "deleted"; rollNo: string }
+  | { status: "error"; error: string };
+
+export function ResultLookup() {
+  const [rollNo, setRollNo] = useState("");
+  const [state, setState] = useState<LookupState>({ status: "idle" });
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const busy = isPending || state.status === "loading";
+
+  const runStep = (
+    message: string,
+    step: () => Promise<LookupState>
+  ) => {
+    setState({ status: "loading", message });
+    startTransition(async () => setState(await step()));
+  };
+
+  const lookUp = () => {
+    const value = rollNo.trim();
+    if (!value) return;
+    runStep("Looking up the database", async () => {
+      const res = await findStoredResult(value);
+      if (!res.ok) return { status: "error", error: res.error };
+      return res.data
+        ? { status: "stored", result: res.data }
+        : { status: "missing", rollNo: value.toLowerCase() };
+    });
+  };
+
+  const current =
+    state.status === "stored" || state.status === "preview"
+      ? state.result.rollNo
+      : state.status === "missing"
+        ? state.rollNo
+        : rollNo.trim();
+
+  return (
+    <div className="flex flex-col gap-4">
+      <form
+        className="flex flex-col gap-2 sm:flex-row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          lookUp();
+        }}
+      >
+        <Label htmlFor="lookup-roll" className="sr-only">
+          Roll number
+        </Label>
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground opacity-50" />
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
-            placeholder="Roll Number (e.g. 210010)"
+            id="lookup-roll"
+            placeholder="Roll number, e.g. 21bcs001"
             value={rollNo}
             onChange={(e) => setRollNo(e.target.value)}
-            className="pl-9 bg-background"
+            className="h-10 pl-9 font-mono"
+            autoComplete="off"
+            spellCheck={false}
           />
         </div>
-        <Select value={method} onValueChange={setMethod}>
-          <SelectTrigger className="w-[140px] text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {fetchMethods.map((m) => (
-              <SelectItem key={m} value={m} className="text-xs">
-                {changeCase(m.replace("ResultByRollNo", ""), "camel_to_title")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Button
-        onClick={handleFetch}
-        disabled={isPending || !rollNo}
-        className="w-full"
-        size="sm"
-      >
-        {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        ) : (
-          <DownloadCloud className="h-4 w-4 mr-2" />
-        )}
-        {isPending ? "Processing..." : "Fetch & Update"}
-      </Button>
-
-      {result && (
-        <ResponsiveDialog
-          title={`${result.name} (${result.rollNo})`}
-          description="Result Details"
-          btnProps={{
-            children: "View Result",
-            variant: "default_soft",
-            size: "sm",
-            className: "w-full",
-          }}
-        >
-          <ResultCard result={result} />
-        </ResponsiveDialog>
-      )}
-    </div>
-  );
-}
-
-export function DeleteResultDiv() {
-  const [value, setValue] = useState("");
-  const [isPending, startTransition] = useTransition();
-
-  const handleDelete = () => {
-    if (!value) return toast.error("Field is empty");
-    if (!confirm("Are you sure? This cannot be undone.")) return;
-
-    startTransition(async () => {
-      try {
-        // Assuming bulk delete for batch, single for rollNo
-        const res = await serverApis.results.deleteResultByRollNo(value);
-        if (res?.error) throw new Error(res.message);
-        toast.success("Deleted successfully");
-        setValue("");
-      } catch (e: any) {
-        toast.error(e.message || "Delete failed");
-      }
-    });
-  };
-
-  return (
-    <div className="flex flex-col sm:flex-row gap-2 items-end sm:items-center w-full">
-      <div className="flex gap-2 w-full">
-        <Input
-          placeholder="Enter Roll Number to delete..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="flex-1 bg-background border-destructive/20 focus-visible:ring-destructive/20"
-        />
-      </div>
-      <Button
-        variant="destructive"
-        size="icon"
-        onClick={handleDelete}
-        disabled={isPending || !value}
-        className="shrink-0"
-      >
-        {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Trash2 className="h-4 w-4" />
-        )}
-      </Button>
-    </div>
-  );
-}
-
-// ----------------------------------------------------------------------
-// 3. MAIL NOTIFICATION (Communication)
-// ----------------------------------------------------------------------
-
-export function MailResultUpdateDiv() {
-  const [targets, setTargets] = useState("");
-  const [isPending, startTransition] = useTransition();
-
-  const handleSend = () => {
-    if (!targets) return;
-    const emails = targets
-      .split(",")
-      .map((e) => e.trim())
-      .filter((e) => e.length > 0);
-
-    startTransition(async () => {
-      try {
-        await sendMailUpdate(emails);
-        toast.success(`Sent to ${emails.length} recipients`);
-        setTargets("");
-      } catch (e) {
-        toast.error("Failed to send mail");
-      }
-    });
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="relative">
-        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground opacity-50" />
-        <Input
-          placeholder="Enter emails (comma separated)..."
-          value={targets}
-          onChange={(e) => setTargets(e.target.value)}
-          className="pl-9 bg-background"
-        />
-      </div>
-      <div className="flex justify-between items-center">
-        <p className="text-[10px] text-muted-foreground pl-1">
-          Auto-appends {orgConfig.mailSuffix} if missing.
-        </p>
-        <Button
-          onClick={handleSend}
-          disabled={isPending || !targets}
-          size="sm"
-          className="gap-2"
-        >
-          {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
-          Send Update
+        <Button type="submit" disabled={busy || !rollNo.trim()}>
+          Look up
         </Button>
+      </form>
+
+      <div aria-live="polite" className="flex flex-col gap-3">
+        {state.status === "loading" && (
+          <JobProgress done={0} total={null} label={state.message} />
+        )}
+        {state.status === "error" && <InlineError>{state.error}</InlineError>}
+        {state.status === "deleted" && (
+          <p className="flex items-center gap-2 text-body text-foreground">
+            <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+            Deleted <span className="font-mono">{state.rollNo}</span>. Run
+            &quot;Recalculate ranks&quot; to close the gap it leaves.
+          </p>
+        )}
+        {state.status === "missing" && (
+          <EmptyNote
+            title={`${state.rollNo} isn't in the database`}
+            description="Preview the college site's copy first, or fetch and save it straight away."
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() =>
+                    runStep("Fetching from the college site", async () => {
+                      const res = await previewResultFromSite(state.rollNo);
+                      return res.ok
+                        ? { status: "preview", result: res.data }
+                        : { status: "error", error: res.error };
+                    })
+                  }
+                >
+                  Preview from site
+                </Button>
+                <Button
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() =>
+                    runStep("Fetching and saving", async () => {
+                      const res = await addResultFromSite(state.rollNo);
+                      return res.ok
+                        ? { status: "stored", result: res.data }
+                        : { status: "error", error: res.error };
+                    })
+                  }
+                >
+                  <DownloadCloud aria-hidden="true" />
+                  Fetch and save
+                </Button>
+              </div>
+            }
+          />
+        )}
+        {(state.status === "stored" || state.status === "preview") && (
+          <ResultSummaryCard
+            result={state.result}
+            saved={state.status === "stored"}
+            actions={
+              state.status === "stored" ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() =>
+                      runStep("Refreshing from the college site", async () => {
+                        const res = await refreshStoredResult(current);
+                        if (res.ok) toast.success("Result refreshed");
+                        return res.ok
+                          ? { status: "stored", result: res.data }
+                          : { status: "error", error: res.error };
+                      })
+                    }
+                  >
+                    <RefreshCw aria-hidden="true" />
+                    Refresh from site
+                  </Button>
+                  <Button
+                    variant="destructive_soft"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 aria-hidden="true" />
+                    Delete
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() =>
+                    runStep("Saving", async () => {
+                      const res = await addResultFromSite(current);
+                      return res.ok
+                        ? { status: "stored", result: res.data }
+                        : { status: "error", error: res.error };
+                    })
+                  }
+                >
+                  <DownloadCloud aria-hidden="true" />
+                  Save to database
+                </Button>
+              )
+            }
+          />
+        )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        tone="destructive"
+        title={`Delete ${current}?`}
+        description="The stored result is removed permanently."
+        consequences={[
+          "The public result page for this roll number stops working.",
+          "Every other student's rank stays as it is until ranks are recalculated.",
+          "You can bring the record back with Fetch and save, if the college site still has it.",
+        ]}
+        requireText={current}
+        confirmLabel="Delete record"
+        onConfirm={() =>
+          runStep("Deleting", async () => {
+            const res = await deleteStoredResult(current);
+            return res.ok
+              ? { status: "deleted", rollNo: current }
+              : { status: "error", error: res.error };
+          })
+        }
+      />
     </div>
   );
 }
 
-// ----------------------------------------------------------------------
-// 4. ABNORMAL RESULTS LIST (Data Integrity)
-// ----------------------------------------------------------------------
-
-export function AbnormalResultsDiv({
-  abnormalsResults,
+function ResultSummaryCard({
+  result,
+  saved,
+  actions,
 }: {
-  abnormalsResults: AbNormalResult[];
+  result: ResultSummary;
+  saved: boolean;
+  actions: React.ReactNode;
 }) {
-  const [isPending, startTransition] = useTransition();
+  return (
+    <article className="flex flex-col gap-4 rounded-xl border border-border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-body-lg font-medium text-foreground">
+            {result.name}
+          </h3>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
+            <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-foreground">
+              {result.rollNo}
+            </span>
+            <span>{result.branch}</span>
+            <span>
+              {result.programme}, batch {result.batch}
+            </span>
+          </p>
+        </div>
+        <Badge variant={saved ? "success_soft" : "warning_soft"}>
+          {saved ? "Saved" : "Preview, not saved"}
+        </Badge>
+      </div>
+      <dl className="grid grid-cols-2 gap-2 @xl:grid-cols-4">
+        <CountTile
+          label="Latest CGPI"
+          value={result.latestCgpi?.toFixed(2) ?? "N/A"}
+        />
+        <CountTile label="Semesters" value={result.semesters} />
+        <CountTile
+          label="College rank"
+          value={result.collegeRank ? `#${result.collegeRank}` : "N/A"}
+        />
+        <CountTile
+          label="Updated"
+          value={
+            result.updatedAt
+              ? formatDistanceToNow(new Date(result.updatedAt), {
+                  addSuffix: true,
+                })
+              : "N/A"
+          }
+        />
+      </dl>
+      <div className="flex flex-wrap items-center gap-2">
+        {actions}
+        {saved && (
+          <Button variant="ghost" size="sm" asChild>
+            <Link
+              href={`/results/${result.rollNo}`}
+              target="_blank"
+              prefetch={false}
+            >
+              Public page
+              <ArrowUpRight aria-hidden="true" />
+            </Link>
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}
 
-  const handleBulkAction = (action: "update" | "delete") => {
-    if (action === "delete" && !confirm("Delete all abnormal records?")) return;
+// --- Flagged records ---
 
-    const ids = abnormalsResults.map((r) => r.rollNo);
-    startTransition(async () => {
-      try {
-        if (action === "update")
-          await serverApis.results.bulkUpdateResults(ids);
-        else await serverApis.results.bulkDeleteResults(ids);
-        toast.success(`Bulk ${action} successful`);
-      } catch (e) {
-        toast.error("Operation failed");
+const REFRESH_CHUNK = 16;
+
+type BulkState =
+  | { status: "idle" }
+  | { status: "running"; kind: "refresh"; done: number; total: number }
+  | { status: "running"; kind: "delete" }
+  | {
+      status: "done";
+      kind: "refresh";
+      sent: number;
+      cancelled: boolean;
+      errors: { rollNo: string; error: string }[];
+    }
+  | { status: "done"; kind: "delete"; deleted: number }
+  | { status: "error"; error: string };
+
+export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
+  const router = useRouter();
+  const [state, setState] = useState<BulkState>({ status: "idle" });
+  const [confirm, setConfirm] = useState<"refresh" | "delete" | null>(null);
+  const cancelRef = useRef(false);
+  const [, startRefresh] = useTransition();
+
+  const rollNos = records.map((r) => r.rollNo);
+  const running = state.status === "running";
+
+  const refreshAll = async () => {
+    cancelRef.current = false;
+    const errors: { rollNo: string; error: string }[] = [];
+    let sent = 0;
+    setState({ status: "running", kind: "refresh", done: 0, total: rollNos.length });
+    for (let i = 0; i < rollNos.length; i += REFRESH_CHUNK) {
+      if (cancelRef.current) break;
+      const chunk = rollNos.slice(i, i + REFRESH_CHUNK);
+      const res = await refreshResultsChunk(chunk);
+      if (res.ok) {
+        errors.push(...res.data.errors);
+      } else {
+        errors.push(...chunk.map((rollNo) => ({ rollNo, error: res.error })));
       }
+      sent += chunk.length;
+      setState({ status: "running", kind: "refresh", done: sent, total: rollNos.length });
+    }
+    setState({
+      status: "done",
+      kind: "refresh",
+      sent,
+      cancelled: cancelRef.current,
+      errors,
     });
+    startRefresh(() => router.refresh());
   };
 
-  if (abnormalsResults.length === 0) {
+  const deleteAll = async () => {
+    setState({ status: "running", kind: "delete" });
+    const res = await deleteResultsBulk(rollNos);
+    setState(
+      res.ok
+        ? { status: "done", kind: "delete", deleted: res.data.deletedCount }
+        : { status: "error", error: res.error }
+    );
+    if (res.ok) startRefresh(() => router.refresh());
+  };
+
+  if (records.length === 0 && state.status !== "done") {
     return (
-      <EmptyArea
-        icons={[CheckCircle2]}
-        title="All Good"
-        description="No anomalies detected in the result database."
-        className="bg-transparent border-none shadow-none py-12"
+      <EmptyNote
+        icon={<CheckCircle2 aria-hidden="true" />}
+        title="Nothing flagged"
+        description="Every record's semester count is close to the average for its programme and batch."
       />
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Bulk Actions Header */}
-      <div className="flex items-center justify-between bg-muted/40 p-2 rounded-lg border">
-        <span className="text-xs font-medium pl-2 text-muted-foreground">
-          {abnormalsResults.length} records selected
-        </span>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="default_soft"
-            onClick={() => handleBulkAction("update")}
-            disabled={isPending}
-            className="h-7 text-xs"
-          >
-            <RefreshCw className="h-3 w-3 mr-1.5" /> Auto-Fix All
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => handleBulkAction("delete")}
-            disabled={isPending}
-            className="h-7 text-xs"
-          >
-            <Trash2 className="h-3 w-3 mr-1.5" /> Purge All
-          </Button>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-body text-foreground">
+          <span className="font-medium tabular-nums">
+            {records.length.toLocaleString("en-IN")}
+          </span>{" "}
+          {records.length === 1 ? "record" : "records"} flagged
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {running && state.kind === "refresh" ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                cancelRef.current = true;
+                toast.info("Stopping after the current batch");
+              }}
+            >
+              Cancel
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={running || records.length === 0}
+                onClick={() => setConfirm("refresh")}
+              >
+                <RefreshCw aria-hidden="true" />
+                Re-scrape all
+              </Button>
+              <Button
+                variant="destructive_soft"
+                size="sm"
+                disabled={running || records.length === 0}
+                onClick={() => setConfirm("delete")}
+              >
+                <Trash2 aria-hidden="true" />
+                Delete all
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Dense List */}
-      <div className="border rounded-md divide-y max-h-[400px] overflow-y-auto bg-card">
-        {abnormalsResults.map((res) => (
-          <div
-            key={res._id}
-            className="flex items-center justify-between p-3 hover:bg-muted/20 text-sm"
-          >
-            <div className="space-y-0.5">
-              <div className="font-medium flex items-center gap-2">
-                {res.name}
-                <Badge
-                  variant="default_soft"
-                  className="font-mono text-[10px] py-0 h-4"
-                >
-                  {res.rollNo}
-                </Badge>
-              </div>
-              <div className="text-xs text-muted-foreground flex gap-3">
-                <span>Sems: {res.semesterCount}</span>
-                <span
-                  className={res.avgSemesterCount < 5 ? "text-amber-600" : ""}
-                >
-                  Avg: {res.avgSemesterCount.toFixed(2)}
-                </span>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground"
-            >
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+      <div aria-live="polite" className="flex flex-col gap-3">
+        {state.status === "running" && state.kind === "refresh" && (
+          <JobProgress
+            done={state.done}
+            total={state.total}
+            label="Re-scraping flagged records"
+          />
+        )}
+        {state.status === "running" && state.kind === "delete" && (
+          <JobProgress done={0} total={null} label="Deleting flagged records" />
+        )}
+        {state.status === "error" && <InlineError>{state.error}</InlineError>}
+        {state.status === "done" && state.kind === "delete" && (
+          <p className="flex items-center gap-2 text-body text-foreground">
+            <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+            Deleted {state.deleted.toLocaleString("en-IN")} records. Recalculate
+            ranks to close the gaps.
+          </p>
+        )}
+        {state.status === "done" && state.kind === "refresh" && (
+          <div className="flex flex-col gap-3">
+            <p className="flex items-center gap-2 text-body text-foreground">
+              <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+              {state.cancelled ? "Stopped after" : "Sent"}{" "}
+              {state.sent.toLocaleString("en-IN")} records to the scraper. The
+              list below now shows what is still flagged.
+            </p>
+            {state.errors.length > 0 && <ErrorTable errors={state.errors} />}
           </div>
-        ))}
+        )}
       </div>
+
+      {records.length > 0 && (
+        <ul className="max-h-96 divide-y divide-border overflow-y-auto rounded-xl border border-border">
+          {records.map((record) => (
+            <li key={record._id}>
+              <Link
+                href={`/results/${record.rollNo}`}
+                target="_blank"
+                prefetch={false}
+                className="flex items-center justify-between gap-3 px-4 py-3 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-body font-medium text-foreground">
+                    {record.name}
+                  </span>
+                  <span className="flex flex-wrap gap-x-3 text-caption text-muted-foreground">
+                    <span className="font-mono">{record.rollNo}</span>
+                    <span>
+                      {record.programme}, batch {record.batch}
+                    </span>
+                  </span>
+                </span>
+                <span className="shrink-0 text-right text-caption tabular-nums text-muted-foreground">
+                  <span className="text-foreground">
+                    {record.semesterCount} semesters
+                  </span>
+                  <br />
+                  cohort avg {record.avgSemesterCount.toFixed(1)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <ConfirmDialog
+        open={confirm === "refresh"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title={`Re-scrape ${records.length} flagged records?`}
+        description={`Each record is fetched again from the college site, ${REFRESH_CHUNK} at a time.`}
+        consequences={[
+          "Replaces the stored semesters of each record with the college site's copy.",
+          "Sends one request per record to the college site; this can take several minutes.",
+          "You can cancel between batches; records already sent stay updated.",
+        ]}
+        confirmLabel="Start re-scrape"
+        onConfirm={refreshAll}
+      />
+      <ConfirmDialog
+        open={confirm === "delete"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        tone="destructive"
+        title={`Delete ${records.length} flagged records?`}
+        description="Exactly the records listed here are removed permanently."
+        consequences={[
+          `Removes ${records.length} stored results and their public pages.`,
+          "Ranks keep their gaps until you recalculate them.",
+          "Records can only come back by scraping them again.",
+        ]}
+        requireText={`delete ${records.length}`}
+        confirmLabel="Delete records"
+        onConfirm={deleteAll}
+      />
+    </div>
+  );
+}
+
+// --- Mail ---
+
+export function ResultMailer() {
+  const [input, setInput] = useState("");
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [outcome, setOutcome] = useState<
+    | { ok: true; accepted: number; rejected: string[] }
+    | { ok: false; error: string }
+    | null
+  >(null);
+  const { valid, invalid } = parseRecipients(input);
+
+  const send = () =>
+    startTransition(async () => {
+      const res = await sendResultUpdateMail(input);
+      if (res.ok) {
+        setOutcome({ ok: true, ...res.data });
+        setInput("");
+      } else {
+        setOutcome({ ok: false, error: res.error });
+      }
+    });
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="mail-targets" className="text-body text-foreground">
+          Recipients
+        </Label>
+        <Textarea
+          id="mail-targets"
+          rows={3}
+          placeholder={`21bcs001, 21bcs002${orgConfig.mailSuffix}`}
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setOutcome(null);
+          }}
+          aria-describedby="mail-targets-hint"
+        />
+        <p id="mail-targets-hint" className="text-caption text-muted-foreground">
+          Separate with commas, spaces or new lines. A bare username gets{" "}
+          {orgConfig.mailSuffix} added.
+          {input.trim() && (
+            <>
+              {" "}
+              <span className="text-foreground">
+                {valid.length} valid
+              </span>
+              {invalid.length > 0 && (
+                <span className="text-destructive">
+                  , {invalid.length} invalid: {invalid.slice(0, 3).join(", ")}
+                  {invalid.length > 3 ? "..." : ""}
+                </span>
+              )}
+            </>
+          )}
+        </p>
+      </div>
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          disabled={isPending || valid.length === 0}
+          onClick={() => setOpen(true)}
+        >
+          <Send aria-hidden="true" />
+          {isPending ? "Sending" : `Send to ${valid.length || ""}`.trim()}
+        </Button>
+      </div>
+      {outcome?.ok === false && <InlineError>{outcome.error}</InlineError>}
+      {outcome?.ok && (
+        <p
+          aria-live="polite"
+          className="flex items-center gap-2 text-body text-foreground"
+        >
+          <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+          Accepted by the mail server for {outcome.accepted} recipients
+          {outcome.rejected.length > 0
+            ? `, rejected: ${outcome.rejected.join(", ")}`
+            : ""}
+          .
+        </p>
+      )}
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={`Email ${valid.length} ${valid.length === 1 ? "student" : "students"}?`}
+        description={`Subject: "${resultMailSubject()}"`}
+        consequences={[
+          "Sends the result update template to every address listed.",
+          "Emails can't be recalled once sent.",
+          ...(invalid.length > 0
+            ? [`${invalid.length} invalid addresses will be skipped.`]
+            : []),
+        ]}
+        confirmLabel="Send email"
+        onConfirm={send}
+      />
     </div>
   );
 }

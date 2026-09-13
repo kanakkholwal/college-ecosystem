@@ -1,14 +1,7 @@
 "use client";
 
+import RoomCard from "@/components/application/room/card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -27,167 +20,247 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Box, Hash, Loader2, Plus, Users } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Check, Loader2, Lock, Plus, TriangleAlert } from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-import type { z } from "zod";
-import { roomSchema, roomTypes } from "~/constants/common.room";
-import type { RoomSelect } from "~/db/schema/room";
+import { z } from "zod";
+import { createRoom } from "~/actions/common.room";
+import { roomTypes } from "~/constants/common.room";
 
-type RoomType = z.infer<typeof roomSchema>;
+const formSchema = z.object({
+  roomNumber: z
+    .string()
+    .trim()
+    .min(1, "Enter the room number as it appears on the door")
+    .max(60, "Keep it under 60 characters"),
+  roomType: z.enum(roomTypes),
+  capacity: z
+    .number({ invalid_type_error: "Enter the number of seats" })
+    .int("Use a whole number")
+    .min(1, "A room needs at least 1 seat"),
+  currentStatus: z.enum(["available", "occupied"]),
+});
+type RoomFormValues = z.infer<typeof formSchema>;
 
-export default function CreateRoomForm({
-  onSubmit,
-}: {
-  onSubmit: (room: RoomType) => Promise<
-    Omit<RoomSelect, "currentStatus"> & {
-      currentStatus: RoomType["currentStatus"];
-    }
-  >;
-}) {
-  const form = useForm<RoomType>({
-    resolver: zodResolver(roomSchema),
-    defaultValues: {
-      roomNumber: "",
-      roomType: "classroom",
-      capacity: 1,
-      currentStatus: "occupied",
-      lastUpdatedTime: new Date(),
-    },
+const DEFAULTS = {
+  roomNumber: "",
+  roomType: "classroom",
+  capacity: Number.NaN,
+  currentStatus: "available",
+} satisfies RoomFormValues;
+
+const STATUS_OPTIONS = [
+  { value: "available", label: "Available", Icon: Check },
+  { value: "occupied", label: "Occupied", Icon: Lock },
+] as const;
+
+const typeLabel = (type: string) =>
+  type.charAt(0).toUpperCase() + type.slice(1);
+
+export default function CreateRoomForm() {
+  const form = useForm<RoomFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: DEFAULTS,
+    mode: "onTouched",
   });
+  const values = useWatch({ control: form.control }) as RoomFormValues;
+  const { isSubmitting, errors } = form.formState;
 
-  async function handleSubmit(data: RoomType) {
-    await toast.promise(onSubmit(data), {
-      loading: "Registering facility...",
-      success: (data) => `Room ${data.roomNumber} registered`,
-      error: "Failed to register room",
-    });
-    form.reset();
+  async function onSubmit(data: RoomFormValues) {
+    try {
+      const room = await createRoom({ ...data, lastUpdatedTime: new Date() });
+      toast.success(`Room ${room.roomNumber} added`);
+      // Keep the type so a run of similar rooms is quick to enter.
+      form.reset({ ...DEFAULTS, roomType: data.roomType });
+    } catch {
+      form.setError("root", {
+        message: `Room ${data.roomNumber} couldn't be added. It may already be listed; check the rooms page and try again.`,
+      });
+    }
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto border-border/50 bg-card/60 backdrop-blur-lg shadow-lg">
-      <CardHeader className="space-y-1 border-b border-border/40 pb-4">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Box className="size-5 text-primary" />
-          Register Facility
-        </CardTitle>
-        <CardDescription>
-          Add a new physical space to the campus registry.
-        </CardDescription>
-      </CardHeader>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <CardContent className="grid gap-6 pt-6">
-            {/* Primary Identifier */}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        noValidate
+        className="grid grid-cols-1 items-start gap-6 @4xl:grid-cols-[minmax(0,1fr)_22rem]"
+      >
+        <section
+          aria-labelledby="room-details"
+          className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background"
+        >
+          <h2
+            id="room-details"
+            className="text-body-lg font-medium text-foreground"
+          >
+            Room details
+          </h2>
+          <FormField
+            control={form.control}
+            name="roomNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Room number</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="LH-101"
+                    className="font-mono"
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Students search by this, so match the sign on the door.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
             <FormField
               control={form.control}
-              name="roomNumber"
+              name="roomType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <Hash className="size-3.5" /> Room Identifier
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. 304-A, Lab-01"
-                      className="font-mono"
-                      autoCapitalize="characters"
-                      autoComplete="off"
-                      {...field}
-                      value={field.value as string}
-                      disabled={form.formState.isSubmitting}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Unique code or number for this room.
-                  </FormDescription>
+                  <FormLabel>Type</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger onBlur={field.onBlur}>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {roomTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {typeLabel(type)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Room Type */}
-              <FormField
-                control={form.control}
-                name="roomType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      <Box className="size-3.5" /> Classification
-                    </FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(value.trim())}
-                      defaultValue={field.value}
-                      disabled={form.formState.isSubmitting}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {roomTypes.map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                            className="capitalize"
-                          >
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Capacity */}
-              <FormField
-                control={form.control}
-                name="capacity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      <Users className="size-3.5" /> Max Capacity
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="1"
-                        min={1}
-                        {...field}
-                        value={field.value as number}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                        disabled={form.formState.isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-
-          <CardFooter className="border-t border-border/40 bg-muted/10 pt-4 flex justify-end">
-            <Button
-              type="submit"
-              disabled={form.formState.isSubmitting}
-              className="min-w-[140px]"
-            >
-              {form.formState.isSubmitting ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (
-                <Plus className="mr-2 size-4" />
+            <FormField
+              control={form.control}
+              name="capacity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Seats</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      step={1}
+                      placeholder="60"
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={Number.isNaN(field.value) ? "" : field.value}
+                      onChange={(event) =>
+                        field.onChange(event.target.valueAsNumber)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-              {form.formState.isSubmitting ? "Registering..." : "Create Room"}
+            />
+          </div>
+          <FormField
+            control={form.control}
+            name="currentStatus"
+            render={({ field }) => (
+              <FormItem>
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="mb-2 text-body font-medium text-foreground">
+                    Status right now
+                  </legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STATUS_OPTIONS.map(({ value, label, Icon }) => (
+                      <label
+                        key={value}
+                        className="flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-3 text-body text-foreground transition-colors duration-150 hover:bg-muted has-checked:border-primary has-checked:bg-primary/10 has-focus-visible:ring-2 has-focus-visible:ring-ring"
+                      >
+                        <input
+                          type="radio"
+                          name={field.name}
+                          value={value}
+                          checked={field.value === value}
+                          onChange={() => field.onChange(value)}
+                          className="sr-only"
+                        />
+                        <Icon className="size-4" aria-hidden="true" />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <FormDescription>
+                  CRs and faculty update this later from the rooms page.
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+
+          {errors.root?.message && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-xl border border-destructive/40 p-3"
+            >
+              <TriangleAlert
+                className="mt-0.5 size-5 shrink-0 text-destructive"
+                aria-hidden="true"
+              />
+              <p className="text-body text-foreground">{errors.root.message}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end border-t border-border pt-4">
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Plus aria-hidden="true" />
+              )}
+              {isSubmitting ? "Adding room" : "Add room"}
             </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+          </div>
+        </section>
+
+        <aside
+          aria-labelledby="room-preview"
+          className="flex flex-col gap-3 @4xl:sticky @4xl:top-4"
+        >
+          <div className="space-y-1">
+            <h2
+              id="room-preview"
+              className="text-body-lg font-medium text-foreground"
+            >
+              Preview
+            </h2>
+            <p className="text-body text-muted-foreground">
+              How the room shows in the classroom finder.
+            </p>
+          </div>
+          <RoomCard
+            room={{
+              id: "preview",
+              roomNumber: values.roomNumber?.trim() || "Room number",
+              roomType: values.roomType,
+              capacity: Number.isNaN(values.capacity) ? null : values.capacity,
+              currentStatus: values.currentStatus,
+              lastUpdatedTime: null,
+              createdAt: null,
+              updatedAt: null,
+              latestUsageHistory: null,
+            }}
+          />
+        </aside>
+      </form>
+    </Form>
   );
 }

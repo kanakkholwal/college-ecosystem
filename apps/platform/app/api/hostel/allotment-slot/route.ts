@@ -1,105 +1,69 @@
-import { format } from "date-fns";
-import mongoose from "mongoose";
-import { NextResponse } from "next/server";
-// import * as XLSX from "xlsx";
-import dbConnect from "~/lib/dbConnect";
+import { type NextRequest, NextResponse } from "next/server";
+import { authorizeHostelManager } from "~/lib/hostel-access";
 import { AllotmentSlotModel } from "~/models/allotment";
-import { HostelModel, HostelStudentModel } from "~/models/hostel_n_outpass";
+import { HostelStudentModel } from "~/models/hostel_n_outpass";
 
-export async function GET(request: Request) {
+const timeFormat = new Intl.DateTimeFormat("en-IN", {
+  hour: "numeric",
+  minute: "2-digit",
+  day: "numeric",
+  month: "short",
+  timeZone: "Asia/Kolkata",
+});
+
+export async function GET(request: NextRequest) {
+  const hostelId = request.nextUrl.searchParams.get("hostelId");
+  if (!hostelId) {
+    return NextResponse.json(
+      { message: "No hostel id provided" },
+      { status: 400 }
+    );
+  }
+
+  const access = await authorizeHostelManager(hostelId, "id");
+  if (!access.ok) {
+    return NextResponse.json(
+      { message: access.error },
+      { status: access.status }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const hostelId = searchParams.get("hostelId");
+    const slots = await AllotmentSlotModel.find({
+      hostelId: access.hostel._id,
+    })
+      .select("startingTime endingTime allotedFor")
+      .sort({ startingTime: 1 })
+      .lean<{ startingTime: Date; endingTime: Date; allotedFor: string[] }[]>();
 
-    await dbConnect();
+    const students = await HostelStudentModel.find({
+      email: { $in: slots.flatMap((s) => s.allotedFor) },
+    })
+      .select("email name rollNumber")
+      .lean<{ email: string; name: string; rollNumber: string }[]>();
+    const byEmail = new Map(students.map((s) => [s.email, s]));
 
-    if (!hostelId) {
-      return NextResponse.json(
-        { message: "No hostel id provided" },
-        { status: 400 }
-      );
-    }
+    const data = slots.map((slot, index) => {
+      const people = slot.allotedFor.flatMap((email) => {
+        const student = byEmail.get(email);
+        return student ? [student] : [];
+      });
+      return {
+        slotNumber: index + 1,
+        slotTiming: `${timeFormat.format(slot.startingTime)} to ${timeFormat.format(slot.endingTime)}`,
+        slotRollNumbers: people.map((p) => p.rollNumber),
+        slotNames: people.map((p) => p.name),
+      };
+    });
 
-    // Get all upcoming slots for the hostel
-    const upcomingSlots = await AllotmentSlotModel.find({
-      hostelId: new mongoose.Types.ObjectId(hostelId),
-    }).sort({ startingTime: 1 });
-
-    // Prepare data for Excel
-    const data = [["Slot Number", "Slot Timing", "Roll Number", "Name"]];
-
-    // Fetch student details for each slot
-    const allSlots = await Promise.all(
-      upcomingSlots.map(async (slot, index) => {
-        const slotNumber = index + 1;
-
-        // Format the time range
-        const startTime = format(slot.startingTime, "hh:mm a");
-        const endTime = format(slot.endingTime, "hh:mm a");
-        const slotTiming = `${startTime} - ${endTime}`;
-
-        const slotRelatedStudents = await HostelStudentModel.find({
-          email: { $in: slot.allotedFor },
-        }).populate("userId", "name rollNumber");
-
-        return {
-          slotNumber,
-          slotTiming,
-          slotRollNumbers: slotRelatedStudents.map(
-            (student) => student.rollNumber
-          ), // Fix incorrect field
-          slotNames: slotRelatedStudents.map((student) => student.name),
-        };
-      })
-    );
-
-    for (const slot of allSlots) {
-      const { slotNumber, slotTiming, slotRollNumbers, slotNames } = slot;
-      const rollNumbers = slotRollNumbers.join("\n");
-      const names = slotNames.join("\n");
-      data.push([slotNumber.toString(), slotTiming, rollNumbers, names]);
-    }
-
-    // Create workbook and worksheet
-    // const workbook = XLSX.utils.book_new();
-    // const worksheet = XLSX.utils.aoa_to_sheet(data);
-
-    // // Add the worksheet to the workbook
-    // XLSX.utils.book_append_sheet(workbook, worksheet, "Slot Allotments");
-
-    // Get hostel name for the filename
-    const hostel = await HostelModel.findById(hostelId);
-    const hostelName = hostel ? hostel.name.replace(/\s+/g, "_") : "hostel";
-
-    // Write workbook to buffer
-    // const excelBuffer = XLSX.write(workbook, {
-    //   type: "buffer",
-    //   bookType: "xlsx",
-    // });
-
-    // Return the file as a download
     return NextResponse.json(
-      {
-        message: "Excel file generated successfully",
-        data: allSlots,
-        // excelBuffer, // Uncomment this line if you want to return the buffer directly
-      },
-      { status: 200 }
+      { message: "Slots fetched", hostel: access.hostel.name, data },
+      { status: 200, headers: { "Cache-Control": "no-store" } }
     );
-    // return new NextResponse(excelBuffer, {
-    //   headers: {
-    //     "Content-Type":
-    //       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    //     "Content-Disposition": `attachment; filename="${hostelName}_slot_allotments.xlsx"`,
-    //   },
-    // });
   } catch (error) {
-    console.error("Error generating Excel file:", error);
+    console.error("allotment-slot failed:", error);
     return NextResponse.json(
-      {
-        message: "Failed to generate Excel file",
-        error: (error as Error).message,
-      },
+      { message: "Failed to load slots" },
       { status: 500 }
     );
   }

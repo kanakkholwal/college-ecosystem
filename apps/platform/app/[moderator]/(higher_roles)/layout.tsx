@@ -1,35 +1,22 @@
-import Page403 from "@/components/utils/403";
 import { notFound } from "next/navigation";
 import { ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
 
-const NOT_ALLOWED_ROLES = [ROLES_ENUMS.STUDENT, ROLES_ENUMS.GUARD];
+// The parent layout already matched the session to this segment.
+const NOT_ALLOWED_ROLES: string[] = [ROLES_ENUMS.STUDENT, ROLES_ENUMS.GUARD];
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  params: Promise<{
-    moderator: (typeof ALLOWED_ROLES)[number];
-  }>;
-}
-
-export default async function DashboardLayout({
+export default async function HigherRolesLayout({
   children,
   params,
-}: DashboardLayoutProps) {
-  // const session = await getSession();
+}: {
+  children: React.ReactNode;
+  params: Promise<{ moderator: string }>;
+}) {
   const { moderator } = await params;
-  // Check if the moderator role is not allowed
   if (
-    !ALLOWED_ROLES.includes(moderator as (typeof ALLOWED_ROLES)[number]) ||
-    NOT_ALLOWED_ROLES.includes(moderator as (typeof NOT_ALLOWED_ROLES)[number])
+    !ALLOWED_ROLES.includes(moderator) ||
+    NOT_ALLOWED_ROLES.includes(moderator)
   ) {
-    return notFound();
+    notFound();
   }
-
-  if (
-    NOT_ALLOWED_ROLES.includes(moderator as (typeof NOT_ALLOWED_ROLES)[number])
-  ) {
-    return <Page403 />;
-  }
-
   return children;
 }

@@ -63,6 +63,26 @@ export function isHappeningNow(event: EventLike, now = new Date()): boolean {
   return new Date(event.time) <= now && new Date(event.endDate) > now;
 }
 
+export type EventStatus = "upcoming" | "ongoing" | "past";
+
+/** An event without an end date counts as ongoing for the rest of its IST day once started. */
+export function eventStatus(event: EventLike, now = new Date()): EventStatus {
+  const start = new Date(event.time);
+  if (start > now) return "upcoming";
+  if (event.endDate) return new Date(event.endDate) > now ? "ongoing" : "past";
+  return dayKey(start) === dayKey(now) ? "ongoing" : "past";
+}
+
+/** IST wall-clock parts (`yyyy-mm-dd`, `HH:mm`) of a moment. */
+export const toIstParts = (date: Date | string) => ({
+  date: dayKey(date),
+  time: hourFormat.format(new Date(date)),
+});
+
+// India has no DST, so a fixed offset is exact.
+export const fromIstParts = (date: string, time: string) =>
+  new Date(`${date}T${time}:00+05:30`);
+
 export const eventTypeLabel = (type?: string) =>
   type ? (type.charAt(0).toUpperCase() + type.slice(1)).replace("_", " ") : "";
 

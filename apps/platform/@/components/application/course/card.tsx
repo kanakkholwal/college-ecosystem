@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Pencil } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import type { CourseSelect } from "src/db/schema/course";
 import {
@@ -12,7 +12,7 @@ import {
 type Props = {
   course: CourseSelect;
   className?: string;
-  /** Moderator segment; when set, an edit link is shown beside the syllabus link. */
+  /** Moderator segment; when set, the card opens the editor and a side link opens the syllabus. */
   authorized_role?: string;
   style?: React.CSSProperties;
 };
@@ -26,6 +26,10 @@ export default function CourseCard({
   const department =
     getDepartmentShort(getDepartmentCode(course.department)) ||
     course.department;
+  const publicHref = `/syllabus/${encodeURIComponent(course.code)}`;
+  const href = authorized_role
+    ? `/${authorized_role}/courses/${encodeURIComponent(course.code)}`
+    : publicHref;
 
   return (
     <article
@@ -46,20 +50,21 @@ export default function CourseCard({
         </p>
         {authorized_role && (
           <ButtonLink
-            href={`/${authorized_role}/courses/${course.code}`}
-            variant="outline"
+            href={publicHref}
+            prefetch={false}
+            variant="ghost"
             size="icon_sm"
-            aria-label={`Edit ${course.code}`}
-            className="relative z-10 shrink-0"
+            aria-label={`Open the public syllabus for ${course.code}`}
+            className="relative z-10 -mt-1.5 -mr-1.5 shrink-0 text-muted-foreground"
           >
-            <Pencil />
+            <ArrowUpRight />
           </ButtonLink>
         )}
       </div>
 
       <h3 className="line-clamp-2 text-body-lg font-medium text-foreground">
         <Link
-          href={`/syllabus/${course.code}`}
+          href={href}
           prefetch={false}
           data-card-link
           className="outline-none after:absolute after:inset-0 after:rounded-2xl"
@@ -77,7 +82,7 @@ export default function CourseCard({
           aria-hidden="true"
           className="flex items-center gap-1 font-medium text-primary"
         >
-          View syllabus
+          {authorized_role ? "Edit course" : "View syllabus"}
           <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
         </span>
       </div>

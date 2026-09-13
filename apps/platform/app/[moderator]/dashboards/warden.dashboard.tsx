@@ -36,9 +36,10 @@ const GENDER_LABEL: Record<string, string> = {
 };
 
 const campusFormat = (date: string, options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("en-IN", { ...options, timeZone: "Asia/Kolkata" }).format(
-    new Date(date)
-  );
+  new Intl.DateTimeFormat("en-IN", {
+    ...options,
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(date));
 
 export default async function WardenDashboard({ role }: { role: string }) {
   const [viewer, { success, message, hostel }] = await Promise.all([

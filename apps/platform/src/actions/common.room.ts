@@ -1,64 +1,39 @@
 "use server";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { and, desc, eq, like, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import type { z } from "zod";
 import { headers } from "next/headers";
+import type { z } from "zod";
 import { auth } from "~/auth";
 import { roomSchema } from "~/constants/common.room";
 import { db } from "~/db/connect";
 import { roomUsageHistory, rooms, users } from "~/db/schema";
 
-// Define types for rooms and usage history
 type RoomSelect = InferSelectModel<typeof rooms>;
 type RoomInsert = InferInsertModel<typeof rooms>;
 type UsageHistoryInsert = InferInsertModel<typeof roomUsageHistory>;
-type UsageHistorySelect = InferSelectModel<typeof roomUsageHistory>;
+type RoomType = z.infer<typeof roomSchema>;
 
-/* FOR ADMIN USERS */
+const ROOM_STATUSES = ["available", "occupied"];
 
-// Function to get a room by ID with full history for admin
-
-export async function getRoomByIdForAdmin(roomId: string): Promise<
-  | (RoomSelect & {
-      usageHistory: { username: string; name: string; createdAt: Date }[];
-    })
-  | null
-> {
-  "use server";
-  // Fetch room details
-  const room = await db
-    .select()
-    .from(rooms)
-    .where(eq(rooms.id, roomId))
-    .then((res) => res[0]);
-
-  if (!room) return null;
-
-  // Fetch usage history for the room
-  const usageHistory = await db
-    .select({
-      roomId: roomUsageHistory.roomId,
-      userId: roomUsageHistory.userId,
-      createdAt: roomUsageHistory.createdAt,
-      username: users.username,
-      name: users.name,
-    })
-    .from(roomUsageHistory)
-    .innerJoin(users, eq(users.id, roomUsageHistory.userId))
-    .where(eq(roomUsageHistory.roomId, roomId))
-    .orderBy(desc(roomUsageHistory.createdAt));
-
+// Mirrors RoomCard's toggle rule so the UI and the server agree.
+async function getRoomSession() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = session?.user;
   return {
-    ...room,
-    usageHistory: usageHistory
-      .filter((history) => history.createdAt !== null)
-      .map((history) => ({
-        username: history.username,
-        name: history.name,
-        createdAt: history.createdAt as Date,
-      })),
+    user,
+    isAdmin: user?.role === "admin",
+    canToggle:
+      !!user &&
+      (user.role === "admin" ||
+        user.other_roles.includes("cr") ||
+        user.other_roles.includes("faculty")),
   };
+}
+
+function revalidateRoomPages() {
+  revalidatePath("/classroom-availability", "page");
+  revalidatePath("/[moderator]/rooms", "page");
 }
 
 export async function getRoomsInfo(): Promise<{
@@ -66,111 +41,88 @@ export async function getRoomsInfo(): Promise<{
   totalAvailableRooms: number;
   totalOccupiedRooms: number;
 }> {
-  "use server";
-  // Count total rooms
-  const totalRooms = await db
-    .select({ count: sql`count(*)`.mapWith(Number) })
-    .from(rooms)
-    .then((res) => res[0]?.count ?? 0);
-
-  // Count available rooms
-  const totalAvailableRooms = await db
-    .select({ count: sql`count(*)`.mapWith(Number) })
-    .from(rooms)
-    .where(eq(rooms.currentStatus, "available"))
-    .then((res) => res[0]?.count ?? 0);
-
-  // Count occupied rooms
-  const totalOccupiedRooms = await db
-    .select({ count: sql`count(*)`.mapWith(Number) })
-    .from(rooms)
-    .where(eq(rooms.currentStatus, "occupied"))
-    .then((res) => res[0]?.count ?? 0);
+  const [row] = await db
+    .select({
+      totalRooms: sql<number>`count(*)`.mapWith(Number),
+      totalAvailableRooms:
+        sql<number>`count(*) filter (where ${rooms.currentStatus} = 'available')`.mapWith(
+          Number
+        ),
+      totalOccupiedRooms:
+        sql<number>`count(*) filter (where ${rooms.currentStatus} = 'occupied')`.mapWith(
+          Number
+        ),
+    })
+    .from(rooms);
 
   return {
-    totalRooms,
-    totalAvailableRooms,
-    totalOccupiedRooms,
+    totalRooms: row?.totalRooms ?? 0,
+    totalAvailableRooms: row?.totalAvailableRooms ?? 0,
+    totalOccupiedRooms: row?.totalOccupiedRooms ?? 0,
   };
 }
 
-/* FOR NON-ADMIN USERS */
-
-// Function to list all rooms with their usage history
 export async function listAllRoomsWithHistory(filters?: {
   status?: string;
   roomNumber?: string;
+  roomType?: string;
 }): Promise<
   (RoomSelect & {
     latestUsageHistory: { username: string; name: string } | null;
   })[]
 > {
-  "use server";
-  // Build the filters for the query
   const conditions = [];
   if (filters?.status) {
     conditions.push(eq(rooms.currentStatus, filters.status));
   }
   if (filters?.roomNumber) {
-    conditions.push(like(rooms.roomNumber, `%${filters.roomNumber}%`));
+    conditions.push(ilike(rooms.roomNumber, `%${filters.roomNumber}%`));
+  }
+  if (filters?.roomType) {
+    conditions.push(eq(rooms.roomType, filters.roomType));
   }
 
-  // Apply filters if any
-  const roomQuery = conditions.length
-    ? db
-        .select()
-        .from(rooms)
-        .where(and(...conditions))
-    : db.select().from(rooms);
+  const [filteredRooms, latestHistories] = await Promise.all([
+    conditions.length
+      ? db
+          .select()
+          .from(rooms)
+          .where(and(...conditions))
+      : db.select().from(rooms),
+    // One row per room instead of the whole usage log.
+    db
+      .selectDistinctOn([roomUsageHistory.roomId], {
+        roomId: roomUsageHistory.roomId,
+        username: users.username,
+        name: users.name,
+      })
+      .from(roomUsageHistory)
+      .innerJoin(users, eq(users.id, roomUsageHistory.userId))
+      .orderBy(roomUsageHistory.roomId, desc(roomUsageHistory.createdAt)),
+  ]);
 
-  const filteredRooms = await roomQuery;
-
-  // Fetch latest usage history per room
-  const latestHistories = await db
-    .select({
-      roomId: roomUsageHistory.roomId,
-      userId: roomUsageHistory.userId,
-      createdAt: roomUsageHistory.createdAt,
-      username: users.username,
-      name: users.name,
-    })
-    .from(roomUsageHistory)
-    .innerJoin(users, eq(users.id, roomUsageHistory.userId))
-    .orderBy(desc(roomUsageHistory.createdAt));
-
-  // Map latest usage history by roomId
-  const latestHistoryMap = latestHistories.reduce(
-    (acc, history) => {
-      if (history.roomId && !acc[history.roomId]) {
-        acc[history.roomId] = {
-          username: history.username,
-          name: history.name,
-        };
-      }
-      return acc;
-    },
-    {} as Record<string, { username: string; name: string }>
+  const latestHistoryMap = new Map(
+    latestHistories.map((history) => [
+      history.roomId,
+      { username: history.username, name: history.name },
+    ])
   );
 
-  // Populate rooms with latest usage history
   return filteredRooms.map((room) => ({
     ...room,
-    latestUsageHistory: latestHistoryMap[room.id] || null,
+    latestUsageHistory: latestHistoryMap.get(room.id) ?? null,
   }));
 }
-type RoomType = z.infer<typeof roomSchema>;
 
-// Function to create a new room
-export async function createRoom(
-  roomData: z.infer<typeof roomSchema>
-  // initialUsageHistory?: UsageHistoryInsert
-): Promise<
+export async function createRoom(roomData: z.infer<typeof roomSchema>): Promise<
   Omit<RoomSelect, "currentStatus"> & {
     currentStatus: RoomType["currentStatus"];
   }
 > {
-  "use server";
-  // Validate room data
+  const { isAdmin } = await getRoomSession();
+  if (!isAdmin) {
+    throw new Error("Unauthorized: Only admins can create rooms");
+  }
   const response = roomSchema.safeParse(roomData);
   if (!response.success) {
     throw new Error(
@@ -178,35 +130,47 @@ export async function createRoom(
     );
   }
 
-  // Insert new room into the database
-  const [newRoom] = await db.insert(rooms).values(roomData).returning();
+  const [newRoom] = await db.insert(rooms).values(response.data).returning();
 
   if (!newRoom) {
     throw new Error("Failed to create room");
   }
-
-  // if (initialUsageHistory) {
-  //   await db.insert(roomUsageHistory).values({
-  //     ...initialUsageHistory,
-  //     roomId: newRoom.id,
-  //   });
-  // }
+  revalidateRoomPages();
 
   return newRoom as Omit<RoomSelect, "currentStatus"> & {
     currentStatus: RoomType["currentStatus"];
   };
 }
 
-// Function to update a room
+/** CRs and faculty may only change the status; admins may edit any room field. */
 export async function updateRoom(
   roomId: string,
   updatedData: Partial<RoomInsert>,
-  usageHistoryData?: UsageHistoryInsert
+  _usageHistoryData?: Partial<UsageHistoryInsert>
 ): Promise<RoomSelect> {
-  // "use server"
+  const { user, isAdmin, canToggle } = await getRoomSession();
+  if (!user || !canToggle) {
+    throw new Error("Unauthorized: you can't update rooms");
+  }
+  if (
+    updatedData.currentStatus !== undefined &&
+    !ROOM_STATUSES.includes(updatedData.currentStatus)
+  ) {
+    throw new Error("Invalid room status");
+  }
+
+  const changes: Partial<RoomInsert> = isAdmin
+    ? {
+        roomNumber: updatedData.roomNumber,
+        roomType: updatedData.roomType,
+        capacity: updatedData.capacity,
+        currentStatus: updatedData.currentStatus,
+      }
+    : { currentStatus: updatedData.currentStatus };
+
   const [updatedRoom] = await db
     .update(rooms)
-    .set(updatedData)
+    .set({ ...changes, lastUpdatedTime: new Date(), updatedAt: new Date() })
     .where(eq(rooms.id, roomId))
     .returning();
 
@@ -214,35 +178,24 @@ export async function updateRoom(
     throw new Error(`Failed to update room with ID: ${roomId}`);
   }
 
-  if (usageHistoryData) {
-    await db.insert(roomUsageHistory).values({
-      ...usageHistoryData,
-      roomId,
-    });
-  }
-  revalidatePath("/classroom-availability", "page");
+  // The log records who acted from the session, never from the client payload.
+  await db.insert(roomUsageHistory).values({ roomId, userId: user.id });
+  revalidateRoomPages();
 
   return updatedRoom;
 }
 
-// Function to delete a room and its usage history
 export async function deleteRoom(roomId: string): Promise<RoomSelect> {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session || !session.user || session.user.role !== "admin") {
+  const { isAdmin } = await getRoomSession();
+  if (!isAdmin) {
     throw new Error("Unauthorized: Only admins can delete rooms");
   }
   try {
-    // Start a transaction
     const deletedRoom = await db.transaction(async (tx) => {
-      // First delete usage history associated with the room
       await tx
         .delete(roomUsageHistory)
         .where(eq(roomUsageHistory.roomId, roomId));
 
-      // Then delete the room itself
       const [room] = await tx
         .delete(rooms)
         .where(eq(rooms.id, roomId))
@@ -255,11 +208,7 @@ export async function deleteRoom(roomId: string): Promise<RoomSelect> {
       return room;
     });
 
-    // Only revalidate paths if transaction succeeds
-    revalidatePath("/classroom-availability", "page");
-    revalidatePath("/admin/rooms", "page");
-    revalidatePath("/cr/rooms", "page");
-    revalidatePath("/faculty/rooms", "page");
+    revalidateRoomPages();
 
     return deletedRoom;
   } catch (error) {
@@ -268,30 +217,4 @@ export async function deleteRoom(roomId: string): Promise<RoomSelect> {
       `Failed to delete room: ${error instanceof Error ? error.message : String(error)}`
     );
   }
-}
-
-// Function to add usage history to a room
-export async function addUsageHistory(
-  usageHistoryData: UsageHistoryInsert
-): Promise<UsageHistorySelect> {
-  const [newHistory] = await db
-    .insert(roomUsageHistory)
-    .values(usageHistoryData)
-    .returning();
-
-  if (!newHistory) {
-    throw new Error("Failed to add usage history");
-  }
-
-  return newHistory;
-}
-
-// Function to list usage history for a specific room
-export async function listRoomUsageHistory(
-  roomId: string
-): Promise<UsageHistorySelect[]> {
-  return await db
-    .select()
-    .from(roomUsageHistory)
-    .where(eq(roomUsageHistory.roomId, roomId));
 }

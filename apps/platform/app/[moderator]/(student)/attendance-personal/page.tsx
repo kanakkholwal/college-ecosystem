@@ -1,97 +1,80 @@
-// app/attendance/page.tsx
-import EmptyArea from "@/components/common/empty-area";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { BookUser, Plus } from "lucide-react";
+import { SectionError } from "@/components/application/dashboard/primitives";
+import { KpiGridSkeleton } from "@/components/application/stats-card";
+import { HeaderBar } from "@/components/common/header-bar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { ClipboardCheck } from "lucide-react";
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { getAttendanceRecords } from "~/actions/student.record_personal";
-import AttendanceAnalytics from "./attendance-analytics";
-import CreateAttendanceRecord from "./create-record";
-import AttendanceRecord from "./record";
+import { getAttendanceSubjects } from "~/actions/student.record_personal";
+import { AddSubjectButton } from "./add-subject";
+import { AttendanceBoard } from "./attendance-board";
+import { ATTENDANCE_THRESHOLD } from "./standing";
 
 export const metadata: Metadata = {
   title: "Attendance",
-  description: "Manage your attendance records here.",
+  description: "Track your attendance for every subject.",
 };
 
-export default async function PersonalAttendanceManager() {
-  const attendance_records = await getAttendanceRecords();
+type Props = { params: Promise<{ moderator: string }> };
+
+export default async function PersonalAttendancePage({ params }: Props) {
+  const { moderator } = await params;
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-10 py-6 px-4">
-      {/* Analytics Section */}
-      <section>
-        <AttendanceAnalytics records={attendance_records} />
-      </section>
-
-      {/* Main Content Area */}
-      <section className="space-y-6">
-        {/* Controls Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h3 className="text-xl font-semibold tracking-tight">
-              Your Subjects
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Manage attendance for {attendance_records.length} active courses.
-            </p>
-          </div>
-          <CreateAttendanceRecordButton />
-        </div>
-
-        {/* Empty State */}
-        {attendance_records.length === 0 && (
-          <div className="rounded-xl border border-dashed p-8 bg-muted/30">
-            <EmptyArea
-              icons={[BookUser]}
-              title="No subjects tracked"
-              description="Start by adding a subject to track your daily attendance."
-            />
-          </div>
-        )}
-
-        {/* Records Grid */}
-        <Suspense
-          fallback={
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">
-              Loading records...
-            </div>
-          }
-        >
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-            {attendance_records.map((record, index) => (
-              <AttendanceRecord
-                record={record}
-                key={record.id}
-                className="animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-backwards"
-                style={{ animationDelay: `${index * 100}ms` }}
-              />
-            ))}
-          </div>
-        </Suspense>
-      </section>
+    <div className="@container flex w-full flex-col gap-8">
+      <HeaderBar
+        Icon={ClipboardCheck}
+        titleNode="Attendance"
+        descriptionNode={`Your own record of every class. The minimum is set to ${ATTENDANCE_THRESHOLD}% because the platform has no department rule on file; check your department's rule if it differs.`}
+        actionNode={<AddSubjectButton />}
+      />
+      <ErrorBoundaryWithSuspense
+        loadingFallback={<BoardSkeleton />}
+        fallback={<SectionError what="Your attendance" />}
+      >
+        <Board basePath={`/${moderator}/attendance-personal`} />
+      </ErrorBoundaryWithSuspense>
     </div>
   );
 }
 
-function CreateAttendanceRecordButton() {
+async function Board({ basePath }: { basePath: string }) {
+  const subjects = await getAttendanceSubjects();
   return (
-    <ResponsiveDialog
-      title="Add New Subject"
-      description="Create a tracker for a new course."
-      btnProps={{
-        variant: "default",
-        size: "sm",
-        className: "shadow-lg shadow-primary/20",
-        children: (
-          <>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Subject
-          </>
-        ),
-      }}
-    >
-      <CreateAttendanceRecord />
-    </ResponsiveDialog>
+    <AttendanceBoard
+      basePath={basePath}
+      subjects={subjects.map((s) => ({
+        ...s,
+        subjectName: s.subjectName.replaceAll("&amp;", "&"),
+      }))}
+    />
+  );
+}
+
+function BoardSkeleton() {
+  return (
+    <div className="flex flex-col gap-10" aria-busy="true">
+      <KpiGridSkeleton count={3} />
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-7 w-32 bg-muted" />
+        <div className="grid grid-cols-1 gap-3 @xl:grid-cols-2 @5xl:grid-cols-3">
+          {["a", "b", "c"].map((k) => (
+            <div
+              key={k}
+              className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 dark:bg-background"
+            >
+              <Skeleton className="h-5 w-40 bg-muted" />
+              <Skeleton className="h-9 w-24 bg-muted" />
+              <Skeleton className="h-2 w-full bg-muted" />
+              <Skeleton className="h-4 w-56 bg-muted" />
+              <div className="grid grid-cols-2 gap-2">
+                <Skeleton className="h-11 rounded-md bg-muted" />
+                <Skeleton className="h-11 rounded-md bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

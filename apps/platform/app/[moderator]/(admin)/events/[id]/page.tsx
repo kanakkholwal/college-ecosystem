@@ -1,177 +1,156 @@
-import { ActionButton } from "@/components/application/action-bar";
+import { Panel } from "@/components/application/dashboard/primitives";
+import { EventCard } from "@/components/application/event/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { ButtonLink, PreviousPageLink } from "@/components/utils/link";
-import { format } from "date-fns";
-import {
-  AlertTriangle,
-  CalendarDays,
-  Clock,
-  MapPin,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+  EVENT_TIME_ZONE,
+  eventStatus,
+  eventTypeLabel,
+} from "@/components/application/event/format";
+import { HeaderBar } from "@/components/common/header-bar";
+import { ButtonLink } from "@/components/utils/link";
+import { ArrowLeft, CalendarDays, Pencil } from "lucide-react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { deleteEvent, getEventById } from "~/actions/common.events";
+import { cache } from "react";
+import { getEventById } from "~/actions/common.events";
+import { DeleteEventButton } from "../event-actions";
+import { EventStatusTag } from "../event-status";
 
-export default async function EventPage(props: {
-  params: Promise<{
-    id: string;
-  }>;
-}) {
-  const params = await props.params;
-  const event = await getEventById(params.id);
-  if (!event) {
-    return notFound();
-  }
+type Props = { params: Promise<{ id: string }> };
 
-  const startDate = new Date(event.time);
-  const endDate = event.endDate ? new Date(event.endDate) : null;
+const loadEvent = cache(getEventById);
+
+const fullDate = new Intl.DateTimeFormat("en-IN", {
+  timeZone: EVENT_TIME_ZONE,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+const clock = new Intl.DateTimeFormat("en-IN", {
+  timeZone: EVENT_TIME_ZONE,
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+const stamp = new Intl.DateTimeFormat("en-IN", {
+  timeZone: EVENT_TIME_ZONE,
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+const moment = (value: Date | string) => {
+  const date = new Date(value);
+  return `${fullDate.format(date)}, ${clock.format(date).toUpperCase()} IST`;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const event = await loadEvent((await params).id);
+  return { title: event ? `${event.title} | Events` : "Event not found" };
+}
+
+export default async function EventPage({ params }: Props) {
+  const event = await loadEvent((await params).id);
+  if (!event) notFound();
+
+  const status = eventStatus(event);
+  const type = eventTypeLabel(event.eventType);
+  const details: { label: string; value: React.ReactNode }[] = [
+    { label: "Starts", value: moment(event.time) },
+    {
+      label: "Ends",
+      value: event.endDate ? moment(event.endDate) : "No end set",
+    },
+    { label: "Type", value: type || "Not set" },
+    { label: "Location", value: event.location || "Not decided" },
+    {
+      label: "Last updated",
+      value: event.updatedAt
+        ? `${stamp.format(new Date(event.updatedAt))} IST`
+        : "Unknown",
+    },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 space-y-8">
-      {/* 1. Header and Actions */}
-      <div className="border-b pb-6 space-y-4">
-        <PreviousPageLink className="text-muted-foreground hover:text-foreground transition-colors" />
+    <div className="@container flex flex-col gap-8">
+      <div>
+        <ButtonLink
+          href="/admin/events"
+          variant="ghost"
+          size="sm"
+          className="-ml-3"
+        >
+          <ArrowLeft aria-hidden="true" />
+          All events
+        </ButtonLink>
+      </div>
+      <HeaderBar
+        Icon={CalendarDays}
+        titleNode={event.title}
+        descriptionNode={
+          <span className="flex flex-wrap items-center gap-2">
+            <EventStatusTag status={status} />
+            {type}
+          </span>
+        }
+        actionNode={
+          <>
+            <DeleteEventButton event={{ id: event.id, title: event.title }} />
+            <ButtonLink
+              href={`/admin/events/${event.id}/edit`}
+              variant="primary"
+            >
+              <Pencil aria-hidden="true" />
+              Edit
+            </ButtonLink>
+          </>
+        }
+      />
 
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold tracking-tight text-foreground">
-              {event.title}
-            </h1>
-            <p className="text-xl text-primary font-semibold">
-              {event.location || "Online / To Be Announced"}
+      <div className="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <Panel as="section" className="flex flex-col gap-4">
+          <h2 className="text-body-lg font-medium text-foreground">
+            Schedule and details
+          </h2>
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-4 @xl:grid-cols-2">
+            {details.map((item) => (
+              <div key={item.label} className="flex flex-col gap-0.5">
+                <dt className="text-caption text-muted-foreground">
+                  {item.label}
+                </dt>
+                <dd className="text-body text-foreground">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="flex flex-col gap-1 border-t border-border pt-4">
+            <h3 className="text-caption text-muted-foreground">Description</h3>
+            <p className="whitespace-pre-wrap text-body leading-relaxed text-foreground">
+              {event.description || "No description yet."}
             </p>
           </div>
+        </Panel>
 
-          <div className="flex gap-3">
-            <ButtonLink
-              variant="outline"
-              size="sm"
-              href={`/admin/events/${event.id}/edit`}
-              className="gap-2"
-            >
-              <Pencil className="h-4 w-4" /> Edit Event
-            </ButtonLink>
+        <Panel as="section" className="flex flex-col gap-3">
+          <div className="space-y-1">
+            <h2 className="text-body-lg font-medium text-foreground">
+              Calendar preview
+            </h2>
+            <p className="text-body text-muted-foreground">
+              As shown on the public academic calendar.
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* 2. Main Grid: Description vs. Metadata */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column (2/3): Description & Primary Content */}
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                Event Description
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-base leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                {event.description || "No detailed description provided."}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Add future sections here (e.g., Attendee List, Links) */}
-        </div>
-
-        {/* Right Column (1/3): Metadata & Danger Zone */}
-        <div className="lg:col-span-1 space-y-8">
-          {/* Metadata Card */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">Schedule</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Start Time */}
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase">
-                    Starts
-                  </p>
-                  <p className="font-semibold">
-                    {format(startDate, "dd MMM yyyy")}
-                  </p>
-                  <p className="text-sm text-foreground/80">
-                    {format(startDate, "hh:mm a")}
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* End Time (Conditional) */}
-              {endDate && (
-                <>
-                  <div className="flex items-center gap-3">
-                    <CalendarDays className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase">
-                        Ends
-                      </p>
-                      <p className="font-semibold">
-                        {format(endDate, "dd MMM yyyy")}
-                      </p>
-                      <p className="text-sm text-foreground/80">
-                        {format(endDate, "hh:mm a")}
-                      </p>
-                    </div>
-                  </div>
-                  <Separator />
-                </>
-              )}
-
-              {/* Location (Conditional) */}
-              {event.location && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase">
-                      Location
-                    </p>
-                    <p className="font-semibold text-foreground/90">
-                      {event.location}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Danger Zone Card */}
-          <Card className="border-destructive/20 bg-destructive/5 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-destructive flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" /> Permanently Delete
-              </CardTitle>
-              <CardDescription>
-                This action is irreversible and will remove the event from all
-                calendars.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ActionButton
-                variant="destructive"
-                size="sm"
-                actionName="Event Deletion"
-                loadingLabel="Deleting event..."
-                action={deleteEvent.bind(null, event.id)}
-                className="w-full justify-center"
-              >
-                <Trash2 className="h-4 w-4 mr-2" /> Delete Event
-              </ActionButton>
-            </CardContent>
-          </Card>
-        </div>
+          <EventCard event={event} />
+          <ButtonLink
+            href="/academic-calendar"
+            target="_blank"
+            rel="noopener"
+            variant="outline"
+            size="sm"
+            className="self-start"
+          >
+            Open public calendar
+            <span className="sr-only">(opens in a new tab)</span>
+          </ButtonLink>
+        </Panel>
       </div>
     </div>
   );

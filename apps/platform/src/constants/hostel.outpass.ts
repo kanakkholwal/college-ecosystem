@@ -15,96 +15,93 @@ export const OUTPASS_STATUS = [
   "processed",
 ] as const;
 
+const campusClock = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Kolkata",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** Campus (IST) calendar day and minutes past midnight, whatever the runtime's timezone. */
+export function campusTime(value: Date | string) {
+  const parts = Object.fromEntries(
+    campusClock.formatToParts(new Date(value)).map((p) => [p.type, p.value])
+  );
+  return {
+    day: `${parts.year}-${parts.month}-${parts.day}`,
+    minutes: Number(parts.hour) * 60 + Number(parts.minute),
+  };
+}
+
+export const LOCAL_TRIP_REASONS = ["market", "outing"] as const;
+/** Latest IST leave and return times for market and outing passes, in minutes past midnight. */
+export const LOCAL_TRIP_LIMITS = { leaveBy: 18 * 60, returnBy: 20 * 60 };
+
+const isLocalTrip = (reason: string) =>
+  (LOCAL_TRIP_REASONS as readonly string[]).includes(reason);
+
 export const requestOutPassSchema = z
   .object({
     roomNumber: z
       .string()
-      .nonempty()
-      .min(3)
-      .refine(
-        (value) => {
-          if (value === "UNKNOWN" || value.trim() === "") {
-            return false;
-          }
-          return true;
-        },
-        {
-          message: "Invalid room number provided or room number is UNKNOWN",
-        }
-      ),
-    address: z.string().min(4).nonempty(),
+      .trim()
+      .min(1, { message: "Add your room number." })
+      .refine((value) => value !== "UNKNOWN", {
+        message: "Add your room number.",
+      }),
+    address: z
+      .string()
+      .trim()
+      .min(4, { message: "Say where you're going, at least 4 characters." })
+      .max(200, { message: "Keep the destination under 200 characters." }),
     reason: z.enum(REASONS, {
-      message: "Invalid reason",
+      message: "Pick a reason.",
     }),
     expectedOutTime: z
       .string()
-      .datetime()
-      .refine(
-        (value) => {
-          const outTime = new Date(value);
-          if (outTime < new Date()) {
-            return false;
-          }
-          return true;
-        },
-        {
-          message: "Expected out time can't be in past",
-        }
-      ),
-    expectedInTime: z.string().datetime(),
+      .datetime({ message: "Pick when you're leaving." })
+      .refine((value) => new Date(value) >= new Date(Date.now() - 60_000), {
+        message: "Leaving time can't be in the past.",
+      }),
+    expectedInTime: z.string().datetime({ message: "Pick when you're back." }),
   })
   .refine(
-    (data) => {
-      const outTime = new Date(data.expectedOutTime).getTime();
-      const inTime = new Date(data.expectedInTime).getTime();
-      if (inTime < outTime) {
-        return false;
-      }
-      return true;
-    },
+    (data) =>
+      new Date(data.expectedInTime).getTime() >
+      new Date(data.expectedOutTime).getTime(),
     {
-      message: "Expected out time can't be more than expected in time",
-      path: ["expectedOutTime"],
-    }
-  )
-  .refine(
-    (data) => {
-      const outTime = new Date(data.expectedOutTime);
-      const inTime = new Date(data.expectedInTime);
-      const sixPM = new Date(outTime);
-      sixPM.setHours(18, 0, 0, 0);
-      const eightPM = new Date(inTime);
-      eightPM.setHours(20, 0, 0, 0);
-
-      if (
-        (data.reason === "market" || data.reason === "outing") &&
-        (outTime > sixPM || inTime > eightPM)
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message:
-        "For market or outing, expectedOutTime can't be more than 6 PM and expectedInTime can't be more than 8 PM",
+      message: "Return time must be after leaving time.",
       path: ["expectedInTime"],
     }
   )
   .refine(
-    (data) => {
-      const outTime = new Date(data.expectedOutTime);
-      const inTime = new Date(data.expectedInTime);
-      // if reason market or outing inTime should be same day / today
-      if (
-        (data.reason === "market" || data.reason === "outing") &&
-        outTime.getDate() !== inTime.getDate()
-      ) {
-        return false;
-      }
-      return true;
-    },
+    (data) =>
+      !isLocalTrip(data.reason) ||
+      campusTime(data.expectedOutTime).minutes <= LOCAL_TRIP_LIMITS.leaveBy,
     {
-      message: "For market or outing, expected in time should be same day",
+      message: "For market or outing, leave by 6:00 PM IST.",
+      path: ["expectedOutTime"],
+    }
+  )
+  .refine(
+    (data) =>
+      !isLocalTrip(data.reason) ||
+      campusTime(data.expectedInTime).minutes <= LOCAL_TRIP_LIMITS.returnBy,
+    {
+      message: "For market or outing, be back by 8:00 PM IST.",
+      path: ["expectedInTime"],
+    }
+  )
+  .refine(
+    (data) =>
+      !isLocalTrip(data.reason) ||
+      campusTime(data.expectedOutTime).day ===
+        campusTime(data.expectedInTime).day,
+    {
+      message: "For market or outing, come back the same day.",
       path: ["expectedInTime"],
     }
   );

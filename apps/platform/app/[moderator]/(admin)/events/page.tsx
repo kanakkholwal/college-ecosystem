@@ -1,174 +1,309 @@
-import EmptyArea from "@/components/common/empty-area";
+import {
+  EmptyNote,
+  SectionError,
+} from "@/components/application/dashboard/primitives";
+import {
+  dayKey,
+  eventStatus,
+  eventTypeLabel,
+  formatEventTime,
+  parseDayKey,
+} from "@/components/application/event/format";
 import { HeaderBar } from "@/components/common/header-bar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { ButtonLink } from "@/components/utils/link";
-import { cn } from "@/lib/utils";
-import { format, isToday } from "date-fns";
 import {
   CalendarDays,
+  CalendarX,
+  ChevronDown,
   Clock,
   ExternalLink,
-  MoreHorizontal,
+  MapPin,
   Plus,
 } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getEvents } from "~/actions/common.events";
+import { EventRowMenu } from "./event-actions";
+import { EventStatusTag } from "./event-status";
 
-type Props = {
-  params: Promise<{
-    moderator: string;
-  }>;
-  searchParams: Promise<{
-    query?: string;
-    from?: string;
-    to?: string;
-  }>;
+export const metadata: Metadata = {
+  title: "Events | Admin Dashboard",
+  description: "Manage the dates on the public academic calendar.",
 };
 
-export default async function ManageEventsPage(props: Props) {
-  const searchParams = await props.searchParams;
+type Row = {
+  id: string;
+  title: string;
+  time: string;
+  endDate: string | null;
+  location?: string;
+  eventType: string;
+  status: ReturnType<typeof eventStatus>;
+};
+type MonthGroup = { key: string; rows: Row[] };
 
-  // Defaults: from today to 1 year ahead
-  const groupedEvents = await getEvents({
-    query: searchParams.query || "",
-    from: searchParams.from ? new Date(searchParams.from) : new Date(),
-    to: searchParams.to
-      ? new Date(searchParams.to)
-      : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-  });
+const monthLabel = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "UTC",
+  month: "long",
+  year: "numeric",
+});
+const tileMonth = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "UTC",
+  month: "short",
+});
 
-  const totalEvents = groupedEvents.flatMap((group) => group.events).length;
+function groupByMonth(rows: Row[]): MonthGroup[] {
+  const groups = new Map<string, Row[]>();
+  for (const row of rows) {
+    const key = dayKey(row.time).slice(0, 7);
+    groups.set(key, [...(groups.get(key) ?? []), row]);
+  }
+  return [...groups].map(([key, rows]) => ({ key, rows }));
+}
 
+export default function ManageEventsPage() {
   return (
-    <div className="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 space-y-8">
-      {/* 1. Header */}
+    <div className="@container flex flex-col gap-8">
       <HeaderBar
         Icon={CalendarDays}
-        titleNode={
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight">Event Schedule</h1>
-            <Badge variant="default" className="rounded-full px-2.5">
-              {totalEvents} Upcoming
-            </Badge>
-          </div>
-        }
-        descriptionNode="Plan and manage academic and extracurricular activities."
+        titleNode="Events"
+        descriptionNode="Everything here is public on the academic calendar. Upcoming dates come first."
         actionNode={
-          <div className="flex items-center gap-2">
+          <>
             <ButtonLink
               variant="outline"
-              size="sm"
               href="/academic-calendar"
               target="_blank"
-              className="hidden sm:flex gap-2"
+              rel="noopener"
             >
-              <ExternalLink className="h-4 w-4" />
-              Public Calendar
+              <ExternalLink aria-hidden="true" />
+              Public calendar
+              <span className="sr-only">(opens in a new tab)</span>
             </ButtonLink>
-            <ButtonLink
-              variant="default"
-              size="sm"
-              href={`/admin/events/new`}
-              className="gap-2 shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              Create Event
+            <ButtonLink variant="primary" href="/admin/events/new">
+              <Plus aria-hidden="true" />
+              New event
             </ButtonLink>
-          </div>
+          </>
         }
       />
+      <ErrorBoundaryWithSuspense
+        loadingFallback={<EventListSkeleton />}
+        fallback={<SectionError what="Events" />}
+      >
+        <EventList />
+      </ErrorBoundaryWithSuspense>
+    </div>
+  );
+}
 
-      {/* 2. Timeline Content */}
-      <div className="max-w-4xl mx-auto">
-        {groupedEvents.length > 0 ? (
-          <div className="space-y-8 pl-4 sm:pl-0">
-            {groupedEvents.map((group, groupIdx) => {
-              const date = new Date(group.day);
-              const isTodayDate = isToday(date);
+async function EventList() {
+  const grouped = await getEvents({ from: "", to: "" });
+  const now = new Date();
+  const rows: Row[] = grouped
+    .flatMap((group) => group.events)
+    .map((event) => ({
+      id: String(event.id),
+      title: event.title,
+      time: String(event.time),
+      endDate: event.endDate ? String(event.endDate) : null,
+      location: event.location,
+      eventType: event.eventType,
+      status: eventStatus(event, now),
+    }))
+    .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
-              return (
-                <div key={`group-${groupIdx}`} className="relative">
-                  {/* Sticky Date Header */}
-                  <div className="sticky top-0 z-10 bg-background/95 backdrop-blur py-4 flex items-center gap-4">
-                    <div
-                      className={cn(
-                        "h-3 w-3 rounded-full border-2",
-                        isTodayDate
-                          ? "bg-primary border-primary"
-                          : "bg-background border-muted-foreground/30"
-                      )}
-                    />
-                    <h3
-                      className={cn(
-                        "text-sm font-semibold uppercase tracking-wider",
-                        isTodayDate ? "text-primary" : "text-muted-foreground"
-                      )}
-                    >
-                      {isTodayDate ? "Today, " : ""}
-                      {format(date, "EEEE, MMMM do")}
-                    </h3>
-                    <div className="h-px bg-border flex-1" />
-                  </div>
+  const current = rows.filter((row) => row.status !== "past");
+  const past = rows.filter((row) => row.status === "past").reverse();
 
-                  {/* Events List for this Day */}
-                  <div className="ml-1.5 border-l-2 border-border/40 pl-8 pb-4 space-y-4">
-                    {group.events.map((event) => (
-                      <div
-                        key={event.id}
-                        className="group relative bg-card hover:bg-muted/40 border rounded-xl p-4 transition-all hover:shadow-sm hover:border-primary/20"
-                      >
-                        {/* Connecting Dot */}
-                        <div className="absolute -left-[39px] top-6 h-2 w-2 rounded-full bg-border group-hover:bg-primary transition-colors" />
+  if (rows.length === 0) {
+    return (
+      <EmptyNote
+        icon={<CalendarX />}
+        title="No events yet"
+        description="Add exam weeks, holidays and campus events so students can plan ahead."
+        action={
+          <ButtonLink variant="primary" href="/admin/events/new">
+            <Plus aria-hidden="true" />
+            New event
+          </ButtonLink>
+        }
+      />
+    );
+  }
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
-                          <div className="space-y-1.5 flex-1">
-                            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              {format(new Date(event.time), "hh:mm a")}
-                            </div>
-                            <h4 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors">
-                              {event.title}
-                            </h4>
-                            {event.description && (
-                              <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                                {event.description}
-                              </p>
-                            )}
-                            {/* Optional: Location if you have it in schema */}
-                            {/* <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
-                                    <MapPin className="h-3 w-3" /> Campus Auditorium
-                                </div> */}
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity -mr-2"
-                            asChild
-                          >
-                            <Link href={`/admin/events/${event.id}`}>
-                              Edit Details{" "}
-                              <MoreHorizontal className="h-4 w-4 ml-2" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+  return (
+    <div className="flex flex-col gap-10">
+      <section
+        aria-labelledby="current-heading"
+        className="flex flex-col gap-4"
+      >
+        <div className="space-y-1">
+          <h2
+            id="current-heading"
+            className="text-subheading font-medium text-foreground"
+          >
+            Upcoming and ongoing
+          </h2>
+          <p className="text-body text-muted-foreground">
+            {current.length === 1 ? "1 event" : `${current.length} events`},
+            soonest first.
+          </p>
+        </div>
+        {current.length > 0 ? (
+          <MonthList groups={groupByMonth(current)} />
         ) : (
-          <EmptyArea
-            title="No Events Scheduled"
-            description="Your calendar is clear for this period."
-            icons={[CalendarDays]}
-            className="py-20 border-dashed"
+          <EmptyNote
+            icon={<CalendarX />}
+            title="Nothing upcoming"
+            description="Every event on the calendar has ended. Add the next date students should know about."
           />
         )}
+      </section>
+
+      {past.length > 0 && (
+        <section aria-labelledby="past-heading" className="flex flex-col gap-4">
+          <div className="space-y-1">
+            <h2
+              id="past-heading"
+              className="text-subheading font-medium text-foreground"
+            >
+              Past
+            </h2>
+            <p className="text-body text-muted-foreground">
+              Still visible on the public calendar, most recent first.
+            </p>
+          </div>
+          <details className="group">
+            <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 self-start rounded-md text-body font-medium text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+              <ChevronDown
+                className="size-4 transition-transform duration-150 group-open:rotate-180"
+                aria-hidden="true"
+              />
+              <span className="group-open:hidden">
+                Show {past.length} past {past.length === 1 ? "event" : "events"}
+              </span>
+              <span className="hidden group-open:inline">Hide past events</span>
+            </summary>
+            <div className="mt-4">
+              <MonthList groups={groupByMonth(past)} />
+            </div>
+          </details>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function MonthList({ groups }: { groups: MonthGroup[] }) {
+  return (
+    <ol className="flex flex-col gap-4">
+      {groups.map((group) => {
+        const [year, month] = group.key.split("-").map(Number);
+        return (
+          <li
+            key={group.key}
+            className="overflow-hidden rounded-2xl border border-border bg-card dark:bg-background"
+          >
+            <h3 className="flex items-baseline justify-between gap-3 border-b border-border px-4 py-3 text-body-lg font-medium text-foreground">
+              {monthLabel.format(new Date(Date.UTC(year, month - 1, 1)))}
+              <span className="text-caption font-normal text-muted-foreground tabular-nums">
+                {group.rows.length === 1
+                  ? "1 event"
+                  : `${group.rows.length} events`}
+              </span>
+            </h3>
+            <ul className="divide-y divide-border">
+              {group.rows.map((row) => (
+                <EventRow key={row.id} row={row} />
+              ))}
+            </ul>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function EventRow({ row }: { row: Row }) {
+  const key = dayKey(row.time);
+  const { year, month, day } = parseDayKey(key);
+  const type = eventTypeLabel(row.eventType);
+  return (
+    <li className="flex items-start gap-3 px-4 py-3">
+      <time
+        dateTime={key}
+        className="flex size-12 shrink-0 flex-col items-center justify-center rounded-lg border border-border"
+      >
+        <span className="text-caption text-muted-foreground">
+          {tileMonth.format(new Date(Date.UTC(year, month, day)))}
+        </span>
+        <span className="text-body font-semibold leading-none text-foreground tabular-nums">
+          {day}
+        </span>
+      </time>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h4 className="min-w-0 text-body-lg font-medium text-foreground">
+            <Link
+              href={`/admin/events/${row.id}`}
+              className="rounded-sm outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {row.title}
+            </Link>
+          </h4>
+          <EventStatusTag status={row.status} />
+        </div>
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-muted-foreground">
+          <span className="flex items-center gap-1.5 tabular-nums">
+            <Clock className="size-3.5" aria-hidden="true" />
+            {formatEventTime(row)}
+          </span>
+          {row.location && (
+            <span className="flex items-center gap-1.5">
+              <MapPin className="size-3.5" aria-hidden="true" />
+              {row.location}
+            </span>
+          )}
+          {type && <span>{type}</span>}
+        </p>
       </div>
+      <EventRowMenu event={{ id: row.id, title: row.title }} />
+    </li>
+  );
+}
+
+function EventListSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-hidden="true">
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-56 bg-muted" />
+        <Skeleton className="h-5 w-40 bg-muted" />
+      </div>
+      {[3, 2].map((count) => (
+        <div
+          key={count}
+          className="overflow-hidden rounded-2xl border border-border bg-card dark:bg-background"
+        >
+          <div className="border-b border-border px-4 py-3">
+            <Skeleton className="h-6 w-40 bg-muted" />
+          </div>
+          {Array.from({ length: count }, (_, i) => (
+            <div
+              key={`row-${i.toString()}`}
+              className="flex items-start gap-3 border-b border-border px-4 py-3 last:border-b-0"
+            >
+              <Skeleton className="size-12 rounded-lg bg-muted" />
+              <div className="flex flex-1 flex-col gap-2">
+                <Skeleton className="h-5 w-2/3 bg-muted" />
+                <Skeleton className="h-4 w-1/3 bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

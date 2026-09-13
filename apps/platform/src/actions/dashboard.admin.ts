@@ -34,6 +34,7 @@ const getCurrentSession = cache(async () =>
 );
 
 async function isServerIdentity() {
+  // biome-ignore lint/suspicious/noUndeclaredEnvVars: runtime secret, not a build input
   const expected = process.env.SERVER_IDENTITY;
   if (!expected) return false;
   return (await headers()).get("x-authorization") === expected;
@@ -94,9 +95,7 @@ async function fetchTimeSeries(
       count: sql<number>`COUNT(*)::int`.as("count"),
     })
     .from(table)
-    .where(
-      sql`${column} >= ${previous.start} AND ${column} <= ${current.end}`
-    )
+    .where(sql`${column} >= ${previous.start} AND ${column} <= ${current.end}`)
     .groupBy(bucket)
     .orderBy(bucket);
 
@@ -388,6 +387,59 @@ export async function changeUserPassword(
     return true;
   } catch (error) {
     console.error("Error changing user password:", error);
+    return false;
+  }
+}
+
+export type AdminSessionRow = {
+  id: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+  createdAt: Date;
+  expiresAt: Date;
+  impersonated: boolean;
+};
+
+/** A user's sessions without their tokens. better-auth's admin middleware gates the call. */
+export async function getUserSessions(
+  userId: string
+): Promise<AdminSessionRow[]> {
+  const { sessions: rows } = await auth.api.listUserSessions({
+    headers: await headers(),
+    body: { userId },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    userAgent: row.userAgent ?? null,
+    ipAddress: row.ipAddress ?? null,
+    createdAt: row.createdAt,
+    expiresAt: row.expiresAt,
+    impersonated: Boolean(
+      (row as typeof row & { impersonatedBy?: string | null }).impersonatedBy
+    ),
+  }));
+}
+
+/** Revokes one session by id so tokens never reach the browser. */
+export async function revokeUserSessionById(
+  userId: string,
+  sessionId: string
+): Promise<boolean> {
+  try {
+    const requestHeaders = await headers();
+    const { sessions: rows } = await auth.api.listUserSessions({
+      headers: requestHeaders,
+      body: { userId },
+    });
+    const target = rows.find((row) => row.id === sessionId);
+    if (!target) return false;
+    await auth.api.revokeUserSession({
+      headers: requestHeaders,
+      body: { sessionToken: target.token },
+    });
+    return true;
+  } catch (error) {
+    console.error("Error revoking session:", error);
     return false;
   }
 }
