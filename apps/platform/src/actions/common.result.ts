@@ -3,11 +3,11 @@ import { cache } from "react";
 import type { ResultTypeWithId } from "~/models/result";
 
 import { PipelineStage } from "mongoose";
-import { z } from "zod";
 import dbConnect from "~/lib/dbConnect";
 import { serverFetch } from "~/lib/fetch-server";
 import redis from "~/lib/redis";
 import ResultModel from "~/models/result";
+import { z } from "zod/v3";
 
 /*
 /*  For Public Search
@@ -282,15 +282,15 @@ export async function getResultByRollNo(
       method: "PUT",
       params: { rollNo },
     });
-    if (response.error || !response.data) return null;
+    const updated = response.data?.data;
+    if (response.error || !updated) return null;
     await assignRanks();
-    // cache updated data if present
     try {
-      await redis?.set(cacheKey, JSON.stringify(response.data), "EX", 60);
+      await redis?.set(cacheKey, JSON.stringify(updated), "EX", 60);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
-    return response.data.data;
+    return updated;
   }
 
   if (!result && is_new) {
@@ -302,14 +302,15 @@ export async function getResultByRollNo(
       method: "POST",
       params: { rollNo },
     });
-    if (response.error || !response.data) return null;
+    const created = response.data?.data;
+    if (response.error || !created) return null;
     await assignRanks();
     try {
-      await redis?.set(cacheKey, JSON.stringify(response.data), "EX", 60);
+      await redis?.set(cacheKey, JSON.stringify(created), "EX", 60);
     } catch (e) {
       console.log("Redis SET error:", e);
     }
-    return response.data.data;
+    return created;
   }
 
   if (!result) {
@@ -326,7 +327,8 @@ export async function getResultByRollNo(
   return JSON.parse(JSON.stringify(result)); // deep clone
 }
 
-export async function assignRanks() {
+// Not exported: exports of a "use server" file are publicly callable actions.
+async function assignRanks() {
   const response = await serverFetch<{
     error: boolean;
     message: string;
@@ -341,7 +343,6 @@ export async function assignRanks() {
 
   return Promise.resolve(true);
 }
-
 const freshersDataSchema = z.array(
   z.object({
     name: z.string(),

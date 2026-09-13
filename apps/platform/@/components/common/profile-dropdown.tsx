@@ -57,7 +57,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         rounded: "full",
         variant: "ghost",
         className:
-          "size-9 rounded-full border border-border/40 hover:bg-muted/50 transition-all",
+          "size-9 rounded-full border border-border transition-colors hover:bg-muted",
         children: (
           <Avatar className="size-8 rounded-full">
             <AvatarImage src={avatarSrc} alt={user.username} />
@@ -66,7 +66,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         ),
       }}
     >
-      <div className="flex items-center gap-3 p-4 border-b border-border/50 shrink-0">
+      <div className="flex items-center gap-3 p-4 border-b border-border shrink-0">
         <div className="relative shrink-0">
           <Avatar className="size-16 rounded-xl border border-border shadow-sm">
             <AvatarImage src={avatarSrc} alt={user.username} />
@@ -74,11 +74,11 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
               {user.name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background bg-emerald-500" />
+          <span className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background bg-success" />
         </div>
 
         <div className="flex flex-col justify-center items-start min-w-0 flex-1">
-          <h4 className="font-semibold tracking-wide text-base">{user.name}</h4>
+          <h4 className="text-body-lg font-medium">{user.name}</h4>
           <p className="text-muted-foreground font-medium text-xs font-mono">
             {user.email}
             <Link
@@ -101,7 +101,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         <div className="pb-2">
           {/* Section Header with Count */}
           <div className="flex items-center justify-between px-2 py-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            <span className="text-caption font-semibold text-muted-foreground">
               Workspaces
             </span>
             {platformLinks.length > 0 && (
@@ -125,8 +125,8 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                       "group relative flex items-center gap-3 rounded-lg border border-transparent px-2.5 py-2 transition-all duration-200",
                       // Conditional Hover Styles
                       isAdmin
-                        ? "hover:bg-red-500/5 hover:border-red-500/20 col-span-2"
-                        : "hover:bg-muted/80 hover:border-border/50 hover:shadow-sm"
+                        ? "col-span-2 hover:border-destructive/30 hover:bg-destructive/10"
+                        : "hover:border-border hover:bg-muted"
                     )}
                   >
                     {/* Icon Box */}
@@ -134,8 +134,8 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                       className={cn(
                         "flex size-8 shrink-0 items-center justify-center rounded-md border shadow-sm transition-colors",
                         isAdmin
-                          ? "bg-background border-red-200 text-red-600 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-400"
-                          : "bg-background border-border text-muted-foreground group-hover:text-primary group-hover:border-primary/30"
+                          ? "border-destructive/30 bg-background text-destructive"
+                          : "border-border bg-background text-muted-foreground group-hover:text-primary"
                       )}
                     >
                       <link.Icon className="size-4" />
@@ -147,13 +147,13 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                         className={cn(
                           "block text-xs font-medium text-foreground transition-colors",
                           isAdmin
-                            ? "group-hover:text-red-700 dark:group-hover:text-red-400"
+                            ? "group-hover:text-destructive"
                             : "group-hover:text-primary"
                         )}
                       >
                         {link.title}
                       </span>
-                      <span className="block text-[10px] text-muted-foreground/60 truncate group-hover:text-muted-foreground">
+                      <span className="block truncate text-caption text-muted-foreground">
                         {isAdmin ? "System Configuration" : "Manage dashboard"}
                       </span>
                     </div>
@@ -163,7 +163,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                       className={cn(
                         "size-3 transition-all duration-300 opacity-0 -translate-x-1 translate-y-1",
                         "group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0",
-                        isAdmin ? "text-red-500" : "text-primary"
+                        isAdmin ? "text-destructive" : "text-primary"
                       )}
                     />
                   </Link>
@@ -171,15 +171,15 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
               })
             ) : (
               // Improved Empty State
-              <div className="flex items-center gap-3 rounded-lg border border-dashed border-border/60 bg-muted/20 px-3 py-4">
-                <div className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground/50">
+              <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-muted px-3 py-4">
+                <div className="flex size-8 items-center justify-center rounded-full bg-background text-muted-foreground">
                   <ShieldAlert className="size-4" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-medium text-muted-foreground">
                     No Access
                   </span>
-                  <span className="text-[10px] text-muted-foreground/50">
+                  <span className="text-caption text-muted-foreground">
                     Contact admin for roles.
                   </span>
                 </div>
@@ -191,7 +191,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
 
         {/* Resources */}
         <div className="px-2 pt-1">
-          <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider opacity-80">
+          <div className="px-2 py-1.5 text-caption font-semibold text-muted-foreground">
             Shortcuts
           </div>
           <div className="grid grid-cols-2 gap-0.5">
@@ -199,7 +199,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center justify-between px-2 py-1.5 text-xs font-medium text-muted-foreground rounded-md hover:bg-muted/50 hover:text-foreground transition-colors"
+                className="flex h-9 items-center justify-between rounded-md px-2 text-body text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <div className="flex items-center gap-2 whitespace-nowrap">
                   <LifeBuoy className="size-3.5 opacity-70" />
@@ -212,7 +212,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
       </div>
 
       {/* --- FIXED FOOTER --- */}
-      <div className="p-3 bg-muted/10 border-t border-border/50 shrink-0">
+      <div className="shrink-0 border-t border-border bg-muted p-3">
         <div className="flex items-center justify-between gap-2">
           {/* Home Button */}
           <Button
@@ -226,7 +226,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
             </Link>
           </Button>
 
-          <div className="h-4 w-px bg-border/60" />
+          <div className="h-4 w-px bg-border" />
 
           {/* Social Icons (Compact) */}
           <div className="flex items-center gap-1">
@@ -235,20 +235,20 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                 key={link.href}
                 href={link.href}
                 target="_blank"
-                className="flex items-center justify-center size-7 rounded-full text-muted-foreground hover:bg-muted hover:text-primary transition-all"
+                className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
               >
                 <link.icon className="size-3.5" />
               </Link>
             ))}
           </div>
 
-          <div className="h-4 w-px bg-border/60" />
+          <div className="h-4 w-px bg-border" />
 
           {/* Sign Out */}
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+            className="h-9 px-3 text-body text-destructive hover:bg-destructive/10"
             onClick={async () => {
               await authClient.signOut({
                 fetchOptions: {

@@ -46,7 +46,7 @@ const containerVariants: Variants = {
 // };
 const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
   (
-    { className, navLinks, activeTab, triggerHeight = "h-[30px]", ...props },
+    { className, navLinks, activeTab, triggerHeight = "h-9", ...props },
     ref
   ) => {
     const pathname = usePathname();
@@ -119,7 +119,7 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
       >
         <div
           className={cn(
-            "absolute transition-all duration-300 ease-out bg-primary/10 dark:bg-primary/30 rounded-xl flex items-center",
+            "absolute flex items-center rounded-md bg-muted transition-all duration-300 ease-craft",
             triggerHeight
           )}
           style={{
@@ -129,7 +129,7 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
         />
         {/* Active Indicator */}
         <div
-          className="absolute top-auto z-10 bottom-0 h-0.25 bg-primary rounded-full transition-all duration-300 ease-out"
+          className="absolute bottom-0 z-10 h-0.5 rounded-full bg-primary transition-all duration-300 ease-craft"
           style={activeStyle}
         />{" "}
         {/* Tabs */}
@@ -139,7 +139,7 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
             initial="hidden"
             animate="show"
             exit="hidden"
-            className="inline-flex space-x-[6px] items-center"
+            className="inline-flex items-center gap-1"
           >
             {navLinks.map((navLink, index) => (
               <Link
@@ -150,11 +150,11 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                 }}
                 className={cn(
                   "px-3 py-2 cursor-pointer transition-colors duration-300 z-10 ",
-                  "text-muted-foreground hover:text-foreground/80 bg-transparent",
-                  activeIndex === index ? "text-primary" : "",
-                  hoveredIndex === index
-                    ? "text-primary hover:text-primary"
+                  "font-medium bg-transparent text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring rounded-md",
+                  activeIndex === index
+                    ? "text-foreground [&_svg]:text-primary"
                     : "",
+                  hoveredIndex === index ? "text-foreground" : "",
                   triggerHeight
                 )}
                 onMouseEnter={() => setHoveredIndex(index)}
@@ -169,15 +169,15 @@ const NavTabs = React.forwardRef<HTMLDivElement, NavTabsProps>(
                   });
                 }}
               >
-                <div className="text-xs font-medium leading-5 whitespace-nowrap flex items-center gap-2 justify-center h-full [&>svg]:size-4 hover:[&>svg]:rotate-y-180 [&>svg]:duration-500">
+                <div className="flex h-full items-center justify-center gap-2 whitespace-nowrap text-body [&>svg]:size-4 [&>svg]:duration-500 hover:[&>svg]:rotate-y-180">
                   {navLink?.children}
                   {navLink.notification ? (
-                    <span className="inline-flex items-center justify-center size-4 text-xs font-medium text-primary bg-primary/10 rounded-full">
+                    <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary/10 text-caption font-medium text-primary">
                       {navLink.notification}
                     </span>
                   ) : null}
                   {navLink?.isNew ? (
-                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[0.6rem] font-medium text-primary bg-primary/10 rounded-full">
+                    <span className="inline-flex items-center justify-center rounded-full border border-border px-1.5 text-caption font-medium text-primary">
                       New
                     </span>
                   ) : null}

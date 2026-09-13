@@ -138,7 +138,8 @@ export default function AnnouncementsList({
                       <a
                         href={href}
                         className="text-primary hover:underline font-medium"
-                        target="_blank" rel="noopener"
+                        target="_blank"
+                        rel="noopener"
                       >
                         {children}
                       </a>

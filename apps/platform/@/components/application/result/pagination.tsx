@@ -34,7 +34,7 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
   // 1. Safe parsing of current page
   const currentPage = useMemo(() => {
     const page = Number(searchParams.get("page"));
-    return isNaN(page) || page < 1 ? 1 : page;
+    return Number.isNaN(page) || page < 1 ? 1 : page;
   }, [searchParams]);
 
   // 2. Optimized URL Generator
@@ -76,8 +76,8 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
             aria-disabled={currentPage <= 1}
             size="sm"
             className={cn(
-              "rounded-lg border border-border/40 transition-all hover:bg-muted/50",
-              currentPage <= 1 && "pointer-events-none opacity-40"
+              "rounded-lg border border-border bg-card transition-colors hover:bg-muted",
+              currentPage <= 1 && "pointer-events-none opacity-50"
             )}
           >
             <ChevronLeft />
@@ -89,8 +89,8 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
           {paginationRange.map((pageNumber, i) => {
             if (pageNumber === "...") {
               return (
-                <PaginationItem key={`ellipsis-${i}`}>
-                  <PaginationEllipsis className="text-muted-foreground/40" />
+                <PaginationItem key={`ellipsis-${paginationRange[i - 1]}`}>
+                  <PaginationEllipsis className="text-muted-foreground" />
                 </PaginationItem>
               );
             }
@@ -101,10 +101,10 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
                   href={createPageURL(pageNumber)}
                   isActive={pageNumber === currentPage}
                   className={cn(
-                    "rounded-lg border border-transparent font-mono text-xs transition-all",
+                    "rounded-lg border border-transparent text-body tabular-nums transition-colors",
                     pageNumber === currentPage
-                      ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:border-border/40"
+                      ? "border-border bg-card font-medium text-foreground shadow-xs"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   {pageNumber}
@@ -116,7 +116,7 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
 
         {/* Mobile: Compact Indicator */}
         <div className="flex sm:hidden items-center px-2">
-          <span className="text-sm text-muted-foreground font-medium">
+          <span className="text-body tabular-nums text-muted-foreground">
             <span className="text-foreground">{currentPage}</span> /{" "}
             {totalPages}
           </span>
@@ -131,8 +131,8 @@ export default function Paginate({ totalPages, className }: PaginateProps) {
             aria-disabled={currentPage >= totalPages}
             size="sm"
             className={cn(
-              "rounded-lg border border-border/40 transition-all hover:bg-muted/50",
-              currentPage >= totalPages && "pointer-events-none opacity-40"
+              "rounded-lg border border-border bg-card transition-colors hover:bg-muted",
+              currentPage >= totalPages && "pointer-events-none opacity-50"
             )}
           >
             <ChevronRight />
@@ -163,8 +163,8 @@ function JumpToPage({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const p = parseInt(val);
-    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+    const p = Number.parseInt(val, 10);
+    if (!Number.isNaN(p) && p >= 1 && p <= totalPages) {
       onJump(p);
       setIsOpen(false);
       setVal("");
@@ -177,8 +177,8 @@ function JumpToPage({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          title="Jump to page"
+          className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Jump to page"
         >
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -186,10 +186,10 @@ function JumpToPage({
       <PopoverContent className="w-48 p-3" align="end" sideOffset={8}>
         <form onSubmit={handleSubmit} className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="text-caption font-semibold text-muted-foreground">
               Jump to
             </span>
-            <span className="text-[10px] text-muted-foreground/50">
+            <span className="text-caption text-muted-foreground">
               Max {totalPages}
             </span>
           </div>
@@ -200,16 +200,11 @@ function JumpToPage({
               min={1}
               max={totalPages}
               placeholder="#"
-              className="h-8 text-xs font-mono"
+              className="h-9 font-mono"
               value={val}
               onChange={(e) => setVal(e.target.value)}
             />
-            <Button
-              type="submit"
-              size="sm"
-              className="h-8 px-3 text-xs"
-              disabled={!val}
-            >
+            <Button type="submit" size="sm" className="px-3" disabled={!val}>
               Go
             </Button>
           </div>

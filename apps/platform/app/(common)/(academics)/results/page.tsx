@@ -1,225 +1,219 @@
 import { ResultCard, SkeletonCard } from "@/components/application/result/card";
+import {
+  pickQuickFilters,
+  QuickFilters,
+} from "@/components/application/result/hero";
 import Pagination from "@/components/application/result/pagination";
 import SearchBox from "@/components/application/result/search";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense } from "react";
-import { BiSpreadsheet } from "react-icons/bi";
-import { getResults } from "~/actions/common.result";
-
-import { BaseHeroSection } from "@/components/application/base-hero";
-import {
-  HeroLabel,
-  HeroQuickFilters,
-  HeroStats,
-} from "@/components/application/result/hero";
 import AdUnit from "@/components/common/adsense";
-import EmptyArea from "@/components/common/empty-area";
-import { NoteSeparator } from "@/components/common/note-separator";
-import ConditionalRender from "@/components/utils/conditional-render";
+import { TiltedChip } from "@/components/site/sections";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
+import { SearchX, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
-import { type SearchParams } from "nuqs/server";
+import type { SearchParams } from "nuqs/server";
+import { Suspense } from "react";
+import { getCachedLabels, getResults } from "~/actions/common.result";
 import { appConfig, orgConfig } from "~/project.config";
-import { getServerEnv } from "~/utils/env";
 import { searchParamsCache } from "./utils";
 
-import { getCachedLabels } from "~/actions/common.result";
+type ParsedParams = Awaited<ReturnType<typeof searchParamsCache.parse>>;
+
+const jsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SearchResultsPage",
+  name: `${orgConfig.shortName} Results Portal`,
+  description: `Semester results for ${orgConfig.name}`,
+  url: `${appConfig.url}/results`,
+  publisher: orgConfig.jsonLds.EducationalOrganization,
+});
 
 export default async function ResultPage(props: {
   searchParams: Promise<SearchParams>;
 }) {
-  const searchParams = await props.searchParams;
-  const { branches, batches, programmes } = await getCachedLabels(
-    searchParams?.cache === "new"
-  );
-  if (getServerEnv().isDev) {
-    console.log(
-      "[Branches]:",
-      branches,
-      "[Batches]:",
-      batches,
-      "[Programmes]:",
-      programmes
-    );
-  }
-  // get shuffled filter combinations
-  const filterCombinations = [];
-  for (const batch of batches) {
-    for (const programme of programmes) {
-      filterCombinations.push({ batch, programme });
-    }
-  }
-  const shuffledFilterCombinations = filterCombinations
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 4);
-  const session = "Fall 2025";
+  const params = await searchParamsCache.parse(props.searchParams);
+  const freshCache = params.cache === "new";
+
   return (
-    <div className="px-4 md:px-12 xl:px-6 @container">
-      <BaseHeroSection
-        title={`${orgConfig.shortName} Semester Results Portal`}
-        description="Access official exam results for National Institute of Technology Hamirpur. Check grades,
-        and track academic performance"
-        className="w-full"
-      >
-        <Suspense
-          key={"key_search_bar"}
-          fallback={<Skeleton className="h-12 w-full " />}
-        >
-          <HeroLabel session={session} />
-          <SearchBox
-            new_cache={searchParams?.cache === "new"}
-            branches={branches}
-            batches={batches}
-            programmes={programmes}
-          />
-          <HeroQuickFilters filters={shuffledFilterCombinations} />
-          <HeroStats totalCount={5000} totalSemesters={8} />
-        </Suspense>
-      </BaseHeroSection>
-      <script type="application/ld+json" id="search-results-json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "SearchResultsPage",
-          name: "NITH Results Portal",
-          description: "Official examination results portal for NIT Hamirpur",
-          url: `${appConfig.url}/results`,
-          publisher: orgConfig.jsonLds.EducationalOrganization,
-        })}
-      </script>
+    <div className="@container mx-auto flex w-full max-w-(--max-app-width) flex-col px-4 pb-12 md:px-6">
+      <script
+        type="application/ld+json"
+        id="search-results-json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD; text children would be HTML-escaped
+        dangerouslySetInnerHTML={{ __html: jsonLd }}
+      />
+
+      <header className="mx-auto flex w-full max-w-3xl flex-col items-center py-12 text-center sm:py-16">
+        <TiltedChip>
+          <span className="text-primary">Every semester</span>, every branch
+        </TiltedChip>
+        <h1 className="mt-4 text-balance text-heading-lg font-medium text-foreground md:text-display">
+          Find a semester
+          <br />
+          <span className="text-primary">result</span>
+        </h1>
+        <p className="mt-3 max-w-xl text-pretty text-body text-muted-foreground md:text-body-lg">
+          Search by roll number or name, then narrow it down by branch, batch or
+          programme.
+        </p>
+
+        <div className="mt-8 flex w-full flex-col gap-4 rounded-3xl border border-border bg-card/85 p-2 backdrop-blur-xl dark:bg-background/85">
+          <Suspense fallback={<Skeleton className="h-14 w-full rounded-2xl" />}>
+            <SearchWithLabels freshCache={freshCache} />
+          </Suspense>
+        </div>
+      </header>
 
       <ErrorBoundaryWithSuspense
         fallback={
-          <EmptyArea
-            icons={[BiSpreadsheet]}
-            title="Failed to load results"
-            description="An error occurred while fetching the results. Please try again later."
+          <EmptyState
+            icon={<TriangleAlert className="size-6" aria-hidden="true" />}
+            title="Results couldn't load"
+            description="The results service didn't respond. Refresh the page, or try again in a minute."
           />
         }
-        loadingFallback={
-          <div className="mx-auto max-w-7xl w-full grid gap-4 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
-            {[...Array(6)].map((_, i) => {
-              return <SkeletonCard key={i.toString()} />;
-            })}
-          </div>
-        }
+        loadingFallback={<ResultsGridSkeleton />}
       >
-        <ResultDisplay searchParams={props.searchParams} />
+        <ResultDisplay params={params} />
       </ErrorBoundaryWithSuspense>
 
-      <AdUnit adSlot="multiplex" key={"results-page-ad"} />
+      <AdUnit adSlot="multiplex" key="results-page-ad" />
     </div>
   );
 }
 
-async function ResultDisplay({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const { query, page, batch, branch, programme, cache, freshers } =
-    await searchParamsCache.parse(searchParams);
-
-  const currentPage = Number(page) || 1;
-  const filter = {
-    batch: batch,
-    branch: branch || "",
-    programme: programme || "",
-    include_freshers: freshers === "1",
-  };
-  const new_cache = cache === "new";
-
-  const resData = await getResults(query, currentPage, filter, new_cache);
-  const { results, totalPages, totalCount } = resData;
-  if (getServerEnv().isDev) {
-    console.log(
-      "[Results fetched]:",
-      results.length,
-      "[Total Pages]:",
-      totalPages,
-      "[Total Count]:",
-      totalCount
-    );
-  }
+async function SearchWithLabels({ freshCache }: { freshCache: boolean }) {
+  const { branches, batches, programmes } = await getCachedLabels(freshCache);
   return (
     <>
-      <NoteSeparator label={`${results.length} Results found`} />
-
-      <ConditionalRender condition={results.length > 0}>
-        <div className="mx-auto max-w-7xl w-full xl:px-6 grid gap-3 grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @5xl:grid-cols-4">
-          {results.map((result, i) => {
-            return (
-              <ResultCard
-                key={result._id.toString()}
-                result={result}
-                style={{
-                  animationDelay: `${i * 100}ms`,
-                }}
-              />
-            );
-          })}
-        </div>
-        <div className="max-w-7xl mx-auto p-4 empty:hidden">
-          <Suspense
-            key={"Pagination_key"}
-            fallback={<Skeleton className="h-12 w-full " />}
-          >
-            <Pagination totalPages={totalPages} />
-          </Suspense>
-        </div>
-      </ConditionalRender>
-      <ConditionalRender condition={results.length === 0}>
-        <EmptyArea
-          icons={[BiSpreadsheet]}
-          title="No Results Found"
-          description="Try adjusting your search filters."
-        />
-      </ConditionalRender>
+      <SearchBox
+        branches={branches}
+        batches={batches}
+        programmes={programmes}
+      />
+      <div className="px-2 pb-2">
+        <QuickFilters filters={pickQuickFilters(batches, programmes)} />
+      </div>
     </>
   );
 }
+
+async function ResultDisplay({ params }: { params: ParsedParams }) {
+  const { query, page, batch, branch, programme, cache, freshers } = params;
+  const currentPage = Number(page) || 1;
+
+  const { results, totalPages, totalCount } = await getResults(
+    query,
+    currentPage,
+    {
+      batch,
+      branch: branch || "",
+      programme: programme || "",
+      include_freshers: freshers === "1",
+    },
+    cache === "new"
+  );
+
+  if (results.length === 0) {
+    return (
+      <EmptyState
+        icon={<SearchX className="size-6" aria-hidden="true" />}
+        title="No results match"
+        description="Check the roll number, or clear a filter to widen the search."
+      />
+    );
+  }
+
+  return (
+    <section aria-labelledby="results-count" className="flex flex-col gap-4">
+      <div className="flex items-baseline justify-between gap-4 border-b border-border pb-3">
+        <h2
+          id="results-count"
+          className="text-body-lg font-medium text-foreground"
+        >
+          {totalCount.toLocaleString("en-IN")}{" "}
+          {totalCount === 1 ? "student" : "students"}
+        </h2>
+        <p className="text-caption text-muted-foreground tabular-nums">
+          Page {Math.min(currentPage, totalPages)} of {totalPages}
+        </p>
+      </div>
+
+      <ul className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4">
+        {results.map((result) => (
+          <li key={result._id.toString()}>
+            <ResultCard result={result} />
+          </li>
+        ))}
+      </ul>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center pt-4">
+          <Suspense fallback={<Skeleton className="h-10 w-64" />}>
+            <Pagination totalPages={totalPages} />
+          </Suspense>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ResultsGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-3 @md:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4">
+      {Array.from({ length: 8 }, (_, i) => (
+        <SkeletonCard key={`skeleton-${i.toString()}`} />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+      <span className="grid size-12 place-items-center rounded-xl border border-border bg-card text-foreground">
+        {icon}
+      </span>
+      <h2 className="mt-4 text-body-lg font-medium text-foreground">{title}</h2>
+      <p className="mt-1 text-body text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
 export const metadata: Metadata = {
-  title:
-    orgConfig.shortName + " Results Portal - Check Semester Results Online",
-  description:
-    orgConfig.shortName +
-    " result portal. Search semester results by roll number, name, or course. Access academic records, grades, and transcripts for all programs.",
-  applicationName: orgConfig.shortName + " Result Portal",
-  alternates: {
-    canonical: "/results",
-  },
+  title: `${orgConfig.shortName} Results Portal - Check Semester Results Online`,
+  description: `${orgConfig.shortName} result portal. Search semester results by roll number, name, or course. Access academic records, grades, and transcripts for all programs.`,
+  applicationName: `${orgConfig.shortName} Result Portal`,
+  alternates: { canonical: "/results" },
   keywords: [
     orgConfig.shortName,
     orgConfig.name,
-    // Primary Keywords
     "NITH Results",
     "NITH Result Portal",
     "NITH Semester Results",
     "NITH Exam Results",
-
-    // Program-Specific
     "NITH BTech Results",
     "NITH MTech Results",
     "NITH BArch Results",
     "NITH MCA Results",
     "NITH PhD Results",
-
-    // Search Functionality
     "Check NITH Results",
     "NITH Result by Roll Number",
     "NITH Result by Name",
     "NITH Result Search",
-
-    // Location-Based
     "NITH Hamirpur Results",
     "NIT Hamirpur Results",
-
-    // Academic Terms
     "NITH Grade Card",
     "NITH Academic Records",
     "NITH Transcript",
-
-    // Technical Terms
-    "NITH Result 2024",
     "NITH Odd Semester Results",
     "NITH Even Semester Results",
   ],
@@ -236,7 +230,6 @@ export const metadata: Metadata = {
         alt: "NITH Results Portal Interface",
       },
     ],
-
     locale: "en_IN",
     type: "website",
   },
@@ -247,13 +240,4 @@ export const metadata: Metadata = {
       "Instant access to semester exam results for NIT Hamirpur students",
     images: [new URL("/logo.png", appConfig.url).toString()],
   },
-  // robots: {
-  //     index: true,
-  //     follow: true,
-  //     nocache: true,
-  //     googleBot: {
-  //       index: true,
-  //       follow: true,
-  //     }
-  //   },
 };

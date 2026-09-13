@@ -80,7 +80,7 @@ export default function Navbar({ user }: NavbarProps) {
       )}
     >
       <div className="w-full max-w-(--max-app-width) mx-auto">
-        <div className="flex items-center justify-between px-4 py-3 h-16">
+        <div className="flex h-16 items-center justify-between gap-4 px-4">
           {/* Brand */}
           <Link
             href="/"
@@ -104,8 +104,8 @@ export default function Navbar({ user }: NavbarProps) {
               <AuthButtonLink
                 size="sm"
                 href={pathname}
-                variant="rainbow"
-                className="font-medium px-5"
+                variant="primary"
+                className="px-4"
               >
                 Log In
               </AuthButtonLink>
@@ -124,12 +124,14 @@ export default function Navbar({ user }: NavbarProps) {
               >
                 {categories.map((category) => (
                   <button
+                    type="button"
                     key={category}
+                    aria-pressed={activeCategory === category}
                     onClick={() => setActiveCategory(category)}
                     className={cn(
-                      "relative h-8 whitespace-nowrap rounded-md px-3 text-caption font-medium capitalize transition-colors duration-150",
+                      "relative h-8 whitespace-nowrap rounded-md px-3 text-body capitalize transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                       activeCategory === category
-                        ? "text-primary"
+                        ? "font-medium text-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
@@ -137,7 +139,7 @@ export default function Navbar({ user }: NavbarProps) {
                     {activeCategory === category && (
                       <motion.div
                         layoutId="navbar-category-pill"
-                        className="absolute inset-0 bg-primary/10 rounded-md -z-10"
+                        className="absolute inset-0 -z-10 rounded-md bg-muted"
                         transition={{
                           type: "spring",
                           bounce: 0.2,
@@ -160,7 +162,7 @@ export default function Navbar({ user }: NavbarProps) {
                   children: (
                     <span className="flex items-center gap-2">
                       {link.Icon && (
-                        <link.Icon className="size-3.5 opacity-70" />
+                        <link.Icon className="size-4" aria-hidden="true" />
                       )}
                       {link.title}
                     </span>
@@ -483,7 +485,7 @@ export function SocialBar({ className }: { className?: string }) {
           href={link.href}
           target="_blank"
           className={cn(
-            "flex items-center justify-center size-8 rounded-full text-muted-foreground transition-all",
+            "flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors",
             "hover:bg-muted hover:text-foreground"
           )}
         >

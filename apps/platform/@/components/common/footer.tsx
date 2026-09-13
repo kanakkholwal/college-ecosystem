@@ -22,7 +22,6 @@ const columns = [
       { title: "Community", href: "/community" },
       { title: "Announcements", href: "/announcements" },
       { title: "Polls", href: "/polls" },
-      { title: "Whisper Room", href: "/whisper-room" },
     ],
   },
   {

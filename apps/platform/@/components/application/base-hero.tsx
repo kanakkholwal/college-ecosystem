@@ -1,8 +1,12 @@
+import { TiltedChip } from "@/components/site/sections";
 import { cn } from "@/lib/utils";
 
 interface BaseHeroSectionProps {
+  /** Tilted chip above the title. A string renders as a `TiltedChip`; a node renders as-is. */
   badge?: React.ReactNode;
   title?: string | React.ReactNode;
+  /** Second line of the title, set in the brand colour. */
+  accent?: string;
   description?: string | React.ReactNode;
   children?: React.ReactNode;
   className?: string;
@@ -11,9 +15,11 @@ interface BaseHeroSectionProps {
   style?: React.CSSProperties;
 }
 
+/** Centred page header in the Orbit Explore pattern; `children` sit below it (search card, actions). */
 function BaseHeroSection({
   badge,
   title,
+  accent,
   description,
   children,
   className,
@@ -23,41 +29,41 @@ function BaseHeroSection({
 }: BaseHeroSectionProps) {
   return (
     <section
-      id="hero"
       className={cn(
-        "relative w-full flex flex-col items-center justify-center py-24 md:py-32 px-4 lg:px-8 text-center overflow-hidden",
+        "relative mx-auto flex w-full flex-col items-center px-4 py-12 text-center sm:py-16",
         className
       )}
       style={style}
     >
-      {/* Background Decor: Dot Pattern with Radial Mask */}
-      <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(hsl(var(--muted-foreground)/0.15)_1px,transparent_1px)] bg-size-[20px_20px] mask-[radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+      <div className="flex w-full max-w-3xl flex-col items-center">
+        {badge &&
+          (typeof badge === "string" ? (
+            <TiltedChip className="mb-4">{badge}</TiltedChip>
+          ) : (
+            <div className="mb-4">{badge}</div>
+          ))}
 
-      <div className="relative z-10 w-full max-w-[calc(var(--max-app-width)*0.75)] mx-auto flex flex-col items-center">
-        {/* Optional Top Badge */}
-        {badge && (
-          <div className="mb-8 animate-in fade-in zoom-in duration-500 slide-in-from-bottom-2">
-            {badge}
-          </div>
+        {title && (
+          <h1
+            className={cn(
+              "text-balance text-heading-lg font-medium text-foreground md:text-display",
+              titleClassName
+            )}
+          >
+            {title}
+            {accent && (
+              <>
+                <br />
+                <span className="text-primary">{accent}</span>
+              </>
+            )}
+          </h1>
         )}
 
-        {/* Title */}
-        <h2
-          className={cn(
-            "text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-foreground text-balance",
-            // If it's a string, give it a subtle gradient finish by default, otherwise let the node handle it
-            typeof title === "string" && "text-metallic",
-            titleClassName
-          )}
-        >
-          {title}
-        </h2>
-
-        {/* Description */}
         {description && (
           <p
             className={cn(
-              "mt-6 text-lg md:text-xl text-muted-foreground text-pretty max-w-2xl mx-auto leading-relaxed",
+              "mt-3 max-w-xl text-pretty text-body text-muted-foreground md:text-body-lg",
               descriptionClassName
             )}
           >
@@ -65,13 +71,8 @@ function BaseHeroSection({
           </p>
         )}
 
-        {/* Actions / Children */}
         {children && (
-          <div
-            className="mt-10 flex flex-wrap items-center justify-center gap-4 w-full"
-            data-aos="fade-up"
-            data-aos-delay="100"
-          >
+          <div className="mt-8 flex w-full flex-col items-center gap-4">
             {children}
           </div>
         )}

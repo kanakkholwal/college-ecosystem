@@ -1,12 +1,11 @@
 "use client";
-import { StaticStep } from "@/components/common/step";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import ErrorBanner from "@/components/utils/error";
+
+import { TiltedChip } from "@/components/site/sections";
+import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/utils/link";
-import { Contact, Terminal } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { RotateCw } from "lucide-react";
 import { useEffect } from "react";
-import { appConfig } from "~/project.config";
+import { RecoverySteps } from "./recovery-steps";
 
 export default function ErrorBoundary({
   error,
@@ -15,72 +14,45 @@ export default function ErrorBoundary({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const pathname = usePathname();
   useEffect(() => {
-    // Log the error to an error reporting service
-    console.error("Error occurred:", error);
+    console.error("Result page error:", error);
   }, [error]);
+
   return (
-    <div className="flex items-center justify-center w-full h-full space-y-10 flex-col max-w-5xl mx-auto mt-20">
-      <ErrorBanner
-        title={"Oops! Something went wrong"}
-        description={
-          error?.message ||
-          "If you had UMC(unfair means) or result not on the college site then it can't be helped, otherwise Try instructions below"
-        }
-      />
-      <Alert>
-        <Terminal className="size-4" />
-        <AlertTitle className="text-foreground">
-          If you had UMC(unfair means) or result not on the college site then it
-          can{"'"}t be helped,otherwise Try instructions below
-        </AlertTitle>
-        <AlertDescription className="mb-2 text-muted-foreground">
-          If you are still facing following issues then follow steps or please
-          contact the support team.
-          <div className="w-full flex-1 mt-5">
-            <StaticStep step={1} title="How to add my result to portal?">
-              Open the this in new tab{" "}
-              <a
-                href={`${pathname}?update=1`}
-                className="ml-2 text-primary underline"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {pathname}?update=1
-              </a>
-            </StaticStep>
-            <StaticStep step={2} title="How to update my result?">
-              Open the this in new tab{" "}
-              <a
-                href={`${pathname}?new=1`}
-                className="ml-2 text-primary underline"
-              >
-                {pathname}?new=1
-              </a>
-            </StaticStep>
-            <StaticStep step={3} title="How to update my result?">
-              Open the this in new tab{" "}
-              <a
-                href={`/results?cache=new`}
-                className="ml-2 text-primary underline"
-              >
-                /results?cache=new
-              </a>
-            </StaticStep>
-            <ButtonLink
-              href={appConfig.contact}
-              className="mt-4"
-              variant="dark"
-              size="sm"
-              target="_blank"
-            >
-              <Contact />
-              Contact Support
-            </ButtonLink>
-          </div>
-        </AlertDescription>
-      </Alert>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-16">
+      <div className="flex flex-col items-start">
+        <TiltedChip>Result error</TiltedChip>
+        <h1 className="mt-4 text-balance text-heading-lg font-medium text-foreground md:text-display">
+          This result
+          <br />
+          <span className="text-primary">didn't load</span>
+        </h1>
+        <p className="mt-3 text-pretty text-body text-muted-foreground md:text-body-lg">
+          Try again first. If it keeps failing, one of the fixes below usually
+          helps.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button variant="primary" onClick={reset}>
+            <RotateCw />
+            Try again
+          </Button>
+          <ButtonLink href="/results" variant="outline">
+            Back to results
+          </ButtonLink>
+        </div>
+        {(error.digest || error.message) && (
+          <details className="mt-6 w-full rounded-xl border border-border bg-card px-4 py-3 text-body dark:bg-background">
+            <summary className="cursor-pointer font-medium text-foreground">
+              Error details
+            </summary>
+            <p className="mt-2 wrap-break-word font-mono text-caption text-muted-foreground">
+              {error.message}
+              {error.digest ? ` (digest ${error.digest})` : ""}
+            </p>
+          </details>
+        )}
+      </div>
+      <RecoverySteps />
     </div>
   );
 }

@@ -1,9 +1,8 @@
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
-  Award,
+  Minus,
   TrendingDown,
   TrendingUp,
   Trophy,
@@ -16,215 +15,155 @@ type ResultType = Omit<ResultTypeWithId, "semesters"> & {
   prevCgpi?: number;
 };
 
-//  Helpers
-const getRankStyle = (rank: number) => {
-  if (rank === 1) return "bg-pink-500/10 text-pink-600 border-pink-500/20";
-  if (rank === 2) return "bg-rose-400/10 text-rose-600 border-rose-400/20";
-  if (rank === 3) return "bg-amber-500/10 text-amber-600 border-amber-500/20";
-  return "bg-primary/5 text-primary border-primary/20";
-};
-
-export function ResultCard({
-  result,
+/** Rank chip: top three carry a trophy glyph, so the podium never relies on colour. */
+export function RankChip({
+  rank,
   className,
-  ...props
-}: { result: ResultType; className?: string } & React.ComponentProps<"div">) {
-  const trend =
-    result.prevCgpi !== undefined ? result.cgpi - result.prevCgpi : 0;
-
+}: {
+  rank: number;
+  className?: string;
+}) {
+  const podium = rank >= 1 && rank <= 3;
   return (
-    <div
+    <span
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1",
+        "inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-caption font-semibold tabular-nums",
+        podium
+          ? "border-primary/30 bg-primary/10 text-primary"
+          : "border-border text-foreground",
         className
       )}
-      {...props}
     >
-      {/* Background Decor */}
-      <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-      {/* Header */}
-      <div className="relative z-10 flex justify-between items-start mb-6">
-        <div>
-          <h3 className="font-semibold text-lg leading-tight text-foreground line-clamp-1">
-            {result.name}
-          </h3>
-          <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-            <span className="font-mono bg-muted/50 px-1.5 py-0.5 rounded">
-              {result.rollNo}
-            </span>
-            {result.programme && (
-              <>
-                <span className="w-1 h-1 rounded-full bg-border" />
-                <span className="truncate max-w-30">{result.programme}</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Rank Badge */}
-        <Badge
-          variant="outline"
-          className={cn(
-            "flex items-center gap-1 px-2.5 py-1 text-xs font-semibold",
-            getRankStyle(result.rank.college)
-          )}
-        >
-          {result.rank.college <= 3 ? (
-            <Trophy className="size-3" />
-          ) : (
-            <Award className="size-3" />
-          )}
-          #{result.rank.college}
-        </Badge>
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="relative z-10 grid grid-cols-2 gap-4 mb-6">
-        {/* CGPA Block */}
-        <div>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-            CGPI
-          </p>
-          <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold tracking-tight text-foreground">
-              {result.cgpi?.toFixed(2)}
-            </span>
-            {trend !== 0 && (
-              <div
-                className={cn(
-                  "flex items-center mb-1.5 text-xs font-medium",
-                  trend > 0 ? "text-emerald-600" : "text-rose-600"
-                )}
-              >
-                {trend > 0 ? (
-                  <TrendingUp className="size-3 mr-0.5" />
-                ) : (
-                  <TrendingDown className="size-3 mr-0.5" />
-                )}
-                {Math.abs(trend).toFixed(2)}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Ranks Block */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-muted-foreground">Branch</span>
-            <span className="font-mono font-medium">#{result.rank.branch}</span>
-          </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-muted-foreground">Batch</span>
-            <span className="font-mono font-medium">#{result.rank.batch}</span>
-          </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-muted-foreground">Class</span>
-            <span className="font-mono font-medium">#{result.rank.class}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Action */}
-      <div className="relative z-10 pt-4 border-t border-border/40 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground font-medium">
-          Batch {result.batch || "N/A"}
-        </span>
-
-        <Link
-          href={`/results/${result.rollNo}`}
-          prefetch={false}
-          className="flex items-center gap-1 text-xs font-semibold text-primary opacity-80 hover:opacity-100 transition-opacity"
-        >
-          View Report <ArrowRight className="size-3" />
-        </Link>
-      </div>
-    </div>
+      {podium && <Trophy className="size-3.5" aria-hidden="true" />}
+      <span className="sr-only">College rank </span>#{rank}
+    </span>
   );
 }
 
-export function ResultCardMinimal({
+/** CGPI change since the previous semester, stated with a glyph and a sign. */
+export function TrendDelta({ delta }: { delta: number | null }) {
+  if (delta === null) return null;
+  const rounded = Math.round(delta * 100) / 100;
+  const Icon = rounded > 0 ? TrendingUp : rounded < 0 ? TrendingDown : Minus;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-caption font-medium tabular-nums",
+        rounded > 0 && "text-success",
+        rounded < 0 && "text-destructive",
+        rounded === 0 && "text-muted-foreground"
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden="true" />
+      {rounded > 0 ? "+" : ""}
+      {rounded.toFixed(2)}
+      <span className="sr-only"> since last semester</span>
+    </span>
+  );
+}
+
+export function ResultCard({
   result,
   className,
 }: {
   result: ResultType;
   className?: string;
 }) {
+  const delta =
+    typeof result.prevCgpi === "number" && typeof result.cgpi === "number"
+      ? result.cgpi - result.prevCgpi
+      : null;
+
   return (
     <Link
       href={`/results/${result.rollNo}`}
       prefetch={false}
       className={cn(
-        "group flex items-center justify-between p-4 rounded-lg border border-border/40 bg-card hover:bg-muted/30 hover:border-primary/20 transition-all",
+        "group flex h-full flex-col gap-5 rounded-2xl border border-border bg-card p-5 outline-none transition-[border-color,box-shadow] duration-200 hover:border-border-strong hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring dark:bg-background",
         className
       )}
     >
-      <div className="flex items-center gap-4">
-        {/* Rank Circle */}
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold border",
-            getRankStyle(result.rank.college)
-          )}
-        >
-          #{result.rank.college}
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="line-clamp-1 text-body-lg font-medium text-foreground">
             {result.name}
-          </h4>
-          <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-            <span className="font-mono">{result.rollNo}</span>
-            {result.branch && (
-              <>
-                <span className="text-border">•</span>
-                <span>{result.branch}</span>
-              </>
-            )}
-          </div>
+          </h3>
+          <p className="mt-1 flex min-w-0 items-center gap-2 text-caption text-muted-foreground">
+            <span className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-foreground">
+              {result.rollNo}
+            </span>
+            <span className="truncate">{result.branch}</span>
+          </p>
         </div>
+        <RankChip rank={result.rank.college} />
       </div>
 
-      <div className="text-right">
-        <span className="block text-lg font-bold tabular-nums text-foreground">
-          {result.cgpi?.toFixed(2)}
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="text-caption text-muted-foreground">CGPI</p>
+          <p className="flex items-baseline gap-2">
+            <span className="font-heading text-heading font-medium tabular-nums text-foreground">
+              {typeof result.cgpi === "number" ? result.cgpi.toFixed(2) : "N/A"}
+            </span>
+            <TrendDelta delta={delta} />
+          </p>
+        </div>
+        <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 text-caption">
+          <dt className="text-muted-foreground">Branch</dt>
+          <dd className="text-right font-mono tabular-nums text-foreground">
+            #{result.rank.branch}
+          </dd>
+          <dt className="text-muted-foreground">Batch</dt>
+          <dd className="text-right font-mono tabular-nums text-foreground">
+            #{result.rank.batch}
+          </dd>
+          <dt className="text-muted-foreground">Class</dt>
+          <dd className="text-right font-mono tabular-nums text-foreground">
+            #{result.rank.class}
+          </dd>
+        </dl>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between border-t border-border pt-4 text-caption">
+        <span className="text-muted-foreground">
+          {result.programme} · Batch {result.batch || "N/A"}
         </span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-          CGPI
+        <span className="flex items-center gap-1 font-medium text-primary">
+          View result
+          <ArrowRight
+            aria-hidden="true"
+            className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+          />
         </span>
       </div>
     </Link>
   );
 }
 
-// --- 3. SKELETON ---
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl border border-border/50 bg-card p-5 space-y-6">
-      <div className="flex justify-between items-start">
+    <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 dark:bg-background">
+      <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-5 w-32 rounded-md" />
-          <Skeleton className="h-3 w-20 rounded-md" />
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-4 w-24" />
         </div>
-        <Skeleton className="h-6 w-12 rounded-full" />
+        <Skeleton className="h-7 w-12 rounded-full" />
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex items-end justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-3 w-8 rounded-md" />
-          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-3 w-8" />
+          <Skeleton className="h-8 w-20" />
         </div>
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-full rounded-md" />
-          <Skeleton className="h-3 w-full rounded-md" />
-          <Skeleton className="h-3 w-full rounded-md" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-20" />
         </div>
       </div>
-
-      <div className="pt-4 border-t border-border/40 flex justify-between items-center">
-        <Skeleton className="h-3 w-16 rounded-md" />
-        <Skeleton className="h-3 w-20 rounded-md" />
+      <div className="flex justify-between border-t border-border pt-4">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-3 w-20" />
       </div>
     </div>
   );

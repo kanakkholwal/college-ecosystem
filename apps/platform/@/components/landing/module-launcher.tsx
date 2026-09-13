@@ -74,7 +74,7 @@ export function ModuleLauncher({ role }: { role: string }) {
             e.preventDefault();
             open();
           }}
-          className="mt-8 w-full rounded-3xl border border-border bg-card/85 p-2 text-left shadow-lg backdrop-blur-xl"
+          className="mt-8 w-full rounded-3xl border border-border bg-card/85 p-2 text-left backdrop-blur-xl"
         >
           <fieldset className="no-scrollbar flex min-w-0 gap-1 overflow-x-auto border-0 p-1">
             <legend className="sr-only">Filter by category</legend>

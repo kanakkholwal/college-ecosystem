@@ -19,6 +19,7 @@ public/swe-worker*
 .DS_Store
 *.pem
 
+.notes
 # debug
 npm-debug.log*
 yarn-debug.log*

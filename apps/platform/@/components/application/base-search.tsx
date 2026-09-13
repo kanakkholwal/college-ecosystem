@@ -3,19 +3,12 @@
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { FilterPanel, type FilterOption } from "./filter-panel";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
-
-//  Types
-type FilterOption = {
-  key: string;
-  label: string;
-  values: { value: string; label: string }[];
-};
 
 type SearchBoxProps = {
   searchPlaceholder?: string;
@@ -83,7 +76,8 @@ export default function BaseSearchBox({
   );
 
   const clearAllFilters = useCallback(() => {
-    filterOptions.forEach((opt) => params.delete(opt.key));
+    for (const opt of filterOptions) params.delete(opt.key);
+    params.set("page", "1");
     replace(`${pathname}?${params.toString()}`);
   }, [filterOptions, params, pathname, replace]);
 
@@ -98,50 +92,35 @@ export default function BaseSearchBox({
       className={cn("w-full space-y-3 max-w-(--max-app-width) z-10", className)}
     >
       <div className="relative group">
-        <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-primary/0 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
-
         <div
           className={cn(
-            "relative flex items-center bg-card rounded-full shadow-sm border border-border/50 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all mx-auto",
+            "relative mx-auto flex h-14 items-center gap-1 rounded-2xl border border-border bg-card px-1.5 transition-colors focus-within:border-ring dark:bg-background",
             searchBoxClassName
           )}
         >
           {filterOptions.length > 0 && (
             <div className="pl-1.5">
               {variant === "default" ? (
-                <Suspense fallback={<FilterButtonFallback />}>
-                  <ResponsiveDialog
-                    title={filterDialogTitle}
-                    description={filterDialogDescription}
-                    btnProps={{
-                      variant: "ghost",
-                      size: "icon",
-                      className: cn(
-                        "size-9 rounded-full text-muted-foreground hover:bg-muted transition-colors",
-                        activeFilterCount > 0 &&
-                          "text-primary bg-primary/10 hover:bg-primary/20"
-                      ),
-                      children: (
-                        <Icon name="sliders-horizontal" className="size-4" />
-                      ),
-                    }}
-                  >
-                    <FilterContent
-                      options={filterOptions}
-                      currentParams={params}
-                      onSelect={handleFilter}
-                    />
-                  </ResponsiveDialog>
-                </Suspense>
+                <FilterPanel
+                  title={filterDialogTitle}
+                  description={filterDialogDescription}
+                  options={filterOptions}
+                  getValue={(key) => params.get(key)}
+                  onSelect={handleFilter}
+                  onClearAll={clearAllFilters}
+                  activeCount={activeFilterCount}
+                />
               ) : (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "size-9 rounded-full text-muted-foreground hover:bg-muted transition-colors",
+                    "size-10 rounded-xl text-muted-foreground transition-colors hover:bg-muted",
                     showExpandedFilters && "bg-muted text-foreground"
                   )}
+                  aria-label="Filters"
+                  aria-expanded={showExpandedFilters}
                   onClick={() => setShowExpandedFilters(!showExpandedFilters)}
                 >
                   <Icon name="sliders-horizontal" className="size-4" />
@@ -153,7 +132,7 @@ export default function BaseSearchBox({
           {/* Center: Input */}
           <Input
             id={id}
-            className="flex-1 h-12 border-none bg-transparent dark:bg-transparent focus:bg-transparent  focus-visible:bg-transparent shadow-none px-3 focus-visible:ring-0 placeholder:text-muted-foreground/60"
+            className="h-12 flex-1 border-none bg-transparent px-3 text-base shadow-none focus:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body-lg dark:bg-transparent"
             placeholder={searchPlaceholder}
             defaultValue={searchParams.get(searchParamsKey)?.toString()}
             onChange={(e) => handleSearch(e.target.value)}
@@ -163,8 +142,7 @@ export default function BaseSearchBox({
           {/* Right: Search Action */}
           <div className="pr-1.5">
             <Button
-              // size="icon"
-              className="h-9 rounded-full shrink-0"
+              className="h-10 shrink-0 rounded-xl"
               onClick={() => {
                 const input = document.getElementById(id) as HTMLInputElement;
                 if (input) handleSearch(input.value);
@@ -183,7 +161,7 @@ export default function BaseSearchBox({
         filterOptions.length > 0 && (
           <div className="animate-in slide-in-from-top-2 fade-in duration-200">
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-caption font-semibold text-muted-foreground">
                 Filters
               </span>
               {activeFilterCount > 0 && (
@@ -191,7 +169,7 @@ export default function BaseSearchBox({
                   variant="ghost"
                   size="sm"
                   onClick={clearAllFilters}
-                  className="h-6 text-[10px] text-muted-foreground hover:text-destructive px-2"
+                  className="h-7 px-2 text-caption text-muted-foreground hover:text-destructive"
                 >
                   Clear All
                 </Button>
@@ -202,9 +180,9 @@ export default function BaseSearchBox({
               {filterOptions.map((option) => (
                 <div
                   key={option.key}
-                  className="flex items-center gap-2 p-1 pr-2 rounded-full border border-border/60 bg-card/50"
+                  className="flex items-center gap-2 rounded-xl border border-border bg-card p-1 pr-2"
                 >
-                  <span className="pl-2 text-[10px] font-medium text-muted-foreground/70 uppercase">
+                  <span className="pl-2 text-caption font-medium text-muted-foreground">
                     {option.label}
                   </span>
                   <Separator orientation="vertical" className="h-4" />
@@ -213,12 +191,14 @@ export default function BaseSearchBox({
                       const isActive = params.get(option.key) === val.value;
                       return (
                         <button
+                          type="button"
+                          aria-pressed={isActive}
                           key={val.value}
                           onClick={() => handleFilter(option.key, val.value)}
                           className={cn(
-                            "px-2 py-0.5 rounded-full text-xs transition-all border border-transparent",
+                            "h-7 rounded-lg border border-transparent px-2 text-caption transition-colors",
                             isActive
-                              ? "bg-primary text-primary-foreground shadow-sm"
+                              ? "bg-primary text-primary-foreground"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           )}
                         >
@@ -232,84 +212,6 @@ export default function BaseSearchBox({
             </div>
           </div>
         )}
-    </div>
-  );
-}
-
-function FilterButtonFallback() {
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="size-9 rounded-full"
-      disabled
-    >
-      <Icon name="sliders-horizontal" className="size-4 opacity-50" />
-    </Button>
-  );
-}
-
-function FilterContent({
-  options,
-  currentParams,
-  onSelect,
-}: {
-  options: FilterOption[];
-  currentParams: URLSearchParams;
-  onSelect: (key: string, value: string) => void;
-}) {
-  return (
-    <div className="space-y-6 py-2">
-      {options.map((group) => {
-        // Check if this specific group has an active filter
-        const activeValue = currentParams.get(group.key);
-        const hasSelection = !!activeValue;
-
-        return (
-          <div key={group.key} className="space-y-3">
-            {/* Group Header with optional Reset */}
-            <div className="flex items-center justify-between">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {group.label}
-              </h4>
-              {hasSelection && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => onSelect(group.key, "all")} // Assuming 'all' clears it
-                >
-                  <Icon name="rotate-ccw" className="mr-1.5 size-3" />
-                  Reset
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {group.values.map((item) => {
-                const isSelected =
-                  currentParams.get(group.key) === item.value.toString();
-                return (
-                  <Button
-                    key={item.value}
-                    onClick={() => onSelect(group.key, item.value)}
-                    size="xs"
-                    variant={isSelected ? "default_soft" : "outline"}
-                  >
-                    {item.label}
-                    {isSelected && (
-                      <Icon name="check:bold" className="ml-1 size-3" />
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-      {options.length === 0 && (
-        <div className="text-center text-sm text-muted-foreground py-4">
-          No filters available.
-        </div>
-      )}
     </div>
   );
 }

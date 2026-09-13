@@ -333,8 +333,8 @@ interface PieBaseProps<
 interface PieDonutTextProps<
   TData extends Record<string, any>,
   TConfig extends ChartConfig,
->
-  extends BaseProps<TData, TConfig>, PieBaseProps<TData, TConfig> {
+> extends BaseProps<TData, TConfig>,
+    PieBaseProps<TData, TConfig> {
   // Additional properties specific to Pie/Donut charts
   textLabel?: string;
   textValue: string | number;

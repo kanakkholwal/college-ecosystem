@@ -1,25 +1,20 @@
-import { getCachedLabels } from "~/actions/common.result";
 import BaseSearchBox from "../base-search";
 
 type Props = {
   branches: string[];
   batches: string[];
   programmes: string[];
-  new_cache?: boolean;
 };
 
-export default async function ResultSearchBox({
+export default function ResultSearchBox({
   branches,
   batches,
   programmes,
-  new_cache,
 }: Props) {
-  // const { branches, batches, programmes } = await getCachedLabels(new_cache);
-
   const filterOptions = [
     {
       key: "branch",
-      label: "By Branches",
+      label: "Branch",
       values: [
         { value: "all", label: "All" },
         ...branches.map((branch) => ({ value: branch, label: branch })),
@@ -27,7 +22,7 @@ export default async function ResultSearchBox({
     },
     {
       key: "batch",
-      label: "By Batch",
+      label: "Batch",
       values: [
         { value: "all", label: "All" },
         ...batches.map((batch) => ({ value: batch, label: batch })),
@@ -35,7 +30,7 @@ export default async function ResultSearchBox({
     },
     {
       key: "programme",
-      label: "By Programme",
+      label: "Programme",
       values: [
         { value: "all", label: "All" },
         ...programmes.map((programme) => ({
@@ -48,11 +43,11 @@ export default async function ResultSearchBox({
 
   return (
     <BaseSearchBox
-      searchPlaceholder="Search by Roll No. or Name"
+      searchPlaceholder="Roll number or name"
       filterOptions={filterOptions}
-      filterDialogTitle="Filter Results"
-      filterDialogDescription="Filter by branches, batch, programme"
-      searchBoxClassName="shadow-xl shadow-black/5 mx-auto"
+      filterDialogTitle="Filter results"
+      filterDialogDescription="Narrow the list by branch, batch or programme."
+      searchBoxClassName="border-transparent bg-muted dark:bg-muted"
     />
   );
 }

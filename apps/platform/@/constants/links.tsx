@@ -141,15 +141,7 @@ export const quick_links: RouterCardLink[] = [
     allowed_roles: ["*"],
     category: "community",
   },
-  {
-    title: "Whisper Room",
-    href: "/whisper-room",
-    description: "Anonymous confessions and thoughts.",
-    Icon: PiGhostDuotone,
-    category: "community",
-    allowed_roles: ["student"],
-    isNew: true,
-  },
+ 
 ];
 
 // --- Sidebar Navigation Links ---
@@ -404,19 +396,7 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
       allowed_roles: ["*"],
     });
   }
-  // if(process.env.NODE_ENV !== "production"){
-  if (!linksByRole.some((l) => l.title === "Whisper Room")) {
-    linksByRole.push({
-      title: "Whisper Room",
-      href: "/whisper-room",
-      description: "Anonymous discussion forum for students.",
-      Icon: PiGhostDuotone,
-      category: "community",
-      allowed_roles: ["student"],
-      isNew: true,
-    });
-  }
-  // }
+  
   return linksByRole;
 };
 

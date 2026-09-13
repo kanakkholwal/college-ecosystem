@@ -74,7 +74,7 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
       <Button
         variant="ghost"
         size="icon_sm"
-        className={cn("rounded-full", className)}
+        className={cn("rounded-md", className)}
         disabled
       >
         <Icon name="sun" className="size-4 opacity-50" />
@@ -90,7 +90,7 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
             variant="ghost"
             size="icon_sm"
             className={cn(
-              "relative rounded-full text-muted-foreground hover:text-foreground transition-colors",
+              "relative rounded-md text-muted-foreground transition-colors hover:text-foreground",
               className
             )}
           >
@@ -108,7 +108,7 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
 
         <DropdownMenuContent
           align="end"
-          className="min-w-[140px] p-1.5 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl"
+          className="min-w-36 rounded-xl border-border p-1.5 shadow-lg"
         >
           <div className="flex flex-col gap-1">
             {themes_modes.map((t) => {
@@ -124,7 +124,7 @@ export const ThemeSwitcher = ({ onChange, className }: ThemeSwitcherProps) => {
                     });
                   }}
                   className={cn(
-                    "relative flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium outline-none transition-colors cursor-pointer focus:bg-transparent",
+                    "relative flex h-9 cursor-pointer items-center gap-2 rounded-md px-3 text-body outline-none transition-colors focus:bg-transparent",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -226,7 +226,7 @@ export function ThemePopover({ className }: { className?: string }) {
             variant="ghost"
             size="icon_sm"
             className={cn(
-              "relative size-9 rounded-full border border-border/40 bg-background transition-all hover:bg-muted group",
+              "group relative size-9 rounded-md border border-border bg-card transition-colors hover:bg-muted",
               className
             )}
           >
@@ -244,7 +244,7 @@ export function ThemePopover({ className }: { className?: string }) {
             <PopoverContent
               sideOffset={8}
               align="end"
-              className="w-64 p-3 rounded-xl border border-border/50 backdrop-blur-xl shadow-xl"
+              className="w-64 rounded-xl border border-border p-3 shadow-lg"
               asChild
             >
               <motion.div
@@ -254,7 +254,7 @@ export function ThemePopover({ className }: { className?: string }) {
                 transition={{ duration: 0.2, ease: "easeOut" }}
               >
                 <div className="flex items-center justify-between mb-3 px-1">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <span className="text-caption font-semibold text-muted-foreground">
                     Interface Color
                   </span>
                   <Palette className="size-3.5 text-muted-foreground" />
@@ -277,9 +277,9 @@ export function ThemePopover({ className }: { className?: string }) {
                               });
                             }}
                             className={cn(
-                              "group relative flex items-center justify-center size-10 rounded-full border border-transparent transition-all hover:scale-105 focus:outline-hidden",
+                              "group relative flex size-10 items-center justify-center rounded-lg border border-transparent outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                               isActive
-                                ? "border-foreground/20 shadow-xs"
+                                ? "border-border shadow-xs"
                                 : "hover:border-border"
                             )}
                             style={{
