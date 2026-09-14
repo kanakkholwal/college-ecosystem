@@ -44,13 +44,16 @@ async function resolveSession(request: NextRequest): Promise<ResolvedSession> {
   }).catch(() => null);
   if (cached?.user) return { session: cached, unresolved: false };
 
+  // Behind TLS-terminating ingress the public origin is https but the container speaks http.
   const { data, error } = await betterFetch<Session>("/api/auth/get-session", {
-    baseURL: request.nextUrl.origin,
+    baseURL: process.env.INTERNAL_APP_URL || request.nextUrl.origin,
     headers: {
-      //get the cookie from the request
       cookie: request.headers.get("cookie") || "",
     },
-  });
+  }).catch((err: unknown) => ({
+    data: null,
+    error: { status: 0, message: String(err) },
+  }));
   if (error) {
     // Self-fetching our own origin fails behind the CDN in front of the app.
     console.error("[proxy] session lookup failed", error.status, error.message);
