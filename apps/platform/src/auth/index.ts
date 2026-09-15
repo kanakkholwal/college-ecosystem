@@ -1,10 +1,11 @@
 // biome-ignore assist/source/organizeImports: too much sort
 import { betterAuth, type BetterAuthOptions, type User } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError } from "better-auth/api";
+import { defineRequestState, hasRequestState } from "@better-auth/core/context";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin, haveIBeenPwned, username } from "better-auth/plugins";
-import { getHostelStudent } from "~/actions/hostel.core";
+import { getHostelStudent } from "~/lib/hostel-student";
 import { getResultByRollNo } from "~/api/result";
 import { APP_AUTH_ERROR_CODES } from "~/auth/errors";
 import { emailSchema, ROLES_ENUMS } from "~/constants";
@@ -49,12 +50,25 @@ if (isProd && !isBuildPhase && !BETTER_AUTH_SECRET) {
   throw new Error("BETTER_AUTH_SECRET is required in production");
 }
 
+const PROFILE_LOCKED_FIELDS = [
+  "other_roles",
+  "username",
+  "department",
+  "gender",
+  "hostelId",
+  "role",
+] as const;
+
 export const ORG_EMAIL_REQUIRED = `Use your ${orgConfig.mailSuffix} account to sign in`;
 
 /** Case-insensitive: Google may return the address with different casing than we store. */
 export function isOrgEmail(email: string): boolean {
   return emailSchema.safeParse(email.trim().toLowerCase()).success;
 }
+
+// Better Auth swallows errors from email senders (runInBackgroundOrAwait), so failures are
+// recorded per request and turned into an error response by the after hook below.
+const emailSendFailed = defineRequestState(() => false);
 
 async function sendAuthEmail<T extends EmailTemplateId>(
   template: T,
@@ -65,10 +79,7 @@ async function sendAuthEmail<T extends EmailTemplateId>(
     await sendEmail({ template, to, props });
   } catch (err) {
     console.error(`[auth] ${template} email to ${to} failed`, err);
-    throw new APIError("INTERNAL_SERVER_ERROR", {
-      code: APP_AUTH_ERROR_CODES.EMAIL_SEND_FAILED,
-      message: "Error sending email",
-    });
+    if (await hasRequestState()) await emailSendFailed.set(true);
   }
 }
 
@@ -149,6 +160,19 @@ export const betterAuthOptions = {
           };
         },
       },
+      update: {
+        // These fields are `input: true` so sign-up accepts them, which also exposes them on
+        // /update-user. Only the admin tools (direct DB writes) may change them.
+        before: async (user, ctx) => {
+          if (ctx?.path !== "/update-user") return;
+          const locked = PROFILE_LOCKED_FIELDS.filter((field) => field in user);
+          if (locked.length > 0) {
+            throw new APIError("FORBIDDEN", {
+              message: `${locked.join(", ")} can only be changed by an admin`,
+            });
+          }
+        },
+      },
       // delete:{
       //   before: async (user) => {
       //     console.log("[DELETING_USER]:", user.email);
@@ -160,6 +184,15 @@ export const betterAuthOptions = {
       //   },
       // }
     },
+  },
+  hooks: {
+    after: createAuthMiddleware(async () => {
+      if (!(await hasRequestState()) || !(await emailSendFailed.get())) return;
+      throw new APIError("INTERNAL_SERVER_ERROR", {
+        code: APP_AUTH_ERROR_CODES.EMAIL_SEND_FAILED,
+        message: "Error sending email",
+      });
+    }),
   },
   // throw:false lets OAuth callback failures land on errorURL instead of
   // surfacing as a raw 500 — the create-user hook below throws for students

@@ -8,11 +8,6 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const res = await request.json();
-  const body = bodySchema.safeParse(res);
-  if (!body.success) {
-    return Response.json({ error: body.error.message }, { status: 400 });
-  }
   const session = await getSession();
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,7 +15,15 @@ export async function POST(request: Request) {
   if (session.user.role !== "admin") {
     return Response.json(
       { error: "Unauthorized: admin role required" },
-      { status: 401 }
+      { status: 403 }
+    );
+  }
+  const res = await request.json().catch(() => null);
+  const body = bodySchema.safeParse(res);
+  if (!body.success) {
+    return Response.json(
+      { error: "Send files and a type of events or courses" },
+      { status: 400 }
     );
   }
   const { files, type } = body.data;

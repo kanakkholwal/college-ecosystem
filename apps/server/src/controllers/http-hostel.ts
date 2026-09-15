@@ -136,7 +136,7 @@ function extractHostelsFromTable(table: HTMLElement): HostelType[] {
           ?.trim()
           ?.split(" ")
           ?.join("_") as "warden" | "mmca" | "assistant_warden";
-        const email = cells[4]?.textContent?.trim();
+        const email = cells[4]?.textContent?.trim() ?? "";
         const phoneNumber = cells[3]?.textContent?.trim() || "";
 
         if (role === "warden") {
@@ -144,7 +144,7 @@ function extractHostelsFromTable(table: HTMLElement): HostelType[] {
             name,
             email:
               currentHostel.slug === "satpura-&-aravali-girls-hostel"
-                ? email.split("\n")[1]
+                ? (email.split("\n")[1] ?? email)
                 : email,
             phoneNumber,
           };

@@ -64,20 +64,32 @@ async function getFacultyListByDepartment(department: Department): Promise<{
   };
 }
 
-async function getFacultyList(): Promise<FacultyType[]> {
-  const faculties: FacultyType[] = [];
-  const promises = DEPARTMENTS_LIST.map((department) =>
-    getFacultyListByDepartment(department)
+/** Scrapes every department page; failed pages are reported so their stored faculty stay untouched. */
+async function getFacultyList() {
+  const byEmail = new Map<string, FacultyType>();
+  const scrapedDepartments: string[] = [];
+  const failedDepartments: string[] = [];
+  const results = await Promise.allSettled(
+    DEPARTMENTS_LIST.map((department) => getFacultyListByDepartment(department))
   );
-  const results = await Promise.allSettled(promises);
 
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      faculties.push(...result.value.data);
+  results.forEach((result, index) => {
+    const department = DEPARTMENTS_LIST[index].name;
+    if (result.status === "rejected" || result.value.error) {
+      failedDepartments.push(department);
+      return;
     }
-  }
-
-  return faculties;
+    scrapedDepartments.push(department);
+    // email is unique in the collection; faculty listed under two departments keep the first.
+    for (const faculty of result.value.data) {
+      if (!byEmail.has(faculty.email)) byEmail.set(faculty.email, faculty);
+    }
+  });
+  return {
+    faculties: [...byEmail.values()],
+    scrapedDepartments,
+    failedDepartments,
+  };
 }
 
 export const getFacultyListByDepartmentHandler = async (
@@ -94,26 +106,45 @@ export const getFacultyListByDepartmentHandler = async (
     });
     return;
   }
-  const facultyList = await Faculty.find({ department });
+  try {
+    await dbConnect();
+    // Faculty docs store the department name (see getFacultyListByDepartment), not its code.
+    const facultyList = await Faculty.find({ department: dept.name });
 
-  if (facultyList.length === 0) {
-    res.status(404).json({
+    if (facultyList.length === 0) {
+      res.status(404).json({
+        error: true,
+        message: "Faculty not found",
+        data: [],
+      });
+      return;
+    }
+    res.status(200).json({
+      error: false,
+      message: "Success",
+      data: facultyList,
+    });
+  } catch (err) {
+    console.error("getFacultyListByDepartment error:", err);
+    res.status(500).json({
       error: true,
-      message: "Faculty not found",
+      message: "Couldn't load the faculty list",
       data: [],
     });
-    return;
   }
-  res.status(200).json({
-    error: false,
-    message: "Success",
-    data: facultyList,
-  });
 };
 
 export const getFacultyListHandler = async (req: Request, res: Response) => {
-  const data = await Faculty.find({});
-  res.status(200).json(data);
+  try {
+    await dbConnect();
+    const data = await Faculty.find({});
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("getFacultyList error:", err);
+    res
+      .status(500)
+      .json({ error: true, message: "Couldn't load faculties", data: [] });
+  }
 };
 
 export const getFacultyByEmailHandler = async (req: Request, res: Response) => {
@@ -127,21 +158,30 @@ export const getFacultyByEmailHandler = async (req: Request, res: Response) => {
     });
     return;
   }
-  await dbConnect();
-  const faculty = await Faculty.findOne({ email });
-  if (!faculty) {
-    res.status(404).json({
+  try {
+    await dbConnect();
+    const faculty = await Faculty.findOne({ email });
+    if (!faculty) {
+      res.status(404).json({
+        error: true,
+        message: "Faculty not found",
+        data: null,
+      });
+      return;
+    }
+    res.status(200).json({
+      error: false,
+      message: "Success",
+      data: faculty,
+    });
+  } catch (err) {
+    console.error("getFacultyByEmail error:", err);
+    res.status(500).json({
       error: true,
-      message: "Faculty not found",
+      message: "Couldn't look up the faculty",
       data: null,
     });
-    return;
   }
-  res.status(200).json({
-    error: false,
-    message: "Success",
-    data: faculty,
-  });
 };
 
 export const refreshFacultyListHandler = async (
@@ -150,27 +190,45 @@ export const refreshFacultyListHandler = async (
 ) => {
   try {
     await dbConnect();
-    const faculties = await getFacultyList();
-    await Faculty.deleteMany({});
-    await Faculty.insertMany(faculties);
-    res.status(200).json({
-      error: false,
-      message: "Success",
-      data: faculties,
-    });
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error(e.message);
-      res.status(500).json({
+    const { faculties, scrapedDepartments, failedDepartments } =
+      await getFacultyList();
+    if (faculties.length === 0) {
+      res.status(502).json({
         error: true,
-        message: e.message,
+        message:
+          "The college site returned no faculty; the stored list was kept",
         data: [],
       });
       return;
     }
+    // Upsert instead of wipe-and-insert, and only prune departments whose page scraped cleanly.
+    await Faculty.bulkWrite(
+      faculties.map((faculty) => ({
+        updateOne: {
+          filter: { email: faculty.email },
+          update: { $set: faculty },
+          upsert: true,
+        },
+      })),
+      { ordered: false }
+    );
+    await Faculty.deleteMany({
+      department: { $in: scrapedDepartments },
+      email: { $nin: faculties.map((faculty) => faculty.email) },
+    });
+    res.status(200).json({
+      error: false,
+      message:
+        failedDepartments.length > 0
+          ? `Updated, but these department pages failed and kept their stored faculty: ${failedDepartments.join(", ")}`
+          : "Success",
+      data: faculties,
+    });
+  } catch (e) {
+    console.error("refreshFacultyList error:", e);
     res.status(500).json({
       error: true,
-      message: "Unknown error",
+      message: "Couldn't refresh the faculty list",
       data: [],
     });
   }

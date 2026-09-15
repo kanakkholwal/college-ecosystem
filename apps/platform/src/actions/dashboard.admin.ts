@@ -30,6 +30,15 @@ import { updateHostelStudent } from "./hostel.core";
 // Mirrors app/[moderator]/(admin)/layout.tsx, which lets both roles in.
 const ADMIN_ROLES = ["admin", "moderator"];
 const SELF_EDITABLE_FIELDS = ["gender", "other_emails"] as const;
+// The fields the admin user page edits; `role` is added for full admins only.
+const ADMIN_EDITABLE_FIELDS = [
+  "displayUsername",
+  "department",
+  "hostelId",
+  "gender",
+  "other_roles",
+  "other_emails",
+] as const;
 
 const getCurrentSession = cache(async () =>
   auth.api.getSession({ headers: await headers() })
@@ -331,7 +340,7 @@ export async function getUser(userId: string): Promise<User | null> {
   return user.length > 0 ? user[0] : null;
 }
 
-/** Admins may edit any field; everyone else only their own gender (once) and extra emails. */
+/** Admins may edit profile and access fields; everyone else only their own gender (once) and extra emails. */
 export async function updateUser(
   userId: string,
   data: Partial<User>
@@ -344,15 +353,19 @@ export async function updateUser(
       throw new Error("Unauthorized");
     }
 
-    let patch: Partial<User> = data;
-    if (!isAdmin) {
-      patch = {};
-      for (const field of SELF_EDITABLE_FIELDS) {
-        if (field in data) Object.assign(patch, { [field]: data[field] });
-      }
-      if (session.user.gender !== "not_specified") delete patch.gender;
-      if (Object.keys(patch).length === 0) throw new Error("Nothing to update");
+    // Allow-listed so a client can't set id, email or emailVerified, and a moderator can't grant `role`.
+    const editable: readonly (keyof User)[] = isAdmin
+      ? session.user.role === "admin"
+        ? [...ADMIN_EDITABLE_FIELDS, "role"]
+        : ADMIN_EDITABLE_FIELDS
+      : SELF_EDITABLE_FIELDS;
+    let patch: Partial<User> = {};
+    for (const field of editable) {
+      if (field in data) Object.assign(patch, { [field]: data[field] });
     }
+    if (!isAdmin && session.user.gender !== "not_specified")
+      delete patch.gender;
+    if (Object.keys(patch).length === 0) throw new Error("Nothing to update");
     if ("hostelId" in patch) {
       const hostelId = hostelIdSchema.safeParse(patch.hostelId);
       if (!hostelId.success) throw new Error("Invalid hostel id");
@@ -365,8 +378,14 @@ export async function updateUser(
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    if (isAdmin && patch.hostelId && user) {
-      await updateHostelStudent(user.email, { hostelId: patch.hostelId });
+    if (isAdmin && "hostelId" in patch && user) {
+      // Clearing must sync too, or a removed resident keeps hostel access through Mongo.
+      await updateHostelStudent(user.email, {
+        hostelId: patch.hostelId ?? null,
+      }).catch((err) => {
+        // Staff and not-yet-imported students have no hostel record; the Postgres change still stands.
+        if (err !== "Hostel student not found") throw err;
+      });
     }
     return user ?? null;
   } catch (error) {

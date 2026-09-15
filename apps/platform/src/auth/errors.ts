@@ -105,7 +105,7 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
   },
   [APP_AUTH_ERROR_CODES.EMAIL_SEND_FAILED]: {
     title: "We couldn't send the email",
-    description: `Try again in a few minutes. ${CONTACT}`,
+    description: `Try again in a few minutes. If you just created an account, sign in later to get a new link. ${CONTACT}`,
   },
 
   // --- Registration ---

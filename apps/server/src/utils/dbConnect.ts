@@ -1,7 +1,6 @@
 import mongoose, { type ConnectOptions, type Mongoose } from "mongoose";
 import { config } from "../config";
 
-
 const MONGODB_URI = config.MONGODB_URI;
 
 declare const global: {
@@ -34,18 +33,24 @@ async function dbConnect(dbName: string = defaultDb): Promise<Mongoose> {
   if (!cached.promise) {
     const opts: ConnectOptions = {
       dbName,
+      retryWrites: true,
+      writeConcern: { w: "majority" },
+      appName: "nith",
     };
 
     try {
       mongoose.set("strictQuery", false);
       cached.promise = mongoose
-        .connect(
-          `${MONGODB_URI} + "?retryWrites=true&w=majority&appName=nith"`,
-          opts
-        )
+        .connect(MONGODB_URI, opts)
         .then((mongoose) => {
           console.log("Connected to MongoDB to database:", dbName);
+          cached.conn = mongoose;
           return mongoose;
+        })
+        .catch((err) => {
+          // A cached rejection would fail every later request until restart.
+          cached.promise = null;
+          throw err;
         });
     } catch (err) {
       console.error("Error connecting to MongoDB:", err);

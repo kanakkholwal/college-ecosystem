@@ -233,11 +233,19 @@ export async function deletePost(id: string) {
 
 export async function getPostActivity(id: string) {
   try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return Promise.reject("Sign in to see post activity");
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return Promise.reject("Post not found");
+    }
     await dbConnect();
     const post = await CommunityPost.findById<ICommunityPost>(id);
     if (!post) {
       return Promise.reject("Post not found");
     }
+    // Bookmarks are private: only the author and admins see who saved a post.
+    const canSeeSaves =
+      post.author.id === session.user.id || session.user.role === "admin";
 
     const likedBy =
       post.likes.length === 0
@@ -253,7 +261,7 @@ export async function getPostActivity(id: string) {
             .where(inArray(users.id, post.likes));
 
     const savedBy =
-      post.savedBy.length === 0
+      !canSeeSaves || post.savedBy.length === 0
         ? []
         : await db
             .select({

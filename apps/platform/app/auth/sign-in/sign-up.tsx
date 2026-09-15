@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "~/auth/client";
 import { type AuthErrorInfo, getAuthError } from "~/auth/errors";
+import { passwordSchema } from "~/constants";
 import { getDepartmentName } from "~/constants/core.departments";
 import { orgConfig } from "~/project.config";
 import {
@@ -43,11 +44,7 @@ const SignUpSchema = z.object({
     .refine((val) => val.endsWith(orgConfig.mailSuffix), {
       message: `Must use organization email (${orgConfig.mailSuffix})`,
     }),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Must contain an uppercase letter")
-    .regex(/[0-9]/, "Must contain a number"),
+  password: passwordSchema,
 });
 
 type SignUpValues = z.infer<typeof SignUpSchema>;
@@ -266,8 +263,8 @@ export default function SignUpForm() {
                   <PasswordInput {...field} autoComplete="new-password" />
                 </FormControl>
                 <FormDescription className="text-caption">
-                  At least 8 characters, with one uppercase letter and one
-                  number.
+                  At least 8 characters, with an uppercase letter, a lowercase
+                  letter and a number. Symbols are allowed.
                 </FormDescription>
                 <FormMessage aria-live="polite" />
               </FormItem>

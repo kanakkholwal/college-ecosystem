@@ -75,54 +75,15 @@ export const isValidRollNumber = (rollNo: string): boolean => {
   return rollNoSchema.safeParse(rollNo).success;
 };
 
-const passwordSettings = {
-  minLength: 8,
-  minUppercase: 1,
-  minLowercase: 1,
-  minNumbers: 1,
-  minSpecialChars: 1,
-  specialChars: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+/,
-  uppercaseRegex: /[A-Z]/g,
-  lowercaseRegex: /[a-z]/g,
-  numbersRegex: /[0-9]/g,
-};
-
+/** The one rule set for any new password (sign up, reset, settings). Every character is allowed. */
 export const passwordSchema = z
   .string()
-  .min(passwordSettings.minLength)
-  .refine(
-    (password) =>
-      (password.match(passwordSettings.uppercaseRegex) || []).length >=
-      passwordSettings.minUppercase,
-    {
-      message: `Password must contain at least ${passwordSettings.minUppercase} uppercase letter`,
-    }
-  )
-  .refine(
-    (password) =>
-      (password.match(passwordSettings.lowercaseRegex) || []).length >=
-      passwordSettings.minLowercase,
-    {
-      message: `Password must contain at least ${passwordSettings.minLowercase} lowercase letter`,
-    }
-  )
-  .refine(
-    (password) =>
-      (password.match(passwordSettings.numbersRegex) || []).length >=
-      passwordSettings.minNumbers,
-    {
-      message: `Password must contain at least ${passwordSettings.minNumbers} number`,
-    }
-  )
-  .refine(
-    (password) =>
-      passwordSettings.specialChars.test(password) &&
-      (password.match(passwordSettings.specialChars) || []).length >=
-        passwordSettings.minSpecialChars,
-    {
-      message: `Password must contain at least ${passwordSettings.minSpecialChars} special character`,
-    }
-  );
+  .min(8, "Use at least 8 characters")
+  // Better Auth rejects passwords over 128 characters.
+  .max(128, "Use at most 128 characters")
+  .regex(/[a-z]/, "Include a lowercase letter")
+  .regex(/[A-Z]/, "Include an uppercase letter")
+  .regex(/\d/, "Include a number");
 
 export const Programmes = {
   dual_degree: {

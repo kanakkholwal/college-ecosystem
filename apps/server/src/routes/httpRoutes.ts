@@ -30,7 +30,11 @@ import {
 import { resultScrapingSSEHandler } from "../controllers/sse-scraping";
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+// Buffered in memory, so cap the upload before it can exhaust the process.
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+});
 
 /** UTILS ENDPOINTS */
 
@@ -51,23 +55,22 @@ router.get(
 // Endpoint to allot rooms to new students
 router.post(
   "/hostels/allotment/rooms-from-excel",
-  upload.single("file"), allotRoomsFromExcel as unknown as RequestHandler);
+  upload.single("file"),
+  allotRoomsFromExcel as unknown as RequestHandler
+);
 /** RESULT ENDPOINTS */
 // Endpoint to import freshers results from the json data
 router.post(
   "/results/import-freshers",
   importFreshers as unknown as RequestHandler
 );
-// Endpoint to create new batch using previous batch 
+// Endpoint to create new batch using previous batch
 router.post(
   "/results/create-batch",
   createBatchUsingPrevious as unknown as RequestHandler
 );
 // Endpoint to assign ranks to the results in the database
-router.post(
-  "/results/assign-ranks",
-  assignRankToResults
-);
+router.post("/results/assign-ranks", assignRankToResults);
 router.post(
   "/results/assign-branch-change",
   assignBranchChangeToResults as unknown as RequestHandler
@@ -79,7 +82,10 @@ router.delete("/results/abnormals", deleteAbNormalResults);
 router.post("/results/bulk/update", bulkUpdateResults);
 router.post("/results/bulk/delete", bulkDeleteResults);
 // Endpoint to get result by rollNo scraped from the website
-router.get("/results/scrape-sse", resultScrapingSSEHandler as unknown as RequestHandler);
+router.get(
+  "/results/scrape-sse",
+  resultScrapingSSEHandler as unknown as RequestHandler
+);
 
 // Endpoint to get results by batch (updates latestCgpi, returns CSV)
 router.get("/results/batch/:batch", getResultsByBatch);
@@ -90,8 +96,5 @@ router.get("/results/:rollNo", getResult);
 router.post("/results/:rollNo", addResult);
 router.put("/results/:rollNo", updateResult);
 router.delete("/results/:rollNo", deleteResult);
-
-
-
 
 export default router;

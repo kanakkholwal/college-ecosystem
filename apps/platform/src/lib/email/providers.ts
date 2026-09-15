@@ -1,6 +1,12 @@
 import nodemailer, { type Transporter } from "nodemailer";
 
-export const EMAIL_PROVIDERS = ["smtp", "resend", "brevo", "console"] as const;
+export const EMAIL_PROVIDERS = [
+  "mail-server",
+  "smtp",
+  "resend",
+  "brevo",
+  "console",
+] as const;
 export type EmailProvider = (typeof EMAIL_PROVIDERS)[number];
 
 function requireEnv(name: string): string {
@@ -11,6 +17,17 @@ function requireEnv(name: string): string {
 
 // Every provider is a nodemailer transport, so adding one is a single entry here.
 const transports: Record<EmailProvider, () => Transporter> = {
+  // Same env and defaults as apps/mail-server, so its existing config works unchanged.
+  "mail-server": () =>
+    nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: requireEnv("MAIL_EMAIL"),
+        pass: requireEnv("MAIL_PASSWORD"),
+      },
+    }),
   smtp: () =>
     nodemailer.createTransport({
       host: requireEnv("SMTP_HOST"),
@@ -48,8 +65,12 @@ function isEmailProvider(value: string): value is EmailProvider {
 export function resolveEmailProvider(): EmailProvider {
   const configured = process.env.EMAIL_PROVIDER?.trim().toLowerCase();
   if (!configured) {
+    if (process.env.MAIL_EMAIL && process.env.MAIL_PASSWORD)
+      return "mail-server";
     if (process.env.NODE_ENV === "production") {
-      throw new Error("[email] EMAIL_PROVIDER is required in production");
+      throw new Error(
+        "[email] Set EMAIL_PROVIDER, or MAIL_EMAIL and MAIL_PASSWORD for the mail-server SMTP setup"
+      );
     }
     return "console";
   }

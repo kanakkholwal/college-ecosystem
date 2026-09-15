@@ -25,7 +25,11 @@ const envVariables = z.object({
   REDIS_URL: z.string(),
 
   // email: see src/lib/email/providers.ts for what each provider needs
-  EMAIL_PROVIDER: z.enum(["smtp", "resend", "brevo", "console"]).optional(),
+  EMAIL_PROVIDER: z
+    .enum(["mail-server", "smtp", "resend", "brevo", "console"])
+    .optional(),
+  MAIL_EMAIL: z.string().optional(),
+  MAIL_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   EMAIL_REPLY_TO: z.string().optional(),
   EMAIL_ASSET_BASE_URL: z.string().url().optional(),

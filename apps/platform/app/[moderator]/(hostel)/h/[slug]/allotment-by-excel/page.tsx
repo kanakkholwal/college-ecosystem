@@ -155,13 +155,26 @@ export default function AllotmentByExcelPage() {
           headers: { "X-Authorization": serverIdentity, Origin: baseUrl },
         }
       );
-      if (!res.ok) throw new Error("The allotment server returned an error");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(
+          body?.message ||
+            `The allotment server returned an error (HTTP ${res.status})`
+        );
+      }
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Allotment failed");
       await downloadAllotmentAsExcelNative(data.allocation, targetGender, []);
       toast.success("Allotment done. The sheet is downloading.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Allotment failed");
+      // fetch rejects with a TypeError only when the server can't be reached at all.
+      toast.error(
+        error instanceof TypeError
+          ? "Couldn't reach the allotment server. It may be down; try again in a minute."
+          : error instanceof Error
+            ? error.message
+            : "Allotment failed"
+      );
     } finally {
       setLoading(false);
     }

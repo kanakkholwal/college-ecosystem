@@ -99,9 +99,13 @@ export async function getEvents({
 
     // Text search
     if (query) {
+      // The query comes from a public URL; escape it so it can't be an expensive or invalid regex.
+      const pattern = query
+        .slice(0, 100)
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       matchStage.$or = [
-        { title: { $regex: query, $options: "i" } },
-        { description: { $regex: query, $options: "i" } },
+        { title: { $regex: pattern, $options: "i" } },
+        { description: { $regex: pattern, $options: "i" } },
       ];
     }
 

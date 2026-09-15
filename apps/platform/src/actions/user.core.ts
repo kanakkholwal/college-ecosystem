@@ -53,25 +53,24 @@ export async function deleteUserResourcesById(userId: string): Promise<void> {
         .delete(emailVerifications)
         .where(eq(emailVerifications.userId, userId));
       await tx.delete(users).where(eq(users.id, userId));
-      // Mongo is not part of the transaction; failures here leave orphans, not a live account.
-      try {
-        await dbConnect();
-        await Promise.all([
-          Announcement.deleteMany({ "createdBy.id": userId }),
-          CommunityPost.deleteMany({ "author.id": userId }),
-          CommunityComment.deleteMany({ "author.id": userId }),
-          HostelStudentModel.deleteMany({ userId }),
-          ...(target
-            ? [PollModel.deleteMany({ createdBy: target.username })]
-            : []),
-        ]);
-      } catch (error) {
-        console.error("Error deleting mongoose models:", error);
-      }
     });
   } catch (error) {
     console.error("Error deleting user:", error);
     return Promise.reject("Failed to delete user resources");
+  }
+  // Mongo isn't in the transaction, so clean up only after the account is really gone.
+  // A failure here leaves orphans, never a live account whose content was wiped.
+  try {
+    await dbConnect();
+    await Promise.all([
+      Announcement.deleteMany({ "createdBy.id": userId }),
+      CommunityPost.deleteMany({ "author.id": userId }),
+      CommunityComment.deleteMany({ "author.id": userId }),
+      HostelStudentModel.deleteMany({ userId }),
+      ...(target ? [PollModel.deleteMany({ createdBy: target.username })] : []),
+    ]);
+  } catch (error) {
+    console.error("Error deleting mongoose models:", error);
   }
 }
 

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import packageJson from "../package.json";
@@ -23,7 +24,15 @@ app.get("/", (req, res) => {
 
 const SERVER_IDENTITY = config.SERVER_IDENTITY;
 if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
+const IDENTITY_BUFFER = Buffer.from(SERVER_IDENTITY);
 
+function hasServerIdentity(header: string): boolean {
+  const given = Buffer.from(header);
+  return (
+    given.length === IDENTITY_BUFFER.length &&
+    timingSafeEqual(given, IDENTITY_BUFFER)
+  );
+}
 
 /** Referer carries a full URL, not an origin, so it can never be echoed back as-is. */
 function resolveOrigin(req: Request): string {
@@ -71,14 +80,18 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 
   // 2. Handle regular requests
   if (config.isDev)
-    console.log(`Origin: ${origin}, Identity Key: ${identityKey}, Authorization: ${authorization}`);
+    console.log(
+      `Origin: ${origin}, identity key sent: ${Boolean(identityKey)}, authorization sent: ${Boolean(authorization)}`
+    );
 
   if (!origin) {
     console.warn("Request without origin");
-    if (authorization === SERVER_IDENTITY) {
+    if (hasServerIdentity(authorization)) {
       next();
     } else {
-      res.status(403).json({ error: "Missing or invalid authorization", data: null });
+      res
+        .status(403)
+        .json({ error: "Missing or invalid authorization", data: null });
     }
     return;
   }
@@ -86,12 +99,14 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
   // Allow either a trusted browser origin (e.g. app.nith.eu.org -> api.nith.eu.org)
   // or a server-to-server caller presenting the identity key. The origin check is
   // essential for SSE/EventSource requests, which cannot send the X-Authorization header.
-  if (checkCors(origin) || authorization === SERVER_IDENTITY) {
+  if (checkCors(origin) || hasServerIdentity(authorization)) {
     applyCorsHeaders(req, res, origin);
     next();
   } else {
     console.warn(`CORS request from disallowed origin: ${origin}`);
-    res.status(403).json({ error: "CORS policy: Invalid credentials", data: null });
+    res
+      .status(403)
+      .json({ error: "CORS policy: Invalid credentials", data: null });
   }
 });
 // Routes
@@ -108,9 +123,14 @@ app.use(
     _next: express.NextFunction
   ) => {
     console.error(err.stack);
-    res.status(500).json({
-      message: "Something went wrong!",
-      error: err.message,
+    // Body-parser errors carry a 4xx status and a safe message; anything else stays internal.
+    const status = (err as { status?: number }).status;
+    const clientError =
+      typeof status === "number" && status >= 400 && status < 500;
+    res.status(clientError ? status : 500).json({
+      message: clientError ? err.message : "Something went wrong!",
+      error: true,
+      data: null,
     });
   }
 );

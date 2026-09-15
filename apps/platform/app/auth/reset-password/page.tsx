@@ -19,6 +19,7 @@ import {
 import { ButtonLink } from "@/components/utils/link";
 import { authClient } from "~/auth/client";
 import { type AuthErrorInfo, getAuthError } from "~/auth/errors";
+import { passwordSchema } from "~/constants";
 import { AuthErrorAlert } from "../auth-error-alert";
 import {
   authLabelClass,
@@ -30,8 +31,8 @@ import { AuthHeader } from "../auth-header";
 
 const ResetSchema = z
   .object({
-    newPassword: z.string().min(8, "Must be at least 8 characters"),
-    confirmNewPassword: z.string().min(8, "Must be at least 8 characters"),
+    newPassword: passwordSchema,
+    confirmNewPassword: z.string().min(1, "Confirm your new password"),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {
     message: "Passwords do not match",
@@ -167,7 +168,8 @@ export default function ResetPassword() {
                   <PasswordInput {...field} autoComplete="new-password" />
                 </FormControl>
                 <FormDescription className="text-caption">
-                  At least 8 characters.
+                  At least 8 characters, with an uppercase letter, a lowercase
+                  letter and a number. Symbols are allowed.
                 </FormDescription>
                 <FormMessage aria-live="polite" />
               </FormItem>

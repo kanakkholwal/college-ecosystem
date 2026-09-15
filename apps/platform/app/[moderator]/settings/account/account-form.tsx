@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
 import { changeUserPassword, updateUser } from "~/actions/dashboard.admin";
-import { emailSchema } from "~/constants";
+import { emailSchema, passwordSchema } from "~/constants";
 
 type AccountUser = {
   id: string;
@@ -41,15 +41,7 @@ const profileSchema = z.object({
   other_emails: z.array(z.union([emailSchema, z.string().email()])),
 });
 
-const passwordSchema = z.object({
-  password: z
-    .string()
-    .min(8, "Use at least 8 characters")
-    .max(128, "Use at most 128 characters")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/, {
-      message: "Include an uppercase letter, a lowercase letter and a number.",
-    }),
-});
+const passwordFormSchema = z.object({ password: passwordSchema });
 
 function SettingRow({
   label,
@@ -248,13 +240,13 @@ function SecuritySection({ currentUser }: { currentUser: AccountUser }) {
   const passwordId = useId();
   const [showPassword, setShowPassword] = useState(false);
 
-  const form = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
+  const form = useForm<z.infer<typeof passwordFormSchema>>({
+    resolver: zodResolver(passwordFormSchema),
     defaultValues: { password: "" },
   });
   const { isDirty, isSubmitting } = form.formState;
 
-  const onSubmit = async (data: z.infer<typeof passwordSchema>) => {
+  const onSubmit = async (data: z.infer<typeof passwordFormSchema>) => {
     const res = await changeUserPassword(currentUser.id, data.password);
     if (!res.ok) {
       toast.error(res.error);
@@ -282,7 +274,7 @@ function SecuritySection({ currentUser }: { currentUser: AccountUser }) {
             <SettingRow
               label="New password"
               htmlFor={passwordId}
-              description="At least 8 characters, with an uppercase letter, a lowercase letter and a number."
+              description="At least 8 characters, with an uppercase letter, a lowercase letter and a number. Symbols are allowed."
             >
               <FormField
                 control={form.control}

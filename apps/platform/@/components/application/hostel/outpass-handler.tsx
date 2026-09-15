@@ -77,6 +77,9 @@ export default function OutpassVerifier() {
     if (!value) return;
     setLoading(true);
     setError("");
+    // Drop the previous card first so a failed lookup can't leave another student's pass actionable.
+    setCurrent(null);
+    setHistory([]);
     try {
       const response = await apiFetch<ResponseType>(
         `/api/outpass/status?identifier=${encodeURIComponent(value)}`
@@ -160,7 +163,13 @@ export default function OutpassVerifier() {
           autoCapitalize="characters"
           inputMode="text"
           value={term ?? ""}
-          onChange={(e) => setTerm(e.target.value || null)}
+          onChange={(e) => {
+            setTerm(e.target.value || null);
+            // The card belongs to the last lookup, not to what is being typed now.
+            setCurrent(null);
+            setHistory([]);
+            setSearched(false);
+          }}
           placeholder="Roll number, or scan the pass"
           className="h-12 flex-1 border-none bg-transparent px-2 font-mono text-body-lg shadow-none focus-visible:ring-0 dark:bg-transparent"
         />

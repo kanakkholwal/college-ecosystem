@@ -2,6 +2,7 @@
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { and, count, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
+import { getSession } from "~/auth/server";
 import { db } from "~/db/connect";
 import {
   booksAndReferences,
@@ -43,9 +44,11 @@ export async function getCourses(
     filterConditions.push(eq(courses.type, filter.type));
   }
 
+  // Escape LIKE wildcards so searching "_" or "%" matches literally.
+  const pattern = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
   const queryConditions = or(
-    ilike(courses.code, `%${query}%`),
-    ilike(courses.name, `%${query}%`)
+    ilike(courses.code, pattern),
+    ilike(courses.name, pattern)
   );
 
   const whereClause = filterConditions.length
@@ -117,17 +120,33 @@ export async function getCourseByCode(code: string): Promise<{
     chapters: courseChapters as ChapterSelect[],
   };
 }
+/** Contributions render on the public syllabus, so they need a signed-in author and a real course. */
+async function assertContributor(courseId: string) {
+  const session = await getSession();
+  if (!session?.user) throw new Error("Sign in to add resources");
+  const id = z.string().uuid().safeParse(courseId);
+  if (!id.success) throw new Error("Course not found");
+  const [course] = await db
+    .select({ id: courses.id })
+    .from(courses)
+    .where(eq(courses.id, id.data))
+    .limit(1);
+  if (!course) throw new Error("Course not found");
+}
+
 export async function updateBooksAndRefPublic(
   courseId: string,
   booksRef: Pick<BookReferenceInsert, "name" | "link" | "type">
 ) {
+  await assertContributor(courseId);
   const link = publicLink.parse(booksRef.link);
+  const name = z.string().trim().min(1).max(200).parse(booksRef.name);
   const updatedBooksRefs = await db
     .insert(booksAndReferences)
     .values([
       {
         courseId,
-        name: booksRef.name,
+        name,
         link,
         type: booksRef.type,
       },
@@ -140,6 +159,7 @@ export async function updatePrevPapersPublic(
   courseId: string,
   paper: Pick<PreviousPaperInsert, "year" | "exam" | "link">
 ) {
+  await assertContributor(courseId);
   const link = publicLink.parse(paper.link);
   const updatedPapers = await db
     .insert(previousPapers)

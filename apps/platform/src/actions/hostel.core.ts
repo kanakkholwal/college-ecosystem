@@ -659,7 +659,12 @@ export async function importResidents(
             updateOne: {
               filter: { rollNumber: row.dbRoll },
               update: {
-                $set: { hostelId: hostel._id, cgpi: row.cgpi ?? 0, gender },
+                // A guest hostel says nothing about gender, so it must not wipe a known one.
+                $set: {
+                  hostelId: hostel._id,
+                  cgpi: row.cgpi ?? 0,
+                  ...(gender !== "not_specified" && { gender }),
+                },
               },
             },
           }
@@ -715,50 +720,5 @@ export async function importResidents(
       failed: [],
       error: "Import failed. Nothing was saved.",
     };
-  }
-}
-
-const getHostelStudentSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-  rollNo: z.string(),
-  gender: genderSchema.optional(),
-  cgpi: z.number(),
-});
-
-// Open: exported and unauthenticated because the sign-up hook in src/auth calls it before a session exists.
-export async function getHostelStudent(
-  payload: z.infer<typeof getHostelStudentSchema>
-): Promise<HostelStudentJson | null> {
-  const response = getHostelStudentSchema.safeParse(payload);
-  if (!response.success) {
-    return Promise.reject("Invalid schema has passed");
-  }
-  const data = response.data;
-
-  try {
-    await dbConnect();
-    const hostelStudent = await HostelStudentModel.findOne({
-      email: data.email,
-    }).lean();
-
-    if (!hostelStudent) {
-      const hostel = new HostelStudentModel({
-        name: data.name,
-        email: data.email,
-        rollNumber: data.rollNo,
-        position: "none",
-        roomNumber: "UNKNOWN",
-        gender: data.gender,
-        cgpi: data.cgpi,
-        hostelId: null,
-      });
-      await hostel.save();
-      return serialize(hostel);
-    }
-    return serialize(hostelStudent);
-  } catch (err) {
-    console.error("Failed to fetch student", err);
-    return null;
   }
 }

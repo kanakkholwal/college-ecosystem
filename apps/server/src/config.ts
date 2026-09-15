@@ -5,26 +5,36 @@ dotenv.config({ quiet: true });
 // It includes the server identity, port, database URL, Redis URL, and CORS settings.
 
 export const config = {
-    appName: "College Platform Server",
-    // The version of the application
-    appVersion: "1.0.0",
-    // The identity key for the server
-    SERVER_IDENTITY: process.env.SERVER_IDENTITY as string || "",
+  appName: "College Platform Server",
+  // The version of the application
+  appVersion: "1.0.0",
+  // The identity key for the server
+  SERVER_IDENTITY: (process.env.SERVER_IDENTITY as string) || "",
 
-    // The port on which the server will run
-    PORT: Number.parseInt(process.env.PORT || "8080"),
+  // The port on which the server will run
+  PORT: Number.parseInt(process.env.PORT || "8080"),
 
-    // The URL of the database
-    MONGODB_URI: process.env.MONGODB_URI || "mongodb://localhost:27017/nith",
-    // The URL of the Redis server
-    REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
+  // The URL of the database
+  MONGODB_URI: process.env.MONGODB_URI || "mongodb://localhost:27017/nith",
+  // The URL of the Redis server
+  REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
 
-
-    // The apex entry also matches every subdomain (see checkCors in utils/cors.ts),
-    // so any *.nith.eu.org host is allowed without listing each one.
-    corsOrigins: ["https://nith.eu.org", "https://app.nith.eu.org", "https://api.nith.eu.org","https://platform.nith.eu.org","https://server.nith.eu.org"],
-    corsEnabled: process.env.CORS_ENABLED === "true",
-    isDev: process.env.NODE_ENV !== "production",
+  // The apex entry also matches every subdomain (see checkCors in utils/cors.ts),
+  // so any *.nith.eu.org host is allowed without listing each one.
+  corsOrigins: [
+    "https://nith.eu.org",
+    "https://app.nith.eu.org",
+    "https://api.nith.eu.org",
+    "https://platform.nith.eu.org",
+    "https://server.nith.eu.org",
+  ],
+  corsEnabled: process.env.CORS_ENABLED === "true",
+  isDev: process.env.NODE_ENV !== "production",
 } as const;
+
+// The localhost fallback is for development; in production it would silently point at nothing.
+if (!config.isDev && !process.env.MONGODB_URI) {
+  throw new Error("MONGODB_URI is required in production");
+}
 
 export type Config = typeof config;

@@ -153,6 +153,11 @@ export function ImportResidents({ slug }: { slug: string }) {
       const res = await previewResidentImport(slug, payload());
       if (!res.success) toast.error(res.error ?? "Couldn't check the file");
       else setPreview(res.rows);
+    } catch {
+      // A rejected action (network drop, redeploy) would otherwise fail silently.
+      toast.error(
+        "Couldn't reach the server. Check your connection and try again."
+      );
     } finally {
       setBusy(null);
     }
@@ -168,6 +173,11 @@ export function ImportResidents({ slug }: { slug: string }) {
       }
       setResult({ written: res.written, failed: res.failed });
       router.refresh();
+    } catch {
+      // A rejected action (network drop, redeploy) would otherwise fail silently.
+      toast.error(
+        "Couldn't reach the server. Check your connection and try again."
+      );
     } finally {
       setBusy(null);
     }

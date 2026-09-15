@@ -75,6 +75,11 @@ export function RoomPicker({
       toast.success(res.message);
       setChosen(null);
       router.refresh();
+    } catch {
+      // A rejected action (network drop, redeploy) would otherwise fail silently.
+      toast.error(
+        "Couldn't reach the server. Check your connection and try again."
+      );
     } finally {
       setBusy(false);
     }
@@ -245,6 +250,11 @@ export function MyRoomPanel({
         setRolls("");
         router.refresh();
       }
+    } catch {
+      // A rejected action (network drop, redeploy) would otherwise fail silently.
+      toast.error(
+        "Couldn't reach the server. Check your connection and try again."
+      );
     } finally {
       setBusy(false);
     }
