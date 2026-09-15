@@ -48,7 +48,10 @@ type Viewer =
 
 /** Authors delete their own polls; admins delete any. Mirrors the check in `deletePoll`. */
 export function canManagePoll(viewer: Viewer, createdBy: string) {
-  return !!viewer && (viewer.username === createdBy || viewer.role === ROLES_ENUMS.ADMIN);
+  return (
+    !!viewer &&
+    (viewer.username === createdBy || viewer.role === ROLES_ENUMS.ADMIN)
+  );
 }
 
 export function toPollView(poll: PollType, viewerId?: string | null): PollView {

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { requestOutpass } from "~/actions/student.outpass";
 import {
   LOCAL_TRIP_REASONS,

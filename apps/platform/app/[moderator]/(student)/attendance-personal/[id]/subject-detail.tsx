@@ -29,7 +29,7 @@ import {
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { startTransition, useMemo, useOptimistic, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import {
   type AttendanceLog,
   deleteAttendanceLog,

@@ -56,7 +56,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import * as z from "zod";
 import {
   type AdminSessionRow,

@@ -6,7 +6,7 @@ import { MailCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {

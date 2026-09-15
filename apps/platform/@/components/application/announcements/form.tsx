@@ -27,7 +27,7 @@ import { ArrowLeft, Loader2, Megaphone } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import type { z } from "zod";
 import { createAnnouncement } from "~/actions/common.announcement";
 import {

@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Download } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 
 const Barcode = dynamic(() => import("barcode-react"), {
   ssr: false,

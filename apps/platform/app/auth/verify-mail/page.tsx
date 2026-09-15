@@ -3,7 +3,7 @@
 import { Loader2, MailQuestion, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { ButtonLink } from "@/components/utils/link";
 import { authClient } from "~/auth/client";
 import { type AuthErrorInfo, getAuthError } from "~/auth/errors";

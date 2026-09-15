@@ -80,7 +80,8 @@ export default function AnnouncementsList({
         const createdAt = new Date(announcement.createdAt);
         const canDelete =
           !!user &&
-          (announcement.createdBy.id === user.id || user.role === ROLES_ENUMS.ADMIN);
+          (announcement.createdBy.id === user.id ||
+            user.role === ROLES_ENUMS.ADMIN);
 
         return (
           <li key={announcement._id}>

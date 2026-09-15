@@ -14,7 +14,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import { useRef } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import {
   createTimeTable,
   deleteTimeTable,

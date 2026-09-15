@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { Link2, Loader2, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { deletePoll } from "~/actions/common.poll";
 import { pollHref } from "./utils";
 

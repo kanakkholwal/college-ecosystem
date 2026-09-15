@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { toPng } from "html-to-image";
 import { ArrowRight, Download, LoaderCircle, ScanBarcode } from "lucide-react";
 import { useRef, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import {
   OutpassStatusTag,
   REASON_LABEL,

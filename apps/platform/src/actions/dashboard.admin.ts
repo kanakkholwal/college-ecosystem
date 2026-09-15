@@ -397,7 +397,11 @@ export async function changeUserPassword(
   newPassword: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await getCurrentSession();
-  if (!session || session.user.id !== userId || session.user.role !== ROLES_ENUMS.ADMIN) {
+  if (
+    !session ||
+    session.user.id !== userId ||
+    session.user.role !== ROLES_ENUMS.ADMIN
+  ) {
     return { ok: false, error: "You can only change your own password." };
   }
   try {

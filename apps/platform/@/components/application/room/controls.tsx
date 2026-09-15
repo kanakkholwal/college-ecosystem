@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useOptimistic, useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { deleteRoom, updateRoom } from "~/actions/common.room";
 import { callAction } from "~/lib/call-action";
 

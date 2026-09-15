@@ -21,7 +21,7 @@ import { Eye, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { deleteEvent } from "~/actions/common.events";
 import { callAction } from "~/lib/call-action";
 

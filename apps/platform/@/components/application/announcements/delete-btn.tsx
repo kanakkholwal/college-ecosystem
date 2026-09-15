@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { deleteAnnouncement } from "~/actions/common.announcement";
 import { callAction } from "~/lib/call-action";
 

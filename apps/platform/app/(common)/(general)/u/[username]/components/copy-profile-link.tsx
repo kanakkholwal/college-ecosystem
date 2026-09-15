@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Link2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 
 export function CopyProfileLink({ path }: { path: string }) {
   const [copied, setCopied] = useState(false);

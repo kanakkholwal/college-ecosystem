@@ -22,7 +22,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Loader2, Lock, Plus, TriangleAlert } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { z } from "zod";
 import { createRoom } from "~/actions/common.room";
 import { roomTypes } from "~/constants/common.room";

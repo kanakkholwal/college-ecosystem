@@ -33,7 +33,6 @@ import type { Session } from "~/auth/client";
 import { ROLES, ROLES_ENUMS } from "~/constants";
 
 import { appConfig, supportLinks } from "~/project.config";
-import { toRegex } from "~/utils/string";
 
 export type AllowedRoleType =
   | Session["user"]["role"]
@@ -141,7 +140,6 @@ export const quick_links: RouterCardLink[] = [
     allowed_roles: ["*"],
     category: "community",
   },
- 
 ];
 
 // --- Sidebar Navigation Links ---
@@ -324,42 +322,28 @@ export const socials: SocialLink[] = [
   },
 ];
 
+/**
+ * Whether any of `roles` may see a link. `"*"` allows everyone and `"!role"` denies that role;
+ * a list with only denials allows every other role.
+ */
+export const canAccessLink = (
+  roles: string | readonly string[],
+  allowed: AllowedRoleType | readonly AllowedRoleType[]
+): boolean => {
+  const held = (typeof roles === "string" ? [roles] : roles).filter(Boolean);
+  const rules = (Array.isArray(allowed) ? allowed : [allowed]).map(String);
+  const denied = rules.filter((r) => r.startsWith("!")).map((r) => r.slice(1));
+  if (held.some((role) => denied.includes(role))) return false;
+  if (rules.includes("*")) return true;
+  const granted = rules.filter((r) => !r.startsWith("!"));
+  if (granted.length === 0) return denied.length > 0;
+  return held.some((role) => granted.includes(role));
+};
+
 export const getLinksByRole = <T extends rawLinkType | RouterCardLink>(
-  role: string,
+  role: string | readonly string[],
   links: T[]
-): T[] => {
-  return links.filter((link) =>
-    checkRoleAccess(role, normalizeRoles(link.allowed_roles))
-  );
-};
-// Helper function to normalize allowed_roles to array
-const normalizeRoles = (
-  roles: AllowedRoleType | AllowedRoleType[]
-): string[] => {
-  return Array.isArray(roles)
-    ? ROLES.map((role) => String(role))
-    : [String(roles)];
-};
-// Helper function to check role access with negation support
-const checkRoleAccess = (userRole: string, allowedRoles: string[]): boolean => {
-  // If allowed_roles is "*", allow access to everyone
-  if (allowedRoles.includes("*")) return true;
-
-  // Check for direct role match
-  if (allowedRoles.includes(userRole)) return true;
-
-  // Check for negation roles (starting with "!")
-  // const positiveRoles = allowedRoles.filter((role) => !role.startsWith("!"));
-  // const negatedRoles = allowedRoles.filter((role) => role.startsWith("!"));
-
-  // // If there are positive roles specified, use standard inclusion logic
-  // if (positiveRoles.length > 0) {
-  //   return positiveRoles.includes(userRole);
-  // }
-
-  // If only negation roles are specified, allow access if user's role is not negated
-  return !allowedRoles.some((roles) => toRegex(roles).test(userRole));
-};
+): T[] => links.filter((link) => canAccessLink(role, link.allowed_roles));
 
 export const SUPPORT_LINKS = supportLinks;
 
@@ -368,15 +352,9 @@ export type NavLink = RouterCardLink & {
 };
 
 export const getNavLinks = (user?: Session["user"]): NavLink[] => {
-  const linksByRole = [user?.role, ...(user?.other_roles || [])]
-    .map((role) => getLinksByRole("*", quick_links))
-    .flat() // filter out unique links
-    .filter(
-      (link, index, self) =>
-        index ===
-        self.findIndex((l) => l.href === link.href && l.title === link.title)
-    );
-  // console.log("Links by role:", linksByRole);
+  // With no roles (signed out), only links open to everyone pass.
+  const roles = user ? [user.role, ...(user.other_roles ?? [])] : [];
+  const linksByRole = getLinksByRole(roles, quick_links);
 
   if (user) {
     linksByRole.push({
@@ -396,7 +374,7 @@ export const getNavLinks = (user?: Session["user"]): NavLink[] => {
       allowed_roles: ["*"],
     });
   }
-  
+
   return linksByRole;
 };
 
@@ -485,28 +463,22 @@ export const getSideNavLinks = (
     });
   }
 
+  // `role` is the dashboard segment, which the [moderator] layout has already checked the user holds.
   return sidebar_links_modified
-    .filter(
-      (link) =>
-        link.allowed_roles.includes(role) || link.allowed_roles.includes("*")
-    )
+    .filter((link) => canAccessLink(role, link.allowed_roles))
     .map((link) => ({
       title: link.title,
       icon: link.icon,
       href: prefixPath ? `/${prefixPath}${link.path}` : `/${role}${link.path}`,
       preserveParams: link?.preserveParams,
       items: link?.items
-        ?.filter(
-          (link) =>
-            link.allowed_roles.includes(role) ||
-            link.allowed_roles.includes("*")
-        )
+        ?.filter((item) => canAccessLink(role, item.allowed_roles))
         ?.map((item) => ({
           title: item.title,
           href: prefixPath
             ? `/${prefixPath}${link.path}${item.path}`
             : `/${role}${link.path}${item.path}`,
-          disabled: true,
+          disabled: "disabled" in item ? Boolean(item.disabled) : false,
         })),
     }));
 };

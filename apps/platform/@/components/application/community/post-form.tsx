@@ -28,7 +28,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import type { z } from "zod";
 import { createPost, updatePost } from "~/actions/common.community";
 import { callAction } from "~/lib/call-action";

@@ -17,7 +17,7 @@ import { Check, Eye, EyeOff, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import * as z from "zod";
 import { changeUserPassword, updateUser } from "~/actions/dashboard.admin";
 import { emailSchema, passwordSchema, ROLES_ENUMS } from "~/constants";

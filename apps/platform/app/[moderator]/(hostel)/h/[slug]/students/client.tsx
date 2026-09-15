@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { readSheet as readXlsxFile } from "read-excel-file/browser";
 import BaseSearchBox from "@/components/application/base-search";
 import type { FilterOption } from "@/components/application/filter-panel";

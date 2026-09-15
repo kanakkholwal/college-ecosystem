@@ -149,7 +149,9 @@ async function CalendarSection({ searchParams }: Props) {
           days={days}
           todayKey={todayKey}
           newEventHref={
-            session?.user?.role === ROLES_ENUMS.ADMIN ? "/admin/events/new" : undefined
+            session?.user?.role === ROLES_ENUMS.ADMIN
+              ? "/admin/events/new"
+              : undefined
           }
         />
       </TabsContent>

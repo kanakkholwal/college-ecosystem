@@ -28,7 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import * as z from "zod";
 import { createPoll } from "~/actions/common.poll";
 import { closeWindow, duplicateOptionIndex, POLL_LIMITS } from "./schema";

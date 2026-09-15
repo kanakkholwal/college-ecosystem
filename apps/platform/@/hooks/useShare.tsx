@@ -13,7 +13,7 @@ import { LuFacebook } from "react-icons/lu";
 import { TbBrandTelegram } from "react-icons/tb";
 
 import { useMemo } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { FaPinterestP, FaXTwitter } from "react-icons/fa6";
 
 type Social = {

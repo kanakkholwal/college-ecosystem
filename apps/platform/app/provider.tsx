@@ -9,8 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { Next13ProgressBar } from "next13-progressbar";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { APP_TOASTER_ID } from "@/lib/toast";
 import type React from "react";
-import { Toaster as HotToaster } from "react-hot-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,13 +58,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
 
         <GithubStarDialog />
       </NextThemesProvider>
-      <HotToaster
-        position="top-center"
-        toastOptions={{
-          // Define default options
-          duration: 2500,
-        }}
-      />
+      <Toaster id={APP_TOASTER_ID} position="top-center" duration={2500} />
       <Toaster position="bottom-right" richColors />
     </QueryClientProvider>
   );

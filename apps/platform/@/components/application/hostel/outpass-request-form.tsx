@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { addHours, addMinutes } from "date-fns";
 import { ArrowRight, Building, Clock, MapPin, Navigation } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { toast } from "react-hot-toast";
+import { toast } from "@/lib/toast";
 import type z from "zod";
 import { DateTimePicker } from "@/components/extended/date-n-time/date-time-picker";
 import { Button } from "@/components/ui/button";

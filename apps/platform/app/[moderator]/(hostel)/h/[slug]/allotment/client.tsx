@@ -3,7 +3,7 @@
 import { Download, LoaderCircle, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { cn } from "@/lib/utils";

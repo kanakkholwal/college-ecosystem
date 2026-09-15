@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { readSheet as readXlsxFile } from "read-excel-file/browser";
 import wordsToNumbers from "words-to-numbers";
 import BaseSearchBox from "@/components/application/base-search";

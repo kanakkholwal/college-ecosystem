@@ -29,7 +29,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { deletePost } from "~/actions/common.community";
 import { callAction } from "~/lib/call-action";
 

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useId, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { readSheet as readXlsxFile } from "read-excel-file/browser";
 import { HeaderBar } from "@/components/common/header-bar";
 import { Button } from "@/components/ui/button";

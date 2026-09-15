@@ -209,7 +209,10 @@ export async function deletePost(id: string): Promise<ActionResult<string>> {
     const post = await CommunityPost.findById(id);
     if (!post) throw new UserFacingError(POST_NOT_FOUND);
 
-    if (post.author.id !== session.user.id && session.user.role !== ROLES_ENUMS.ADMIN) {
+    if (
+      post.author.id !== session.user.id &&
+      session.user.role !== ROLES_ENUMS.ADMIN
+    ) {
       throw new UserFacingError("You are not authorized to delete this post");
     }
     await post.deleteOne();
@@ -254,7 +257,8 @@ export async function getPostActivity(
     if (!post) throw new UserFacingError(POST_NOT_FOUND);
     // Bookmarks are private: only the author and admins see who saved a post.
     const canSeeSaves =
-      post.author.id === session.user.id || session.user.role === ROLES_ENUMS.ADMIN;
+      post.author.id === session.user.id ||
+      session.user.role === ROLES_ENUMS.ADMIN;
 
     const likedBy =
       post.likes.length === 0

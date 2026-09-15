@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, CircleCheck, Loader2, LogIn } from "lucide-react";
 import { useId, useOptimistic, useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { castVote } from "~/actions/common.poll";
 import { useNow } from "./poll-timer";
 import {

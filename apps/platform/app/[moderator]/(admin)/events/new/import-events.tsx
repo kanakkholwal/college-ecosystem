@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { FileText, Loader2, Save, Sparkles, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { saveNewEvents } from "~/actions/common.events";
 import {
   rawEventsSchema,

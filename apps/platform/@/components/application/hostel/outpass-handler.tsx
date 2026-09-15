@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { EmptyNote } from "@/components/application/dashboard/primitives";
 import {
   OutpassStatusTag,

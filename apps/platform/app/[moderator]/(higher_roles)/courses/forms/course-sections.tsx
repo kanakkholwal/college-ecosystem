@@ -37,7 +37,7 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { DEPARTMENTS_LIST } from "~/constants/core.departments";
 import {
   COURSE_TYPES,

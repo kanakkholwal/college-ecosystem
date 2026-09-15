@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import type { z } from "zod";
 import type { courseSchemaByOCR } from "~/constants/common.course";
 import { DEPARTMENTS_LIST } from "~/constants/core.departments";

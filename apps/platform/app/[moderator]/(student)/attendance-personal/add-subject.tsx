@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Plus } from "lucide-react";
 import { useId, useState, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { createAttendance } from "~/actions/student.record_personal";
 import {
   type AttendanceSubjectInput,

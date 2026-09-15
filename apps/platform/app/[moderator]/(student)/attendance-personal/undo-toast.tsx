@@ -1,6 +1,6 @@
 "use client";
 
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 
 export function undoToast(message: string, onUndo: () => void) {
   toast(

@@ -15,7 +15,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { type FieldErrors, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { saveCourse } from "../actions";
 import {
   BasicsSection,

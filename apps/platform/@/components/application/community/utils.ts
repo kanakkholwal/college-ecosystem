@@ -50,7 +50,10 @@ export function canManagePost(
   viewer: Viewer,
   post: { author: { id: string } }
 ) {
-  return !!viewer && (viewer.id === post.author.id || viewer.role === ROLES_ENUMS.ADMIN);
+  return (
+    !!viewer &&
+    (viewer.id === post.author.id || viewer.role === ROLES_ENUMS.ADMIN)
+  );
 }
 
 const MARKDOWN_NOISE: [RegExp, string][] = [

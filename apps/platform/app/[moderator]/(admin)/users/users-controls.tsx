@@ -21,7 +21,7 @@ import { Copy, Ellipsis, Mail, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 
 const FILTERS: FilterOption[] = [
   {

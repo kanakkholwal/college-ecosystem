@@ -2,7 +2,7 @@
 
 import { Check, LoaderCircle, X } from "lucide-react";
 import { useId, useState } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";

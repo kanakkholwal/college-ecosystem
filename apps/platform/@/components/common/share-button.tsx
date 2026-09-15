@@ -3,7 +3,7 @@
 import { useShare } from "@/hooks/useShare";
 import { sendGAEvent } from "@next/third-parties/google";
 import { useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
+import { toast } from "@/lib/toast";
 import { Icon } from "../icons";
 import { Button, ButtonProps } from "../ui/button";
 import { ResponsiveDialog } from "../ui/responsive-dialog";

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "~/auth";
 import { isAdminLike } from "~/auth/guards";
-import { ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
+import { type ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

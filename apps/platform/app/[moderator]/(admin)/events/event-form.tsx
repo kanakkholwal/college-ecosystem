@@ -38,7 +38,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { createNewEvent, updateEvent } from "~/actions/common.events";
 import { eventTypes } from "~/constants/common.events";
 import { callAction } from "~/lib/call-action";

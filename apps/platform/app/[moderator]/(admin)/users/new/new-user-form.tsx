@@ -36,7 +36,7 @@ import { Check, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import * as z from "zod";
 import { authClient } from "~/auth/client";
 import { genderSchema, ROLES } from "~/constants";

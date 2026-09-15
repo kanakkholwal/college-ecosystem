@@ -21,7 +21,7 @@ import {
   FileRejection,
   useDropzone,
 } from "react-dropzone";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 
 type DirectionOptions = "rtl" | "ltr" | undefined;
 

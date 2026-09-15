@@ -9,7 +9,7 @@ import { ChevronRight, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useMemo, useTransition } from "react";
-import toast from "react-hot-toast";
+import toast from "@/lib/toast";
 import { authClient, type Session } from "~/auth/client";
 import { changeCase } from "~/utils/string";
 import { QuickLinks } from "./navbar";
