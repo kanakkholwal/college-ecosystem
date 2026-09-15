@@ -1,7 +1,10 @@
 "use client";
 
+import { Check, CircleAlert, Loader2, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, CircleAlert, Loader2 } from "lucide-react";
 
 export function StepIndicator({
   steps,
@@ -136,6 +139,55 @@ export function CountTile({
       >
         {typeof value === "number" ? value.toLocaleString("en-IN") : value}
       </dd>
+    </div>
+  );
+}
+
+/** A section whose data failed to load, with the reason and a retry that re-runs the server loaders. */
+export function LoadError({
+  what,
+  reason,
+  bare = false,
+}: {
+  what: string;
+  reason: string;
+  bare?: boolean;
+}) {
+  const router = useRouter();
+  const [retrying, startRetry] = useTransition();
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "flex flex-wrap items-start justify-between gap-3",
+        !bare &&
+          "rounded-2xl border border-border bg-card p-5 dark:bg-background"
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <CircleAlert
+          className="mt-0.5 size-5 shrink-0 text-destructive"
+          aria-hidden="true"
+        />
+        <div className="min-w-0">
+          <p className="text-body font-medium text-foreground">
+            {what} couldn't load
+          </p>
+          <p className="text-body text-muted-foreground">{reason}</p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={retrying}
+        onClick={() => startRetry(() => router.refresh())}
+      >
+        <RefreshCw
+          className={cn(retrying && "animate-spin")}
+          aria-hidden="true"
+        />
+        {retrying ? "Retrying" : "Retry"}
+      </Button>
     </div>
   );
 }

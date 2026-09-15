@@ -1,8 +1,8 @@
 import { eq, or } from "drizzle-orm";
-import mongoose from "mongoose";
 import { cache } from "react";
 import { getSession } from "~/auth/server";
 import { getAcademicYear, isValidRollNumber } from "~/constants";
+import { toHostelId } from "~/constants/hostel_n_outpass";
 import { db } from "~/db/connect";
 import { users } from "~/db/schema/auth-schema";
 import dbConnect from "~/lib/dbConnect";
@@ -135,10 +135,11 @@ export async function getPrivateDetails(
   if (!row) return null;
 
   let hostel: string | null = null;
-  if (row.hostelId && mongoose.isObjectIdOrHexString(row.hostelId)) {
+  const hostelId = toHostelId(row.hostelId);
+  if (hostelId) {
     try {
       await dbConnect();
-      const doc = await HostelModel.findById(row.hostelId)
+      const doc = await HostelModel.findById(hostelId)
         .select("name")
         .lean<{ name: string }>();
       hostel = doc?.name ?? null;

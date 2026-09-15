@@ -4,6 +4,8 @@ import { eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { auth } from "~/auth";
+import { getAuthErrorMessage, toAuthErrorLike } from "~/auth/errors";
+import { hostelIdSchema } from "~/constants/hostel_n_outpass";
 import { db } from "~/db/connect";
 import { sessions, users } from "~/db/schema/auth-schema";
 import dbConnect from "~/lib/dbConnect";
@@ -351,6 +353,11 @@ export async function updateUser(
       if (session.user.gender !== "not_specified") delete patch.gender;
       if (Object.keys(patch).length === 0) throw new Error("Nothing to update");
     }
+    if ("hostelId" in patch) {
+      const hostelId = hostelIdSchema.safeParse(patch.hostelId);
+      if (!hostelId.success) throw new Error("Invalid hostel id");
+      patch = { ...patch, hostelId: hostelId.data };
+    }
 
     await db.update(users).set(patch).where(eq(users.id, userId)).execute();
     const [user] = await db
@@ -371,23 +378,21 @@ export async function updateUser(
 export async function changeUserPassword(
   userId: string,
   newPassword: string
-): Promise<boolean> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getCurrentSession();
+  if (!session || session.user.id !== userId || session.user.role !== "admin") {
+    return { ok: false, error: "You can only change your own password." };
+  }
   try {
-    const session = await getCurrentSession();
-    if (
-      !session ||
-      session.user.id !== userId ||
-      session.user.role !== "admin"
-    ) {
-      throw new Error("Unauthorized: You can only change your own password.");
-    }
-    const ctx = await auth.$context;
-    const hash = await ctx.password.hash(newPassword);
-    await ctx.internalAdapter.updatePassword(userId, hash);
-    return true;
+    // Plugins like haveIBeenPwned hook password.hash and need an endpoint context, so go through the API.
+    await auth.api.setUserPassword({
+      headers: await headers(),
+      body: { userId, newPassword },
+    });
+    return { ok: true };
   } catch (error) {
     console.error("Error changing user password:", error);
-    return false;
+    return { ok: false, error: getAuthErrorMessage(toAuthErrorLike(error)) };
   }
 }
 

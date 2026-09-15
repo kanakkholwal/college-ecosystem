@@ -28,12 +28,6 @@ export type Endpoints = {
       ApiResponse<APITypes["departments"][K]["response"]>
     >;
   }>;
-  mail: ApiConfigMap<{
-    [K in keyof APITypes["mail"]]: ApiConfigEntry<
-      APITypes["mail"][K]["payload"],
-      ApiResponse<APITypes["mail"][K]["response"]>
-    >;
-  }>;
 };
 const results: Endpoints["results"] = {
   importFreshers: {
@@ -230,20 +224,6 @@ export const departments: Endpoints["departments"] = {
 } as const;
 
 /*
- **  Mail API
- */
-export const mail: Endpoints["mail"] = {
-  sendResultUpdate: {
-    url: "/api/send",
-    method: "POST",
-    transformBody: (payload: APITypes["mail"]["sendResultUpdate"]["payload"]) =>
-      payload,
-    transformResponse: (res: unknown) =>
-      res as ApiResponse<APITypes["mail"]["sendResultUpdate"]["response"]>,
-  },
-} as const;
-
-/*
  **  Exports
  */
 
@@ -252,7 +232,6 @@ const serverApis = {
   hostels,
   faculties,
   departments,
-  mail,
 } as const;
 
 export default serverApis;

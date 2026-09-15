@@ -1,3 +1,5 @@
+import { ArrowLeft, RadioTower } from "lucide-react";
+import type { Metadata } from "next";
 import {
   DashboardRoot,
   PanelSkeleton,
@@ -6,8 +8,6 @@ import {
 import { HeaderBar } from "@/components/common/header-bar";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeft, RadioTower } from "lucide-react";
-import type { Metadata } from "next";
 import { getScrapeEstimates, listScrapeTasks } from "./actions";
 import { ScrapeConsole } from "./console";
 
@@ -47,18 +47,13 @@ export default async function ScrapeResultsPage({ params }: PageProps) {
 
 async function ConsoleLoader() {
   const [tasks, estimates] = await Promise.all([
-    listScrapeTasks()
-      .then((data) => ({ data, error: null }))
-      .catch(() => ({
-        data: [],
-        error: "Couldn't reach the scraping server, so history is unavailable.",
-      })),
+    listScrapeTasks(),
     getScrapeEstimates(),
   ]);
   return (
     <ScrapeConsole
-      initialTasks={tasks.data}
-      historyError={tasks.error}
+      initialTasks={tasks.ok ? tasks.data : []}
+      historyError={tasks.ok ? null : `History is unavailable. ${tasks.error}`}
       estimates={estimates}
     />
   );

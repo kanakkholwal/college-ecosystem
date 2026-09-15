@@ -4,18 +4,19 @@ import type { PipelineStage } from "mongoose";
 import dbConnect from "~/lib/dbConnect";
 import { serverFetch } from "~/lib/fetch-server";
 import ResultModel from "~/models/result";
-import { assertAdmin, guarded } from "../guard";
+import { assertAdmin, guarded, upstreamFailure } from "../guard";
 import { EVENTS, LIST_TYPE, type TaskData } from "./types";
 
 const TASKS_PATH = "/api/results/scrape-sse";
 
-export async function listScrapeTasks(): Promise<TaskData[]> {
-  await assertAdmin();
-  const { data, error } = await serverFetch<{ data: TaskData[] }>(
-    `${TASKS_PATH}?action=${EVENTS.TASK_GET_LIST}`
-  );
-  if (error) throw new Error(error.message || "Couldn't load scrape history");
-  return JSON.parse(JSON.stringify(data?.data ?? []));
+export async function listScrapeTasks() {
+  return guarded("Couldn't load scrape history", async () => {
+    const { data, error } = await serverFetch<{ data: TaskData[] }>(
+      `${TASKS_PATH}?action=${EVENTS.TASK_GET_LIST}`
+    );
+    if (error) throw upstreamFailure(error, "Couldn't load scrape history");
+    return JSON.parse(JSON.stringify(data?.data ?? [])) as TaskData[];
+  });
 }
 
 export async function deleteScrapeTask(taskId: string) {
@@ -24,8 +25,7 @@ export async function deleteScrapeTask(taskId: string) {
     const { error } = await serverFetch(
       `${TASKS_PATH}?action=${EVENTS.TASK_DELETE}&deleteTaskId=${taskId}`
     );
-    if (error)
-      throw new Error(error.message || "Couldn't delete that task log");
+    if (error) throw upstreamFailure(error, "Couldn't delete that task log");
     return taskId;
   });
 }
@@ -35,7 +35,7 @@ export async function clearScrapeTasks() {
     const { error } = await serverFetch(
       `${TASKS_PATH}?action=${EVENTS.TASK_CLEAR_ALL}`
     );
-    if (error) throw new Error(error.message || "Couldn't clear the history");
+    if (error) throw upstreamFailure(error, "Couldn't clear the history");
     return true;
   });
 }
@@ -60,7 +60,18 @@ export async function getScrapeEstimates(): Promise<
   Record<string, number | null>
 > {
   await assertAdmin();
-  await dbConnect();
+  const unknown = Object.fromEntries(
+    Object.values(LIST_TYPE).map((type) => [type, null])
+  );
+  // Estimates are a hint; a database outage shouldn't take the scraper down with it.
+  const connected = await dbConnect().then(
+    () => true,
+    (err) => {
+      console.error("Scrape estimates: database unreachable", err);
+      return false;
+    }
+  );
+  if (!connected) return unknown;
   const safe = (p: Promise<number>) => p.catch(() => null);
   const [all, backlog, newSemester, dualDegree, freshers] = await Promise.all([
     safe(ResultModel.countDocuments()),

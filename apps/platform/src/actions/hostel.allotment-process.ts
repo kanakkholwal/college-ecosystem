@@ -10,6 +10,7 @@ import {
   SLOT_DURATION,
   SLOT_TIME_GAP,
 } from "~/constants/hostel.allotment-process";
+import { objectIdSchema } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import {
   authorizeHostelManager,
@@ -40,7 +41,7 @@ const fail = <T>(message: string, data: T): Result<T> => ({
 
 const allotmentProcessSchema = z.object({
   status: z.enum(ALLOTMENT_STATUSES),
-  hostelId: z.string(),
+  hostelId: objectIdSchema,
 });
 type AllotmentProcess = z.infer<typeof allotmentProcessSchema>;
 

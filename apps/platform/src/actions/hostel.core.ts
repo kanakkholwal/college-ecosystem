@@ -8,6 +8,7 @@ import { genderSchema, ROLES_ENUMS } from "~/constants";
 import { isValidRollNumber } from "~/constants/core.departments";
 import {
   createHostelSchema,
+  toHostelId,
   updateHostelAbleStudentSchema,
 } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
@@ -251,18 +252,13 @@ export async function getHostelForStudent(
     let hostelId = hosteler?.hostelId?._id?.toString();
 
     // Admins set users.hostelId; link a record that has none yet.
-    if (
-      hosteler &&
-      !hostelId &&
-      user.hostelId &&
-      user.hostelId !== "not_specified" &&
-      mongoose.isValidObjectId(user.hostelId)
-    ) {
+    const assignedHostelId = toHostelId(user.hostelId);
+    if (hosteler && !hostelId && assignedHostelId) {
       await HostelStudentModel.updateOne(
         { _id: hosteler._id, hostelId: null },
-        { $set: { hostelId: user.hostelId } }
+        { $set: { hostelId: assignedHostelId } }
       );
-      hostelId = user.hostelId;
+      hostelId = assignedHostelId;
     }
 
     if (!hosteler || !hostelId) {

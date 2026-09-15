@@ -34,6 +34,3 @@ function lazyFetch(baseUrlEnv: string): Fetcher {
 
 /** Calls `apps/server`; throws only when invoked without the required env. */
 export const serverFetch = lazyFetch("BASE_SERVER_URL");
-
-/** Calls `apps/mail-server`; throws only when invoked without the required env. */
-export const mailFetch = lazyFetch("BASE_MAIL_SERVER_URL");

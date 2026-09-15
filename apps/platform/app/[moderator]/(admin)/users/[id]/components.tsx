@@ -67,7 +67,7 @@ import { deleteUserResourcesById } from "~/actions/user.core";
 import { authClient } from "~/auth/client";
 import { genderSchema, ROLES } from "~/constants";
 import { DEPARTMENTS_LIST } from "~/constants/core.departments";
-import { IN_CHARGES_EMAILS } from "~/constants/hostel_n_outpass";
+import { IN_CHARGES_EMAILS, toHostelId } from "~/constants/hostel_n_outpass";
 import { roleLabel } from "../shared";
 
 const GENDERS = [
@@ -85,6 +85,7 @@ const IN_CHARGE_OPTIONS = Array.from(
 const formSchema = z.object({
   displayUsername: z.string().max(60, "Keep it under 60 characters"),
   department: z.string().min(1, "Choose a department"),
+  // Select can't hold null, so "no hostel" is NO_HOSTEL here and null once saved.
   hostelId: z.string(),
   gender: genderSchema,
   role: z.string().min(1),
@@ -94,16 +95,21 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-type EditableUser = FormValues & { id: string; name: string };
+type EditableUser = Omit<FormValues, "hostelId"> & {
+  id: string;
+  name: string;
+  hostelId: string | null;
+};
 
 const NOT_SET = "not_specified";
+const NO_HOSTEL = "none";
 
 function toValues(user: EditableUser): FormValues {
   return {
     displayUsername:
       user.displayUsername === NOT_SET ? "" : user.displayUsername,
     department: user.department,
-    hostelId: user.hostelId || NOT_SET,
+    hostelId: toHostelId(user.hostelId) ?? NO_HOSTEL,
     gender: user.gender,
     role: user.role,
     other_roles: user.other_roles,
@@ -167,6 +173,7 @@ export function UserAccessForm({
       const result = await updateUser(user.id, {
         ...values,
         displayUsername: values.displayUsername.trim() || NOT_SET,
+        hostelId: toHostelId(values.hostelId),
       });
       if (!result) {
         toast.error("Changes weren't saved. Check your access and try again.");
@@ -252,7 +259,7 @@ export function UserAccessForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={NOT_SET}>Not a resident</SelectItem>
+                      <SelectItem value={NO_HOSTEL}>Not a resident</SelectItem>
                       {hostels.map((hostel) => (
                         <SelectItem key={hostel.id} value={hostel.id}>
                           {hostel.name}

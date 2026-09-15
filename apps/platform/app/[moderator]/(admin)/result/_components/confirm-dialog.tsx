@@ -1,5 +1,7 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
+import { useId, useState } from "react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,8 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TriangleAlert } from "lucide-react";
-import { useId, useState } from "react";
 
 export type ConfirmDialogProps = {
   open: boolean;

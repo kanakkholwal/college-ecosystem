@@ -1,11 +1,14 @@
-import { betterAuth, BetterAuthOptions, User } from "better-auth";
+// biome-ignore assist/source/organizeImports: too much sort
+import { betterAuth, type BetterAuthOptions, type User } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin, haveIBeenPwned, username } from "better-auth/plugins";
 import { getHostelStudent } from "~/actions/hostel.core";
 import { getResultByRollNo } from "~/api/result";
+import { APP_AUTH_ERROR_CODES } from "~/auth/errors";
 import { emailSchema, ROLES_ENUMS } from "~/constants";
+import { toHostelId } from "~/constants/hostel_n_outpass";
 import {
   getDepartmentByRollNo,
   isValidRollNumber,
@@ -20,10 +23,17 @@ import {
 } from "~/db/schema";
 import { appConfig, AUTH_COOKIE_PREFIX, orgConfig } from "~/project.config";
 import { getBaseURL } from "~/utils/env";
-import { mailFetch, serverFetch } from "../lib/fetch-server";
+import {
+  type EmailTemplateId,
+  type EmailTemplateProps,
+  sendEmail,
+} from "~/lib/email";
+import { serverFetch } from "../lib/fetch-server";
 
 const VERIFY_EMAIL_PATH_PREFIX = "/auth/verify-mail";
 const RESET_PASSWORD_PATH_PREFIX = "/auth/reset-password";
+const VERIFY_EMAIL_EXPIRES_IN_S = 60 * 60;
+const RESET_PASSWORD_EXPIRES_IN_S = 60 * 60;
 
 const baseUrl = new URL(getBaseURL());
 
@@ -31,8 +41,9 @@ const isProd = process.env.NODE_ENV === "production";
 // `next build` evaluates this module while collecting page data, and the image
 // is built without secrets on purpose — so only enforce this when serving.
 const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET;
 
-if (isProd && !isBuildPhase && !process.env.BETTER_AUTH_SECRET) {
+if (isProd && !isBuildPhase && !BETTER_AUTH_SECRET) {
   // Better Auth silently falls back to a dev secret, which invalidates every
   // session on the next deploy. Fail the boot instead.
   throw new Error("BETTER_AUTH_SECRET is required in production");
@@ -45,9 +56,28 @@ export function isOrgEmail(email: string): boolean {
   return emailSchema.safeParse(email.trim().toLowerCase()).success;
 }
 
+async function sendAuthEmail<T extends EmailTemplateId>(
+  template: T,
+  to: string,
+  props: EmailTemplateProps<T>
+) {
+  try {
+    await sendEmail({ template, to, props });
+  } catch (err) {
+    console.error(`[auth] ${template} email to ${to} failed`, err);
+    throw new APIError("INTERNAL_SERVER_ERROR", {
+      code: APP_AUTH_ERROR_CODES.EMAIL_SEND_FAILED,
+      message: "Error sending email",
+    });
+  }
+}
+
 function assertOrgEmail(email: string): void {
   if (!isOrgEmail(email)) {
-    throw new APIError("NOT_ACCEPTABLE", { message: ORG_EMAIL_REQUIRED });
+    throw new APIError("NOT_ACCEPTABLE", {
+      code: APP_AUTH_ERROR_CODES.ORG_EMAIL_REQUIRED,
+      message: ORG_EMAIL_REQUIRED,
+    });
   }
 }
 
@@ -66,7 +96,7 @@ export const trustedOrigins = new Set<string>([
 export const betterAuthOptions = {
   appName: appConfig.name,
   baseURL: baseUrl.toString(),
-  secret: process.env.BETTER_AUTH_SECRET,
+  secret: BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -90,15 +120,25 @@ export const betterAuthOptions = {
             session.userId
           );
           if (user && !isOrgEmail(user.email)) {
-            throw new APIError("FORBIDDEN", { message: ORG_EMAIL_REQUIRED });
+            throw new APIError("FORBIDDEN", {
+              code: APP_AUTH_ERROR_CODES.ORG_EMAIL_REQUIRED,
+              message: ORG_EMAIL_REQUIRED,
+            });
           }
         },
       },
     },
     user: {
       create: {
-        before: async (user) => {
+        before: async (user, ctx) => {
           assertOrgEmail(user.email);
+          // Checked here, not in mapProfileToUser: a throw there skips the OAuth error redirect.
+          if (ctx?.path?.startsWith("/callback") && !user.emailVerified) {
+            throw new APIError("NOT_ACCEPTABLE", {
+              code: APP_AUTH_ERROR_CODES.GOOGLE_EMAIL_NOT_VERIFIED,
+              message: "Your Google account email is not verified",
+            });
+          }
           const info = await getUserInfo(user);
           console.log("[CREATING_USER]:", info);
           return {
@@ -142,40 +182,16 @@ export const betterAuthOptions = {
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url, token }, request) => {
-      const reset_link = new URL(getBaseURL());
-      reset_link.pathname = RESET_PASSWORD_PATH_PREFIX;
-      reset_link.searchParams.set("token", token);
-
-      try {
-        const response = await mailFetch<{
-          data: string[] | null;
-          error?: string | null | object;
-        }>("/api/send", {
-          method: "POST",
-          body: JSON.stringify({
-            template_key: "reset-password",
-            targets: [user.email],
-            subject: "Reset Password",
-            payload: {
-              name: user.name,
-              email: user.email,
-              reset_link: reset_link.toString(),
-            },
-          }),
-        });
-        if (response.error) {
-          throw new APIError("INTERNAL_SERVER_ERROR", {
-            message: "Error sending email from mail server",
-          });
-        }
-        console.log(response.data);
-      } catch (err) {
-        console.error(err);
-        throw new APIError("INTERNAL_SERVER_ERROR", {
-          message: "Error sending email",
-        });
-      }
+    resetPasswordTokenExpiresIn: RESET_PASSWORD_EXPIRES_IN_S,
+    sendResetPassword: async ({ user, token }) => {
+      const resetUrl = new URL(RESET_PASSWORD_PATH_PREFIX, getBaseURL());
+      resetUrl.searchParams.set("token", token);
+      await sendAuthEmail("reset-password", user.email, {
+        name: user.name,
+        email: user.email,
+        resetUrl: resetUrl.toString(),
+        expiresInMinutes: RESET_PASSWORD_EXPIRES_IN_S / 60,
+      });
     },
   },
   emailVerification: {
@@ -185,60 +201,25 @@ export const betterAuthOptions = {
     // them in — otherwise verifying just dumps them back on the login form.
     sendOnSignIn: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token }, request) => {
-      const verification_url = new URL(getBaseURL());
-      verification_url.pathname = VERIFY_EMAIL_PATH_PREFIX;
-      verification_url.searchParams.set("token", token);
-      try {
-        const response = await mailFetch<{
-          data: string[] | null;
-          error?: string | null | object;
-        }>("/api/send", {
-          method: "POST",
-          body: JSON.stringify({
-            template_key: "welcome_verify",
-            targets: [user.email],
-            subject: `Welcome to ${appConfig.name}`,
-            payload: {
-              platform_name: appConfig.name,
-              name: user.name,
-              email: user.email,
-              verification_url: verification_url.toString(),
-            },
-          }),
-        });
-        if (response.error) {
-          throw new APIError("INTERNAL_SERVER_ERROR", {
-            message: "Error sending email",
-          });
-        }
-        console.log(response);
-      } catch (err) {
-        console.error(err);
-        throw new APIError("INTERNAL_SERVER_ERROR", {
-          message: "Error sending email",
-        });
-      }
+    expiresIn: VERIFY_EMAIL_EXPIRES_IN_S,
+    sendVerificationEmail: async ({ user, token }) => {
+      const verifyUrl = new URL(VERIFY_EMAIL_PATH_PREFIX, getBaseURL());
+      verifyUrl.searchParams.set("token", token);
+      await sendAuthEmail("verify-email", user.email, {
+        name: user.name,
+        email: user.email,
+        verifyUrl: verifyUrl.toString(),
+        expiresInMinutes: VERIFY_EMAIL_EXPIRES_IN_S / 60,
+      });
     },
   },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_ID,
       clientSecret: process.env.GOOGLE_SECRET,
-      // Filters Google's account chooser to the college domain. It is only a
-      // hint — the profile is still verified below.
+      // Rejects Google accounts outside the college domain; the user create hook still checks the email.
       hd: orgConfig.domain,
-      mapProfileToUser: async (profile) => {
-        assertOrgEmail(profile.email);
-        if (!profile.email_verified) {
-          throw new APIError("NOT_ACCEPTABLE", {
-            message: "Your Google account email is not verified",
-          });
-        }
-        return {
-          image: profile.picture,
-        };
-      },
+      mapProfileToUser: (profile) => ({ image: profile.picture }),
     },
   },
   advanced: {
@@ -271,7 +252,7 @@ export const betterAuthOptions = {
         type: "string",
         required: false,
         input: false,
-        defaultValue: "not_specified",
+        defaultValue: null,
       },
       gender: {
         type: "string",
@@ -362,7 +343,7 @@ async function getUserInfo(
     const { data, error } = await getResultByRollNo(username);
     if (!data) {
       throw new APIError("NOT_ACCEPTABLE", {
-        code: "RESULT_NOT_FOUND",
+        code: APP_AUTH_ERROR_CODES.RESULT_NOT_FOUND,
         message: "Result not found for the given roll number | Contact admin",
         cause: { rollNo: username, error: error },
       });
@@ -383,7 +364,7 @@ async function getUserInfo(
         email: user.email,
         username,
         gender: data?.gender || "not_specified",
-        hostelId: "not_specified",
+        hostelId: null,
       };
     }
     const hostelStudent = await getHostelStudent({
@@ -402,7 +383,7 @@ async function getUserInfo(
       email: user.email,
       username,
       gender: hostelStudent?.gender || "not_specified",
-      hostelId: hostelStudent?.hostelId || "not_specified",
+      hostelId: toHostelId(hostelStudent?.hostelId),
     };
   }
   const { data: response } = await serverFetch<{

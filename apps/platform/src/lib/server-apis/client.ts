@@ -1,4 +1,4 @@
-import { mailFetch, serverFetch } from "~/lib/fetch-client";
+import { serverFetch } from "~/lib/fetch-client";
 import { createApiInstance } from "./base-api";
 import endpoints from "./endpoints";
 /*
@@ -12,7 +12,6 @@ export const departments = createApiInstance(
   serverFetch,
   endpoints.departments
 );
-export const mail = createApiInstance(mailFetch, endpoints.mail);
 
 /*
  **  Exports
@@ -23,7 +22,6 @@ const serverApis = {
   hostels,
   faculties,
   departments,
-  mail,
 } as const;
 
 export default serverApis;

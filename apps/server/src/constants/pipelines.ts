@@ -152,7 +152,14 @@ const assignBranchChange: PipelineStage[] = [
           _id: 1,
           rollNo: 1,
           branch: 1,
-          semesters: { $slice: ["$semesters", 2, { $size: "$semesters" }] },
+          // $slice rejects a count of 0, which students with no semesters would produce.
+          semesters: {
+            $slice: [
+              { $ifNull: ["$semesters", []] },
+              2,
+              { $max: [{ $size: { $ifNull: ["$semesters", []] } }, 1] },
+            ],
+          },
         },
       },
       {
@@ -172,7 +179,9 @@ const assignBranchChange: PipelineStage[] = [
             $map: {
               input: { $setUnion: "$courseCodes" },
               as: "code",
-              in: { $toUpper: { $split: ["$$code", "-"][0] } },
+              in: {
+                $toUpper: { $arrayElemAt: [{ $split: ["$$code", "-"] }, 0] },
+              },
             },
           },
         },

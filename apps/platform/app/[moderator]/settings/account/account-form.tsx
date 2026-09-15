@@ -255,9 +255,9 @@ function SecuritySection({ currentUser }: { currentUser: AccountUser }) {
   const { isDirty, isSubmitting } = form.formState;
 
   const onSubmit = async (data: z.infer<typeof passwordSchema>) => {
-    const ok = await changeUserPassword(currentUser.id, data.password);
-    if (!ok) {
-      toast.error("Your password wasn't changed. Try again.");
+    const res = await changeUserPassword(currentUser.id, data.password);
+    if (!res.ok) {
+      toast.error(res.error);
       return;
     }
     form.reset();

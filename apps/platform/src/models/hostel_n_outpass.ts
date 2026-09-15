@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import mongoose, { type Document, Schema } from "mongoose";
 import type { OUTPASS_STATUS, REASONS } from "~/constants/hostel.outpass";
+import { toHostelId } from "~/constants/hostel_n_outpass";
 import { db } from "~/db/connect";
 import { users } from "~/db/schema/auth-schema";
 import ResultModel from "./result";
@@ -236,7 +237,7 @@ async function updateCorrespondingUserId(student: IHostelStudentType) {
 
     await db
       .update(users)
-      .set({ hostelId: student.hostelId?.toString() ?? "not_specified" })
+      .set({ hostelId: toHostelId(student.hostelId) })
       .where(eq(users.id, userId));
   } else {
     student.userId = null;

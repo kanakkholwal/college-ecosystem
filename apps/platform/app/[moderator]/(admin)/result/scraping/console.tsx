@@ -1,20 +1,7 @@
 "use client";
 
-import {
-  EmptyNote,
-  Panel,
-} from "@/components/application/dashboard/primitives";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { EventSource, type ErrorEvent } from "eventsource";
+import { type ErrorEvent, EventSource } from "eventsource";
 import {
   CheckCircle2,
   CircleSlash,
@@ -29,7 +16,21 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  EmptyNote,
+  Panel,
+} from "@/components/application/dashboard/primitives";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { cn } from "@/lib/utils";
 import { authHeaders } from "~/lib/fetch-client";
+import { callAction } from "../_components/call-action";
 import { ConfirmDialog } from "../_components/confirm-dialog";
 import {
   CountTile,
@@ -133,19 +134,20 @@ export function ScrapeConsole({
   }, [clearTimers]);
 
   const reloadHistory = useCallback(async () => {
-    try {
-      const tasks = await listScrapeTasks();
-      setHistory(tasks);
-      setHistoryNote(null);
-      const mine = taskRef.current?._id
-        ? tasks.find((t) => t._id === taskRef.current?._id)
-        : undefined;
-      if (mine) {
-        taskRef.current = mine;
-        setTask(mine);
-      }
-    } catch {
-      setHistoryNote("Couldn't refresh the history. Reload the page to retry.");
+    const res = await callAction(listScrapeTasks);
+    if (!res.ok) {
+      setHistoryNote(`Couldn't refresh the history. ${res.error}`);
+      return;
+    }
+    const tasks = res.data;
+    setHistory(tasks);
+    setHistoryNote(null);
+    const mine = taskRef.current?._id
+      ? tasks.find((t) => t._id === taskRef.current?._id)
+      : undefined;
+    if (mine) {
+      taskRef.current = mine;
+      setTask(mine);
     }
   }, []);
 
@@ -580,7 +582,7 @@ export function ScrapeConsole({
         onConfirm={async () => {
           if (confirm?.kind !== "delete") return;
           const id = confirm.task._id;
-          const res = await deleteScrapeTask(id);
+          const res = await callAction(() => deleteScrapeTask(id));
           if (res.ok) {
             setHistory((prev) => prev.filter((t) => t._id !== id));
             toast.success("Task log deleted");
@@ -600,7 +602,7 @@ export function ScrapeConsole({
         requireText="clear"
         confirmLabel="Clear history"
         onConfirm={async () => {
-          const res = await clearScrapeTasks();
+          const res = await callAction(clearScrapeTasks);
           if (res.ok) {
             setHistory([]);
             toast.success("History cleared");

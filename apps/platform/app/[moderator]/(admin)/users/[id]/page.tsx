@@ -96,7 +96,7 @@ export default async function UserDetailPage({ params }: PageProps) {
               displayUsername: user.displayUsername,
               department: user.department,
               gender: user.gender,
-              hostelId: user.hostelId ?? "not_specified",
+              hostelId: user.hostelId ?? null,
               role: user.role,
               other_roles: user.other_roles ?? [],
               other_emails: user.other_emails ?? [],

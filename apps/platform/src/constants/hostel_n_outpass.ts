@@ -8,6 +8,37 @@ export const emailSchema = z
     message: `Email must end with @${orgConfig.domain}`,
   });
 
+const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+// Legacy rows stored this sentinel in users.hostelId before the column became nullable.
+const LEGACY_UNSET = "not_specified";
+
+/** A Mongo ObjectId as a 24-char hex string. */
+export const objectIdSchema = z
+  .string()
+  .trim()
+  .regex(OBJECT_ID_RE, "Must be a valid ObjectId");
+
+function normalizeHostelRef(value: unknown): unknown {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "object" && "_id" in value)
+    return normalizeHostelRef(value._id);
+  const raw = typeof value === "string" ? value : String(value);
+  const trimmed = raw.trim();
+  return trimmed === "" || trimmed === LEGACY_UNSET ? null : trimmed;
+}
+
+/** Hostel reference shared by Postgres and Mongo: an ObjectId hex string or null, never free text. */
+export const hostelIdSchema = z.preprocess(
+  normalizeHostelRef,
+  objectIdSchema.nullable()
+);
+
+/** Lenient read-side coercion: anything that isn't a valid hostel ObjectId becomes null. */
+export function toHostelId(value: unknown): string | null {
+  const parsed = hostelIdSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 export const createHostelSchema = z.object({
   name: z.string(),
   slug: z.string(),
@@ -65,7 +96,7 @@ export const updateHostelAbleStudentSchema = z.object({
   name: z.string().optional(),
   userId: z.string().optional(),
   gender: z.enum(["male", "female"]).optional(),
-  hostelId: z.string().optional(),
+  hostelId: hostelIdSchema.optional(),
   roomNumber: z.string().optional(),
   phoneNumber: z.string().optional(),
   banned: z.boolean().optional(),

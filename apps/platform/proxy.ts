@@ -37,11 +37,14 @@ async function resolveSession(request: NextRequest): Promise<ResolvedSession> {
   // No session cookie at all is the only proof of a signed-out visitor.
   if (!sessionToken) return { session: null, unresolved: false };
 
-  const cached = await getCookieCache<Session & { updatedAt: number }>(request, {
-    cookiePrefix: AUTH_COOKIE_PREFIX,
-    secret: process.env.BETTER_AUTH_SECRET,
-    isSecure: request.nextUrl.protocol === "https:",
-  }).catch(() => null);
+  const cached = await getCookieCache<Session & { updatedAt: number }>(
+    request,
+    {
+      cookiePrefix: AUTH_COOKIE_PREFIX,
+      secret: process.env.BETTER_AUTH_SECRET,
+      isSecure: request.nextUrl.protocol === "https:",
+    }
+  ).catch(() => null);
   if (cached?.user) return { session: cached, unresolved: false };
 
   // Behind TLS-terminating ingress the public origin is https but the container speaks http.

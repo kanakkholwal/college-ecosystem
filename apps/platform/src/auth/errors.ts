@@ -20,10 +20,15 @@ export type AuthErrorInfo = {
 
 const CONTACT = "If this keeps happening, contact the admin.";
 
-/**
- * Better Auth derives `code` from the message (uppercased, underscored), so
- * these keys cover both its built-ins and the APIErrors thrown in `~/auth`.
- */
+/** Codes for the APIErrors thrown in `~/auth`; Better Auth 1.7 no longer derives a code from the message. */
+export const APP_AUTH_ERROR_CODES = {
+  ORG_EMAIL_REQUIRED: "ORG_EMAIL_REQUIRED",
+  GOOGLE_EMAIL_NOT_VERIFIED: "GOOGLE_EMAIL_NOT_VERIFIED",
+  RESULT_NOT_FOUND: "RESULT_NOT_FOUND",
+  EMAIL_SEND_FAILED: "EMAIL_SEND_FAILED",
+} as const;
+
+// Keys are Better Auth codes; OAuth redirects send lowercase codes, which the error page uppercases.
 const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
   // --- Credentials ---
   INVALID_EMAIL_OR_PASSWORD: {
@@ -73,12 +78,12 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     description: `Only ${orgConfig.mailSuffix} addresses can be used here.`,
     field: "email",
   },
-  USE_YOUR_NITHACIN_ACCOUNT_TO_SIGN_IN: {
+  [APP_AUTH_ERROR_CODES.ORG_EMAIL_REQUIRED]: {
     title: `Use your ${orgConfig.shortName} email`,
     description: `Only ${orgConfig.mailSuffix} addresses can be used here. Pick that account on the Google screen.`,
     field: "email",
   },
-  YOUR_GOOGLE_ACCOUNT_EMAIL_IS_NOT_VERIFIED: {
+  [APP_AUTH_ERROR_CODES.GOOGLE_EMAIL_NOT_VERIFIED]: {
     title: "Your Google account email isn't verified",
     description: "Verify it with Google, then try again.",
   },
@@ -86,9 +91,21 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     title: "This link was issued for a different email",
     description: "Request a new link from the account you're signing in with.",
   },
+  EMAIL_DOES_NOT_MATCH: {
+    title: "That Google account uses a different email",
+    description: "Pick the Google account with the same email as this account.",
+  },
   USER_EMAIL_NOT_FOUND: {
     title: "Google didn't share an email address",
     description: "Allow email access on the Google consent screen and retry.",
+  },
+  EMAIL_NOT_FOUND: {
+    title: "Google didn't share an email address",
+    description: "Allow email access on the Google consent screen and retry.",
+  },
+  [APP_AUTH_ERROR_CODES.EMAIL_SEND_FAILED]: {
+    title: "We couldn't send the email",
+    description: `Try again in a few minutes. ${CONTACT}`,
   },
 
   // --- Registration ---
@@ -108,9 +125,13 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     title: "That username is taken",
     description: "Pick a different one.",
   },
-  USERNAME_IS_ALREADY_TAKEN_PLEASE_TRY_ANOTHER: {
-    title: "That username is taken",
-    description: "Pick a different one.",
+  FAILED_TO_CREATE_USER: {
+    title: "We couldn't create your account",
+    description: CONTACT,
+  },
+  UNABLE_TO_CREATE_USER: {
+    title: "We couldn't create your account",
+    description: CONTACT,
   },
 
   // --- Password rules ---
@@ -129,15 +150,19 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     description: "Choose a different password to keep your account safe.",
     field: "password",
   },
-  PLEASE_CHOOSE_A_MORE_SECURE_PASSWORD: {
-    title: "This password has appeared in a data breach",
-    description: "Choose a different password to keep your account safe.",
-    field: "password",
+  PASSWORD_ALREADY_SET: {
+    title: "This account already has a password",
+    description: "Use Forgot password to change it.",
+    action: { label: "Forgot password?", href: "/auth/forgot-password" },
   },
 
   // --- Tokens & links ---
   INVALID_TOKEN: {
     title: "This link is invalid or has expired",
+    description: "Request a fresh one and use it within the time limit.",
+  },
+  TOKEN_EXPIRED: {
+    title: "This link has expired",
     description: "Request a fresh one and use it within the time limit.",
   },
   SESSION_EXPIRED: {
@@ -164,12 +189,20 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     title: "That Google account is linked to another user",
     description: CONTACT,
   },
+  ACCOUNT_ALREADY_LINKED_TO_DIFFERENT_USER: {
+    title: "That Google account is linked to another user",
+    description: CONTACT,
+  },
+  UNABLE_TO_LINK_ACCOUNT: {
+    title: "We couldn't link your Google account",
+    description: CONTACT,
+  },
   LINKED_ACCOUNT_ALREADY_EXISTS: {
     title: "That account is already linked",
   },
 
   // --- Onboarding checks thrown by ~/auth ---
-  RESULT_NOT_FOUND_FOR_THE_GIVEN_ROLL_NUMBER__CONTACT_ADMIN: {
+  [APP_AUTH_ERROR_CODES.RESULT_NOT_FOUND]: {
     title: "We couldn't find your academic record",
     description: `Your roll number isn't in the results database yet. Contact the admin to get added.`,
   },
@@ -185,7 +218,8 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
   },
   CROSS_SITE_NAVIGATION_LOGIN_BLOCKED: {
     title: "Sign in was blocked for security",
-    description: "Start the sign in from the site itself, not an external link.",
+    description:
+      "Start the sign in from the site itself, not an external link.",
   },
   INVALID_CALLBACK_URL: {
     title: "Sign in was blocked for security",
@@ -195,6 +229,26 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
     title: "The sign in took too long",
     description: "Start again from the sign in page.",
     action: { label: "Back to sign in", href: "/auth/sign-in" },
+  },
+  STATE_NOT_FOUND: {
+    title: "The sign in took too long",
+    description: "Start again from the sign in page.",
+    action: { label: "Back to sign in", href: "/auth/sign-in" },
+  },
+  INVALID_CODE: {
+    title: "Google sign in didn't complete",
+    description: "Start again from the sign in page.",
+    action: { label: "Back to sign in", href: "/auth/sign-in" },
+  },
+  // Google returns no profile when the account is outside the `hd` domain.
+  UNABLE_TO_GET_USER_INFO: {
+    title: `Use your ${orgConfig.shortName} Google account`,
+    description: `Only ${orgConfig.mailSuffix} accounts can sign in. Pick that account on the Google screen.`,
+    action: { label: "Back to sign in", href: "/auth/sign-in" },
+  },
+  INTERNAL_SERVER_ERROR: {
+    title: "Something went wrong on our end",
+    description: CONTACT,
   },
 };
 
@@ -208,7 +262,10 @@ const STATUS_FALLBACKS: Record<number, AuthErrorInfo> = {
   },
   500: { title: "Something went wrong on our end", description: CONTACT },
   502: { title: "The service is unreachable right now", description: CONTACT },
-  503: { title: "The service is temporarily unavailable", description: CONTACT },
+  503: {
+    title: "The service is temporarily unavailable",
+    description: CONTACT,
+  },
 };
 
 const GENERIC: AuthErrorInfo = {
@@ -217,19 +274,40 @@ const GENERIC: AuthErrorInfo = {
 };
 
 /**
- * Maps an auth failure to user-facing copy. Unrecognised errors fall back to a
- * generic message so raw server text is never rendered.
+ * Maps an auth failure to user-facing copy. Unmapped 4xx errors show Better Auth's own message;
+ * 5xx and unknown errors fall back to generic copy so internals never reach the user.
  */
-export function getAuthError(error: AuthErrorLike | null | undefined) {
+export function getAuthError(
+  error: AuthErrorLike | null | undefined
+): AuthErrorInfo {
   if (!error) return GENERIC;
 
-  const byCode = error.code ? AUTH_ERRORS[error.code] : undefined;
+  const byCode = error.code ? AUTH_ERRORS[error.code.toUpperCase()] : undefined;
   if (byCode) return byCode;
 
-  if (typeof console !== "undefined") {
-    console.warn("[auth] unmapped error", error.code, error.status);
+  console.warn("[auth] unmapped error", error.code, error.status);
+  const isClientError =
+    error.status !== undefined && error.status >= 400 && error.status < 500;
+  if (isClientError && error.status !== 401 && error.message) {
+    return { title: error.message };
   }
   return (error.status && STATUS_FALLBACKS[error.status]) || GENERIC;
+}
+
+/** Normalises a thrown server-side `auth.api` error into the shape {@link getAuthError} reads. */
+export function toAuthErrorLike(error: unknown): AuthErrorLike | null {
+  if (!error || typeof error !== "object") return null;
+  const e = error as {
+    statusCode?: number;
+    message?: string;
+    body?: { code?: string; message?: string };
+  };
+  if (!e.statusCode) return null;
+  return {
+    code: e.body?.code,
+    message: e.body?.message ?? e.message,
+    status: e.statusCode,
+  };
 }
 
 /** Single-line form of {@link getAuthError}, for toasts. */

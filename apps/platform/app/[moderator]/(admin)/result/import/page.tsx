@@ -1,8 +1,8 @@
+import { ArrowLeft, FileSpreadsheet } from "lucide-react";
+import type { Metadata } from "next";
 import { DashboardRoot } from "@/components/application/dashboard/primitives";
 import { HeaderBar } from "@/components/common/header-bar";
 import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeft, FileSpreadsheet } from "lucide-react";
-import type { Metadata } from "next";
 import { FreshersImporter } from "./importer";
 
 export const metadata: Metadata = { title: "Import freshers" };

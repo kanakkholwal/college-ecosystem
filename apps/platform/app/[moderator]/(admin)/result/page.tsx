@@ -1,3 +1,16 @@
+import { formatDistanceToNow } from "date-fns";
+import {
+  ArrowRight,
+  Database,
+  FileSpreadsheet,
+  GitBranch,
+  Mail,
+  RadioTower,
+  Trophy,
+} from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { cache } from "react";
 import {
   DashboardRoot,
   DashboardSection,
@@ -12,19 +25,7 @@ import {
 } from "@/components/application/stats-card";
 import { HeaderBar } from "@/components/common/header-bar";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
-import { formatDistanceToNow } from "date-fns";
-import {
-  ArrowRight,
-  Database,
-  FileSpreadsheet,
-  GitBranch,
-  Mail,
-  RadioTower,
-  Trophy,
-} from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { cache } from "react";
+import { LoadError } from "./_components/job-ui";
 import { getAbnormalResults, getResultOverview } from "./actions";
 import {
   FlaggedRecords,
@@ -141,7 +142,9 @@ export default async function AdminResultPage({ params }: PageProps) {
 }
 
 async function OverviewKpis() {
-  const overview = await loadOverview();
+  const res = await loadOverview();
+  if (!res.ok) return <LoadError what="Result totals" reason={res.error} />;
+  const overview = res.data;
   return (
     <KpiGrid label="Result totals">
       <KpiCard
@@ -173,7 +176,7 @@ async function OverviewKpis() {
 }
 
 async function RankJobPanel() {
-  const overview = await loadOverview();
+  const res = await loadOverview();
   return (
     <Panel className="flex flex-col gap-4">
       <JobHeading
@@ -181,14 +184,17 @@ async function RankJobPanel() {
         title="Recalculate ranks"
         description="Rebuilds college, batch, branch and class ranks from the latest CGPI."
       />
-      <RecalculateRanksJob total={overview.total} />
+      <RecalculateRanksJob total={res.ok ? res.data.total : null} />
     </Panel>
   );
 }
 
 async function FlaggedLoader() {
-  const records = await getAbnormalResults();
-  return <FlaggedRecords records={records} />;
+  const res = await getAbnormalResults();
+  if (!res.ok) {
+    return <LoadError what="Flagged records" reason={res.error} bare />;
+  }
+  return <FlaggedRecords records={res.data} />;
 }
 
 function JobHeading({

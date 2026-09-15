@@ -1,11 +1,5 @@
 "use client";
 
-import { EmptyNote } from "@/components/application/dashboard/primitives";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { formatDistanceToNow } from "date-fns";
 import {
   ArrowUpRight,
@@ -20,8 +14,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { EmptyNote } from "@/components/application/dashboard/primitives";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { AbNormalResult } from "~/lib/server-apis/types";
 import { orgConfig } from "~/project.config";
+import { callAction } from "./_components/call-action";
 import { ConfirmDialog } from "./_components/confirm-dialog";
 import {
   CountTile,
@@ -36,10 +37,10 @@ import {
   findStoredResult,
   previewResultFromSite,
   type RankJobSummary,
+  type ResultSummary,
   recalculateRanks,
   refreshResultsChunk,
   refreshStoredResult,
-  type ResultSummary,
   sendResultUpdateMail,
   syncBranchChanges,
 } from "./actions";
@@ -68,7 +69,7 @@ type JobState<T> =
   | { status: "done"; data: T }
   | { status: "error"; error: string };
 
-export function RecalculateRanksJob({ total }: { total: number }) {
+export function RecalculateRanksJob({ total }: { total: number | null }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<JobState<RankJobSummary>>({
     status: "idle",
@@ -78,7 +79,8 @@ export function RecalculateRanksJob({ total }: { total: number }) {
   const run = async () => {
     setState({ status: "running" });
     toast.info("Rank recalculation started");
-    const res = await recalculateRanks();
+    const res = await callAction(recalculateRanks);
+    if (!res.ok) toast.error("Rank recalculation failed");
     setState(
       res.ok
         ? { status: "done", data: res.data }
@@ -131,7 +133,9 @@ export function RecalculateRanksJob({ total }: { total: number }) {
         title="Recalculate every rank?"
         description="Ranks are rebuilt from each student's latest CGPI."
         consequences={[
-          `Rewrites college, batch, branch and class ranks on all ${total.toLocaleString("en-IN")} records.`,
+          total === null
+            ? "Rewrites college, batch, branch and class ranks on every record."
+            : `Rewrites college, batch, branch and class ranks on all ${total.toLocaleString("en-IN")} records.`,
           "Students may see their rank change on the public results pages right away.",
           "Runs on the server and can't be cancelled once started.",
         ]}
@@ -152,7 +156,8 @@ export function SyncBranchesJob() {
   const run = async () => {
     setState({ status: "running" });
     toast.info("Branch sync started");
-    const res = await syncBranchChanges();
+    const res = await callAction(syncBranchChanges);
+    if (!res.ok) toast.error("Branch sync failed");
     setState(
       res.ok
         ? { status: "done", data: res.data }
@@ -230,7 +235,7 @@ export function ResultLookup() {
     const value = rollNo.trim();
     if (!value) return;
     runStep("Looking up the database", async () => {
-      const res = await findStoredResult(value);
+      const res = await callAction(() => findStoredResult(value));
       if (!res.ok) return { status: "error", error: res.error };
       return res.data
         ? { status: "stored", result: res.data }
@@ -300,7 +305,9 @@ export function ResultLookup() {
                   disabled={busy}
                   onClick={() =>
                     runStep("Fetching from the college site", async () => {
-                      const res = await previewResultFromSite(state.rollNo);
+                      const res = await callAction(() =>
+                        previewResultFromSite(state.rollNo)
+                      );
                       return res.ok
                         ? { status: "preview", result: res.data }
                         : { status: "error", error: res.error };
@@ -314,7 +321,9 @@ export function ResultLookup() {
                   disabled={busy}
                   onClick={() =>
                     runStep("Fetching and saving", async () => {
-                      const res = await addResultFromSite(state.rollNo);
+                      const res = await callAction(() =>
+                        addResultFromSite(state.rollNo)
+                      );
                       return res.ok
                         ? { status: "stored", result: res.data }
                         : { status: "error", error: res.error };
@@ -341,7 +350,9 @@ export function ResultLookup() {
                     disabled={busy}
                     onClick={() =>
                       runStep("Refreshing from the college site", async () => {
-                        const res = await refreshStoredResult(current);
+                        const res = await callAction(() =>
+                          refreshStoredResult(current)
+                        );
                         if (res.ok) toast.success("Result refreshed");
                         return res.ok
                           ? { status: "stored", result: res.data }
@@ -369,7 +380,9 @@ export function ResultLookup() {
                   disabled={busy}
                   onClick={() =>
                     runStep("Saving", async () => {
-                      const res = await addResultFromSite(current);
+                      const res = await callAction(() =>
+                        addResultFromSite(current)
+                      );
                       return res.ok
                         ? { status: "stored", result: res.data }
                         : { status: "error", error: res.error };
@@ -400,7 +413,7 @@ export function ResultLookup() {
         confirmLabel="Delete record"
         onConfirm={() =>
           runStep("Deleting", async () => {
-            const res = await deleteStoredResult(current);
+            const res = await callAction(() => deleteStoredResult(current));
             return res.ok
               ? { status: "deleted", rollNo: current }
               : { status: "error", error: res.error };
@@ -494,6 +507,7 @@ type BulkState =
       kind: "refresh";
       sent: number;
       cancelled: boolean;
+      stoppedBy: string | null;
       errors: { rollNo: string; error: string }[];
     }
   | { status: "done"; kind: "delete"; deleted: number }
@@ -513,6 +527,7 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
     cancelRef.current = false;
     const errors: { rollNo: string; error: string }[] = [];
     let sent = 0;
+    let stoppedBy: string | null = null;
     setState({
       status: "running",
       kind: "refresh",
@@ -522,7 +537,13 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
     for (let i = 0; i < rollNos.length; i += REFRESH_CHUNK) {
       if (cancelRef.current) break;
       const chunk = rollNos.slice(i, i + REFRESH_CHUNK);
-      const res = await refreshResultsChunk(chunk);
+      const res = await callAction(() => refreshResultsChunk(chunk));
+      // Every later chunk would fail the same way, so stop instead of burning through the list.
+      if (!res.ok && res.outage) {
+        stoppedBy = res.error;
+        toast.error("Re-scrape stopped: a server is unreachable");
+        break;
+      }
       if (res.ok) {
         errors.push(...res.data.errors);
       } else {
@@ -541,6 +562,7 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
       kind: "refresh",
       sent,
       cancelled: cancelRef.current,
+      stoppedBy,
       errors,
     });
     startRefresh(() => router.refresh());
@@ -548,7 +570,7 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
 
   const deleteAll = async () => {
     setState({ status: "running", kind: "delete" });
-    const res = await deleteResultsBulk(rollNos);
+    const res = await callAction(() => deleteResultsBulk(rollNos));
     setState(
       res.ok
         ? { status: "done", kind: "delete", deleted: res.data.deletedCount }
@@ -634,15 +656,24 @@ export function FlaggedRecords({ records }: { records: AbNormalResult[] }) {
         )}
         {state.status === "done" && state.kind === "refresh" && (
           <div className="flex flex-col gap-3">
-            <p className="flex items-center gap-2 text-body text-foreground">
-              <CheckCircle2
-                className="size-4 text-success"
-                aria-hidden="true"
-              />
-              {state.cancelled ? "Stopped after" : "Sent"}{" "}
-              {state.sent.toLocaleString("en-IN")} records to the scraper. The
-              list below now shows what is still flagged.
-            </p>
+            {state.stoppedBy && (
+              <InlineError>
+                Stopped after {state.sent.toLocaleString("en-IN")} of{" "}
+                {rollNos.length.toLocaleString("en-IN")} records.{" "}
+                {state.stoppedBy}
+              </InlineError>
+            )}
+            {!state.stoppedBy && (
+              <p className="flex items-center gap-2 text-body text-foreground">
+                <CheckCircle2
+                  className="size-4 text-success"
+                  aria-hidden="true"
+                />
+                {state.cancelled ? "Stopped after" : "Sent"}{" "}
+                {state.sent.toLocaleString("en-IN")} records to the scraper. The
+                list below now shows what is still flagged.
+              </p>
+            )}
             {state.errors.length > 0 && <ErrorTable errors={state.errors} />}
           </div>
         )}
@@ -729,7 +760,7 @@ export function ResultMailer() {
 
   const send = () =>
     startTransition(async () => {
-      const res = await sendResultUpdateMail(input);
+      const res = await callAction(() => sendResultUpdateMail(input));
       if (res.ok) {
         setOutcome({ ok: true, ...res.data });
         setInput("");

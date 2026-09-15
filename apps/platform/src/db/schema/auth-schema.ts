@@ -56,9 +56,8 @@ export const users = pgTable("users", {
     .notNull()
     .default("not_specified")
     .$default(() => "not_specified"),
-  hostelId: text("hostelId")
-    .default("not_specified")
-    .$defaultFn(() => "not_specified"),
+  // Mongo Hostel ObjectId or null; validate writes with hostelIdSchema.
+  hostelId: text("hostelId"),
   department: departmentNameEnum("department").notNull(),
 });
 

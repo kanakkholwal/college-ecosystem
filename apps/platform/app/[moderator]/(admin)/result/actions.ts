@@ -1,7 +1,9 @@
 "use server";
 
+import { isValidRollNumber } from "~/constants";
 import dbConnect from "~/lib/dbConnect";
-import { mailFetch, serverFetch } from "~/lib/fetch-server";
+import { sendEmail } from "~/lib/email";
+import { serverFetch } from "~/lib/fetch-server";
 import serverApis from "~/lib/server-apis/server";
 import type {
   AbNormalResult,
@@ -10,8 +12,8 @@ import type {
   rawResultSchemaType,
 } from "~/lib/server-apis/types";
 import ResultModel from "~/models/result";
-import { isValidRollNumber } from "~/constants";
-import { assertAdmin, guarded, unwrap } from "./guard";
+import { appConfig } from "~/project.config";
+import { guarded, unwrap, upstreamFailure } from "./guard";
 import {
   academicYearLabel,
   parseRecipients,
@@ -19,36 +21,39 @@ import {
 } from "./mail-copy";
 
 export async function getResultOverview() {
-  await assertAdmin();
-  await dbConnect();
-  const [total, batches, branches, withFailedCourse, latest] =
-    await Promise.all([
-      ResultModel.countDocuments(),
-      ResultModel.distinct("batch"),
-      ResultModel.distinct("branch"),
-      ResultModel.countDocuments({ "semesters.courses.cgpi": 0 }),
-      ResultModel.findOne({})
-        .sort({ updatedAt: -1 })
-        .select("updatedAt")
-        .lean<{ updatedAt?: Date }>(),
-    ]);
-  return {
-    total,
-    batches: batches.length,
-    branches: branches.length,
-    withFailedCourse,
-    lastUpdatedAt: latest?.updatedAt
-      ? new Date(latest.updatedAt).toISOString()
-      : null,
-  };
+  return guarded("Couldn't load result totals", async () => {
+    await dbConnect();
+    const [total, batches, branches, withFailedCourse, latest] =
+      await Promise.all([
+        ResultModel.countDocuments(),
+        ResultModel.distinct("batch"),
+        ResultModel.distinct("branch"),
+        ResultModel.countDocuments({ "semesters.courses.cgpi": 0 }),
+        ResultModel.findOne({})
+          .sort({ updatedAt: -1 })
+          .select("updatedAt")
+          .lean<{ updatedAt?: Date }>(),
+      ]);
+    return {
+      total,
+      batches: batches.length,
+      branches: branches.length,
+      withFailedCourse,
+      lastUpdatedAt: latest?.updatedAt
+        ? new Date(latest.updatedAt).toISOString()
+        : null,
+    };
+  });
 }
 
-export async function getAbnormalResults(): Promise<AbNormalResult[]> {
-  await assertAdmin();
-  const res = await serverApis.results.getAbnormalResults(undefined);
-  return (
-    unwrap<AbNormalResult[] | null>(res, "Couldn't load flagged records") ?? []
-  );
+export async function getAbnormalResults() {
+  return guarded("Couldn't load flagged records", async () => {
+    const res = await serverApis.results.getAbnormalResults(undefined);
+    return (
+      unwrap<AbNormalResult[] | null>(res, "Couldn't load flagged records") ??
+      []
+    );
+  });
 }
 
 export type ResultSummary = {
@@ -214,7 +219,7 @@ export async function refreshResultsChunk(rollNos: string[]) {
       method: "POST",
       body: JSON.stringify({ rollNos: valid }),
     });
-    if (error) throw new Error(error.message || "Refresh request failed");
+    if (error) throw upstreamFailure(error, "Refresh request failed");
     const payload = unwrap<{
       updated: number;
       errors: { rollNo: string; error: string }[];
@@ -230,7 +235,7 @@ export async function deleteResultsBulk(rollNos: string[]) {
       method: "POST",
       body: JSON.stringify({ rollNos: valid }),
     });
-    if (error) throw new Error(error.message || "Delete request failed");
+    if (error) throw upstreamFailure(error, "Delete request failed");
     const payload = unwrap<deleteResponseType>(data, "Delete request failed");
     return { deletedCount: payload?.deletedCount ?? 0 };
   });
@@ -246,26 +251,15 @@ export async function sendResultUpdateMail(input: string) {
     if (valid.length > MAX_RECIPIENTS) {
       throw new Error(`Send to at most ${MAX_RECIPIENTS} addresses at a time.`);
     }
-    const { data, error } = await mailFetch<{
-      data: { accepted: string[]; rejected: string[] } | null;
-      error?: unknown;
-    }>("/api/send", {
-      method: "POST",
-      body: JSON.stringify({
-        template_key: "result_update",
-        targets: valid,
+    const { accepted, rejected } = await sendEmail({
+      template: "result-update",
+      to: valid,
+      props: {
         subject: resultMailSubject(),
-        payload: { batch: `Academic Year ${academicYearLabel()}` },
-      }),
+        academicYear: academicYearLabel(),
+        resultsUrl: new URL("/results", appConfig.url).toString(),
+      },
     });
-    if (error || !data?.data || data.error) {
-      throw new Error(
-        error?.message || "The mail server rejected the request."
-      );
-    }
-    return {
-      accepted: data.data.accepted?.length ?? 0,
-      rejected: data.data.rejected ?? [],
-    };
+    return { accepted: accepted.length, rejected };
   });
 }

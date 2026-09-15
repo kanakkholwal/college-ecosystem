@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  ArrowRight,
+  CheckCircle2,
+  CircleAlert,
+  CircleSlash,
+  FileSpreadsheet,
+  UploadCloud,
+  X,
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Panel } from "@/components/application/dashboard/primitives";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,16 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ButtonLink } from "@/components/utils/link";
 import { cn } from "@/lib/utils";
-import {
-  ArrowRight,
-  CheckCircle2,
-  CircleSlash,
-  FileSpreadsheet,
-  UploadCloud,
-  X,
-} from "lucide-react";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
+import { callAction } from "../_components/call-action";
 import {
   CountTile,
   ErrorTable,
@@ -150,6 +152,7 @@ export function FreshersImporter({ scrapeHref }: { scrapeHref: string }) {
     skipped: SkippedRow[];
     failed: SkippedRow[];
     cancelled: boolean;
+    stoppedBy: string | null;
   } | null>(null);
   const cancelRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -245,7 +248,8 @@ export function FreshersImporter({ scrapeHref }: { scrapeHref: string }) {
   const check = async () => {
     setChecking(true);
     setCheckError(null);
-    const res = await previewFreshersImport(mappedRows());
+    const rows = mappedRows();
+    const res = await callAction(() => previewFreshersImport(rows));
     setChecking(false);
     if (!res.ok) {
       setCheckError(res.error);
@@ -265,10 +269,17 @@ export function FreshersImporter({ scrapeHref }: { scrapeHref: string }) {
     const skipped = [...plan.skipped];
     let imported = 0;
     let done = 0;
+    let stoppedBy: string | null = null;
     for (let i = 0; i < plan.ready.length; i += CHUNK) {
       if (cancelRef.current) break;
       const chunk = plan.ready.slice(i, i + CHUNK);
-      const res = await importFreshersChunk(chunk);
+      const res = await callAction(() => importFreshersChunk(chunk));
+      // Later chunks would hit the same outage; leave them as "not sent" instead of failing each.
+      if (!res.ok && res.outage) {
+        stoppedBy = res.error;
+        toast.error("Import stopped: a server is unreachable");
+        break;
+      }
       if (res.ok) {
         imported += res.data.imported;
         skipped.push(...res.data.skipped);
@@ -287,13 +298,16 @@ export function FreshersImporter({ scrapeHref }: { scrapeHref: string }) {
     const notSent = plan.ready.slice(done).map((r) => ({
       row: r.row,
       rollNo: r.rollNo,
-      reason: "Not sent, import was cancelled",
+      reason: stoppedBy
+        ? "Not sent, import stopped by an outage"
+        : "Not sent, import was cancelled",
     }));
     setReport({
       imported,
       skipped: skipped.sort((a, b) => a.row - b.row),
       failed: [...failed, ...notSent],
       cancelled: cancelRef.current,
+      stoppedBy,
     });
     setPhase("summary");
   };
@@ -586,7 +600,12 @@ export function FreshersImporter({ scrapeHref }: { scrapeHref: string }) {
       {phase === "summary" && report && (
         <div className="flex flex-col gap-4" aria-live="polite">
           <div className="flex items-start gap-3">
-            {report.cancelled ? (
+            {report.stoppedBy ? (
+              <CircleAlert
+                className="mt-0.5 size-5 shrink-0 text-destructive"
+                aria-hidden="true"
+              />
+            ) : report.cancelled ? (
               <CircleSlash
                 className="mt-0.5 size-5 shrink-0 text-muted-foreground"
                 aria-hidden="true"
@@ -599,12 +618,22 @@ export function FreshersImporter({ scrapeHref }: { scrapeHref: string }) {
             )}
             <div>
               <h2 className="text-body-lg font-medium text-foreground">
-                {report.cancelled ? "Import cancelled" : "Import finished"}
+                {report.stoppedBy
+                  ? "Import stopped"
+                  : report.cancelled
+                    ? "Import cancelled"
+                    : "Import finished"}
               </h2>
               <p className="text-body text-muted-foreground">
                 {report.imported.toLocaleString("en-IN")} records created from{" "}
                 {sheet?.fileName}.
               </p>
+              {report.stoppedBy && (
+                <p className="text-body text-foreground">
+                  {report.stoppedBy} Running the import again skips records that
+                  were already created.
+                </p>
+              )}
             </div>
           </div>
           <dl className="grid grid-cols-1 gap-2 @xl:grid-cols-3">
