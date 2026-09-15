@@ -1,40 +1,12 @@
-import { headers } from "next/headers";
-import { cache } from "react";
 import { ZodError } from "zod";
-import { auth } from "~/auth";
-import type { ActionResult } from "./_components/call-action";
+import { assertAdmin, UnauthorizedError } from "~/auth/guards";
+import { type ActionResult, UserFacingError } from "~/lib/action-result";
 
 export type { ActionResult };
-
-// Mirrors app/[moderator]/(admin)/layout.tsx, which lets both roles in.
-const ADMIN_ROLES = ["admin", "moderator"];
-
-const getCurrentSession = cache(async () =>
-  auth.api.getSession({ headers: await headers() })
-);
-
-export class UnauthorizedError extends Error {
-  constructor() {
-    super("You need an admin session to do this.");
-  }
-}
+export { assertAdmin, UnauthorizedError };
 
 /** A failure whose message is already written for the admin. */
-export class ReportedError extends Error {
-  constructor(
-    message: string,
-    readonly outage = false
-  ) {
-    super(message);
-  }
-}
-
-export async function assertAdmin() {
-  const session = await getCurrentSession();
-  if (!session || !ADMIN_ROLES.includes(session.user.role)) {
-    throw new UnauthorizedError();
-  }
-}
+export class ReportedError extends UserFacingError {}
 
 const UNREACHABLE = new Set([
   "ECONNREFUSED",
@@ -81,11 +53,8 @@ export function describeFailure(
   err: unknown,
   fallback: string
 ): { error: string; outage: boolean } {
-  if (err instanceof ReportedError) {
+  if (err instanceof UserFacingError) {
     return { error: err.message, outage: err.outage };
-  }
-  if (err instanceof UnauthorizedError) {
-    return { error: err.message, outage: false };
   }
   if (err instanceof ZodError) {
     return {

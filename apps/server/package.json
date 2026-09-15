@@ -10,16 +10,13 @@
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "add_freshers": "tsx src/scripts/add_freshers.ts",
+    "rename_mnc_branch": "tsx src/scripts/rename_mnc_branch.ts",
+    "backfill_latest_cgpi": "tsx src/scripts/backfill_latest_cgpi.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "biome format --write .",
     "check": "biome check ."
   },
-  "keywords": [
-    "nodejs",
-    "typescript",
-    "express",
-    "websocket"
-  ],
+  "keywords": ["nodejs", "typescript", "express", "websocket"],
   "author": "https://github.com/kanakkholwal",
   "license": "ISC",
   "dependencies": {

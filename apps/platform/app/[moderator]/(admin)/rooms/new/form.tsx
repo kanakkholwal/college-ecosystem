@@ -26,6 +26,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { createRoom } from "~/actions/common.room";
 import { roomTypes } from "~/constants/common.room";
+import { callAction } from "~/lib/call-action";
 
 const formSchema = z.object({
   roomNumber: z
@@ -67,16 +68,16 @@ export default function CreateRoomForm() {
   const { isSubmitting, errors } = form.formState;
 
   async function onSubmit(data: RoomFormValues) {
-    try {
-      const room = await createRoom({ ...data, lastUpdatedTime: new Date() });
-      toast.success(`Room ${room.roomNumber} added`);
-      // Keep the type so a run of similar rooms is quick to enter.
-      form.reset({ ...DEFAULTS, roomType: data.roomType });
-    } catch {
-      form.setError("root", {
-        message: `Room ${data.roomNumber} couldn't be added. It may already be listed; check the rooms page and try again.`,
-      });
+    const res = await callAction(() =>
+      createRoom({ ...data, lastUpdatedTime: new Date() })
+    );
+    if (!res.ok) {
+      form.setError("root", { message: res.error });
+      return;
     }
+    toast.success(`Room ${res.data.roomNumber} added`);
+    // Keep the type so a run of similar rooms is quick to enter.
+    form.reset({ ...DEFAULTS, roomType: data.roomType });
   }
 
   return (

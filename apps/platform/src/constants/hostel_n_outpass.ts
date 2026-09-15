@@ -18,6 +18,11 @@ export const objectIdSchema = z
   .trim()
   .regex(OBJECT_ID_RE, "Must be a valid ObjectId");
 
+/** Strict 24-hex check; `mongoose.isValidObjectId` also accepts any 12-char string. */
+export function isObjectIdString(value: unknown): value is string {
+  return typeof value === "string" && OBJECT_ID_RE.test(value);
+}
+
 function normalizeHostelRef(value: unknown): unknown {
   if (value === undefined || value === null) return null;
   if (typeof value === "object" && "_id" in value)
@@ -224,7 +229,7 @@ export const IN_CHARGES_EMAILS = [
   {
     gender: "female",
     slug: "satpura-&-aravali-girls-hostel",
-    email: " wardensatpura@nith.ac.in",
+    email: "wardensatpura@nith.ac.in",
     role: "warden",
   },
   {

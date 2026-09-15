@@ -56,7 +56,7 @@ export default async function OutpassPage({ params }: Props) {
 async function OutpassOverview({ base }: { base: string }) {
   const [resident, passes] = await Promise.all([
     getResidentContext(),
-    getOutPassForHosteler().catch(() => null),
+    getOutPassForHosteler().then((res) => (res.ok ? res.data : null)),
   ]);
 
   if (!resident.ok) {

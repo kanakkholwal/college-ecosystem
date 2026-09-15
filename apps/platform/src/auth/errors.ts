@@ -25,6 +25,8 @@ export const APP_AUTH_ERROR_CODES = {
   ORG_EMAIL_REQUIRED: "ORG_EMAIL_REQUIRED",
   GOOGLE_EMAIL_NOT_VERIFIED: "GOOGLE_EMAIL_NOT_VERIFIED",
   RESULT_NOT_FOUND: "RESULT_NOT_FOUND",
+  RESULT_LOOKUP_FAILED: "RESULT_LOOKUP_FAILED",
+  FACULTY_LOOKUP_FAILED: "FACULTY_LOOKUP_FAILED",
   EMAIL_SEND_FAILED: "EMAIL_SEND_FAILED",
 } as const;
 
@@ -205,6 +207,14 @@ const AUTH_ERRORS: Record<string, AuthErrorInfo> = {
   [APP_AUTH_ERROR_CODES.RESULT_NOT_FOUND]: {
     title: "We couldn't find your academic record",
     description: `Your roll number isn't in the results database yet. Contact the admin to get added.`,
+  },
+  [APP_AUTH_ERROR_CODES.RESULT_LOOKUP_FAILED]: {
+    title: "We couldn't check your academic record",
+    description: `Our records service is having trouble. Your account wasn't created, so try again in a few minutes. ${CONTACT}`,
+  },
+  [APP_AUTH_ERROR_CODES.FACULTY_LOOKUP_FAILED]: {
+    title: "We couldn't verify your staff or faculty status",
+    description: `Our directory service is having trouble. Your account wasn't created, so try again in a few minutes. ${CONTACT}`,
   },
 
   // --- Origin / CSRF ---

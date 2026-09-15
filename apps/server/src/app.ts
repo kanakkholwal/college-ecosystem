@@ -1,12 +1,13 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import packageJson from "../package.json";
 import { config } from "./config";
 import httpRoutes from "./routes/httpRoutes";
-import { checkCors } from "./utils/cors";
+import { generalLimiter } from "./utils/rate-limit";
 
 const app = express();
+app.set("trust proxy", config.TRUST_PROXY);
 
 // Middleware
 app.use(express.json());
@@ -22,93 +23,46 @@ app.get("/", (req, res) => {
   });
 });
 
-const SERVER_IDENTITY = config.SERVER_IDENTITY;
+// Secret managers often add a trailing newline, which would fail the exact comparison.
+const SERVER_IDENTITY = config.SERVER_IDENTITY?.trim();
 if (!SERVER_IDENTITY) throw new Error("SERVER_IDENTITY is required in ENV");
 const IDENTITY_BUFFER = Buffer.from(SERVER_IDENTITY);
 
+/** Length and hash prefix, so logs can show two secrets differ without revealing either. */
+function fingerprint(value: string): string {
+  if (!value) return "none";
+  const hash = createHash("sha256").update(value).digest("hex").slice(0, 8);
+  return `len=${value.length} sha256=${hash}`;
+}
+console.info(`[identity] expecting ${fingerprint(SERVER_IDENTITY)}`);
+
 function hasServerIdentity(header: string): boolean {
-  const given = Buffer.from(header);
+  const given = Buffer.from(header.trim());
   return (
     given.length === IDENTITY_BUFFER.length &&
     timingSafeEqual(given, IDENTITY_BUFFER)
   );
 }
 
-/** Referer carries a full URL, not an origin, so it can never be echoed back as-is. */
-function resolveOrigin(req: Request): string {
-  const origin = req.header("Origin");
-  if (origin) return origin;
-  const referer = req.header("Referer");
-  if (!referer) return "";
-  try {
-    return new URL(referer).origin;
-  } catch {
-    return "";
-  }
-}
-
-function applyCorsHeaders(req: Request, res: Response, origin: string): void {
-  res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,DELETE");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    req.header("Access-Control-Request-Headers") ||
-      "Content-Type,X-Identity-Key,X-Authorization"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Max-Age", "86400");
-}
-
-// Middleware to handle custom CORS logic
-app.use((req: Request, res: Response, next: NextFunction): void => {
-  // Allow-Origin is echoed per caller, so a shared cache must not reuse one
-  // domain's response for another. Set before every branch, including rejections.
-  res.setHeader("Vary", "Origin");
-
-  const origin = resolveOrigin(req);
-  const identityKey = req.header("X-Identity-Key") || "";
+// Only the platform's server side calls this API (browser streams and uploads go through its
+// admin-checked routes), so every /api request must carry the identity. Origin is spoofable.
+app.use("/api", (req: Request, res: Response, next: NextFunction): void => {
   const authorization = req.header("X-Authorization") || "";
-
-  // 1. Handle preflight requests first
-  if (req.method === "OPTIONS") {
-    if (origin && checkCors(origin)) {
-      applyCorsHeaders(req, res, origin);
-    }
-    res.status(204).end(); // Respond to preflight
-    return;
-  }
-
-  // 2. Handle regular requests
-  if (config.isDev)
-    console.log(
-      `Origin: ${origin}, identity key sent: ${Boolean(identityKey)}, authorization sent: ${Boolean(authorization)}`
-    );
-
-  if (!origin) {
-    console.warn("Request without origin");
-    if (hasServerIdentity(authorization)) {
-      next();
-    } else {
-      res
-        .status(403)
-        .json({ error: "Missing or invalid authorization", data: null });
-    }
-    return;
-  }
-
-  // Allow either a trusted browser origin (e.g. app.nith.eu.org -> api.nith.eu.org)
-  // or a server-to-server caller presenting the identity key. The origin check is
-  // essential for SSE/EventSource requests, which cannot send the X-Authorization header.
-  if (checkCors(origin) || hasServerIdentity(authorization)) {
-    applyCorsHeaders(req, res, origin);
+  if (hasServerIdentity(authorization)) {
     next();
-  } else {
-    console.warn(`CORS request from disallowed origin: ${origin}`);
-    res
-      .status(403)
-      .json({ error: "CORS policy: Invalid credentials", data: null });
+    return;
   }
+  console.warn(
+    `[identity] rejected ${req.method} ${req.path}: got ${fingerprint(authorization.trim())}, expected ${fingerprint(SERVER_IDENTITY)}`
+  );
+  res.status(403).json({
+    error: true,
+    message: "Missing or invalid authorization",
+    data: null,
+  });
 });
+// After the identity check, so X-Client-Id is only trusted from the platform.
+app.use("/api", generalLimiter);
 // Routes
 app.use("/api", httpRoutes);
 

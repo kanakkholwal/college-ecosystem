@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
 import { changeUserPassword, updateUser } from "~/actions/dashboard.admin";
-import { emailSchema, passwordSchema } from "~/constants";
+import { emailSchema, passwordSchema, ROLES_ENUMS } from "~/constants";
 
 type AccountUser = {
   id: string;
@@ -236,7 +236,7 @@ function ProfileSection({ currentUser }: { currentUser: AccountUser }) {
 
 function SecuritySection({ currentUser }: { currentUser: AccountUser }) {
   // changeUserPassword only accepts admins changing their own password.
-  const canChangeHere = currentUser.role === "admin";
+  const canChangeHere = currentUser.role === ROLES_ENUMS.ADMIN;
   const passwordId = useId();
   const [showPassword, setShowPassword] = useState(false);
 

@@ -90,7 +90,7 @@ async function ResidentsTable({
   filters: { query: string; status: string | null; room: string | null };
 }) {
   const res = await getHostelResidents(slug);
-  if (!res.success) return <SectionError what="Residents" />;
+  if (!res.ok) return <SectionError what="Residents" />;
 
   if (res.data.length === 0) {
     return (

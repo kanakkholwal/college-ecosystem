@@ -20,7 +20,7 @@ export default async function RequestOutpassPage({ params }: Props) {
   const base = `/${moderator}/outpass`;
   const [resident, passes] = await Promise.all([
     getResidentContext(),
-    getOutPassForHosteler().catch(() => []),
+    getOutPassForHosteler().then((res) => (res.ok ? res.data : [])),
   ]);
   const blocking = passes.find(
     (p) => p.status === "pending" || p.status === "in_use"

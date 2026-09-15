@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import type { PollType } from "~/models/poll";
 
 /** A poll as the UI needs it: tallies instead of raw votes, so voter ids never reach the client. */
@@ -47,7 +48,7 @@ type Viewer =
 
 /** Authors delete their own polls; admins delete any. Mirrors the check in `deletePoll`. */
 export function canManagePoll(viewer: Viewer, createdBy: string) {
-  return !!viewer && (viewer.username === createdBy || viewer.role === "admin");
+  return !!viewer && (viewer.username === createdBy || viewer.role === ROLES_ENUMS.ADMIN);
 }
 
 export function toPollView(poll: PollType, viewerId?: string | null): PollView {

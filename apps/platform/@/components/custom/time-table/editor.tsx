@@ -11,6 +11,7 @@ import {
   Settings2,
   Trash2,
 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import { useRef } from "react";
 import toast from "react-hot-toast";
@@ -24,7 +25,9 @@ import {
   rawTimetableSchema,
 } from "~/constants/common.time-table";
 import { getDepartmentName } from "~/constants/core.departments";
+import { callAction } from "~/lib/call-action";
 import type { TimeTableWithID } from "~/models/time-table";
+import { timetableEditHref } from "app/[moderator]/(higher_roles)/schedules/paths";
 import { EditTimetableDialog, TimeTableMetaData } from "./components";
 import { daysMap, timeMap } from "./constants";
 import { useTimeTableStore } from "./store";
@@ -50,6 +53,8 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
   const setDisabled = useTimeTableStore((state) => state.setDisabled);
   const disabled = useTimeTableStore((state) => state.disabled);
   const timetableData = useTimeTableStore((state) => state.timetableData);
+  const router = useRouter();
+  const { moderator } = useParams<{ moderator: string }>();
 
   // Seeds the shared store before the first paint so the grid never flashes the blank template.
   if (!isInitialized.current) {
@@ -69,33 +74,41 @@ export const TimeTableEditor: React.FC<TimeTableEditorProps> = (
       return;
     }
 
-    const promise =
+    const toastId = toast.loading("Saving changes...");
+    const res = await callAction(() =>
       editorProps.mode === "edit"
         ? updateTimeTable(
             (timetableData as TimeTableWithID)?._id,
-            timetableData as TimeTableWithID
+            validatedData.data
           )
-        : createTimeTable(validatedData.data);
-
-    toast
-      .promise(promise, {
-        loading: "Saving changes...",
-        success: "Timetable saved",
-        error: "Failed to save timetable",
-      })
-      .finally(() => setDisabled(false));
+        : createTimeTable(validatedData.data)
+    );
+    setDisabled(false);
+    if (!res.ok) {
+      toast.error(res.error, { id: toastId });
+      return;
+    }
+    toast.success("Timetable saved", { id: toastId });
+    // The edit page is keyed by these fields, so a create or rename must move to the new URL.
+    const href = timetableEditHref(moderator, validatedData.data);
+    if (editorProps.mode === "create" || href !== window.location.pathname) {
+      router.replace(href);
+    }
   };
 
   const handleDeleteTimetable = async () => {
-    if (!(timetableData as TimeTableWithID)?._id) return;
+    const id = (timetableData as TimeTableWithID)?._id;
+    if (!id) return;
     setDisabled(true);
-    toast
-      .promise(deleteTimeTable((timetableData as TimeTableWithID)._id), {
-        loading: "Deleting...",
-        success: "Timetable deleted",
-        error: "Failed to delete",
-      })
-      .finally(() => setDisabled(false));
+    const toastId = toast.loading("Deleting...");
+    const res = await callAction(() => deleteTimeTable(id));
+    setDisabled(false);
+    if (!res.ok) {
+      toast.error(res.error, { id: toastId });
+      return;
+    }
+    toast.success("Timetable deleted", { id: toastId });
+    router.replace(`/${moderator}/schedules`);
   };
 
   const { dayIndex } = campusNow();

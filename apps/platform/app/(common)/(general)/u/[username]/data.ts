@@ -15,6 +15,7 @@ import CommunityPost, {
 import { HostelModel } from "~/models/hostel_n_outpass";
 import Poll, { type PollType } from "~/models/poll";
 import ResultModel from "~/models/result";
+import { serialize } from "~/utils/serialize";
 
 export const PROFILE_TABS = [
   { value: "posts", label: "Posts" },
@@ -30,8 +31,6 @@ export const PAGE_SIZE: Record<ProfileTab, number> = {
 };
 
 const HANDLE = /^[A-Za-z0-9_.-]{1,64}$/;
-const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
-
 export function parseTab(value?: string): ProfileTab {
   return PROFILE_TABS.some((t) => t.value === value)
     ? (value as ProfileTab)

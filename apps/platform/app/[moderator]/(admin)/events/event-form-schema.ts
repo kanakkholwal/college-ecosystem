@@ -19,60 +19,68 @@ export const isHttpUrl = (value: string) => {
 };
 
 // Every base field accepts any string so superRefine reports all problems in one pass.
-export const eventFormSchema = z
-  .object({
-    title: z.string(),
-    eventType: eventTypesEnums,
-    description: z.string(),
-    startDate: z.string(),
-    allDay: z.boolean(),
-    startTime: z.string(),
-    hasEnd: z.boolean(),
-    endDate: z.string(),
-    endTime: z.string(),
-    location: z.string(),
-    links: z.array(z.object({ url: z.string() })),
-  })
-  .superRefine((values, ctx) => {
-    const issue = (path: string, message: string) =>
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: path.split("."),
-        message,
+const buildEventFormSchema = (requireFutureEnd: boolean) =>
+  z
+    .object({
+      title: z.string(),
+      eventType: eventTypesEnums,
+      description: z.string(),
+      startDate: z.string(),
+      allDay: z.boolean(),
+      startTime: z.string(),
+      hasEnd: z.boolean(),
+      endDate: z.string(),
+      endTime: z.string(),
+      location: z.string(),
+      links: z.array(z.object({ url: z.string() })),
+    })
+    .superRefine((values, ctx) => {
+      const issue = (path: string, message: string) =>
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: path.split("."),
+          message,
+        });
+
+      const title = values.title.trim();
+      if (!title) issue("title", "Give the event a title");
+      else if (title.length < 3) issue("title", "Use at least 3 characters");
+      else if (title.length > 100)
+        issue(
+          "title",
+          "Keep it under 100 characters and put the rest in the description"
+        );
+
+      values.links.forEach((link, index) => {
+        if (!isHttpUrl(link.url.trim()))
+          issue(
+            `links.${index}.url`,
+            "Enter a full link starting with https://"
+          );
       });
 
-    const title = values.title.trim();
-    if (!title) issue("title", "Give the event a title");
-    else if (title.length < 3) issue("title", "Use at least 3 characters");
-    else if (title.length > 100)
-      issue(
-        "title",
-        "Keep it under 100 characters and put the rest in the description"
-      );
+      if (!values.startDate) issue("startDate", "Pick a start date");
+      if (!values.allDay && !values.startTime)
+        issue("startTime", "Pick a start time, or turn on All day");
+      if (!values.hasEnd) return;
 
-    values.links.forEach((link, index) => {
-      if (!isHttpUrl(link.url.trim()))
-        issue(`links.${index}.url`, "Enter a full link starting with https://");
+      if (!values.endDate) return issue("endDate", "Pick an end date");
+      if (!values.allDay && !values.endTime)
+        return issue("endTime", "Pick an end time");
+      if (!values.startDate || (!values.allDay && !values.startTime)) return;
+
+      const { time, endDate } = toEventPayload(values);
+      const endField = values.allDay ? "endDate" : "endTime";
+      if (!endDate || endDate <= time)
+        issue(endField, "The end must be after the start");
+      // newEventSchema rejects past end dates, so surface that here instead of on save.
+      else if (requireFutureEnd && endDate <= new Date())
+        issue(endField, "The end must be in the future");
     });
 
-    if (!values.startDate) issue("startDate", "Pick a start date");
-    if (!values.allDay && !values.startTime)
-      issue("startTime", "Pick a start time, or turn on All day");
-    if (!values.hasEnd) return;
-
-    if (!values.endDate) return issue("endDate", "Pick an end date");
-    if (!values.allDay && !values.endTime)
-      return issue("endTime", "Pick an end time");
-    if (!values.startDate || (!values.allDay && !values.startTime)) return;
-
-    const { time, endDate } = toEventPayload(values);
-    const endField = values.allDay ? "endDate" : "endTime";
-    if (!endDate || endDate <= time)
-      issue(endField, "The end must be after the start");
-    // rawEventsSchema rejects past end dates, so surface that here instead of on save.
-    else if (endDate <= new Date())
-      issue(endField, "The end must be in the future");
-  });
+export const eventFormSchema = buildEventFormSchema(true);
+/** Edits skip the future-end rule so events that already ended stay editable. */
+export const editEventFormSchema = buildEventFormSchema(false);
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
 

@@ -51,8 +51,9 @@ export default async function HostelDirectoryPage({
 }
 
 async function HostelGrid({ moderator }: { moderator: string }) {
-  const { success, data: hostels } = await getHostels();
-  if (!success) return <SectionError what="Hostels" />;
+  const res = await getHostels();
+  if (!res.ok) return <SectionError what="Hostels" />;
+  const hostels = res.data;
 
   if (hostels.length === 0) {
     return (

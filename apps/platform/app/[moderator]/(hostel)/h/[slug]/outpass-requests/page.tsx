@@ -41,8 +41,8 @@ export default async function OutpassRequestsPage({
 
 async function QueueSection({ slug, base }: { slug: string; base: string }) {
   const res = await getOutpassQueue(slug);
-  if (!res.success) return <SectionError what="Outpass requests" />;
-  const { counts, pending } = res;
+  if (!res.ok) return <SectionError what="Outpass requests" />;
+  const { counts, pending } = res.data;
 
   return (
     <>

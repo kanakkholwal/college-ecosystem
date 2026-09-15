@@ -1,8 +1,9 @@
-import mongoose from "mongoose";
+import type mongoose from "mongoose";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { auth, type Session } from "~/auth";
 import { ROLES_ENUMS } from "~/constants";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import {
   HostelModel,
@@ -109,7 +110,7 @@ export async function findStaffHostel(user: HostelUser) {
 }
 
 async function findHostel(ref: string, by: "slug" | "id") {
-  if (by === "id" && !mongoose.isValidObjectId(ref)) return null;
+  if (by === "id" && !isObjectIdString(ref)) return null;
   await dbConnect();
   const filter = by === "slug" ? { slug: ref } : { _id: ref };
   return HostelModel.findOne(filter).select(HOSTEL_FIELDS).lean<HostelLean>();

@@ -2,7 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import type z from "zod";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,21 @@ import {
 } from "@/components/ui/multi-select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { createHostel, importHostelsFromSite } from "~/actions/hostel.core";
-import { createHostelSchema, IN_CHARGES_EMAILS } from "~/constants/hostel_n_outpass";
+import {
+  createHostelSchema,
+  IN_CHARGES_EMAILS,
+} from "~/constants/hostel_n_outpass";
+import { callAction } from "~/lib/call-action";
+
+const ADMIN_ROLES = ["warden", "mmca", "assistant_warden"] as const;
+type AdminRole = (typeof ADMIN_ROLES)[number];
+
+// The chief warden is campus-wide, not a hostel administrator, and fails the schema's role enum.
+const ADMIN_OPTIONS = IN_CHARGES_EMAILS.flatMap((inCharge) =>
+  (ADMIN_ROLES as readonly string[]).includes(inCharge.role)
+    ? [{ ...inCharge, role: inCharge.role as AdminRole }]
+    : []
+);
 
 export function CreateHostelForm() {
   const form = useForm<z.infer<typeof createHostelSchema>>({
@@ -44,17 +58,16 @@ export function CreateHostelForm() {
       students: [],
     },
   });
+  const gender = useWatch({ control: form.control, name: "gender" });
   const router = useRouter();
   const handleSubmit = async (data: z.infer<typeof createHostelSchema>) => {
-    const res = await createHostel(data);
-    if (res.success) {
+    const res = await callAction(() => createHostel(data));
+    if (res.ok) {
       toast.success(`${data.name} added`);
       form.reset();
       router.refresh();
     } else {
-      toast.error(
-        typeof res.error === "string" ? res.error : "Couldn't add the hostel"
-      );
+      toast.error(res.error);
     }
   };
 
@@ -189,7 +202,7 @@ export function CreateHostelForm() {
                       field.onChange(
                         values.map((email) => ({
                           email,
-                          role: IN_CHARGES_EMAILS.find(
+                          role: ADMIN_OPTIONS.find(
                             (inCharge) => inCharge.email === email
                           )?.role,
                           userId: null,
@@ -204,15 +217,11 @@ export function CreateHostelForm() {
                     </MultiSelectorTrigger>
                     <MultiSelectorContent>
                       <MultiSelectorList>
-                        {IN_CHARGES_EMAILS.filter((inCharge) => {
-                          const formGender = form.getValues("gender");
-                          if (
+                        {ADMIN_OPTIONS.filter(
+                          (inCharge) =>
                             inCharge.gender === "not_specified" ||
-                            inCharge.gender === formGender
-                          )
-                            return true;
-                          return false;
-                        }).map((inCharge) => {
+                            inCharge.gender === gender
+                        ).map((inCharge) => {
                           return (
                             <MultiSelectorItem
                               key={inCharge.email}
@@ -254,17 +263,17 @@ export function ImportFromSiteButton() {
   return (
     <Button
       variant="primary"
-      onClick={() => {
+      onClick={async () => {
         setLoading(true);
-        toast
-          .promise(importHostelsFromSite(), {
-            loading: "Importing hostels",
-            success: (data: string | undefined) => data || "Hostels imported",
-            error: (msg: string | undefined) =>
-              msg || "Failed to import hostels",
-          })
-          .then(() => router.refresh())
-          .finally(() => setLoading(false));
+        const toastId = toast.loading("Importing hostels");
+        const res = await callAction(importHostelsFromSite);
+        setLoading(false);
+        if (!res.ok) {
+          toast.error(res.error, { id: toastId });
+          return;
+        }
+        toast.success(res.data || "Hostels imported", { id: toastId });
+        router.refresh();
       }}
       disabled={loading}
     >

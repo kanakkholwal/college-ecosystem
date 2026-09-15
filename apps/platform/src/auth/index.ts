@@ -364,6 +364,34 @@ type FacultyType = {
   department: string;
 };
 
+// Only a definite "not found" may fall through to Staff; any other failure would create faculty as Staff for good.
+async function findFacultyByEmail(email: string): Promise<FacultyType | null> {
+  const lookupFailed = (cause: unknown) =>
+    new APIError("SERVICE_UNAVAILABLE", {
+      code: APP_AUTH_ERROR_CODES.FACULTY_LOOKUP_FAILED,
+      message: "Couldn't check the faculty directory, try again shortly",
+      cause: { email, error: cause },
+    });
+
+  // better-fetch returns HTTP errors but rejects on network failures.
+  const { data: response, error } = await serverFetch<{
+    message: string;
+    data: FacultyType | null;
+  }>("/api/faculties/search/:email", {
+    method: "GET",
+    params: { email },
+  }).catch((err: unknown) => {
+    throw lookupFailed(err);
+  });
+  if (error) {
+    if (error.status === 404 && error.message === "Faculty not found") {
+      return null;
+    }
+    throw lookupFailed(error);
+  }
+  return response?.data ?? null;
+}
+
 async function getUserInfo(
   user: User & Record<string, unknown>
 ): Promise<getUserInfoReturnType> {
@@ -373,8 +401,17 @@ async function getUserInfo(
   if (isStudent) {
     console.log("[getUserInfo]: Student detected:", username);
 
-    const { data, error } = await getResultByRollNo(username);
-    if (!data) {
+    const { data, error, failed } = await getResultByRollNo(username);
+    if (failed) {
+      throw new APIError("SERVICE_UNAVAILABLE", {
+        code: APP_AUTH_ERROR_CODES.RESULT_LOOKUP_FAILED,
+        message: "Couldn't check the results database, try again shortly",
+        cause: { rollNo: username, error },
+      });
+    }
+    // TODO: 2025 batch results aren't imported yet, so a missing record must not block sign-up.
+    const isResultPending = username.startsWith("25");
+    if (!data && !isResultPending) {
       throw new APIError("NOT_ACCEPTABLE", {
         code: APP_AUTH_ERROR_CODES.RESULT_NOT_FOUND,
         message: "Result not found for the given roll number | Contact admin",
@@ -387,31 +424,18 @@ async function getUserInfo(
       username
     );
 
-    // TODO: temporarily disable result check for 2025 batch
-    if (username.startsWith("25")) {
-      return {
-        other_roles: [ROLES_ENUMS.STUDENT],
-        department: getDepartmentByRollNo(username) as string,
-        name: user.name,
-        emailVerified: true,
-        email: user.email,
-        username,
-        gender: data?.gender || "not_specified",
-        hostelId: null,
-      };
-    }
     const hostelStudent = await getHostelStudent({
       rollNo: username,
       email: user.email,
-      gender: data?.gender,
-      name: data.name,
-      cgpi: data.semesters.at(-1)?.cgpi || 0,
+      gender: data?.gender ?? "not_specified",
+      name: data?.name ?? user.name,
+      cgpi: data?.semesters.at(-1)?.cgpi || 0,
     });
 
     return {
       other_roles: [ROLES_ENUMS.STUDENT],
       department: getDepartmentByRollNo(username) as string,
-      name: data.name.toUpperCase(),
+      name: data ? data.name.toUpperCase() : user.name,
       emailVerified: true,
       email: user.email,
       username,
@@ -419,17 +443,7 @@ async function getUserInfo(
       hostelId: toHostelId(hostelStudent?.hostelId),
     };
   }
-  const { data: response } = await serverFetch<{
-    message: string;
-    data: FacultyType | null;
-    error?: string | null;
-  }>("/api/faculties/search/:email", {
-    method: "POST",
-    params: {
-      email: user.email,
-    },
-  });
-  const faculty = response?.data;
+  const faculty = await findFacultyByEmail(user.email);
   console.log(faculty ? "is faculty" : "Not faculty");
 
   if (faculty) {

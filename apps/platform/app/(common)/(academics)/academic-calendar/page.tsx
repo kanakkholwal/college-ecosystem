@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { BaseHeroSection } from "@/components/application/base-hero";
 import {
   type CalendarDay,
@@ -148,7 +149,7 @@ async function CalendarSection({ searchParams }: Props) {
           days={days}
           todayKey={todayKey}
           newEventHref={
-            session?.user?.role === "admin" ? "/admin/events/new" : undefined
+            session?.user?.role === ROLES_ENUMS.ADMIN ? "/admin/events/new" : undefined
           }
         />
       </TabsContent>

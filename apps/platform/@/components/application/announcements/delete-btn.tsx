@@ -6,6 +6,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { deleteAnnouncement } from "~/actions/common.announcement";
+import { callAction } from "~/lib/call-action";
 
 export default function DeleteButton({
   announcementId,
@@ -16,18 +17,11 @@ export default function DeleteButton({
 
   const handleDelete = async () => {
     setDeleting(true);
-    try {
-      await toast.promise(deleteAnnouncement(announcementId), {
-        loading: "Deleting announcement...",
-        success: "Announcement deleted",
-        error: (err) =>
-          typeof err === "string" ? err : "Couldn't delete the announcement",
-      });
-    } catch {
-      // toast.promise already surfaced the error
-    } finally {
-      setDeleting(false);
-    }
+    const toastId = toast.loading("Deleting announcement...");
+    const res = await callAction(() => deleteAnnouncement(announcementId));
+    setDeleting(false);
+    if (res.ok) toast.success("Announcement deleted", { id: toastId });
+    else toast.error(res.error, { id: toastId });
   };
 
   return (

@@ -1,4 +1,5 @@
 "use server";
+import { ROLES_ENUMS } from "~/constants";
 import { eq } from "drizzle-orm";
 import { db } from "~/db/connect";
 import {
@@ -13,6 +14,7 @@ import {
   users,
 } from "~/db/schema/auth-schema";
 import { getSession } from "~/auth/server";
+import { type ActionResult, fail, ok } from "~/lib/action-result";
 import dbConnect from "~/lib/dbConnect";
 import Announcement from "~/models/announcement";
 import CommunityPost, { CommunityComment } from "~/models/community";
@@ -20,22 +22,23 @@ import { HostelStudentModel } from "~/models/hostel_n_outpass";
 import PollModel from "~/models/poll";
 
 /** Deletes a user and everything they own. Admins only, and never their own account. */
-export async function deleteUserResourcesById(userId: string): Promise<void> {
+export async function deleteUserResourcesById(
+  userId: string
+): Promise<ActionResult<null>> {
   // Matches the better-auth admin plugin's adminRole, which gates removeUser.
   const session = await getSession();
-  if (session?.user.role !== "admin") {
-    return Promise.reject("Unauthorized");
+  if (session?.user.role !== ROLES_ENUMS.ADMIN) return fail("Unauthorized");
+  if (session.user.id === userId) {
+    return fail("You cannot delete your own account");
   }
-  if (session?.user.id === userId) {
-    return Promise.reject("You cannot delete your own account");
-  }
-  // Polls store the author's username, not the id, so read it before the row is gone.
-  const [target] = await db
-    .select({ username: users.username })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+  let target: { username: string } | undefined;
   try {
+    // Polls store the author's username, not the id, so read it before the row is gone.
+    [target] = await db
+      .select({ username: users.username })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     await db.transaction(async (tx) => {
       await tx
         .delete(personalAttendanceRecords)
@@ -56,7 +59,7 @@ export async function deleteUserResourcesById(userId: string): Promise<void> {
     });
   } catch (error) {
     console.error("Error deleting user:", error);
-    return Promise.reject("Failed to delete user resources");
+    return fail("Failed to delete user resources");
   }
   // Mongo isn't in the transaction, so clean up only after the account is really gone.
   // A failure here leaves orphans, never a live account whose content was wiped.
@@ -72,6 +75,7 @@ export async function deleteUserResourcesById(userId: string): Promise<void> {
   } catch (error) {
     console.error("Error deleting mongoose models:", error);
   }
+  return ok(null);
 }
 
 export async function getUserPlatformActivities(

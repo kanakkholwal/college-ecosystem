@@ -13,6 +13,7 @@ import type {
 } from "~/lib/server-apis/types";
 import ResultModel from "~/models/result";
 import { appConfig } from "~/project.config";
+import { serialize } from "~/utils/serialize";
 import { guarded, unwrap, upstreamFailure } from "./guard";
 import {
   academicYearLabel,
@@ -108,7 +109,7 @@ export async function findStoredResult(rollNo: string) {
         "name rollNo branch batch programme semesters.cgpi rank updatedAt"
       )
       .lean();
-    return doc ? summarise(JSON.parse(JSON.stringify(doc))) : null;
+    return doc ? summarise(serialize(doc)) : null;
   });
 }
 

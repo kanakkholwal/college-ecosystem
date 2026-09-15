@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { CATEGORIES } from "~/constants/common.community";
 
 export type CommunityCategory = (typeof CATEGORIES)[number];
@@ -49,7 +50,7 @@ export function canManagePost(
   viewer: Viewer,
   post: { author: { id: string } }
 ) {
-  return !!viewer && (viewer.id === post.author.id || viewer.role === "admin");
+  return !!viewer && (viewer.id === post.author.id || viewer.role === ROLES_ENUMS.ADMIN);
 }
 
 const MARKDOWN_NOISE: [RegExp, string][] = [

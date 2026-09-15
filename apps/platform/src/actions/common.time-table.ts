@@ -1,20 +1,47 @@
 "use server";
 
-import { headers } from "next/headers";
 import dbConnect from "src/lib/dbConnect";
 import Timetable, { type TimeTableWithID } from "src/models/time-table";
-import { auth } from "~/auth";
-import type { RawTimetableType as RawTimetable } from "~/constants/common.time-table";
+import { getCurrentSession } from "~/auth/guards";
+import { ROLES_ENUMS } from "~/constants";
+import {
+  type RawTimetableType as RawTimetable,
+  rawTimetableSchema,
+} from "~/constants/common.time-table";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
+import {
+  type ActionResult,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
+import { serialize } from "~/utils/serialize";
 
-const TIMETABLE_MANAGERS = ["admin", "moderator", "faculty", "cr"];
+const TIMETABLE_EXISTS = "Timetable already exists";
+const TIMETABLE_NOT_FOUND = "Timetable not found";
 
-async function getTimetableManager() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { session: null, allowed: false } as const;
+const TIMETABLE_MANAGERS: readonly string[] = [
+  ROLES_ENUMS.ADMIN,
+  ROLES_ENUMS.MODERATOR,
+  ROLES_ENUMS.FACULTY,
+  ROLES_ENUMS.CR,
+];
+
+async function requireTimetableManager(verb: string) {
+  const session = await getCurrentSession();
+  if (!session) {
+    throw new UserFacingError(
+      `You need to be logged in to ${verb} a timetable`
+    );
+  }
   const allowed =
     TIMETABLE_MANAGERS.includes(session.user.role) ||
     session.user.other_roles.some((role) => TIMETABLE_MANAGERS.includes(role));
-  return { session, allowed } as const;
+  if (!allowed) {
+    throw new UserFacingError(
+      `You don't have permission to ${verb} a timetable`
+    );
+  }
+  return session;
 }
 
 /** Omitting `sectionName` returns the first section of that semester. */
@@ -35,16 +62,13 @@ export async function getTimeTable(
       .sort({ sectionName: 1 })
       .exec();
 
-    if (!timetable) {
-      return Promise.resolve(null);
-    }
-
-    return Promise.resolve(JSON.parse(JSON.stringify(timetable)));
+    return timetable ? serialize<TimeTableWithID>(timetable) : null;
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch timetable");
+    throw new Error("Failed to fetch timetable");
   }
 }
+
 export async function getAllTimeTables(): Promise<Partial<TimeTableWithID>[]> {
   try {
     await dbConnect();
@@ -54,136 +78,118 @@ export async function getAllTimeTables(): Promise<Partial<TimeTableWithID>[]> {
       .sort({ department_code: 1, year: 1, semester: 1, sectionName: 1 })
       .exec();
 
-    return Promise.resolve(JSON.parse(JSON.stringify(timetables)));
+    return serialize<Partial<TimeTableWithID>[]>(timetables);
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch timetables");
+    throw new Error("Failed to fetch timetables");
   }
 }
-export async function createTimeTable(timetableData: RawTimetable) {
-  const { session, allowed } = await getTimetableManager();
-  if (!session) {
-    return Promise.reject("You need to be logged in to create a timetable");
-  }
-  if (!allowed) {
-    return Promise.reject("You don't have permission to create a timetable");
-  }
-  try {
-    if (
-      !timetableData.department_code ||
-      !timetableData.sectionName ||
-      !timetableData.year ||
-      !timetableData.semester ||
-      !timetableData.schedule
-    ) {
-      return Promise.reject("Invalid timetable data");
-    }
-    await dbConnect();
 
-    const existingTimetable = await Timetable.findOne({
-      department_code: timetableData.department_code,
-      sectionName: timetableData.sectionName,
-      year: timetableData.year,
-      semester: timetableData.semester,
-    });
-    if (existingTimetable) {
-      return Promise.reject("Timetable already exists");
-    }
+export async function createTimeTable(
+  timetableData: RawTimetable
+): Promise<ActionResult<string>> {
+  return runAction(
+    "Failed to create timetable",
+    async () => {
+      const session = await requireTimetableManager("create");
+      const parsed = rawTimetableSchema.safeParse(timetableData);
+      if (!parsed.success || !parsed.data.sectionName) {
+        throw new UserFacingError("Invalid timetable data");
+      }
+      const { department_code, sectionName, year, semester, schedule } =
+        parsed.data;
+      await dbConnect();
 
-    const newTimetable = new Timetable({
-      department_code: timetableData.department_code,
-      sectionName: timetableData.sectionName,
-      year: timetableData.year,
-      semester: timetableData.semester,
-      schedule: timetableData.schedule,
-      author: session.user.id,
-    });
+      const existingTimetable = await Timetable.exists({
+        department_code,
+        sectionName,
+        year,
+        semester,
+      });
+      if (existingTimetable) throw new UserFacingError(TIMETABLE_EXISTS);
 
-    await newTimetable.save();
+      const newTimetable = new Timetable({
+        department_code,
+        sectionName,
+        year,
+        semester,
+        schedule,
+        author: session.user.id,
+      });
 
-    return Promise.resolve("Timetable created successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to create timetable");
-  }
+      await newTimetable.save();
+
+      return "Timetable created successfully";
+    },
+    { duplicate: TIMETABLE_EXISTS }
+  );
 }
-export async function deleteTimeTable(timetableId: string) {
-  const { session, allowed } = await getTimetableManager();
-  if (!session) {
-    return Promise.reject("You need to be logged in to delete a timetable");
-  }
-  if (!allowed) {
-    return Promise.reject("You don't have permission to delete a timetable");
-  }
 
-  try {
+export async function deleteTimeTable(
+  timetableId: string
+): Promise<ActionResult<string>> {
+  return runAction("Failed to delete timetable", async () => {
+    await requireTimetableManager("delete");
+    if (!isObjectIdString(timetableId)) {
+      throw new UserFacingError(TIMETABLE_NOT_FOUND);
+    }
     await dbConnect();
 
     const timetable = await Timetable.findById(timetableId);
-
-    if (!timetable) {
-      return Promise.reject("Timetable not found");
-    }
+    if (!timetable) throw new UserFacingError(TIMETABLE_NOT_FOUND);
 
     await timetable.deleteOne();
 
-    return Promise.resolve("Timetable deleted successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to delete timetable");
-  }
+    return "Timetable deleted successfully";
+  });
 }
 
 export async function updateTimeTable(
   timetableId: string,
-  timetableData: Partial<TimeTableWithID>
-) {
-  const { session, allowed } = await getTimetableManager();
-  if (!session) {
-    return Promise.reject("You need to be logged in to update a timetable");
-  }
-  if (!allowed) {
-    return Promise.reject("You don't have permission to update a timetable");
-  }
+  timetableData: RawTimetable | Partial<TimeTableWithID>
+): Promise<ActionResult<string>> {
+  return runAction(
+    "Failed to update timetable",
+    async () => {
+      await requireTimetableManager("update");
+      const parsed = rawTimetableSchema.safeParse(timetableData);
+      if (!parsed.success || !parsed.data.sectionName) {
+        throw new UserFacingError(
+          parsed.error?.issues[0]?.message ?? "Invalid timetable data"
+        );
+      }
+      const { department_code, sectionName, year, semester, schedule } =
+        parsed.data;
+      if (!isObjectIdString(timetableId)) {
+        throw new UserFacingError(TIMETABLE_NOT_FOUND);
+      }
 
-  try {
-    await dbConnect();
+      await dbConnect();
 
-    const timetable = await Timetable.findById(timetableId);
+      const timetable = await Timetable.findById(timetableId);
+      if (!timetable) throw new UserFacingError(TIMETABLE_NOT_FOUND);
 
-    if (!timetable) {
-      return Promise.reject("Timetable not found");
-    }
-
-    // Renaming onto another section's key would leave two rows no link can tell apart.
-    const { department_code, sectionName, year, semester } = timetableData;
-    const clash =
-      department_code &&
-      sectionName &&
-      year &&
-      semester &&
-      (await Timetable.exists({
+      // Renaming onto another section's key would leave two rows no link can tell apart.
+      const clash = await Timetable.exists({
         _id: { $ne: timetableId },
         department_code,
         sectionName,
         year,
         semester,
-      }));
-    if (clash) {
-      return Promise.reject("Another timetable already uses these details");
-    }
+      });
+      if (clash) throw new UserFacingError(TIMETABLE_EXISTS);
 
-    timetable.department_code = timetableData.department_code;
-    timetable.sectionName = timetableData.sectionName;
-    timetable.year = timetableData.year;
-    timetable.semester = timetableData.semester;
-    timetable.schedule = timetableData.schedule;
+      // Status is not part of the editor, so the stored value is left alone.
+      timetable.department_code = department_code;
+      timetable.sectionName = sectionName;
+      timetable.year = year;
+      timetable.semester = semester;
+      timetable.schedule = schedule;
 
-    await timetable.save();
+      await timetable.save();
 
-    return Promise.resolve("Timetable updated successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to update timetable");
-  }
+      return "Timetable updated successfully";
+    },
+    { duplicate: TIMETABLE_EXISTS }
+  );
 }

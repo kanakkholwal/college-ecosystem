@@ -13,10 +13,7 @@ export const applicationSchema = z.object({
     }),
   mobile: z
     .string()
-    .regex(/^\d{10}$/, "Mobile number must be 10 digits")
-    .refine((mobile) => mobile.length === 10 || mobile.length === 0, {
-      message: "Mobile number must be exactly 10 digits",
-    })
+    .regex(/^(\d{10})?$/, "Mobile number must be 10 digits")
     .optional(),
   collegeYear: z.enum(["1st", "2nd", "3rd", "4th"]),
   workLinks: z

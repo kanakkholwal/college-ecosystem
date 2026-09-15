@@ -26,20 +26,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
-// Assuming you have these types/schema defined in your project
-// import { ApplicationFormData, applicationSchema } from "@/lib/validation";
-// Mocking schema for display purposes if you copy-paste this code directly
-import { z } from "zod";
-const applicationSchema = z.object({
-  name: z.string().min(2),
-  collegeId: z.string().email(),
-  mobile: z.string().min(10),
-  collegeYear: z.string(),
-  workLinks: z.array(z.object({ url: z.string().url() })),
-  bestProject: z.string().optional(),
-  bestHack: z.string().optional(),
-});
-type ApplicationFormData = z.infer<typeof applicationSchema>;
+import { saveApplication } from "./actions";
+import { type ApplicationFormData, applicationSchema } from "./validation";
+
+const YEAR_OPTIONS = [
+  { value: "1st", label: "1st Year" },
+  { value: "2nd", label: "2nd Year" },
+  { value: "3rd", label: "3rd Year" },
+  { value: "4th", label: "Final Year" },
+] as const;
 
 export function ApplicationForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -65,13 +60,24 @@ export function ApplicationForm() {
 
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log(data);
-    toast.success("Application Transmitted", {
-      description: "We'll be in touch shortly.",
-    });
-    setIsSubmitting(false);
+    try {
+      const result = await saveApplication(data);
+      if (!result.success) {
+        toast.error(result.message, {
+          description:
+            "errors" in result ? result.errors?.join(", ") : undefined,
+        });
+        return;
+      }
+      toast.success("Application Transmitted", {
+        description: "We'll be in touch shortly.",
+      });
+      form.reset();
+    } catch {
+      toast.error("We couldn't submit your application. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -124,13 +130,11 @@ export function ApplicationForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {["1st Year", "2nd Year", "3rd Year", "Final Year"].map(
-                        (year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        )
-                      )}
+                      {YEAR_OPTIONS.map((year) => (
+                        <SelectItem key={year.value} value={year.value}>
+                          {year.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -169,7 +173,7 @@ export function ApplicationForm() {
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="+91 98765 43210"
+                      placeholder="9876543210"
                       className="bg-muted/30 focus:bg-background h-11 font-mono"
                       {...field}
                     />

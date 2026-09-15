@@ -10,14 +10,22 @@ import {
   SLOT_DURATION,
   SLOT_TIME_GAP,
 } from "~/constants/hostel.allotment-process";
-import { objectIdSchema } from "~/constants/hostel_n_outpass";
+import { isObjectIdString, objectIdSchema } from "~/constants/hostel_n_outpass";
+import {
+  type ActionResult,
+  fail,
+  ok,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
 import dbConnect from "~/lib/dbConnect";
 import {
   authorizeHostelManager,
   authorizeResident,
   type HostelerLean,
 } from "~/lib/hostel-access";
-import { redisGet, redisSet } from "~/lib/redis";
+import { isDuplicateKeyError } from "~/lib/mongo-errors";
+import { isRedisAvailable, redisGet, redisSet } from "~/lib/redis";
 import {
   AllotmentSlotModel,
   type HostelRoomJson,
@@ -26,16 +34,9 @@ import {
 } from "~/models/allotment";
 import { HostelStudentModel } from "~/models/hostel_n_outpass";
 import { orgConfig } from "~/project.config";
+import { serialize } from "~/utils/serialize";
 
-const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
-
-type Result<T> = { error: boolean; message: string; data: T };
-
-const fail = <T>(message: string, data: T): Result<T> => ({
-  error: true,
-  message,
-  data,
-});
+const ROOM_NOT_FOUND = "Room not found";
 
 // --- Process state ---
 
@@ -48,58 +49,70 @@ type AllotmentProcess = z.infer<typeof allotmentProcessSchema>;
 const processKey = (hostelId: string) => `allotment-process-${hostelId}`;
 
 // Redis being down reads as "waiting", so nobody can pick rooms while state is unknown.
-async function readProcess(hostelId: string): Promise<AllotmentProcess> {
+async function readProcess(
+  hostelId: string
+): Promise<AllotmentProcess & { notice: string | null }> {
   const stored = await redisGet<AllotmentProcess>(processKey(hostelId));
   const parsed = allotmentProcessSchema.safeParse(stored);
-  return parsed.success ? parsed.data : { status: "waiting", hostelId };
+  if (parsed.success) return { ...parsed.data, notice: null };
+  return {
+    status: "waiting",
+    hostelId,
+    notice: isRedisAvailable()
+      ? "No saved status was found (never set, or the status store didn't answer), so selection is treated as Waiting."
+      : "The status store is unreachable, so selection is treated as Waiting for everyone until it recovers.",
+  };
 }
 
+/** `notice` explains a fallback to "waiting" when no status could be read. */
 export async function getAllotmentProcess(
   hostelId: string
-): Promise<AllotmentProcess> {
-  const manager = await authorizeHostelManager(hostelId, "id");
-  if (!manager.ok) {
-    const resident = await authorizeResident();
-    if (!resident.ok || !resident.hostel._id.equals(hostelId)) {
-      return Promise.reject("Unauthorized");
+): Promise<ActionResult<AllotmentProcess & { notice: string | null }>> {
+  return runAction("Couldn't load the allotment status", async () => {
+    const manager = await authorizeHostelManager(hostelId, "id");
+    if (!manager.ok) {
+      const resident = await authorizeResident();
+      if (!resident.ok || !resident.hostel._id.equals(hostelId)) {
+        throw new UserFacingError("Unauthorized");
+      }
     }
-  }
-  return readProcess(hostelId);
+    return readProcess(hostelId);
+  });
 }
 
 export async function updateAllotmentProcess(
   hostelId: string,
   payload: AllotmentProcess
-): Promise<Result<AllotmentProcess | null>> {
-  const access = await authorizeHostelManager(hostelId, "id");
-  if (!access.ok) return fail(access.error, null);
-  const parsed = allotmentProcessSchema.safeParse({ ...payload, hostelId });
-  if (!parsed.success) return fail("Invalid payload", null);
-  const saved = await redisSet(processKey(hostelId), parsed.data);
-  if (!saved) return fail("Couldn't save the status. Try again.", null);
-  revalidatePath("/[moderator]/h/[slug]/allotment", "page");
-  return {
-    error: false,
-    message: "Allotment status updated",
-    data: parsed.data,
-  };
+): Promise<ActionResult<AllotmentProcess>> {
+  return runAction("Couldn't save the status. Try again.", async () => {
+    const access = await authorizeHostelManager(hostelId, "id");
+    if (!access.ok) throw new UserFacingError(access.error);
+    const parsed = allotmentProcessSchema.safeParse({ ...payload, hostelId });
+    if (!parsed.success) throw new UserFacingError("Invalid payload");
+    const saved = await redisSet(processKey(hostelId), parsed.data);
+    if (!saved) {
+      throw new UserFacingError("Couldn't save the status. Try again.");
+    }
+    revalidatePath("/[moderator]/h/[slug]/allotment", "page");
+    return parsed.data;
+  });
 }
 
 // --- Slots ---
 
 export async function distributeSlots(
   hostelId: string
-): Promise<Result<{ slots: number; students: number } | null>> {
-  const access = await authorizeHostelManager(hostelId, "id");
-  if (!access.ok) return fail(access.error, null);
-  try {
+): Promise<ActionResult<{ slots: number; students: number; message: string }>> {
+  return runAction("Couldn't generate slots", async () => {
+    const access = await authorizeHostelManager(hostelId, "id");
+    if (!access.ok) throw new UserFacingError(access.error);
     // Highest CGPI picks first.
     const students = await HostelStudentModel.find({ hostelId })
       .select("email")
       .sort({ cgpi: -1, rollNumber: 1 })
       .lean<{ email: string }[]>();
     if (students.length === 0) {
-      return fail("Import residents before generating slots", null);
+      throw new UserFacingError("Import residents before generating slots");
     }
 
     const start = new Date();
@@ -124,14 +137,11 @@ export async function distributeSlots(
     await AllotmentSlotModel.insertMany(slots);
     revalidatePath("/[moderator]/h/[slug]/allotment", "page");
     return {
-      error: false,
+      slots: slots.length,
+      students: students.length,
       message: `Created ${slots.length} slots for ${students.length} residents`,
-      data: { slots: slots.length, students: students.length },
     };
-  } catch (error) {
-    console.error(error);
-    return fail("Couldn't generate slots", null);
-  }
+  });
 }
 
 export type SlotSummary = {
@@ -143,10 +153,10 @@ export type SlotSummary = {
 
 export async function getUpcomingSlots(
   hostelId: string
-): Promise<Result<SlotSummary[]>> {
-  const access = await authorizeHostelManager(hostelId, "id");
-  if (!access.ok) return fail(access.error, []);
-  try {
+): Promise<ActionResult<SlotSummary[]>> {
+  return runAction("Couldn't load slots", async () => {
+    const access = await authorizeHostelManager(hostelId, "id");
+    if (!access.ok) throw new UserFacingError(access.error);
     const slots = await AllotmentSlotModel.find({ hostelId })
       .select("startingTime endingTime allotedFor")
       .sort({ startingTime: 1 })
@@ -158,19 +168,13 @@ export async function getUpcomingSlots(
           allotedFor: string[];
         }[]
       >();
-    return {
-      error: false,
-      message: "Slots fetched",
-      data: slots.map((s) => ({
-        _id: s._id.toString(),
-        startingTime: s.startingTime.toISOString(),
-        endingTime: s.endingTime.toISOString(),
-        students: s.allotedFor.length,
-      })),
-    };
-  } catch {
-    return fail("Couldn't load slots", []);
-  }
+    return slots.map((s) => ({
+      _id: s._id.toString(),
+      startingTime: s.startingTime.toISOString(),
+      endingTime: s.endingTime.toISOString(),
+      students: s.allotedFor.length,
+    }));
+  });
 }
 
 // --- Rooms ---
@@ -186,22 +190,21 @@ export async function addHostelRooms(
   hostelId: string,
   rooms: RoomImportRow[]
 ): Promise<
-  Result<{
+  ActionResult<{
     added: number;
     skipped: { roomNumber: string; reason: string }[];
-  } | null>
+  }>
 > {
-  const access = await authorizeHostelManager(hostelId, "id");
-  if (!access.ok) return fail(access.error, null);
-  const parsed = z.array(importRoomSchema).max(2000).safeParse(rooms);
-  if (!parsed.success || parsed.data.length === 0) {
-    return fail(
-      "Every row needs a room number and a capacity from 1 to 7",
-      null
-    );
-  }
+  return runAction("Couldn't add rooms", async () => {
+    const access = await authorizeHostelManager(hostelId, "id");
+    if (!access.ok) throw new UserFacingError(access.error);
+    const parsed = z.array(importRoomSchema).max(2000).safeParse(rooms);
+    if (!parsed.success || parsed.data.length === 0) {
+      throw new UserFacingError(
+        "Every row needs a room number and a capacity from 1 to 7"
+      );
+    }
 
-  try {
     const hostel = access.hostel._id;
     const existing = await HostelRoomModel.find({
       hostel,
@@ -239,15 +242,8 @@ export async function addHostelRooms(
       );
     }
     revalidatePath("/[moderator]/h/[slug]/rooms", "page");
-    return {
-      error: false,
-      message: `Added ${fresh.length} rooms`,
-      data: { added: fresh.length, skipped },
-    };
-  } catch (error) {
-    console.error(error);
-    return fail("Couldn't add rooms", null);
-  }
+    return { added: fresh.length, skipped };
+  });
 }
 
 async function listRooms(hostelId: mongoose.Types.ObjectId) {
@@ -263,54 +259,43 @@ async function listRooms(hostelId: mongoose.Types.ObjectId) {
 /** Staff of the hostel, or a resident of it. */
 export async function getHostelRooms(
   hostelId: string
-): Promise<Result<HostelRoomJson[]>> {
-  const manager = await authorizeHostelManager(hostelId, "id");
-  let id = manager.ok ? manager.hostel._id : null;
-  if (!id) {
-    const resident = await authorizeResident();
-    if (resident.ok && resident.hostel._id.equals(hostelId)) {
-      id = resident.hostel._id;
+): Promise<ActionResult<HostelRoomJson[]>> {
+  return runAction("Couldn't load rooms", async () => {
+    const manager = await authorizeHostelManager(hostelId, "id");
+    let id = manager.ok ? manager.hostel._id : null;
+    if (!id) {
+      const resident = await authorizeResident();
+      if (resident.ok && resident.hostel._id.equals(hostelId)) {
+        id = resident.hostel._id;
+      }
     }
-  }
-  if (!id) return fail("Unauthorized", []);
-  try {
-    return {
-      error: false,
-      message: "Rooms fetched",
-      data: await listRooms(id),
-    };
-  } catch {
-    return fail("Couldn't load rooms", []);
-  }
+    if (!id) throw new UserFacingError("Unauthorized");
+    return listRooms(id);
+  });
 }
 
 export async function lockToggleRoom(
   roomId: string
-): Promise<Result<HostelRoomJson | null>> {
-  if (!mongoose.isValidObjectId(roomId)) return fail("Room Not Found", null);
-  try {
+): Promise<ActionResult<HostelRoomJson>> {
+  if (!isObjectIdString(roomId)) return fail(ROOM_NOT_FOUND);
+  return runAction("Couldn't change the lock", async () => {
     await dbConnect();
     const room = await HostelRoomModel.findById(roomId)
       .select("hostel isLocked")
       .lean<{ hostel: mongoose.Types.ObjectId; isLocked: boolean }>();
-    if (!room) return fail("Room Not Found", null);
+    if (!room) throw new UserFacingError(ROOM_NOT_FOUND);
     const access = await authorizeHostelManager(room.hostel.toString(), "id");
-    if (!access.ok) return fail(access.error, null);
+    if (!access.ok) throw new UserFacingError(access.error);
 
     const updated = await HostelRoomModel.findOneAndUpdate(
       { _id: roomId, hostel: room.hostel },
       [{ $set: { isLocked: { $not: "$isLocked" } } }],
       { new: true }
     ).lean();
+    if (!updated) throw new UserFacingError(ROOM_NOT_FOUND);
     revalidatePath("/[moderator]/h/[slug]/rooms", "page");
-    return {
-      error: false,
-      message: updated?.isLocked ? "Room locked" : "Room unlocked",
-      data: serialize(updated),
-    };
-  } catch {
-    return fail("Couldn't change the lock", null);
-  }
+    return serialize<HostelRoomJson>(updated);
+  });
 }
 
 // --- Student room selection ---
@@ -413,11 +398,11 @@ async function roomOf(hosteler: HostelerLean) {
 }
 
 /** Everything the student's room selection page needs, derived from the session. */
-export async function getMyAllotment(): Promise<Result<MyAllotment | null>> {
-  const access = await authorizeResident();
-  if (!access.ok) return fail(access.error, null);
-  const { hosteler, hostel } = access;
-  try {
+export async function getMyAllotment(): Promise<ActionResult<MyAllotment>> {
+  return runAction("Couldn't load your allotment", async () => {
+    const access = await authorizeResident();
+    if (!access.ok) throw new UserFacingError(access.error);
+    const { hosteler, hostel } = access;
     const [process, { slot, hasSlots }, room] = await Promise.all([
       readProcess(hostel._id.toString()),
       slotFor(hostel._id, hosteler.email),
@@ -425,56 +410,52 @@ export async function getMyAllotment(): Promise<Result<MyAllotment | null>> {
     ]);
     const reason = room ? null : eligibility(process.status, slot, hasSlots);
     return {
-      error: false,
-      message: "Fetched",
-      data: {
-        process: process.status,
-        hosteler: {
-          _id: hosteler._id.toString(),
-          name: hosteler.name,
-          rollNumber: hosteler.rollNumber,
-          cgpi: hosteler.cgpi ?? 0,
-        },
-        hostel: {
-          _id: hostel._id.toString(),
-          name: hostel.name,
-          slug: hostel.slug,
-        },
-        slot: slot
-          ? {
-              startingTime: slot.startingTime.toISOString(),
-              endingTime: slot.endingTime.toISOString(),
-            }
-          : null,
-        hasSlots,
-        eligible: !room && reason === null,
-        reason,
-        room,
+      process: process.status,
+      hosteler: {
+        _id: hosteler._id.toString(),
+        name: hosteler.name,
+        rollNumber: hosteler.rollNumber,
+        cgpi: hosteler.cgpi ?? 0,
       },
+      hostel: {
+        _id: hostel._id.toString(),
+        name: hostel.name,
+        slug: hostel.slug,
+      },
+      slot: slot
+        ? {
+            startingTime: slot.startingTime.toISOString(),
+            endingTime: slot.endingTime.toISOString(),
+          }
+        : null,
+      hasSlots,
+      eligible: !room && reason === null,
+      reason,
+      room,
     };
-  } catch (err) {
-    console.error("getMyAllotment failed", err);
-    return fail("Couldn't load your allotment", null);
-  }
+  });
 }
 
-/** Joins as the session's resident (`_joinerId` is ignored); the transaction stops overbooking. */
+// Transactions retry on these, so their raw text is never a refusal worth showing.
+const TRANSIENT_TXN = /WriteConflict|Transaction/i;
+
+/** Joins as the session's resident (`_joinerId` is ignored); the data is the confirmation message. */
 export async function joinRoom(
   roomId: string,
   _joinerId?: string
-): Promise<Result<null>> {
+): Promise<ActionResult<string>> {
   const access = await authorizeResident();
-  if (!access.ok) return fail(access.error, null);
+  if (!access.ok) return fail(access.error);
   const { hosteler, hostel } = access;
-  if (!mongoose.isValidObjectId(roomId)) return fail("Room not found", null);
-  if (hosteler.banned) return fail("Banned residents can't pick rooms", null);
+  if (!isObjectIdString(roomId)) return fail(ROOM_NOT_FOUND);
+  if (hosteler.banned) return fail("Banned residents can't pick rooms");
 
   const [process, { slot, hasSlots }] = await Promise.all([
     readProcess(hostel._id.toString()),
     slotFor(hostel._id, hosteler.email),
   ]);
   const blocked = eligibility(process.status, slot, hasSlots);
-  if (blocked) return fail(blocked, null);
+  if (blocked) return fail(blocked);
 
   await dbConnect();
   const session = await mongoose.startSession();
@@ -485,13 +466,15 @@ export async function joinRoom(
         _id: roomId,
         hostel: hostel._id,
       }).session(session);
-      if (!room) throw new Error("Room not found");
-      if (room.isLocked) throw new Error("This room is locked by the warden");
+      if (!room) throw new UserFacingError(ROOM_NOT_FOUND);
+      if (room.isLocked) {
+        throw new UserFacingError("This room is locked by the warden");
+      }
 
       const already = await RoomMemberModel.exists({
         student: hosteler._id,
       }).session(session);
-      if (already) throw new Error("You already have a room");
+      if (already) throw new UserFacingError("You already have a room");
 
       if (room.occupied_seats >= room.capacity) {
         const members = await RoomMemberModel.find({ room: room._id })
@@ -510,7 +493,7 @@ export async function joinRoom(
           !weakestStudent ||
           (hosteler.cgpi ?? 0) <= (weakestStudent.cgpi ?? 0)
         ) {
-          throw new Error(
+          throw new UserFacingError(
             "This room is full and every member has an equal or higher CGPI"
           );
         }
@@ -549,13 +532,14 @@ export async function joinRoom(
       );
     });
     revalidatePath("/[moderator]/hostel-room-allotment", "page");
-    return { error: false, message, data: null };
+    return ok(message);
   } catch (err) {
-    const message =
-      err instanceof Error && !/WriteConflict|Transaction/i.test(err.message)
-        ? err.message
-        : "Someone picked this room at the same moment. Try again.";
-    return fail(message, null);
+    if (isDuplicateKeyError(err)) return fail("You already have a room");
+    if (err instanceof UserFacingError) return fail(err.message);
+    if (!(err instanceof Error && TRANSIENT_TXN.test(err.message))) {
+      console.error("joinRoom failed", err);
+    }
+    return fail("Someone picked this room at the same moment. Try again.");
   } finally {
     await session.endSession();
   }
@@ -566,14 +550,14 @@ export async function addRoomMembers(
   roomId: string,
   _hostId: string | undefined,
   members: string[]
-): Promise<Result<null>> {
+): Promise<ActionResult<string>> {
   const access = await authorizeResident();
-  if (!access.ok) return fail(access.error, null);
+  if (!access.ok) return fail(access.error);
   const { hosteler, hostel } = access;
-  if (!mongoose.isValidObjectId(roomId)) return fail("Room not found", null);
+  if (!isObjectIdString(roomId)) return fail(ROOM_NOT_FOUND);
 
   const process = await readProcess(hostel._id.toString());
-  if (process.status !== "open") return fail("Room selection isn't open", null);
+  if (process.status !== "open") return fail("Room selection isn't open");
 
   const emails = [
     ...new Set(
@@ -583,7 +567,7 @@ export async function addRoomMembers(
         .map((m) => (m.includes("@") ? m : `${m}@${orgConfig.domain}`))
     ),
   ];
-  if (emails.length === 0) return fail("Add at least one roll number", null);
+  if (emails.length === 0) return fail("Add at least one roll number");
 
   await dbConnect();
   const session = await mongoose.startSession();
@@ -593,13 +577,15 @@ export async function addRoomMembers(
         _id: roomId,
         hostel: hostel._id,
       }).session(session);
-      if (!room) throw new Error("Room not found");
-      if (room.isLocked) throw new Error("This room is locked by the warden");
+      if (!room) throw new UserFacingError(ROOM_NOT_FOUND);
+      if (room.isLocked) {
+        throw new UserFacingError("This room is locked by the warden");
+      }
       if (!room.hostStudent?.equals(hosteler._id)) {
-        throw new Error("Only the room host can add roommates");
+        throw new UserFacingError("Only the room host can add roommates");
       }
       if (room.occupied_seats + emails.length > room.capacity) {
-        throw new Error(
+        throw new UserFacingError(
           `Only ${room.capacity - room.occupied_seats} seats are left in this room`
         );
       }
@@ -616,7 +602,7 @@ export async function addRoomMembers(
       const found = new Set(students.map((s) => s.email.toLowerCase()));
       const missing = emails.filter((e) => !found.has(e));
       if (missing.length) {
-        throw new Error(
+        throw new UserFacingError(
           `Not residents of ${hostel.name}: ${missing.map((e) => e.split("@")[0]).join(", ")}`
         );
       }
@@ -627,7 +613,7 @@ export async function addRoomMembers(
         .session(session)
         .lean<{ student: { name: string } | null }[]>();
       if (placed.length) {
-        throw new Error(
+        throw new UserFacingError(
           `Already in a room: ${placed.map((p) => p.student?.name ?? "unknown").join(", ")}`
         );
       }
@@ -644,13 +630,16 @@ export async function addRoomMembers(
       await room.save({ session });
     });
     revalidatePath("/[moderator]/hostel-room-allotment", "page");
-    return { error: false, message: "Roommates added", data: null };
+    return ok("Roommates added");
   } catch (err) {
-    const message =
-      err instanceof Error && !/WriteConflict|Transaction/i.test(err.message)
-        ? err.message
-        : "The room changed while saving. Try again.";
-    return fail(message, null);
+    if (isDuplicateKeyError(err)) {
+      return fail("One of these roommates already has a room");
+    }
+    if (err instanceof UserFacingError) return fail(err.message);
+    if (!(err instanceof Error && TRANSIENT_TXN.test(err.message))) {
+      console.error("addRoomMembers failed", err);
+    }
+    return fail("The room changed while saving. Try again.");
   } finally {
     await session.endSession();
   }

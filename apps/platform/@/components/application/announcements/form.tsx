@@ -34,6 +34,7 @@ import {
   RELATED_FOR_TYPES,
   rawAnnouncementSchema,
 } from "~/constants/common.announcement";
+import { callAction } from "~/lib/call-action";
 import { CATEGORY_LABELS } from "./labels";
 
 // Tiptap is client-only and heavy, so it loads after the title and options render.
@@ -67,17 +68,14 @@ export default function CreateAnnouncement() {
   const submitting = form.formState.isSubmitting;
 
   async function onSubmit(values: Values) {
-    try {
-      await toast.promise(createAnnouncement(values), {
-        loading: "Publishing announcement...",
-        success: "Announcement published",
-        error: (err) =>
-          typeof err === "string" ? err : "Couldn't publish. Try again.",
-      });
-      router.push("/announcements");
-    } catch {
-      // toast.promise already surfaced the error
+    const toastId = toast.loading("Publishing announcement...");
+    const res = await callAction(() => createAnnouncement(values));
+    if (!res.ok) {
+      toast.error(res.error, { id: toastId });
+      return;
     }
+    toast.success("Announcement published", { id: toastId });
+    router.push("/announcements");
   }
 
   return (

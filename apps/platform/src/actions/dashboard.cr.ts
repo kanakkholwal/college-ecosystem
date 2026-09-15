@@ -6,6 +6,7 @@ import Timetable from "src/models/time-table";
 import type { studentInfoType } from "src/types/student";
 import { auth } from "~/auth";
 import { ROLES_ENUMS } from "~/constants";
+import { serialize } from "~/utils/serialize";
 
 export type CrTimetableSummary = {
   _id: string;
@@ -13,7 +14,6 @@ export type CrTimetableSummary = {
   sectionName: string;
   year: number;
   semester: number;
-  status: "draft" | "published" | "archived";
   updatedAt: string;
 };
 
@@ -22,8 +22,6 @@ export async function getInfo(): Promise<{
   timetables: CrTimetableSummary[];
   stats: {
     totalSchedules: number;
-    published: number;
-    drafts: number;
     lastUpdated: string | null;
   };
 }> {
@@ -40,7 +38,7 @@ export async function getInfo(): Promise<{
     return {
       studentInfo: null,
       timetables: [],
-      stats: { totalSchedules: 0, published: 0, drafts: 0, lastUpdated: null },
+      stats: { totalSchedules: 0, lastUpdated: null },
     };
   }
 
@@ -50,19 +48,16 @@ export async function getInfo(): Promise<{
     department_code: studentInfo.departmentCode,
     year: studentInfo.currentYear,
   })
-    .select("department_code sectionName year semester status updatedAt")
+    .select("department_code sectionName year semester updatedAt")
     .sort({ updatedAt: -1 })
     .lean();
 
-  const plain: CrTimetableSummary[] = JSON.parse(JSON.stringify(timetables));
+  const plain: CrTimetableSummary[] = serialize(timetables);
   return {
     studentInfo,
     timetables: plain,
     stats: {
       totalSchedules: plain.length,
-      published: plain.filter((t) => t.status === "published").length,
-      // Documents created before the status field existed read as drafts.
-      drafts: plain.filter((t) => !t.status || t.status === "draft").length,
       lastUpdated: plain[0]?.updatedAt ?? null,
     },
   };

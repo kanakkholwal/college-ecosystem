@@ -119,9 +119,7 @@ export function HostelOverview({
 
 async function OverviewKpis({ slug, base }: { slug: string; base: string }) {
   const res = await getHostelOverview(slug);
-  if (!res.success || !res.data) {
-    throw new Error(res.error ?? "Failed to load numbers");
-  }
+  if (!res.ok) throw new Error(res.error);
   const s = res.data;
   const vacant = Math.max(0, s.beds - s.occupiedBeds);
   return (

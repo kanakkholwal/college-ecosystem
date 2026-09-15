@@ -1,9 +1,9 @@
 import { scrapeResult } from "../lib/scrape";
+import { sleep } from "../lib/utils";
 import ResultModel from "../models/result";
 import dbConnect from "../utils/dbConnect";
 
 const BATCH_SIZE = 8;
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function scrapeAndSaveResult(rollNo: string) {
   try {

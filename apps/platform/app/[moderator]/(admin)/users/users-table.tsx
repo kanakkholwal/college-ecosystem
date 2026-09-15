@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { EmptyNote } from "@/components/application/dashboard/primitives";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -439,7 +440,7 @@ function Roles({ row }: { row: Row }) {
       <span
         className={cn(
           "inline-flex h-6 items-center rounded-full border px-2 text-caption font-medium",
-          row.role === "admin"
+          row.role === ROLES_ENUMS.ADMIN
             ? "border-primary bg-primary/10 text-primary"
             : "border-border text-foreground"
         )}

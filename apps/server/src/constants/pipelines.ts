@@ -1,56 +1,58 @@
-import { PipelineStage } from "mongoose";
+import type { PipelineStage } from "mongoose";
 
 const assignRank: PipelineStage[] = [
-    // Match valid documents
-    {
-        $match: {
-            semesters: { $exists: true, $ne: [], $type: "array" },
-            latestCgpi: { $gte: 0 }
-        }
+  // Match valid documents
+  {
+    $match: {
+      semesters: { $exists: true, $ne: [], $type: "array" },
+      latestCgpi: { $gte: 0 },
     },
-    // Sort using indexed field
-    { $sort: { latestCgpi: -1, _id: 1 } },
-    
-    // College rank
-    { $group: { _id: null, results: { $push: "$$ROOT" } } },
-    { $unwind: { path: "$results", includeArrayIndex: "collegeRank" } },
-    { $set: { "results.rank.college": { $add: ["$collegeRank", 1] } } },
-    
-    // Batch rank
-    { $group: { _id: "$results.batch", results: { $push: "$results" } } },
-    { $unwind: { path: "$results", includeArrayIndex: "batchRank" } },
-    { $set: { "results.rank.batch": { $add: ["$batchRank", 1] } } },
-    
-    // Branch rank
-    {
-        $group: {
-            _id: { batch: "$results.batch", branch: "$results.branch" },
-            results: { $push: "$results" },
-        },
+  },
+  // Sort using indexed field
+  { $sort: { latestCgpi: -1, _id: 1 } },
+  // Only what later stages read, so the single college-wide group stays far below the 16 MB limit.
+  { $project: { _id: 1, batch: 1, branch: 1, rank: 1 } },
+
+  // College rank
+  { $group: { _id: null, results: { $push: "$$ROOT" } } },
+  { $unwind: { path: "$results", includeArrayIndex: "collegeRank" } },
+  { $set: { "results.rank.college": { $add: ["$collegeRank", 1] } } },
+
+  // Batch rank
+  { $group: { _id: "$results.batch", results: { $push: "$results" } } },
+  { $unwind: { path: "$results", includeArrayIndex: "batchRank" } },
+  { $set: { "results.rank.batch": { $add: ["$batchRank", 1] } } },
+
+  // Branch rank
+  {
+    $group: {
+      _id: { batch: "$results.batch", branch: "$results.branch" },
+      results: { $push: "$results" },
     },
-    { $unwind: { path: "$results", includeArrayIndex: "branchRank" } },
-    { $set: { "results.rank.branch": { $add: ["$branchRank", 1] } } },
-    
-    // Class rank
-    {
-        $group: {
-            _id: { batch: "$results.batch", branch: "$results.branch" },
-            results: { $push: "$results" },
-        },
+  },
+  { $unwind: { path: "$results", includeArrayIndex: "branchRank" } },
+  { $set: { "results.rank.branch": { $add: ["$branchRank", 1] } } },
+
+  // Class rank
+  {
+    $group: {
+      _id: { batch: "$results.batch", branch: "$results.branch" },
+      results: { $push: "$results" },
     },
-    { $unwind: { path: "$results", includeArrayIndex: "classRank" } },
-    { $set: { "results.rank.class": { $add: ["$classRank", 1] } } },
-    
-    { $replaceRoot: { newRoot: "$results" } },
-    {
-        $project: {
-            _id: 1,
-            rank: 1
-        }
-    }
+  },
+  { $unwind: { path: "$results", includeArrayIndex: "classRank" } },
+  { $set: { "results.rank.class": { $add: ["$classRank", 1] } } },
+
+  { $replaceRoot: { newRoot: "$results" } },
+  {
+    $project: {
+      _id: 1,
+      rank: 1,
+    },
+  },
 ];
 
-//LEGACY: 
+//LEGACY:
 
 // const assignRank: PipelineStage[] = [
 //     {
@@ -97,101 +99,101 @@ const assignRank: PipelineStage[] = [
 //     },
 // ];
 const abnormalResults: PipelineStage[] = [
-    {
-        $match: {
-            semesters: { $type: "array" },
-        },
+  {
+    $match: {
+      semesters: { $type: "array" },
     },
-    {
-        $addFields: {
-            semesterCount: { $size: "$semesters" },
-        },
+  },
+  {
+    $addFields: {
+      semesterCount: { $size: "$semesters" },
     },
-    {
-        $group: {
-            _id: { programme: "$programme", batch: "$batch" },
-            avgSemesterCount: { $avg: "$semesterCount" },
-            docs: { $push: "$$ROOT" },
-        },
+  },
+  {
+    $group: {
+      _id: { programme: "$programme", batch: "$batch" },
+      avgSemesterCount: { $avg: "$semesterCount" },
+      docs: { $push: "$$ROOT" },
     },
-    {
-        $unwind: "$docs",
+  },
+  {
+    $unwind: "$docs",
+  },
+  {
+    $replaceRoot: {
+      newRoot: {
+        $mergeObjects: ["$docs", { avgSemesterCount: "$avgSemesterCount" }],
+      },
     },
-    {
-        $replaceRoot: {
-            newRoot: {
-                $mergeObjects: ["$docs", { avgSemesterCount: "$avgSemesterCount" }],
-            },
-        },
+  },
+  {
+    $addFields: {
+      diff: { $abs: { $subtract: ["$semesterCount", "$avgSemesterCount"] } },
     },
-    {
-        $addFields: {
-            diff: { $abs: { $subtract: ["$semesterCount", "$avgSemesterCount"] } },
-        },
+  },
+  {
+    $match: {
+      diff: { $gte: 2 },
     },
-    {
-        $match: {
-            diff: { $gte: 2 },
-        },
+  },
+  {
+    $project: {
+      name: 1,
+      rollNo: 1,
+      programme: 1,
+      batch: 1,
+      semesterCount: 1,
+      avgSemesterCount: 1,
     },
-    {
-        $project: {
-            name: 1,
-            rollNo: 1,
-            programme: 1,
-            batch: 1,
-            semesterCount: 1,
-            avgSemesterCount: 1,
-        },
-    },
-]
+  },
+];
 
 const assignBranchChange: PipelineStage[] = [
-      {
-        $project: {
-          _id: 1,
-          rollNo: 1,
-          branch: 1,
-          // $slice rejects a count of 0, which students with no semesters would produce.
-          semesters: {
-            $slice: [
-              { $ifNull: ["$semesters", []] },
-              2,
-              { $max: [{ $size: { $ifNull: ["$semesters", []] } }, 1] },
-            ],
+  {
+    $project: {
+      _id: 1,
+      rollNo: 1,
+      branch: 1,
+      // $slice rejects a count of 0, which students with no semesters would produce.
+      semesters: {
+        $slice: [
+          { $ifNull: ["$semesters", []] },
+          2,
+          { $max: [{ $size: { $ifNull: ["$semesters", []] } }, 1] },
+        ],
+      },
+    },
+  },
+  {
+    $addFields: {
+      courseCodes: {
+        $reduce: {
+          input: "$semesters",
+          initialValue: [],
+          in: { $concatArrays: ["$$value", "$$this.courses.code"] },
+        },
+      },
+    },
+  },
+  {
+    $addFields: {
+      uniquePrefixes: {
+        $map: {
+          input: { $setUnion: "$courseCodes" },
+          as: "code",
+          in: {
+            $toUpper: { $arrayElemAt: [{ $split: ["$$code", "-"] }, 0] },
           },
         },
       },
-      {
-        $addFields: {
-          courseCodes: {
-            $reduce: {
-              input: "$semesters",
-              initialValue: [],
-              in: { $concatArrays: ["$$value", "$$this.courses.code"] },
-            },
-          },
-        },
-      },
-      {
-        $addFields: {
-          uniquePrefixes: {
-            $map: {
-              input: { $setUnion: "$courseCodes" },
-              as: "code",
-              in: {
-                $toUpper: { $arrayElemAt: [{ $split: ["$$code", "-"] }, 0] },
-              },
-            },
-          },
-        },
-      },
-      {
-        $unset: ["semesters", "courseCodes"], // Remove intermediate fields to avoid schema changes
-      },
-]
+    },
+  },
+  {
+    $unset: ["semesters", "courseCodes"], // Remove intermediate fields to avoid schema changes
+  },
+];
 export const pipelines = {
-    "abnormal-results": abnormalResults,
-    "assign-rank": assignRank,
-    "assign-branch-change": assignBranchChange,
+  "abnormal-results": abnormalResults,
+  "assign-rank": assignRank,
+  "assign-branch-change": assignBranchChange,
 } as const;

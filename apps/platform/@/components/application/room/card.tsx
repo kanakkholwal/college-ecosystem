@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -43,7 +44,7 @@ export default function RoomCard({
 }: Props) {
   const canToggle =
     !!user &&
-    (user.role === "admin" ||
+    (user.role === ROLES_ENUMS.ADMIN ||
       user.other_roles?.includes("cr") ||
       user.other_roles?.includes("faculty"));
   const occupied = room.currentStatus === "occupied";
@@ -90,7 +91,7 @@ export default function RoomCard({
           roomNumber={room.roomNumber}
           status={occupied ? "occupied" : "available"}
           userId={user.id}
-          canDelete={deletable && user.role === "admin"}
+          canDelete={deletable && user.role === ROLES_ENUMS.ADMIN}
         />
       )}
 

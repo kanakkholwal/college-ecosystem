@@ -1,10 +1,11 @@
 import axios from "axios";
 import HTMLParser from "node-html-parser";
-import type { headerMap } from "../models/header";
 import type { rawResultType } from "../types/result";
-import { determineBranchChange, determineDepartment, determineProgramme, getResultHeaders } from "./result_utils";
-
-
+import {
+  determineBranchChange,
+  getResultHeaders,
+  getStudentInfoFromRollNo,
+} from "./result_utils";
 
 /**
  * Fetches the result data from the NITH results page for a given roll number.
@@ -96,7 +97,9 @@ const parseResult = async (
   // Safe extraction for name (guard table index and selector)
   const secondTable = allTables[1];
   if (secondTable) {
-    const nameEl = secondTable.querySelector("td:nth-child(2) > p:nth-child(2)");
+    const nameEl = secondTable.querySelector(
+      "td:nth-child(2) > p:nth-child(2)"
+    );
     student.name = nameEl?.innerText?.trim() ?? "";
   }
 
@@ -105,7 +108,10 @@ const parseResult = async (
 
   // Use table-pairing: skip first two tables (assumed header), ignore last table if it's a footer
   // This yields [subjectTable, resultTable, subjectTable, resultTable, ...]
-  const bodyTables = allTables.slice(2, allTables.length - 1 >= 2 ? allTables.length - 1 : allTables.length);
+  const bodyTables = allTables.slice(
+    2,
+    allTables.length - 1 >= 2 ? allTables.length - 1 : allTables.length
+  );
   for (let pairIndex = 0; pairIndex < bodyTables.length; pairIndex += 2) {
     const subjTable = bodyTables[pairIndex];
     const resTable = bodyTables[pairIndex + 1];
@@ -136,9 +142,11 @@ const parseResult = async (
         // safe numeric parsing
         const subPointsText = tds[5]?.textContent ?? "0";
         const creditsText = tds[3]?.textContent ?? "0";
-        const sub_points = Number.parseFloat(subPointsText.replace(/[^0-9.\-]+/g, "")) || 0;
-        const credits = Number.parseFloat(creditsText.replace(/[^0-9.\-]+/g, "")) || 0;
-        const cgpi = credits > 0 ? (sub_points / credits) : 0;
+        const sub_points =
+          Number.parseFloat(subPointsText.replace(/[^0-9.\-]+/g, "")) || 0;
+        const credits =
+          Number.parseFloat(creditsText.replace(/[^0-9.\-]+/g, "")) || 0;
+        const cgpi = credits > 0 ? sub_points / credits : 0;
 
         semesterObj.courses.push({
           name,
@@ -173,10 +181,16 @@ const parseResult = async (
         const cgpiRaw = extractAfterEqual(tds[3].innerText);
         const cgpiTotalRaw = extractLastToken(tds[4].innerText);
 
-        semesterObj.sgpi = Number.parseFloat(String(sgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
-        semesterObj.sgpi_total = Number.parseFloat(String(sgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) || 0;
-        semesterObj.cgpi = Number.parseFloat(String(cgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
-        semesterObj.cgpi_total = Number.parseFloat(String(cgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.sgpi =
+          Number.parseFloat(String(sgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.sgpi_total =
+          Number.parseFloat(String(sgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) ||
+          0;
+        semesterObj.cgpi =
+          Number.parseFloat(String(cgpiRaw).replace(/[^0-9.\-]+/g, "")) || 0;
+        semesterObj.cgpi_total =
+          Number.parseFloat(String(cgpiTotalRaw).replace(/[^0-9.\-]+/g, "")) ||
+          0;
       }
     }
   }
@@ -192,7 +206,6 @@ const parseResult = async (
   return student;
 };
 
-
 /**
  * Scrapes the result for a given roll number.
  * @param rollNo - The roll number of the student.
@@ -204,11 +217,10 @@ export async function scrapeResult(rollNo: string): Promise<{
   data: rawResultType | null;
   error?: string | null;
 }> {
-
-  const data = await getInfoFromRollNo(rollNo, false);
   console.log("Roll No: %s", rollNo);
 
   try {
+    const data = await getInfoFromRollNo(rollNo, false);
     console.log("evaluating");
     const [result, msg] = await fetchData(data.url, rollNo, data.headers);
     if (result === null) {
@@ -228,10 +240,24 @@ export async function scrapeResult(rollNo: string): Promise<{
     if (data.programme === "Dual Degree") {
       // console.log("Dual Degree result requested, but not implemented yet.");
       const isEligibleForDualDegree = student.semesters.length > 6;
-      if (isEligibleForDualDegree) {
-        const dualDegreeData = await getInfoFromRollNo(rollNo, true);
+      // A missing dual degree scheme must not fail the main result, so header errors are only logged.
+      const dualDegreeData = isEligibleForDualDegree
+        ? await getInfoFromRollNo(rollNo, true).catch((err: unknown) => {
+            console.log({
+              message: String(err),
+              data: null,
+              error: "Result not available for dual degree",
+            });
+            return null;
+          })
+        : null;
+      if (dualDegreeData) {
         console.log("evaluating dual degree result", dualDegreeData.url);
-        const [dualResult, dualMsg] = await fetchData(dualDegreeData.url, rollNo, dualDegreeData.headers);
+        const [dualResult, dualMsg] = await fetchData(
+          dualDegreeData.url,
+          rollNo,
+          dualDegreeData.headers
+        );
         if (dualResult) {
           const studentDual = await parseResult(dualResult, {
             rollNo,
@@ -244,10 +270,12 @@ export async function scrapeResult(rollNo: string): Promise<{
             student.semesters.push({
               ...semester,
               semester: `${semester.semester}-DD`, // Append 'D' to indicate dual degree semester
-            })
+            });
           }
-          console.log(student.semesters.length + " total semesters found in dual degree result");
-
+          console.log(
+            student.semesters.length +
+              " total semesters found in dual degree result"
+          );
         } else {
           console.log({
             message: dualMsg,
@@ -256,10 +284,8 @@ export async function scrapeResult(rollNo: string): Promise<{
           });
           // If dual degree result is not available, we still return the student data with a message
         }
-
       }
     }
-
 
     return Promise.resolve({
       message: "Result fetched successfully!",
@@ -280,72 +306,39 @@ export async function scrapeResult(rollNo: string): Promise<{
 const latestBatchCode = 24; // for 2024 batch
 
 /**
- * Gets the information headers for the roll number.
- * @param rollNo - The roll number of the student.
- * @param isDualDegree - Whether the student is in a dual degree programme.
- * @returns A promise that resolves to an object containing the batch, branch, URL, and headers.
- * */
-
+ * Batch, branch, result URL and headers for the roll number.
+ * Throws when the roll number or its headers can't be resolved, never returning batch 0.
+ */
 export async function getInfoFromRollNo(rollNo: string, dualDegree = false) {
-  // split the roll no into 3 parts starting two characters then 3 characters and then 3 characters
-  const matches = [
-    Number.parseInt(rollNo.toLowerCase().substring(0, 2)), // 20
-    rollNo.toLowerCase().substring(2, 5), // dec,bec,bar
-    rollNo.toLowerCase().substring(5, 8), // 001
-  ] as const;
-  const [batchCode,] = matches;
-  // TODO: validate roll no format more strictly AFTER 2030 is introduced
-  if (isNaN(batchCode) || batchCode < 20) {
-    return {
-      batch: 0,
-      branch: "not_specified",
-      url: "",
-      headers: {
-        Referer: "",
-        CSRFToken: "",
-        RequestVerificationToken: "",
-      },
-      programme: "not_specified",
-    };
-  }
-  if (batchCode === latestBatchCode + 2) {
+  const { batch, branch, programme } = getStudentInfoFromRollNo(rollNo);
+  if (batch === 2000 + latestBatchCode + 2) {
     // console.log("Results not yet available for the latest batch. falling back to previous batch headers");
     return {
-      batch: Number.parseInt(`20${batchCode}`),
-      branch: determineDepartment(rollNo),
+      batch,
+      branch,
       url: "<url>",
       headers: {
         Referer: "<Referer>",
         CSRFToken: "<CSRFToken>",
         RequestVerificationToken: "<RequestVerificationToken>",
       },
-      programme: determineProgramme(rollNo),
+      programme,
     };
   }
   const headersResponse = await getResultHeaders(rollNo, !dualDegree);
-  if (headersResponse.error) {
-    return {
-      batch: 0,
-      branch: "not_specified",
-      url: "",
-      headers: {
-        Referer: "",
-        CSRFToken: "",
-        RequestVerificationToken: "",
-      },
-      programme: "not_specified",
-    };
+  if (headersResponse.error || !headersResponse.headers) {
+    throw new Error(headersResponse.error ?? "Failed to fetch headers");
   }
-  const headers = headersResponse.headers as headerMap;
+  const headers = headersResponse.headers;
   return {
-    batch: Number.parseInt(`20${batchCode}`),
-    branch: determineDepartment(rollNo),
+    batch,
+    branch,
     url: headers.url,
     headers: {
       Referer: headers.Referer,
       CSRFToken: headers.CSRFToken,
       RequestVerificationToken: headers.RequestVerificationToken,
     },
-    programme: determineProgramme(rollNo),
+    programme,
   };
 }

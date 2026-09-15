@@ -9,7 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getPostById } from "~/actions/common.community";
-import { getSession } from "~/auth/server";
+import { getSessionOrThrow } from "~/auth/server";
 
 interface Props {
   searchParams: Promise<{
@@ -29,7 +29,7 @@ export default async function CommunityPostEditPage(props: Props) {
 
   const [post, session] = await Promise.all([
     getPostById(postId, true),
-    getSession(),
+    getSessionOrThrow(),
   ]);
   if (!session) {
     redirect(

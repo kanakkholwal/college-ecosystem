@@ -17,6 +17,7 @@ export const eventTypes = [
 
 export const eventTypesEnums = z.enum(eventTypes);
 
+/** Shared by edits and imports, so past events stay valid; new events use `newEventSchema`. */
 export const rawEventsSchema = z
   .object({
     title: z
@@ -33,12 +34,7 @@ export const rawEventsSchema = z
     // .refine((date) => ((new Date(date) > new Date()) && (new Date(date).getMonth() < new Date().getMonth())), {
     //   message: "Event time must be in the future",
     // })
-    endDate: z
-      .date()
-      .refine((date) => new Date(date) > new Date(), {
-        message: "End date must be in the future",
-      })
-      .optional(), // Optional end date for the event
+    endDate: z.date().optional(), // Optional end date for the event
     eventType: eventTypesEnums, // Type of event (e.g., "meeting", "holiday", etc.)
     location: z.string().optional(), // Optional location for the event
   })
@@ -55,5 +51,10 @@ export const rawEventsSchema = z
       path: ["endDate"],
     }
   );
+
+export const newEventSchema = rawEventsSchema.refine(
+  (data) => !data.endDate || new Date(data.endDate) > new Date(),
+  { message: "End date must be in the future", path: ["endDate"] }
+);
 
 export type rawEventsSchemaType = z.infer<typeof rawEventsSchema>;

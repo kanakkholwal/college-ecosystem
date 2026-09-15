@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { cn } from "@/lib/utils";
-import { authHeaders } from "~/lib/fetch-client";
 import { callAction } from "../_components/call-action";
 import { ConfirmDialog } from "../_components/confirm-dialog";
 import {
@@ -50,7 +49,7 @@ import {
   type TaskData,
 } from "./types";
 
-const SSE_URL = `${process.env.NEXT_PUBLIC_BASE_SERVER_URL}/api/results/scrape-sse`;
+const SSE_PATH = "/api/admin/results/scrape-sse";
 // The server emits task_status once per batch of 5 scrapes; keep-alive comments aren't visible to EventSource.
 const SILENCE_LIMIT_MS = 90_000;
 const MAX_RECONNECTS = 3;
@@ -201,19 +200,13 @@ export function ScrapeConsole({
   const open = useCallback(
     (action: string, list: string, resumeId?: string) => {
       closeStream();
-      const url = new URL(SSE_URL);
+      const url = new URL(SSE_PATH, window.location.origin);
       url.searchParams.set("list_type", list);
       url.searchParams.set("action", action);
       if (resumeId) url.searchParams.set("task_resume_id", resumeId);
 
-      const es = new EventSource(url.toString(), {
-        withCredentials: true,
-        fetch: (input, init) =>
-          fetch(input, {
-            ...init,
-            headers: { ...init.headers, ...authHeaders },
-          }),
-      });
+      // Same-origin proxy: the session cookie authorizes it, and the server identity stays server-side.
+      const es = new EventSource(url.toString());
       esRef.current = es;
       armWatchdog();
 
@@ -254,7 +247,7 @@ export function ScrapeConsole({
         const err = event as ErrorEvent;
         onTransportLost(
           err.code === 429
-            ? "Another scrape is already streaming from this network. Close other tabs and resume."
+            ? "The server refused a new stream: another scrape is open in one of your tabs, or the scrape rate limit was hit. Close other tabs, wait a few minutes, then resume."
             : err.message || "Lost the connection to the server.",
           err.code
         );

@@ -10,6 +10,11 @@ import {
   courses,
   previousPapers,
 } from "~/db/schema";
+import {
+  type ActionResult,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
 
 type CourseSelect = InferSelectModel<typeof courses>;
 
@@ -123,54 +128,69 @@ export async function getCourseByCode(code: string): Promise<{
 /** Contributions render on the public syllabus, so they need a signed-in author and a real course. */
 async function assertContributor(courseId: string) {
   const session = await getSession();
-  if (!session?.user) throw new Error("Sign in to add resources");
+  if (!session?.user) throw new UserFacingError("Sign in to add resources");
   const id = z.string().uuid().safeParse(courseId);
-  if (!id.success) throw new Error("Course not found");
+  if (!id.success) throw new UserFacingError("Course not found");
   const [course] = await db
     .select({ id: courses.id })
     .from(courses)
     .where(eq(courses.id, id.data))
     .limit(1);
-  if (!course) throw new Error("Course not found");
+  if (!course) throw new UserFacingError("Course not found");
+}
+
+function parsePublicLink(value: unknown) {
+  const link = publicLink.safeParse(value);
+  if (!link.success) {
+    throw new UserFacingError(
+      link.error.issues[0]?.message ?? "Enter a valid link"
+    );
+  }
+  return link.data;
 }
 
 export async function updateBooksAndRefPublic(
   courseId: string,
   booksRef: Pick<BookReferenceInsert, "name" | "link" | "type">
-) {
-  await assertContributor(courseId);
-  const link = publicLink.parse(booksRef.link);
-  const name = z.string().trim().min(1).max(200).parse(booksRef.name);
-  const updatedBooksRefs = await db
-    .insert(booksAndReferences)
-    .values([
-      {
-        courseId,
-        name,
-        link,
-        type: booksRef.type,
-      },
-    ])
-    .returning();
-  return updatedBooksRefs as BookReferenceSelect[];
+): Promise<ActionResult<BookReferenceSelect[]>> {
+  return runAction("Couldn't add the resource", async () => {
+    await assertContributor(courseId);
+    const link = parsePublicLink(booksRef.link);
+    const name = z.string().trim().min(1).max(200).safeParse(booksRef.name);
+    if (!name.success) throw new UserFacingError("Enter a name");
+    const updatedBooksRefs = await db
+      .insert(booksAndReferences)
+      .values([
+        {
+          courseId,
+          name: name.data,
+          link,
+          type: booksRef.type,
+        },
+      ])
+      .returning();
+    return updatedBooksRefs as BookReferenceSelect[];
+  });
 }
 
 export async function updatePrevPapersPublic(
   courseId: string,
   paper: Pick<PreviousPaperInsert, "year" | "exam" | "link">
-) {
-  await assertContributor(courseId);
-  const link = publicLink.parse(paper.link);
-  const updatedPapers = await db
-    .insert(previousPapers)
-    .values([
-      {
-        courseId,
-        year: paper.year,
-        exam: paper.exam,
-        link,
-      },
-    ])
-    .returning();
-  return updatedPapers as PreviousPaperSelect[];
+): Promise<ActionResult<PreviousPaperSelect[]>> {
+  return runAction("Couldn't add the paper", async () => {
+    await assertContributor(courseId);
+    const link = parsePublicLink(paper.link);
+    const updatedPapers = await db
+      .insert(previousPapers)
+      .values([
+        {
+          courseId,
+          year: paper.year,
+          exam: paper.exam,
+          link,
+        },
+      ])
+      .returning();
+    return updatedPapers as PreviousPaperSelect[];
+  });
 }

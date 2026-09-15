@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import type { Session } from "~/auth";
-import { getSession } from "~/auth/server";
+import { getSessionOrThrow } from "~/auth/server";
 import { ALLOWED_ROLES } from "~/constants";
 import {
   checkAuthorization,
@@ -43,7 +43,8 @@ export default async function DashboardLayout({
     return notFound();
   }
 
-  const session = (await getSession()) as Session | null;
+  // Throws on lookup failure so an outage shows global-error's retry, not a sign-in redirect.
+  const session = (await getSessionOrThrow()) as Session | null;
   // Authoritative check: the proxy lets requests through when it cannot read the session.
   if (!session) {
     redirect(`${SIGN_IN_PATH}?next=${encodeURIComponent(`/${moderator}`)}`);

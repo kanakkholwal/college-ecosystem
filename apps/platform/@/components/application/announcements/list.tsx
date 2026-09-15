@@ -1,6 +1,8 @@
+import { ROLES_ENUMS } from "~/constants";
 import { UserPreview } from "@/components/application/user-preview";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
+import { campusFormat } from "@/components/application/hostel/ui";
 import {
   CalendarDays,
   Cpu,
@@ -15,7 +17,10 @@ import Markdown, { type Components } from "react-markdown";
 import type { AnnouncementTypeWithId } from "src/models/announcement";
 import type { Session } from "~/auth/client";
 import DeleteButton from "./delete-btn";
-import { type AnnouncementCategory as Category, CATEGORY_LABELS } from "./labels";
+import {
+  type AnnouncementCategory as Category,
+  CATEGORY_LABELS,
+} from "./labels";
 
 const CATEGORY_ICONS: Record<Category, LucideIcon> = {
   academics: GraduationCap,
@@ -75,7 +80,7 @@ export default function AnnouncementsList({
         const createdAt = new Date(announcement.createdAt);
         const canDelete =
           !!user &&
-          (announcement.createdBy.id === user.id || user.role === "admin");
+          (announcement.createdBy.id === user.id || user.role === ROLES_ENUMS.ADMIN);
 
         return (
           <li key={announcement._id}>
@@ -89,7 +94,13 @@ export default function AnnouncementsList({
                     </span>
                     <time
                       dateTime={createdAt.toISOString()}
-                      title={format(createdAt, "d MMM yyyy, h:mm a")}
+                      title={campusFormat(createdAt, {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                     >
                       {formatDistanceToNow(createdAt, { addSuffix: true })}
                     </time>
@@ -127,8 +138,14 @@ export default function AnnouncementsList({
                 {announcement.expiresAt && (
                   <span>
                     Up until{" "}
-                    <time dateTime={new Date(announcement.expiresAt).toISOString()}>
-                      {format(new Date(announcement.expiresAt), "d MMM yyyy")}
+                    <time
+                      dateTime={new Date(announcement.expiresAt).toISOString()}
+                    >
+                      {campusFormat(announcement.expiresAt, {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
                     </time>
                   </span>
                 )}

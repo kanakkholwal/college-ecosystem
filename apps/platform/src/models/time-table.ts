@@ -82,6 +82,11 @@ const timetableSchema = new Schema<ITimetable>(
   }
 );
 
+timetableSchema.index(
+  { department_code: 1, year: 1, semester: 1, sectionName: 1 },
+  { unique: true }
+);
+
 const Timetable =
   mongoose.models?.Timetable ||
   mongoose.model<ITimetable>("Timetable", timetableSchema);

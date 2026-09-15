@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { deleteEvent } from "~/actions/common.events";
+import { callAction } from "~/lib/call-action";
 
 type Target = { id: string; title: string };
 
@@ -42,19 +43,15 @@ function DeleteEventDialog({
 
   const confirm = () =>
     startTransition(async () => {
-      try {
-        await deleteEvent(event.id);
-        toast.success(`Deleted "${event.title}"`);
-        onOpenChange(false);
-        if (redirectTo) router.push(redirectTo);
-        else router.refresh();
-      } catch (error) {
-        toast.error(
-          typeof error === "string" && error
-            ? error
-            : "The event couldn't be deleted. Try again."
-        );
+      const res = await callAction(() => deleteEvent(event.id));
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
       }
+      toast.success(`Deleted "${event.title}"`);
+      onOpenChange(false);
+      if (redirectTo) router.push(redirectTo);
+      else router.refresh();
     });
 
   return (

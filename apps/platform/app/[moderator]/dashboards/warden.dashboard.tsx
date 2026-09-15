@@ -116,9 +116,7 @@ export default async function WardenDashboard({ role }: { role: string }) {
 
 async function WardenKpis({ slug, base }: { slug: string; base: string }) {
   const res = await getWardenDashboardStats(slug);
-  if (!res.success || !res.data) {
-    throw new Error(res.error ?? "Failed to load dashboard stats");
-  }
+  if (!res.ok) throw new Error(res.error);
   const stats = res.data;
   return (
     <KpiGrid>
@@ -156,8 +154,8 @@ async function WardenKpis({ slug, base }: { slug: string; base: string }) {
 
 async function PendingList({ slug, base }: { slug: string; base: string }) {
   const res = await getPendingOutpasses(slug, 1, PENDING_PREVIEW);
-  if (!res.success) throw new Error(res.error ?? "Failed to fetch requests");
-  const requests = res.data ?? [];
+  if (!res.ok) throw new Error(res.error);
+  const requests = res.data;
 
   if (requests.length === 0) {
     return (

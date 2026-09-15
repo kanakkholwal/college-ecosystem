@@ -8,6 +8,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { readSheet as readXlsxFile } from "read-excel-file/browser";
@@ -23,8 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { baseUrl, serverIdentity } from "~/lib/fetch-client";
-import { hostels } from "~/lib/server-apis/endpoints";
 import { downloadAllotmentAsExcelNative } from "./utils";
 
 const GENDER_VALUES = [
@@ -46,6 +45,7 @@ const OPTIONAL_FIELDS = [
 type RoomType = { id: number; capacity: number; count: number };
 
 export default function AllotmentByExcelPage() {
+  const { slug } = useParams<{ slug: string }>();
   const fileId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -147,13 +147,8 @@ export default function AllotmentByExcelPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        process.env.NEXT_PUBLIC_BASE_SERVER_URL +
-          hostels.allotRoomsFromExcel.url,
-        {
-          method: "POST",
-          body: formData,
-          headers: { "X-Authorization": serverIdentity, Origin: baseUrl },
-        }
+        `/api/hostel/allotment/rooms-from-excel?slug=${encodeURIComponent(slug)}`,
+        { method: "POST", body: formData }
       );
       if (!res.ok) {
         const body = await res.json().catch(() => null);

@@ -33,7 +33,7 @@ const announcementSchema = new Schema<IAnnouncement>(
     relatedFor: { type: String, enum: RELATED_FOR_TYPES, required: true },
     expiresAt: {
       type: Date,
-      default: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      default: () => new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       index: { expires: "0s" },
     },
     createdBy: {

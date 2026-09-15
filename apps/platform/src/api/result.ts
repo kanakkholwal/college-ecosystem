@@ -8,6 +8,8 @@ const getResultByRollNo = async (
   message: string;
   error: unknown;
   data: ResultTypeWithId | null;
+  /** True when the lookup itself failed (e.g. Mongo down), as opposed to no record. */
+  failed?: boolean;
 }> => {
   if (!isValidRollNumber(rollNo)) {
     return Promise.resolve({
@@ -37,6 +39,7 @@ const getResultByRollNo = async (
       message: "An error occurred",
       error: err,
       data: null,
+      failed: true,
     });
   }
 };

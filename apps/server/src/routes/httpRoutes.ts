@@ -28,6 +28,7 @@ import {
   updateResult,
 } from "../controllers/http-result";
 import { resultScrapingSSEHandler } from "../controllers/sse-scraping";
+import { facultyRefreshLimiter, scrapeLimiter } from "../utils/rate-limit";
 
 const router = Router();
 // Buffered in memory, so cap the upload before it can exhaust the process.
@@ -44,7 +45,11 @@ router.get("/departments/list", getDepartmentsList);
 
 // Endpoint to get all the faculties from the database
 router.get("/faculties/search/:email", getFacultyByEmailHandler);
-router.get("/faculties/refresh", refreshFacultyListHandler);
+router.get(
+  "/faculties/refresh",
+  facultyRefreshLimiter,
+  refreshFacultyListHandler
+);
 router.get("/faculties/:departmentCode", getFacultyListByDepartmentHandler);
 
 // Endpoint to get all the functionaries from the site
@@ -62,35 +67,43 @@ router.post(
 // Endpoint to import freshers results from the json data
 router.post(
   "/results/import-freshers",
+  scrapeLimiter,
   importFreshers as unknown as RequestHandler
 );
 // Endpoint to create new batch using previous batch
 router.post(
   "/results/create-batch",
+  scrapeLimiter,
   createBatchUsingPrevious as unknown as RequestHandler
 );
 // Endpoint to assign ranks to the results in the database
-router.post("/results/assign-ranks", assignRankToResults);
+router.post("/results/assign-ranks", scrapeLimiter, assignRankToResults);
 router.post(
   "/results/assign-branch-change",
+  scrapeLimiter,
   assignBranchChangeToResults as unknown as RequestHandler
 );
 // Endpoint to get result by rollNo scraped from the website
 router.get("/results/abnormals", getAbnormalResults);
 router.delete("/results/abnormals", deleteAbNormalResults);
 // Endpoint to [get,add,update,delete] result by rollNo from the database
-router.post("/results/bulk/update", bulkUpdateResults);
-router.post("/results/bulk/delete", bulkDeleteResults);
+router.post("/results/bulk/update", scrapeLimiter, bulkUpdateResults);
+router.post("/results/bulk/delete", scrapeLimiter, bulkDeleteResults);
 // Endpoint to get result by rollNo scraped from the website
 router.get(
   "/results/scrape-sse",
+  scrapeLimiter,
   resultScrapingSSEHandler as unknown as RequestHandler
 );
 
-// Endpoint to get results by batch (updates latestCgpi, returns CSV)
+// Endpoint to get results by batch as CSV
 router.get("/results/batch/:batch", getResultsByBatch);
 
-router.post("/results/:rollNo/scrape", getResultByRollNoFromSite);
+router.post(
+  "/results/:rollNo/scrape",
+  scrapeLimiter,
+  getResultByRollNoFromSite
+);
 // Endpoint to [get,add,update] result by rollNo from the database
 router.get("/results/:rollNo", getResult);
 router.post("/results/:rollNo", addResult);

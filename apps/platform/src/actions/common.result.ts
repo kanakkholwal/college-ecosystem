@@ -10,6 +10,7 @@ import { redisGet, redisSet } from "~/lib/redis";
 import ResultModel from "~/models/result";
 import { consumeRateLimit, getClientIp } from "~/lib/rate-limit";
 import { z } from "zod/v3";
+import { serialize } from "~/utils/serialize";
 
 /*
 /*  For Public Search
@@ -263,7 +264,7 @@ async function loadResult(
 
   after(() => redisSet(cacheKey, result, 60));
 
-  return JSON.parse(JSON.stringify(result)); // deep clone
+  return serialize<ResultTypeWithId>(result);
 }
 
 // A refresh scrapes the college site and re-ranks every result, so it is capped per visitor and per roll number.
@@ -345,10 +346,10 @@ async function assignRanks() {
   });
   console.log(response);
   if (!response.data || response.data?.error) {
-    return Promise.reject(response.data?.message);
+    throw new Error(response.data?.message || "Couldn't assign ranks");
   }
 
-  return Promise.resolve(true);
+  return true;
 }
 const freshersDataSchema = z.array(
   z.object({

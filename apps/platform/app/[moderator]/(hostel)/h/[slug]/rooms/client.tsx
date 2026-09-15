@@ -32,6 +32,7 @@ import {
   addHostelRooms,
   lockToggleRoom,
 } from "~/actions/hostel.allotment-process";
+import { callAction } from "~/lib/call-action";
 
 const FILTERS: FilterOption[] = [
   {
@@ -84,19 +85,15 @@ export function RoomLockButton({
     const previous = value;
     setValue(!previous);
     setPending(true);
-    try {
-      const res = await lockToggleRoom(roomId);
-      if (res.error || !res.data) throw new Error(res.message);
-      setValue(res.data.isLocked);
-      router.refresh();
-    } catch (error) {
+    const res = await callAction(() => lockToggleRoom(roomId));
+    setPending(false);
+    if (!res.ok) {
       setValue(previous);
-      toast.error(
-        error instanceof Error ? error.message : "Couldn't change the lock"
-      );
-    } finally {
-      setPending(false);
+      toast.error(res.error);
+      return;
     }
+    setValue(res.data.isLocked);
+    router.refresh();
   };
 
   return (
@@ -210,28 +207,22 @@ export function ImportRooms({ hostelId }: { hostelId: string }) {
 
   const commit = async () => {
     setBusy(true);
-    try {
-      const res = await addHostelRooms(
+    const res = await callAction(() =>
+      addHostelRooms(
         hostelId,
         valid.map((p) => ({
           roomNumber: p.roomNumber,
           capacity: p.capacity ?? 1,
         }))
-      );
-      if (res.error || !res.data) {
-        toast.error(res.message);
-        return;
-      }
-      setResult(res.data);
-      router.refresh();
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(false);
+      )
+    );
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
     }
+    setResult(res.data);
+    router.refresh();
   };
 
   const step = result ? 4 : reviewing ? 3 : fileName ? 2 : 1;

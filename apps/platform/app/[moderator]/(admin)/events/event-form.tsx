@@ -41,9 +41,11 @@ import {
 import toast from "react-hot-toast";
 import { createNewEvent, updateEvent } from "~/actions/common.events";
 import { eventTypes } from "~/constants/common.events";
+import { callAction } from "~/lib/call-action";
 import {
   EMPTY_EVENT_FORM,
   type EventFormValues,
+  editEventFormSchema,
   eventFormSchema,
   isHttpUrl,
   toEventPayload,
@@ -105,7 +107,9 @@ export function EventForm({
   const router = useRouter();
   const [navigating, startTransition] = useTransition();
   const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(
+      mode === "edit" ? editEventFormSchema : eventFormSchema
+    ),
     defaultValues: { ...EMPTY_EVENT_FORM, ...defaultValues },
     mode: "onTouched",
   });
@@ -122,27 +126,20 @@ export function EventForm({
   useUnsavedChangesGuard(isDirty && !pending);
 
   async function onSubmit(values: EventFormValues) {
-    try {
-      const payload = toEventPayload(values);
-      const saved =
-        mode === "edit" && eventId
-          ? await updateEvent(eventId, payload)
-          : await createNewEvent(payload);
-      const id = eventId ?? saved.id;
-      form.reset(values);
-      toast.success(mode === "edit" ? "Changes saved" : "Event published");
-      startTransition(() => router.push(`/admin/events/${id}`));
-    } catch (error) {
-      const message =
-        typeof error === "string"
-          ? error
-          : error instanceof Error
-            ? error.message
-            : "";
-      form.setError("root", {
-        message: message || "The event couldn't be saved. Try again.",
-      });
+    const payload = toEventPayload(values);
+    const res = await callAction(() =>
+      mode === "edit" && eventId
+        ? updateEvent(eventId, payload)
+        : createNewEvent(payload)
+    );
+    if (!res.ok) {
+      form.setError("root", { message: res.error });
+      return;
     }
+    const id = eventId ?? res.data.id;
+    form.reset(values);
+    toast.success(mode === "edit" ? "Changes saved" : "Event published");
+    startTransition(() => router.push(`/admin/events/${id}`));
   }
 
   return (

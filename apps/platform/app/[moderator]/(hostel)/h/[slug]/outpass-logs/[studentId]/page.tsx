@@ -20,9 +20,9 @@ export default async function StudentOutpassHistoryPage({
 }) {
   const { moderator, slug, studentId } = await params;
   const res = await getOutPassByIdForHosteler(studentId, slug);
-  if (!res.data || !res.student) notFound();
+  if (!res.ok) notFound();
 
-  const { student, data: outpasses } = res;
+  const { student, outpasses } = res.data;
   const late = outpasses.filter(
     (p) =>
       p.actualInTime && new Date(p.actualInTime) > new Date(p.expectedInTime)

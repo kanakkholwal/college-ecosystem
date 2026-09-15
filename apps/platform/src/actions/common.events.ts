@@ -1,21 +1,25 @@
 "use server";
 
-import { isValidObjectId } from "mongoose";
 import { revalidatePath } from "next/cache";
-import { getSession } from "~/auth/server";
+import { getCurrentSession, isAdminLike } from "~/auth/guards";
 import type { rawEventsSchemaType } from "~/constants/common.events";
-import { rawEventsSchema } from "~/constants/common.events";
+import { newEventSchema, rawEventsSchema } from "~/constants/common.events";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
+import {
+  type ActionResult,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
 import dbConnect from "~/lib/dbConnect";
 import { type EventJSONType, EventModel } from "~/models/events";
+import { serialize } from "~/utils/serialize";
 
 const NOT_ADMIN = "Only admins can change events";
+const NOT_FOUND = "Event not found or already deleted";
 
-// Mirrors app/[moderator]/(admin)/layout.tsx, which lets both roles in.
-const ADMIN_ROLES = ["admin", "moderator"];
-
-async function isAdmin() {
-  const session = await getSession();
-  return !!session && ADMIN_ROLES.includes(session.user.role);
+async function requireAdmin() {
+  const session = await getCurrentSession();
+  if (!isAdminLike(session?.user)) throw new UserFacingError(NOT_ADMIN);
 }
 
 function revalidateEvents() {
@@ -25,54 +29,43 @@ function revalidateEvents() {
 
 export async function createNewEvent(
   newEvent: rawEventsSchemaType
-): Promise<EventJSONType> {
-  try {
-    if (!(await isAdmin())) return Promise.reject(NOT_ADMIN);
-    const validatedEvent = rawEventsSchema.safeParse(newEvent);
+): Promise<ActionResult<EventJSONType>> {
+  return runAction("The event couldn't be saved. Try again.", async () => {
+    await requireAdmin();
+    const validatedEvent = newEventSchema.safeParse(newEvent);
     if (!validatedEvent.success) {
-      return Promise.reject(validatedEvent.error.issues[0].message);
+      throw new UserFacingError(validatedEvent.error.issues[0].message);
     }
     await dbConnect();
     const event = await EventModel.create(validatedEvent.data);
     revalidateEvents();
-    return JSON.parse(
-      JSON.stringify({ ...event.toObject(), id: event._id.toString() })
-    );
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Something went wrong"
-    );
-  }
+    return serialize<EventJSONType>({
+      ...event.toObject(),
+      id: event._id.toString(),
+    });
+  });
 }
 
 export async function saveNewEvents(
   newEvents: rawEventsSchemaType[]
-): Promise<EventJSONType[]> {
-  try {
-    if (!(await isAdmin())) return Promise.reject(NOT_ADMIN);
+): Promise<ActionResult<EventJSONType[]>> {
+  return runAction("The events couldn't be saved. Try again.", async () => {
+    await requireAdmin();
     const validatedEvents = rawEventsSchema.array().safeParse(newEvents);
     if (!validatedEvents.success) {
-      return Promise.reject(validatedEvents.error.issues[0].message);
+      throw new UserFacingError(validatedEvents.error.issues[0].message);
     }
     await dbConnect();
     const events = await EventModel.insertMany(validatedEvents.data);
     revalidateEvents();
     // Spreading a hydrated document copies Mongoose internals, not its fields.
-    return JSON.parse(
-      JSON.stringify(
-        events.map((event) => ({
-          ...event.toObject(),
-          id: event._id.toString(),
-        }))
-      )
+    return serialize<EventJSONType[]>(
+      events.map((event) => ({
+        ...event.toObject(),
+        id: event._id.toString(),
+      }))
     );
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Something went wrong"
-    );
-  }
+  });
 }
 
 interface GroupedEvents {
@@ -109,22 +102,19 @@ export async function getEvents({
       ];
     }
 
-    // Time range filters
+    // Overlap: the event starts before the range ends and ends (or, without an end, starts) after it begins.
     const timeConditions: any[] = [];
+    const fromDate = from ? new Date(from) : null;
+    const toDate = to ? new Date(to) : null;
 
-    if (from) {
-      timeConditions.push({ time: { $gte: from } });
+    if (fromDate && !Number.isNaN(fromDate.getTime())) {
+      timeConditions.push({
+        $or: [{ time: { $gte: fromDate } }, { endDate: { $gte: fromDate } }],
+      });
     }
 
-    if (to) {
-      timeConditions.push({ time: { $lte: to } });
-      timeConditions.push({
-        $or: [
-          { endDate: null },
-          { endDate: { $exists: false } },
-          { endDate: { $lte: to } },
-        ],
-      });
+    if (toDate && !Number.isNaN(toDate.getTime())) {
+      timeConditions.push({ time: { $lte: toDate } });
     }
 
     if (timeConditions.length > 0) {
@@ -184,54 +174,42 @@ export async function getEvents({
     // Execute aggregation
     const result = await EventModel.aggregate<GroupedEvents>(pipeline);
 
-    return Promise.resolve(JSON.parse(JSON.stringify(result)));
+    return serialize<GroupedEvents[]>(result);
   } catch (err) {
-    console.log(err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Something went wrong"
-    );
+    console.error("getEvents failed", err);
+    throw err;
   }
 }
 
 export async function getEventById(
   eventId: string
 ): Promise<EventJSONType | null> {
+  if (!isObjectIdString(eventId)) return null;
   try {
-    if (!isValidObjectId(eventId)) return null;
     await dbConnect();
     const event = await EventModel.findById(eventId);
-    if (!event) {
-      return Promise.resolve(null);
-    }
-    return Promise.resolve(
-      JSON.parse(
-        JSON.stringify({
-          ...event.toObject(),
-          id: event._id.toString(), // Convert _id to id
-        })
-      )
-    );
+    if (!event) return null;
+    return serialize<EventJSONType>({
+      ...event.toObject(),
+      id: event._id.toString(),
+    });
   } catch (err) {
-    console.log(err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Something went wrong"
-    );
+    console.error("getEventById failed", err);
+    throw err;
   }
 }
 
 export async function updateEvent(
   eventId: string,
   updatedData: rawEventsSchemaType
-) {
-  try {
-    if (!(await isAdmin())) return Promise.reject(NOT_ADMIN);
+): Promise<ActionResult<EventJSONType>> {
+  return runAction("The event couldn't be saved. Try again.", async () => {
+    await requireAdmin();
     const validatedEvent = rawEventsSchema.safeParse(updatedData);
     if (!validatedEvent.success) {
-      return Promise.reject(validatedEvent.error.issues[0].message);
+      throw new UserFacingError(validatedEvent.error.issues[0].message);
     }
-    if (!isValidObjectId(eventId)) {
-      return Promise.reject("Event not found or already deleted");
-    }
+    if (!isObjectIdString(eventId)) throw new UserFacingError(NOT_FOUND);
     await dbConnect();
     const { data } = validatedEvent;
     // An undefined key is skipped by $set, so a cleared end date or location would survive.
@@ -240,36 +218,25 @@ export async function updateEvent(
       { ...data, endDate: data.endDate ?? null, location: data.location ?? "" },
       { new: true }
     );
-    if (!result) {
-      return Promise.reject("Event not found or already deleted");
-    }
+    if (!result) throw new UserFacingError(NOT_FOUND);
     revalidateEvents();
-    return JSON.parse(JSON.stringify(result));
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Something went wrong"
-    );
-  }
+    return serialize<EventJSONType>({
+      ...result.toObject(),
+      id: result._id.toString(),
+    });
+  });
 }
 
-export async function deleteEvent(eventId: string) {
-  try {
-    if (!(await isAdmin())) return Promise.reject(NOT_ADMIN);
-    if (!isValidObjectId(eventId)) {
-      return Promise.reject("Event not found or already deleted");
-    }
+export async function deleteEvent(
+  eventId: string
+): Promise<ActionResult<string>> {
+  return runAction("The event couldn't be deleted. Try again.", async () => {
+    await requireAdmin();
+    if (!isObjectIdString(eventId)) throw new UserFacingError(NOT_FOUND);
     await dbConnect();
     const result = await EventModel.deleteOne({ _id: eventId });
-    if (result.deletedCount === 0) {
-      return Promise.reject("Event not found or already deleted");
-    }
+    if (result.deletedCount === 0) throw new UserFacingError(NOT_FOUND);
     revalidateEvents();
     return "Event deleted successfully";
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Something went wrong"
-    );
-  }
+  });
 }

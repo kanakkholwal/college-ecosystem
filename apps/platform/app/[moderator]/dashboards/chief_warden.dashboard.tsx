@@ -69,7 +69,7 @@ export default async function ChiefWardenDashboard({ role }: { role: string }) {
 
 async function HostelOverview({ role }: { role: string }) {
   const response = await getHostelsStats();
-  if (!response.success) throw new Error("Failed to load hostels");
+  if (!response.ok) throw new Error("Failed to load hostels");
   const hostels = response.data.hostels;
   const count = (gender: HostelType["gender"]) =>
     hostels.filter((h) => h.gender === gender).length;

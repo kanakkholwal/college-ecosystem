@@ -91,7 +91,7 @@ async function RoomsTable({
   };
 }) {
   const res = await getHostelRooms(hostelId);
-  if (res.error) return <SectionError what="Rooms" />;
+  if (!res.ok) return <SectionError what="Rooms" />;
   const rooms = res.data;
 
   if (rooms.length === 0) {

@@ -1,11 +1,18 @@
 "use server";
 
 import { format } from "date-fns";
-import mongoose from "mongoose";
+import type mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import type z from "zod";
 import { ROLES_ENUMS } from "~/constants";
 import { REASONS, requestOutPassSchema } from "~/constants/hostel.outpass";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
+import {
+  type ActionResult,
+  fail,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
 import dbConnect from "~/lib/dbConnect";
 import {
   authorizeGate,
@@ -19,11 +26,15 @@ import {
 } from "~/lib/hostel-access";
 import {
   HostelStudentModel,
+  OPEN_OUTPASS_STATUSES,
   OutPassModel,
   type OutPassType,
 } from "~/models/hostel_n_outpass";
+import { serialize } from "~/utils/serialize";
 
-const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
+const OPEN_PASS_MESSAGE =
+  "You already have a request waiting for review or a pass in use";
+const SOMETHING_WENT_WRONG = "Something went wrong";
 
 const STUDENT_FIELDS = "_id name email rollNumber";
 const HOSTEL_FIELDS = "_id name slug gender";
@@ -37,108 +48,106 @@ const endOfDay = (date: Date, addDays = 0) => {
 
 export async function createOutPass(
   data: z.infer<typeof requestOutPassSchema>
-) {
-  try {
-    const validationResponse = requestOutPassSchema.safeParse(data);
-    if (!validationResponse.success) {
-      return Promise.reject(
-        validationResponse.error.issues[0]?.message ?? "Invalid request"
-      );
-    }
-    const input = validationResponse.data;
-    const access = await authorizeResident();
-    if (!access.ok) return Promise.reject(access.error);
-    const { hosteler, hostel } = access;
-
-    const now = new Date();
-    if (
-      hosteler.banned &&
-      (!hosteler.bannedTill || hosteler.bannedTill > now)
-    ) {
-      return Promise.reject(
-        `You can't request outpasses until ${hosteler.bannedTill ? format(new Date(hosteler.bannedTill), "dd/MM/yyyy HH:mm") : "the warden lifts the ban"}`
-      );
-    }
-    if (!REASONS.includes(input.reason)) {
-      return Promise.reject("Invalid Reason");
-    }
-
-    const open = await OutPassModel.exists({
-      student: hosteler._id,
-      status: { $in: ["pending", "in_use"] },
-    });
-    if (open) {
-      return Promise.reject(
-        "You already have a request waiting for review or a pass in use"
-      );
-    }
-
-    if (
-      input.roomNumber !== hosteler.roomNumber &&
-      input.roomNumber !== "UNKNOWN"
-    ) {
-      await HostelStudentModel.updateOne(
-        { _id: hosteler._id },
-        { roomNumber: input.roomNumber }
-      );
-    }
-
-    // Home and medical passes stay valid four days past the return date; the rest end that day.
-    const returnDate = new Date(input.expectedInTime);
-    const validTill =
-      input.reason === "home" || input.reason === "medical"
-        ? endOfDay(returnDate, 4)
-        : endOfDay(returnDate);
-
-    await OutPassModel.create({
-      student: hosteler._id,
-      hostel: hostel._id,
-      rollNumber: hosteler.rollNumber,
-      roomNumber: input.roomNumber,
-      address: input.address,
-      reason: input.reason,
-      expectedInTime: input.expectedInTime,
-      expectedOutTime: input.expectedOutTime,
-      status: "pending",
-      validTill,
-    });
-
-    return "Outpass Requested Successfully";
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Something went wrong");
+): Promise<ActionResult<string>> {
+  const validationResponse = requestOutPassSchema.safeParse(data);
+  if (!validationResponse.success) {
+    return fail(
+      validationResponse.error.issues[0]?.message ?? "Invalid request"
+    );
   }
+  const input = validationResponse.data;
+  return runAction(
+    SOMETHING_WENT_WRONG,
+    async () => {
+      const access = await authorizeResident();
+      if (!access.ok) throw new UserFacingError(access.error);
+      const { hosteler, hostel } = access;
+
+      const now = new Date();
+      if (
+        hosteler.banned &&
+        (!hosteler.bannedTill || hosteler.bannedTill > now)
+      ) {
+        throw new UserFacingError(
+          `You can't request outpasses until ${hosteler.bannedTill ? format(new Date(hosteler.bannedTill), "dd/MM/yyyy HH:mm") : "the warden lifts the ban"}`
+        );
+      }
+      if (!REASONS.includes(input.reason)) {
+        throw new UserFacingError("Invalid Reason");
+      }
+
+      const open = await OutPassModel.exists({
+        student: hosteler._id,
+        status: { $in: [...OPEN_OUTPASS_STATUSES] },
+      });
+      if (open) throw new UserFacingError(OPEN_PASS_MESSAGE);
+
+      if (
+        input.roomNumber !== hosteler.roomNumber &&
+        input.roomNumber !== "UNKNOWN"
+      ) {
+        await HostelStudentModel.updateOne(
+          { _id: hosteler._id },
+          { roomNumber: input.roomNumber }
+        );
+      }
+
+      // Home and medical passes stay valid four days past the return date; the rest end that day.
+      const returnDate = new Date(input.expectedInTime);
+      const validTill =
+        input.reason === "home" || input.reason === "medical"
+          ? endOfDay(returnDate, 4)
+          : endOfDay(returnDate);
+
+      await OutPassModel.create({
+        student: hosteler._id,
+        hostel: hostel._id,
+        rollNumber: hosteler.rollNumber,
+        roomNumber: input.roomNumber,
+        address: input.address,
+        reason: input.reason,
+        expectedInTime: input.expectedInTime,
+        expectedOutTime: input.expectedOutTime,
+        status: "pending",
+        validTill,
+      });
+
+      return "Outpass Requested Successfully";
+    },
+    { duplicate: OPEN_PASS_MESSAGE }
+  );
 }
 
-export async function getOutPassForHosteler(): Promise<OutPassType[]> {
-  const access = await authorizeResident();
-  if (!access.ok) return Promise.reject(access.error);
-  try {
+export async function getOutPassForHosteler(): Promise<
+  ActionResult<OutPassType[]>
+> {
+  return runAction(SOMETHING_WENT_WRONG, async () => {
+    const access = await authorizeResident();
+    if (!access.ok) throw new UserFacingError(access.error);
     const outPasses = await OutPassModel.find({ student: access.hosteler._id })
       .populate("hostel", HOSTEL_FIELDS)
       .populate("student", STUDENT_FIELDS)
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
-    return serialize(outPasses);
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Something went wrong");
-  }
+    return serialize<OutPassType[]>(outPasses);
+  });
 }
 
 /** Gate staff and campus-wide roles only. */
 export async function getOutPassHistoryByRollNo(
   rollNo: string
-): Promise<OutPassType[]> {
-  const session = await getHostelSession();
-  if (
-    !session?.user ||
-    !(hasRole(session.user, [ROLES_ENUMS.GUARD]) || isCampusWide(session.user))
-  ) {
-    return Promise.reject("Unauthorized");
-  }
-  try {
+): Promise<ActionResult<OutPassType[]>> {
+  return runAction(SOMETHING_WENT_WRONG, async () => {
+    const session = await getHostelSession();
+    if (
+      !session?.user ||
+      !(
+        hasRole(session.user, [ROLES_ENUMS.GUARD]) || isCampusWide(session.user)
+      )
+    ) {
+      throw new UserFacingError("Unauthorized");
+    }
     await dbConnect();
     const roll = rollNo.trim();
     const student = await HostelStudentModel.findOne({
@@ -153,19 +162,18 @@ export async function getOutPassHistoryByRollNo(
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
-    return serialize(outPasses);
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Something went wrong");
-  }
+    return serialize<OutPassType[]>(outPasses);
+  });
 }
 
 /** Visible to the student it belongs to, that hostel's staff, gate staff and campus-wide roles. */
-export async function getOutPassById(id: string): Promise<OutPassType | null> {
-  const session = await getHostelSession();
-  if (!session?.user) return Promise.reject("Unauthorized");
-  if (!mongoose.isValidObjectId(id)) return null;
-  try {
+export async function getOutPassById(
+  id: string
+): Promise<ActionResult<OutPassType | null>> {
+  return runAction(SOMETHING_WENT_WRONG, async () => {
+    const session = await getHostelSession();
+    if (!session?.user) throw new UserFacingError("Unauthorized");
+    if (!isObjectIdString(id)) return null;
     await dbConnect();
     const outPass = await OutPassModel.findById(id)
       .populate("hostel", `${HOSTEL_FIELDS} warden administrators`)
@@ -189,11 +197,8 @@ export async function getOutPassById(id: string): Promise<OutPassType | null> {
     if (!allowed) return null;
 
     const { warden, administrators, ...hostel } = outPass.hostel;
-    return serialize({ ...outPass, hostel });
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Something went wrong");
-  }
+    return serialize<OutPassType>({ ...outPass, hostel });
+  });
 }
 
 const describeGateState = (status?: string) => {
@@ -213,14 +218,14 @@ const describeGateState = (status?: string) => {
 export async function allowEntryExit(
   id: string,
   action_type: "entry" | "exit"
-): Promise<string> {
-  const access = await authorizeGate();
-  if (!access.ok) return Promise.reject(access.error);
-  if (!mongoose.isValidObjectId(id)) return Promise.reject("Outpass not found");
-  if (action_type !== "entry" && action_type !== "exit") {
-    return Promise.reject("Invalid action type provided.");
-  }
-  try {
+): Promise<ActionResult<string>> {
+  return runAction("Couldn't update the outpass. Try again.", async () => {
+    const access = await authorizeGate();
+    if (!access.ok) throw new UserFacingError(access.error);
+    if (!isObjectIdString(id)) throw new UserFacingError("Outpass not found");
+    if (action_type !== "entry" && action_type !== "exit") {
+      throw new UserFacingError("Invalid action type provided.");
+    }
     await dbConnect();
     const now = new Date();
     const loggedBy = access.session.user.id;
@@ -247,12 +252,12 @@ export async function allowEntryExit(
       const current = await OutPassModel.findById(id)
         .select("status expectedInTime")
         .lean<{ status: string; expectedInTime: Date }>();
-      if (!current) return Promise.reject("Outpass not found");
+      if (!current) throw new UserFacingError("Outpass not found");
       if (current.status === "in_use") return "Exit was already logged.";
       if (current.status === "approved") {
-        return Promise.reject("This outpass has expired.");
+        throw new UserFacingError("This outpass has expired.");
       }
-      return Promise.reject(describeGateState(current.status));
+      throw new UserFacingError(describeGateState(current.status));
     }
 
     const updated = await OutPassModel.findOneAndUpdate(
@@ -271,16 +276,13 @@ export async function allowEntryExit(
     const current = await OutPassModel.findById(id)
       .select("status")
       .lean<{ status: string }>();
-    if (!current) return Promise.reject("Outpass not found");
+    if (!current) throw new UserFacingError("Outpass not found");
     if (current.status === "processed") return "Return was already logged.";
     if (current.status === "approved") {
-      return Promise.reject("Log the exit before the return.");
+      throw new UserFacingError("Log the exit before the return.");
     }
-    return Promise.reject(describeGateState(current.status));
-  } catch (err) {
-    console.error("Entry/Exit Error:", err);
-    return Promise.reject("Couldn't update the outpass. Try again.");
-  }
+    throw new UserFacingError(describeGateState(current.status));
+  });
 }
 
 /** Hostel staff decide once while pending; a repeat is a no-op, the opposite is refused. */
@@ -288,24 +290,24 @@ export async function approveRejectOutPass(
   id: string,
   action: "approve" | "reject",
   reason?: string
-): Promise<string> {
-  if (!mongoose.isValidObjectId(id)) return Promise.reject("Outpass not found");
+): Promise<ActionResult<string>> {
+  if (!isObjectIdString(id)) return fail("Outpass not found");
   if (action !== "approve" && action !== "reject") {
-    return Promise.reject("Invalid action type");
+    return fail("Invalid action type");
   }
   const rejectionReason = reason?.trim().slice(0, 500) ?? "";
   if (action === "reject" && rejectionReason.length < 3) {
-    return Promise.reject("Add a reason so the student knows what to fix");
+    return fail("Add a reason so the student knows what to fix");
   }
-  try {
+  return runAction("Couldn't update the request. Try again.", async () => {
     await dbConnect();
     const target = await OutPassModel.findById(id)
       .select("hostel status")
       .lean<{ hostel: mongoose.Types.ObjectId; status: string }>();
-    if (!target) return Promise.reject("Outpass not found");
+    if (!target) throw new UserFacingError("Outpass not found");
 
     const access = await authorizeHostelManager(target.hostel.toString(), "id");
-    if (!access.ok) return Promise.reject(access.error);
+    if (!access.ok) throw new UserFacingError(access.error);
 
     const nextStatus = action === "approve" ? "approved" : "rejected";
     const updated = await OutPassModel.findOneAndUpdate(
@@ -334,13 +336,10 @@ export async function approveRejectOutPass(
         ? "Outpass was already approved"
         : "Outpass was already rejected";
     }
-    return Promise.reject(
+    throw new UserFacingError(
       `Someone already ${current?.status === "rejected" ? "rejected" : "approved"} this request`
     );
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Couldn't update the request. Try again.");
-  }
+  });
 }
 
 export type OutpassQueueItem = {
@@ -360,24 +359,12 @@ export type OutpassStatusCounts = Record<OutPassType["status"], number>;
 export async function getOutpassQueue(
   slug: string,
   limit = 50
-): Promise<{
-  success: boolean;
-  pending: OutpassQueueItem[];
-  counts: OutpassStatusCounts;
-  error?: string;
-}> {
-  const empty: OutpassStatusCounts = {
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    in_use: 0,
-    processed: 0,
-  };
-  const access = await authorizeHostelManager(slug);
-  if (!access.ok) {
-    return { success: false, pending: [], counts: empty, error: access.error };
-  }
-  try {
+): Promise<
+  ActionResult<{ pending: OutpassQueueItem[]; counts: OutpassStatusCounts }>
+> {
+  return runAction("Failed to load requests", async () => {
+    const access = await authorizeHostelManager(slug);
+    if (!access.ok) throw new UserFacingError(access.error);
     const hostelId = access.hostel._id;
     const [pending, grouped] = await Promise.all([
       OutPassModel.find({ hostel: hostelId, status: "pending" })
@@ -393,20 +380,18 @@ export async function getOutpassQueue(
         { $group: { _id: "$status", count: { $sum: 1 } } },
       ]),
     ]);
-    const counts = { ...empty };
+    const counts: OutpassStatusCounts = {
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      in_use: 0,
+      processed: 0,
+    };
     for (const g of grouped) {
       if (g._id in counts) counts[g._id] = g.count;
     }
-    return { success: true, pending: serialize(pending), counts };
-  } catch (err) {
-    console.error("getOutpassQueue failed", err);
-    return {
-      success: false,
-      pending: [],
-      counts: empty,
-      error: "Failed to load requests",
-    };
-  }
+    return { pending: serialize<OutpassQueueItem[]>(pending), counts };
+  });
 }
 
 export type OutpassLogRow = {
@@ -440,14 +425,10 @@ export async function getOutPassHistoryForHostel({
   page?: number;
   limit?: number;
   sortBy?: "asc" | "desc";
-}): Promise<{
-  data: OutpassLogRow[];
-  total: number;
-  error: string | null;
-}> {
-  const access = await authorizeHostelManager(slug);
-  if (!access.ok) return { data: [], total: 0, error: access.error };
-  try {
+}): Promise<ActionResult<{ rows: OutpassLogRow[]; total: number }>> {
+  return runAction("Failed to load outpass logs", async () => {
+    const access = await authorizeHostelManager(slug);
+    if (!access.ok) throw new UserFacingError(access.error);
     const hostelId = access.hostel._id;
     const filter: Record<string, unknown> = { hostel: hostelId };
     if (status && status !== "all") filter.status = status;
@@ -479,32 +460,27 @@ export async function getOutPassHistoryForHostel({
         .lean(),
       OutPassModel.countDocuments(filter),
     ]);
-    return { data: serialize(rows), total, error: null };
-  } catch (err) {
-    console.error(err);
-    return { data: [], total: 0, error: "Failed to load outpass logs" };
-  }
+    return { rows: serialize<OutpassLogRow[]>(rows), total };
+  });
 }
+
+type HostelerProfile = {
+  _id: string;
+  name: string;
+  rollNumber: string;
+  email: string;
+  roomNumber: string;
+};
 
 /** One resident's outpasses, for staff of the hostel that resident belongs to. */
 export async function getOutPassByIdForHosteler(
   studentId: string,
   slug?: string
-): Promise<{
-  data: OutPassType[] | null;
-  student: {
-    _id: string;
-    name: string;
-    rollNumber: string;
-    email: string;
-    roomNumber: string;
-  } | null;
-  error: string | null;
-}> {
-  if (!mongoose.isValidObjectId(studentId)) {
-    return { data: null, student: null, error: "Student not found" };
-  }
-  try {
+): Promise<
+  ActionResult<{ outpasses: OutPassType[]; student: HostelerProfile }>
+> {
+  if (!isObjectIdString(studentId)) return fail("Student not found");
+  return runAction(SOMETHING_WENT_WRONG, async () => {
     await dbConnect();
     const student = await HostelStudentModel.findById(studentId)
       .select("_id name rollNumber email roomNumber hostelId")
@@ -516,19 +492,14 @@ export async function getOutPassByIdForHosteler(
         roomNumber: string;
         hostelId: mongoose.Types.ObjectId | null;
       }>();
-    if (!student?.hostelId) {
-      return { data: null, student: null, error: "Student not found" };
-    }
+    if (!student?.hostelId) throw new UserFacingError("Student not found");
     const access = await authorizeHostelManager(
       student.hostelId.toString(),
       "id"
     );
-    if (!access.ok || (slug && access.hostel.slug !== slug)) {
-      return {
-        data: null,
-        student: null,
-        error: access.ok ? "Student not found" : access.error,
-      };
+    if (!access.ok) throw new UserFacingError(access.error);
+    if (slug && access.hostel.slug !== slug) {
+      throw new UserFacingError("Student not found");
     }
 
     const outPasses = await OutPassModel.find({ student: student._id })
@@ -540,12 +511,8 @@ export async function getOutPassByIdForHosteler(
 
     const { hostelId, ...profile } = student;
     return {
-      data: serialize(outPasses),
-      student: serialize(profile),
-      error: null,
+      outpasses: serialize<OutPassType[]>(outPasses),
+      student: serialize<HostelerProfile>(profile),
     };
-  } catch (err) {
-    console.error(err);
-    return { data: null, student: null, error: "Something went wrong" };
-  }
+  });
 }

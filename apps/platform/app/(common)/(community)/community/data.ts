@@ -1,7 +1,7 @@
 import { commentsPageId } from "@/components/application/community/utils";
 import { count, inArray } from "drizzle-orm";
-import mongoose from "mongoose";
 import { db } from "~/db/connect";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import { comments } from "~/db/schema";
 import dbConnect from "~/lib/dbConnect";
 import CommunityPost from "~/models/community";
@@ -29,7 +29,7 @@ export async function getCommentCounts(
 }
 
 export async function recordPostView(postId: string) {
-  if (!mongoose.isObjectIdOrHexString(postId)) return;
+  if (!isObjectIdString(postId)) return;
   try {
     await dbConnect();
     await CommunityPost.updateOne(

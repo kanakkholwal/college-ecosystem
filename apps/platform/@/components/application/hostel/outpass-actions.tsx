@@ -8,6 +8,7 @@ import { ControlledResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { approveRejectOutPass } from "~/actions/hostel.outpass";
+import { callAction } from "~/lib/call-action";
 
 interface OutpassActionFooterProps {
   className?: string;
@@ -37,20 +38,21 @@ export function OutpassActionFooter({
 
   const decide = async (action: "approve" | "reject") => {
     setBusy(action);
-    try {
-      const message = await approveRejectOutPass(
+    const res = await callAction(() =>
+      approveRejectOutPass(
         outpassId,
         action,
         action === "reject" ? reason : undefined
-      );
-      toast.success(message);
-      setRejectOpen(false);
-      onDone?.(action === "approve" ? "approved" : "rejected");
-    } catch (error) {
-      toast.error(typeof error === "string" ? error : "Couldn't save that");
-    } finally {
-      setBusy(null);
+      )
+    );
+    setBusy(null);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
     }
+    toast.success(res.data);
+    setRejectOpen(false);
+    onDone?.(action === "approve" ? "approved" : "rejected");
   };
 
   const who = studentName ? ` for ${studentName}` : "";

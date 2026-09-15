@@ -1,16 +1,23 @@
 "use server";
 
 import { format } from "date-fns";
-import mongoose from "mongoose";
+import type mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { genderSchema, ROLES_ENUMS } from "~/constants";
+import { ROLES_ENUMS } from "~/constants";
 import { isValidRollNumber } from "~/constants/core.departments";
 import {
   createHostelSchema,
+  isObjectIdString,
   toHostelId,
   updateHostelAbleStudentSchema,
 } from "~/constants/hostel_n_outpass";
+import {
+  type ActionResult,
+  fail,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
 import dbConnect from "~/lib/dbConnect";
 import {
   authorizeHostelManager,
@@ -31,106 +38,100 @@ import {
 } from "~/models/hostel_n_outpass";
 import ResultModel from "~/models/result";
 import { orgConfig } from "~/project.config";
+import { serialize } from "~/utils/serialize";
 
-const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
+// dashboard.admin.ts matches this text to skip users without a hostel record.
+const HOSTEL_STUDENT_NOT_FOUND = "Hostel student not found";
+const HOSTEL_NOT_FOUND = "Hostel not found";
+const ROW_LIMIT_MESSAGE = "Upload between 1 and 2000 rows";
 
 async function requireCampusWide() {
   const session = await getHostelSession();
   if (!session?.user || !isCampusWide(session.user)) {
-    throw new Error("Only admins and the chief warden can do this");
+    throw new UserFacingError("Only admins and the chief warden can do this");
   }
   return session;
 }
 
-export async function createHostel(data: z.infer<typeof createHostelSchema>) {
-  try {
-    await requireCampusWide();
-    const response = createHostelSchema.safeParse(data);
-    if (!response.success) {
-      return { error: response.error };
-    }
-    await dbConnect();
-    await HostelModel.create(response.data);
-    revalidatePath("/[moderator]/hostels", "page");
-    return { success: true };
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : String(err) };
-  }
+export async function createHostel(
+  data: z.infer<typeof createHostelSchema>
+): Promise<ActionResult<null>> {
+  return runAction(
+    "Couldn't add the hostel",
+    async () => {
+      await requireCampusWide();
+      const response = createHostelSchema.safeParse(data);
+      if (!response.success) {
+        throw new UserFacingError(
+          response.error.issues[0]?.message ?? "Check the hostel details"
+        );
+      }
+      await dbConnect();
+      await HostelModel.create(response.data);
+      revalidatePath("/[moderator]/hostels", "page");
+      return null;
+    },
+    { duplicate: "A hostel with this slug already exists" }
+  );
 }
 
 // dashboard.admin.ts calls this after its own admin check; the guard keeps the endpoint closed.
 export async function updateHostelStudent(
   email: string,
   data: z.infer<typeof updateHostelAbleStudentSchema>
-): Promise<string> {
-  const session = await getHostelSession();
-  if (
-    !session?.user ||
-    !hasRole(session.user, [
-      ROLES_ENUMS.ADMIN,
-      "moderator",
-      ROLES_ENUMS.CHIEF_WARDEN,
-    ])
-  ) {
-    return Promise.reject("Unauthorized");
-  }
-  try {
+): Promise<ActionResult<string>> {
+  return runAction("Couldn't update the hostel student", async () => {
+    const session = await getHostelSession();
+    if (
+      !session?.user ||
+      !hasRole(session.user, [
+        ROLES_ENUMS.ADMIN,
+        ROLES_ENUMS.MODERATOR,
+        ROLES_ENUMS.CHIEF_WARDEN,
+      ])
+    ) {
+      throw new UserFacingError("Unauthorized");
+    }
     const response = updateHostelAbleStudentSchema.safeParse(data);
     if (!response.success) {
-      return Promise.reject("Invalid schema has passed");
+      throw new UserFacingError("Invalid schema has passed");
     }
     await dbConnect();
     const hostelStudent = await HostelStudentModel.findOne({ email });
-    if (!hostelStudent) {
-      return Promise.reject("Hostel student not found");
-    }
+    if (!hostelStudent) throw new UserFacingError(HOSTEL_STUDENT_NOT_FOUND);
     Object.assign(hostelStudent, response.data);
     await hostelStudent.save();
     return "Hostel student updated successfully";
-  } catch (err) {
-    return Promise.reject(err?.toString());
-  }
+  });
 }
 
-export async function getHostel(slug: string): Promise<{
-  success: boolean;
-  hostel: (HostelType & { students: { count: number } }) | null;
-  error?: object;
-}> {
-  try {
+export async function getHostel(
+  slug: string
+): Promise<ActionResult<HostelType & { students: { count: number } }>> {
+  return runAction("Failed to fetch hostel", async () => {
     await dbConnect();
     const hostel = await HostelModel.findOne({ slug }).lean<HostelType>();
-    if (!hostel) return { success: false, hostel: null };
+    if (!hostel) throw new UserFacingError(HOSTEL_NOT_FOUND);
     const count = await HostelStudentModel.countDocuments({
       hostelId: hostel._id,
     });
-    return {
-      success: true,
-      hostel: serialize({ ...hostel, students: { count } }),
-    };
-  } catch (err) {
-    console.error("getHostel failed", err);
-    return { success: false, hostel: null };
-  }
+    return serialize<HostelType & { students: { count: number } }>({
+      ...hostel,
+      students: { count },
+    });
+  });
 }
 
-export async function getHostelById(id: string): Promise<{
-  success: boolean;
-  hostel: HostelType | null;
-  error?: object | null;
-}> {
-  try {
-    if (!mongoose.isValidObjectId(id)) {
-      return { success: false, hostel: null, error: null };
-    }
+export async function getHostelById(
+  id: string
+): Promise<ActionResult<HostelType>> {
+  if (!isObjectIdString(id)) return fail(HOSTEL_NOT_FOUND);
+  return runAction("Failed to fetch hostel", async () => {
     await dbConnect();
     const hostel = await HostelModel.findById(id).lean();
-    if (!hostel) return { success: false, hostel: null, error: null };
-    return { success: true, hostel: serialize(hostel), error: null };
-  } catch (err) {
-    console.error("getHostelById failed", err);
-    return { success: false, hostel: null, error: null };
-  }
+    if (!hostel) throw new UserFacingError(HOSTEL_NOT_FOUND);
+    return serialize<HostelType>(hostel);
+  });
 }
 
 interface getHostelByUserType {
@@ -196,10 +197,10 @@ export async function getHostelByUser(
 
     const hosteler = await findHostelerByEmail(user.email);
     const hostelRef = hosteler?.hostelId;
-    if (!hosteler || !hostelRef) return denied("Hostel not found");
+    if (!hosteler || !hostelRef) return denied(HOSTEL_NOT_FOUND);
     const hostel = await HostelModel.findById(hostelRef._id).lean();
     if (!hostel || (slug && hostelRef.slug !== slug)) {
-      return denied("Hostel not found");
+      return denied(HOSTEL_NOT_FOUND);
     }
     if (hosteler.banned) {
       return {
@@ -219,7 +220,7 @@ export async function getHostelByUser(
     };
   } catch (err) {
     console.error("Failed to fetch hostel", err);
-    return Promise.reject("Failed to fetch hostel");
+    throw new Error("Failed to fetch hostel");
   }
 }
 
@@ -289,40 +290,29 @@ export async function getHostelForStudent(
     };
   } catch (err) {
     console.error("Failed to fetch hostel", err);
-    return Promise.reject("Failed to fetch hostel");
+    throw new Error("Failed to fetch hostel");
   }
 }
 
-export async function getHostels(): Promise<{
-  success: boolean;
-  data: HostelType[];
-}> {
-  try {
+export async function getHostels(): Promise<ActionResult<HostelType[]>> {
+  return runAction("Failed to load hostels", async () => {
     await dbConnect();
     const hostels = await HostelModel.find({}).sort({ name: 1 }).lean();
-    return { success: true, data: serialize(hostels) };
-  } catch {
-    return { success: false, data: [] };
-  }
+    return serialize<HostelType[]>(hostels);
+  });
 }
 
-export async function getHostelsStats(): Promise<{
-  success: boolean;
-  data: { hostels: HostelType[]; totalStudents: number };
-}> {
-  try {
+export async function getHostelsStats(): Promise<
+  ActionResult<{ hostels: HostelType[]; totalStudents: number }>
+> {
+  return runAction("Failed to load hostels", async () => {
     await dbConnect();
     const [hostels, totalStudents] = await Promise.all([
       HostelModel.find({}).sort({ name: 1 }).lean(),
       HostelStudentModel.countDocuments({ hostelId: { $ne: null } }),
     ]);
-    return {
-      success: true,
-      data: { hostels: serialize(hostels), totalStudents },
-    };
-  } catch {
-    return { success: false, data: { hostels: [], totalStudents: 0 } };
-  }
+    return { hostels: serialize<HostelType[]>(hostels), totalStudents };
+  });
 }
 
 type SiteHostel = Pick<
@@ -330,41 +320,38 @@ type SiteHostel = Pick<
   "name" | "slug" | "gender" | "warden" | "administrators"
 >;
 
-export async function importHostelsFromSite() {
+export async function importHostelsFromSite(): Promise<ActionResult<string>> {
   try {
-    await requireCampusWide();
-    const res = await serverApis.hostels.getAll(undefined);
-    if (res?.error) {
-      return Promise.reject(
-        res?.message || "Some error occurred while fetching hostels"
-      );
-    }
-    const incoming = (res?.data?.hostels ?? []) as unknown as SiteHostel[];
-    await dbConnect();
-    const existing = await HostelModel.find({
-      slug: { $in: incoming.map((h) => h.slug) },
-    })
-      .select("slug")
-      .lean<{ slug: string }[]>();
-    const taken = new Set(existing.map((h) => h.slug));
-    const fresh = incoming
-      .filter((h) => !taken.has(h.slug))
-      .map(({ name, slug, gender, warden, administrators }) => ({
-        name,
-        slug,
-        gender,
-        warden,
-        administrators,
-      }));
-    if (fresh.length) await HostelModel.insertMany(fresh);
-    return fresh.length === 0
-      ? "All hostels on the college site are already imported"
-      : `${fresh.length} hostels imported`;
-  } catch (err) {
-    console.error("Failed to import hostels", err);
-    return Promise.reject(
-      err instanceof Error ? err.message : "Failed to import hostels"
-    );
+    return await runAction("Failed to import hostels", async () => {
+      await requireCampusWide();
+      const res = await serverApis.hostels.getAll(undefined);
+      if (res?.error) {
+        throw new UserFacingError(
+          res?.message || "Some error occurred while fetching hostels"
+        );
+      }
+      const incoming = (res?.data?.hostels ?? []) as unknown as SiteHostel[];
+      await dbConnect();
+      const existing = await HostelModel.find({
+        slug: { $in: incoming.map((h) => h.slug) },
+      })
+        .select("slug")
+        .lean<{ slug: string }[]>();
+      const taken = new Set(existing.map((h) => h.slug));
+      const fresh = incoming
+        .filter((h) => !taken.has(h.slug))
+        .map(({ name, slug, gender, warden, administrators }) => ({
+          name,
+          slug,
+          gender,
+          warden,
+          administrators,
+        }));
+      if (fresh.length) await HostelModel.insertMany(fresh);
+      return fresh.length === 0
+        ? "All hostels on the college site are already imported"
+        : `${fresh.length} hostels imported`;
+    });
   } finally {
     revalidatePath("/[moderator]/hostels", "page");
   }
@@ -380,14 +367,12 @@ export type HostelOverviewStats = {
   occupiedBeds: number;
 };
 
-export async function getHostelOverview(slug: string): Promise<{
-  success: boolean;
-  data: HostelOverviewStats | null;
-  error?: string;
-}> {
-  const access = await authorizeHostelManager(slug);
-  if (!access.ok) return { success: false, data: null, error: access.error };
-  try {
+export async function getHostelOverview(
+  slug: string
+): Promise<ActionResult<HostelOverviewStats>> {
+  return runAction("Failed to load numbers", async () => {
+    const access = await authorizeHostelManager(slug);
+    if (!access.ok) throw new UserFacingError(access.error);
     const hostelId = access.hostel._id;
     const [pendingOutpasses, outNow, residents, banned, rooms] =
       await Promise.all([
@@ -412,21 +397,15 @@ export async function getHostelOverview(slug: string): Promise<{
         ]),
       ]);
     return {
-      success: true,
-      data: {
-        pendingOutpasses,
-        outNow,
-        residents,
-        banned,
-        rooms: rooms[0]?.rooms ?? 0,
-        beds: rooms[0]?.beds ?? 0,
-        occupiedBeds: rooms[0]?.occupiedBeds ?? 0,
-      },
+      pendingOutpasses,
+      outNow,
+      residents,
+      banned,
+      rooms: rooms[0]?.rooms ?? 0,
+      beds: rooms[0]?.beds ?? 0,
+      occupiedBeds: rooms[0]?.occupiedBeds ?? 0,
     };
-  } catch (err) {
-    console.error("getHostelOverview failed", err);
-    return { success: false, data: null, error: "Failed to load numbers" };
-  }
+  });
 }
 
 // --- Residents ---
@@ -442,49 +421,38 @@ export type HostelResident = {
   bannedTill: string | null;
 };
 
-export async function getHostelResidents(slug: string): Promise<{
-  success: boolean;
-  data: HostelResident[];
-  error?: string;
-}> {
-  const access = await authorizeHostelManager(slug);
-  if (!access.ok) return { success: false, data: [], error: access.error };
-  try {
+export async function getHostelResidents(
+  slug: string
+): Promise<ActionResult<HostelResident[]>> {
+  return runAction("Failed to load residents", async () => {
+    const access = await authorizeHostelManager(slug);
+    if (!access.ok) throw new UserFacingError(access.error);
     const residents = await HostelStudentModel.find({
       hostelId: access.hostel._id,
     })
       .select("name rollNumber email roomNumber cgpi banned bannedTill")
       .sort({ rollNumber: 1 })
       .lean();
-    return {
-      success: true,
-      data: serialize<HostelResident[]>(residents).map((r) => ({
-        ...r,
-        cgpi: typeof r.cgpi === "number" && r.cgpi > 0 ? r.cgpi : null,
-        bannedTill: r.bannedTill ?? null,
-      })),
-    };
-  } catch (err) {
-    console.error("getHostelResidents failed", err);
-    return { success: false, data: [], error: "Failed to load residents" };
-  }
+    return serialize<HostelResident[]>(residents).map((r) => ({
+      ...r,
+      cgpi: typeof r.cgpi === "number" && r.cgpi > 0 ? r.cgpi : null,
+      bannedTill: r.bannedTill ?? null,
+    }));
+  });
 }
 
 export async function getStudentsByHostelId(
   hostelId: string
-): Promise<HostelStudentJson[]> {
-  const access = await authorizeHostelManager(hostelId, "id");
-  if (!access.ok) return Promise.reject(access.error);
-  try {
+): Promise<ActionResult<HostelStudentJson[]>> {
+  return runAction("Failed to fetch students", async () => {
+    const access = await authorizeHostelManager(hostelId, "id");
+    if (!access.ok) throw new UserFacingError(access.error);
     const students = await HostelStudentModel.find({ hostelId })
       .select("-__v")
       .sort({ cgpi: -1, createdAt: 1 })
       .lean();
-    return serialize(students);
-  } catch (err) {
-    console.error("Failed to fetch students", err);
-    return Promise.reject("Failed to fetch students");
-  }
+    return serialize<HostelStudentJson[]>(students);
+  });
 }
 
 const importRowSchema = z.object({
@@ -582,57 +550,36 @@ async function planResidentImport(
 export async function previewResidentImport(
   slug: string,
   rows: ResidentImportRow[]
-): Promise<{
-  success: boolean;
-  rows: ResidentImportRowResult[];
-  error?: string;
-}> {
-  const access = await authorizeHostelManager(slug);
-  if (!access.ok) return { success: false, rows: [], error: access.error };
-  if (!Array.isArray(rows) || rows.length === 0 || rows.length > 2000) {
-    return {
-      success: false,
-      rows: [],
-      error: "Upload between 1 and 2000 rows",
-    };
-  }
-  try {
+): Promise<ActionResult<ResidentImportRowResult[]>> {
+  return runAction("Couldn't check the file", async () => {
+    const access = await authorizeHostelManager(slug);
+    if (!access.ok) throw new UserFacingError(access.error);
+    if (!Array.isArray(rows) || rows.length === 0 || rows.length > 2000) {
+      throw new UserFacingError(ROW_LIMIT_MESSAGE);
+    }
     const plan = await planResidentImport(access.hostel._id, rows);
-    return { success: true, rows: plan.map(({ dbRoll, ...row }) => row) };
-  } catch (err) {
-    console.error("previewResidentImport failed", err);
-    return { success: false, rows: [], error: "Couldn't check the file" };
-  }
+    return plan.map(({ dbRoll, ...row }) => row);
+  });
 }
 
 export async function importResidents(
   slug: string,
   rows: ResidentImportRow[]
-): Promise<{
-  success: boolean;
-  written: number;
-  failed: ResidentImportRowResult[];
-  error?: string;
-}> {
-  const access = await authorizeHostelManager(slug);
-  if (!access.ok) {
-    return { success: false, written: 0, failed: [], error: access.error };
-  }
-  if (!Array.isArray(rows) || rows.length === 0 || rows.length > 2000) {
-    return {
-      success: false,
-      written: 0,
-      failed: [],
-      error: "Upload between 1 and 2000 rows",
-    };
-  }
-  const { hostel } = access;
-  const gender =
-    hostel.gender === "male" || hostel.gender === "female"
-      ? hostel.gender
-      : "not_specified";
+): Promise<
+  ActionResult<{ written: number; failed: ResidentImportRowResult[] }>
+> {
+  return runAction("Import failed. Nothing was saved.", async () => {
+    const access = await authorizeHostelManager(slug);
+    if (!access.ok) throw new UserFacingError(access.error);
+    if (!Array.isArray(rows) || rows.length === 0 || rows.length > 2000) {
+      throw new UserFacingError(ROW_LIMIT_MESSAGE);
+    }
+    const { hostel } = access;
+    const gender =
+      hostel.gender === "male" || hostel.gender === "female"
+        ? hostel.gender
+        : "not_specified";
 
-  try {
     const plan = await planResidentImport(hostel._id, rows);
     const writable = plan.filter((r) =>
       ["new", "update", "move"].includes(r.status)
@@ -706,19 +653,10 @@ export async function importResidents(
 
     revalidatePath("/[moderator]/h/[slug]/students", "page");
     return {
-      success: true,
       written,
       failed: failed
         .map(({ dbRoll, ...row }) => row)
         .sort((a, b) => a.row - b.row),
     };
-  } catch (err) {
-    console.error("importResidents failed", err);
-    return {
-      success: false,
-      written: 0,
-      failed: [],
-      error: "Import failed. Nothing was saved.",
-    };
-  }
+  });
 }

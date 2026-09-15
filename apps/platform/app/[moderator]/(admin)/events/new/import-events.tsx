@@ -15,6 +15,7 @@ import {
   rawEventsSchema,
   type rawEventsSchemaType,
 } from "~/constants/common.events";
+import { callAction } from "~/lib/call-action";
 
 const dayLabel = new Intl.DateTimeFormat("en-IN", {
   timeZone: "UTC",
@@ -92,21 +93,15 @@ export function ImportEvents() {
     startSaving(async () => {
       if (!events) return;
       const chosen = events.filter((_, index) => selected.has(index));
-      try {
-        await saveNewEvents(chosen);
-        toast.success(
-          chosen.length === 1
-            ? "1 event added"
-            : `${chosen.length} events added`
-        );
-        router.push("/admin/events");
-      } catch (err) {
-        setError(
-          typeof err === "string" && err
-            ? err
-            : "The events couldn't be saved. Try again."
-        );
+      const res = await callAction(() => saveNewEvents(chosen));
+      if (!res.ok) {
+        setError(res.error);
+        return;
       }
+      toast.success(
+        chosen.length === 1 ? "1 event added" : `${chosen.length} events added`
+      );
+      router.push("/admin/events");
     });
 
   const toggle = (index: number, checked: boolean) =>

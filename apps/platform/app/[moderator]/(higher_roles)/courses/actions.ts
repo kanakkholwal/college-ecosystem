@@ -1,5 +1,6 @@
 "use server";
 
+import { ROLES_ENUMS } from "~/constants";
 import { and, eq, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession } from "~/auth/server";
@@ -185,7 +186,7 @@ export async function saveCourse(
 /** Saves several extracted courses; each one succeeds or fails on its own. */
 export async function importCourses(items: CourseFormValues[]) {
   const session = await getSession();
-  if (session?.user.role !== "admin") {
+  if (session?.user.role !== ROLES_ENUMS.ADMIN) {
     return { saved: [], failed: items.map((i) => i.code) };
   }
   const results = await Promise.all(items.map((item) => saveCourse(item)));

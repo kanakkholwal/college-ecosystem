@@ -16,6 +16,7 @@ import {
   type AllotmentStatus,
   ALLOTMENT_STATUS_COPY as STATUS_COPY,
 } from "~/constants/hostel.allotment-process";
+import { callAction } from "~/lib/call-action";
 
 export function ProcessControl({
   hostelId,
@@ -31,27 +32,19 @@ export function ProcessControl({
   const confirm = async () => {
     if (!target) return;
     setBusy(true);
-    try {
-      const res = await updateAllotmentProcess(hostelId, {
-        status: target,
-        hostelId,
-      });
-      if (res.error) toast.error(res.message);
-      else {
-        toast.success(
-          `Room selection is now ${STATUS_COPY[target].label.toLowerCase()}`
-        );
-        setTarget(null);
-        router.refresh();
-      }
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(false);
+    const res = await callAction(() =>
+      updateAllotmentProcess(hostelId, { status: target, hostelId })
+    );
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
     }
+    toast.success(
+      `Room selection is now ${STATUS_COPY[target].label.toLowerCase()}`
+    );
+    setTarget(null);
+    router.refresh();
   };
 
   return (
@@ -124,22 +117,15 @@ export function SlotActions({
 
   const generate = async () => {
     setBusy("generate");
-    try {
-      const res = await distributeSlots(hostelId);
-      if (res.error) toast.error(res.message);
-      else {
-        toast.success(res.message);
-        setConfirming(false);
-        router.refresh();
-      }
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(null);
+    const res = await callAction(() => distributeSlots(hostelId));
+    setBusy(null);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
     }
+    toast.success(res.data.message);
+    setConfirming(false);
+    router.refresh();
   };
 
   const download = async () => {

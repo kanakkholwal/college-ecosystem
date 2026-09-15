@@ -2,7 +2,8 @@ import Page403 from "@/components/utils/403";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "~/auth";
-import { ALLOWED_ROLES } from "~/constants";
+import { isAdminLike } from "~/auth/guards";
+import { ALLOWED_ROLES, ROLES_ENUMS } from "~/constants";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -16,19 +17,14 @@ export default async function DashboardLayout({
   params,
 }: DashboardLayoutProps) {
   const { moderator } = await params;
-  if (moderator !== "admin") {
+  if (moderator !== ROLES_ENUMS.ADMIN) {
     return notFound();
   }
   const headersList = await headers();
   const session = await auth.api.getSession({
     headers: headersList,
   });
-  if (
-    session &&
-    moderator === "admin" &&
-    session.user.role !== "admin" &&
-    session.user.role !== "moderator"
-  ) {
+  if (session && !isAdminLike(session.user)) {
     console.log("403 from layout: admin");
     return <Page403 />;
   }

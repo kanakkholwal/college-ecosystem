@@ -30,6 +30,7 @@ import {
   updateBooksAndRefPublic,
   updatePrevPapersPublic,
 } from "~/actions/common.course";
+import { callAction } from "~/lib/call-action";
 
 const YEAR_COUNT = 10;
 const yearOptions = Array.from({ length: YEAR_COUNT }, (_, i) =>
@@ -74,25 +75,22 @@ export function AddPrevModal({ code, courseId }: ModalProps) {
   });
 
   const onSubmit = async (data: z.infer<typeof paperSchema>) => {
-    try {
-      await toast.promise(
-        updatePrevPapersPublic(courseId, {
-          exam: data.exam,
-          link: data.link,
-          year: Number(data.year),
-        }),
-        {
-          loading: "Adding paper",
-          success: "Paper added",
-          error: "Couldn't add the paper",
-        }
-      );
-      form.reset();
-      setOpen(false);
-      router.refresh();
-    } catch {
-      // toast.promise already reported the failure
+    const toastId = toast.loading("Adding paper");
+    const res = await callAction(() =>
+      updatePrevPapersPublic(courseId, {
+        exam: data.exam,
+        link: data.link,
+        year: Number(data.year),
+      })
+    );
+    if (!res.ok) {
+      toast.error(res.error, { id: toastId });
+      return;
     }
+    toast.success("Paper added", { id: toastId });
+    form.reset();
+    setOpen(false);
+    router.refresh();
   };
 
   return (
@@ -206,18 +204,16 @@ export function AddRefsModal({ code, courseId }: ModalProps) {
   });
 
   const onSubmit = async (data: z.infer<typeof refSchema>) => {
-    try {
-      await toast.promise(updateBooksAndRefPublic(courseId, data), {
-        loading: "Adding resource",
-        success: "Resource added",
-        error: "Couldn't add the resource",
-      });
-      form.reset();
-      setOpen(false);
-      router.refresh();
-    } catch {
-      // toast.promise already reported the failure
+    const toastId = toast.loading("Adding resource");
+    const res = await callAction(() => updateBooksAndRefPublic(courseId, data));
+    if (!res.ok) {
+      toast.error(res.error, { id: toastId });
+      return;
     }
+    toast.success("Resource added", { id: toastId });
+    form.reset();
+    setOpen(false);
+    router.refresh();
   };
 
   return (

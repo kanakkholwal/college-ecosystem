@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { allowEntryExit } from "~/actions/hostel.outpass";
-import { apiFetch } from "~/lib/fetch-client";
+import { callAction } from "~/lib/call-action";
 import type { OutPassType } from "~/models/hostel_n_outpass";
 
 type ResponseType =
@@ -81,16 +81,19 @@ export default function OutpassVerifier() {
     setCurrent(null);
     setHistory([]);
     try {
-      const response = await apiFetch<ResponseType>(
-        `/api/outpass/status?identifier=${encodeURIComponent(value)}`
+      // Same-origin route; the gate staff session cookie authorizes it.
+      const response = await fetch(
+        `/api/outpass/status?identifier=${encodeURIComponent(value)}`,
+        { cache: "no-store" }
       );
-      const data = response.data;
-      if (response.error || !data) {
+      const data = (await response
+        .json()
+        .catch(() => null)) as ResponseType | null;
+      if (!response.ok || !data) {
         setError(
-          response.error?.message || "Couldn't look that up. Try again."
+          (data && "message" in data && data.message) ||
+            "Couldn't look that up. Try again."
         );
-        setCurrent(null);
-        setHistory([]);
         return;
       }
       if (data.identifier === "rollNo") {
@@ -123,18 +126,11 @@ export default function OutpassVerifier() {
   const log = async (kind: "exit" | "entry") => {
     if (!current) return;
     setUpdating(true);
-    try {
-      const message = await allowEntryExit(current._id, kind);
-      toast.success(message);
-      await search(term || current._id);
-    } catch (err) {
-      toast.error(
-        typeof err === "string" ? err : "Couldn't log that. Try again."
-      );
-      await search(term || current._id);
-    } finally {
-      setUpdating(false);
-    }
+    const res = await callAction(() => allowEntryExit(current._id, kind));
+    if (res.ok) toast.success(res.data);
+    else toast.error(res.error);
+    await search(term || current._id);
+    setUpdating(false);
   };
 
   const action = current ? gateAction(current) : null;

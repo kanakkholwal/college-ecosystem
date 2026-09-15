@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { ErrorBoundaryWithSuspense } from "@/components/utils/error-boundary";
 import { Lock, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
@@ -60,7 +61,7 @@ export default async function ProfilePage(props: Props) {
 
   const viewer = session?.user;
   const isOwner = viewer?.id === profile.id;
-  const isAdmin = viewer?.role === "admin";
+  const isAdmin = viewer?.role === ROLES_ENUMS.ADMIN;
   const tab = parseTab(searchParams.tab);
   const page = parsePage(searchParams.page);
 

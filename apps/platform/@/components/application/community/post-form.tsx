@@ -31,6 +31,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import type { z } from "zod";
 import { createPost, updatePost } from "~/actions/common.community";
+import { callAction } from "~/lib/call-action";
 import {
   CATEGORIES,
   CATEGORY_TYPES,
@@ -86,25 +87,27 @@ export function PostForm(props: PostFormProps) {
       values.category === "departmental"
         ? values
         : { ...values, subCategory: null };
-    try {
-      if (props.mode === "edit") {
-        await toast.promise(updatePost(props.postId, { type: "edit", data }), {
-          loading: "Saving changes...",
-          success: "Changes saved",
-          error: "Couldn't save your changes. Try again.",
-        });
-        router.push(`/community/posts/${props.postId}`);
-      } else {
-        await toast.promise(createPost(data), {
-          loading: "Publishing...",
-          success: "Post published",
-          error: (err) =>
-            typeof err === "string" ? err : "Couldn't publish. Try again.",
-        });
-        router.push(feedHref({ category: data.category }));
+    if (props.mode === "edit") {
+      const postId = props.postId;
+      const toastId = toast.loading("Saving changes...");
+      const res = await callAction(() =>
+        updatePost(postId, { type: "edit", data })
+      );
+      if (!res.ok) {
+        toast.error(res.error, { id: toastId });
+        return;
       }
-    } catch {
-      // toast.promise already surfaced the error
+      toast.success("Changes saved", { id: toastId });
+      router.push(`/community/posts/${postId}`);
+    } else {
+      const toastId = toast.loading("Publishing...");
+      const res = await callAction(() => createPost(data));
+      if (!res.ok) {
+        toast.error(res.error, { id: toastId });
+        return;
+      }
+      toast.success("Post published", { id: toastId });
+      router.push(feedHref({ category: data.category }));
     }
   }
 

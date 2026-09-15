@@ -21,6 +21,7 @@ import {
   joinRoom,
   type MyAllotment,
 } from "~/actions/hostel.allotment-process";
+import { callAction } from "~/lib/call-action";
 import type { HostelRoomJson } from "~/models/allotment";
 
 type Availability = "free" | "full" | "locked";
@@ -65,24 +66,17 @@ export function RoomPicker({
   const confirmJoin = async () => {
     if (!chosen) return;
     setBusy(true);
-    try {
-      const res = await joinRoom(chosen._id);
-      if (res.error) {
-        toast.error(res.message);
-        router.refresh();
-        return;
-      }
-      toast.success(res.message);
-      setChosen(null);
-      router.refresh();
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(false);
+    const roomId = chosen._id;
+    const res = await callAction(() => joinRoom(roomId));
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      if (!res.outage) router.refresh();
+      return;
     }
+    toast.success(res.data);
+    setChosen(null);
+    router.refresh();
   };
 
   const chosenFull = chosen ? availability(chosen) === "full" : false;
@@ -242,22 +236,17 @@ export function MyRoomPanel({
       .filter(Boolean);
     if (list.length === 0) return;
     setBusy(true);
-    try {
-      const res = await addRoomMembers(room._id, undefined, list);
-      if (res.error) toast.error(res.message);
-      else {
-        toast.success(res.message);
-        setRolls("");
-        router.refresh();
-      }
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(false);
+    const res = await callAction(() =>
+      addRoomMembers(room._id, undefined, list)
+    );
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
     }
+    toast.success(res.data);
+    setRolls("");
+    router.refresh();
   };
 
   return (

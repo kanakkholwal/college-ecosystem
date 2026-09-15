@@ -44,7 +44,9 @@ export default async function OutpassDetailPage({ params }: Props) {
   const { id, moderator } = await params;
   const [resident, pass] = await Promise.all([
     getResidentContext(),
-    getOutPassById(id).catch(() => null) as Promise<Pass | null>,
+    getOutPassById(id).then((res) =>
+      res.ok ? (res.data as Pass | null) : null
+    ),
   ]);
   // Staff can read any pass through the action; this page only shows the viewer's own.
   if (

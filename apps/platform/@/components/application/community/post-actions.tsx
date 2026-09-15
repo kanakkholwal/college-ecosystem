@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useOptimistic, useTransition } from "react";
 import toast from "react-hot-toast";
 import { updatePost } from "~/actions/common.community";
+import { callAction } from "~/lib/call-action";
 import { formatNumber } from "~/utils/number";
 import { signInHref } from "./utils";
 
@@ -60,11 +61,12 @@ export function PostActions({
     const start = action === "like" ? startLike : startSave;
     start(async () => {
       apply(action);
-      try {
-        await updatePost(postId, {
+      const res = await callAction(() =>
+        updatePost(postId, {
           type: action === "like" ? "toggleLike" : "toggleSave",
-        });
-      } catch {
+        })
+      );
+      if (!res.ok) {
         toast.error(
           action === "like"
             ? "Couldn't update your like. Try again."

@@ -4,6 +4,11 @@ dotenv.config({ quiet: true });
 // This file contains the configuration for the server.
 // It includes the server identity, port, database URL, Redis URL, and CORS settings.
 
+function parseProxyHops(value: string | undefined): number {
+  const hops = Number.parseInt(value ?? "", 10);
+  return Number.isInteger(hops) && hops >= 0 ? hops : 1;
+}
+
 export const config = {
   appName: "College Platform Server",
   // The version of the application
@@ -19,16 +24,9 @@ export const config = {
   // The URL of the Redis server
   REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
 
-  // The apex entry also matches every subdomain (see checkCors in utils/cors.ts),
-  // so any *.nith.eu.org host is allowed without listing each one.
-  corsOrigins: [
-    "https://nith.eu.org",
-    "https://app.nith.eu.org",
-    "https://api.nith.eu.org",
-    "https://platform.nith.eu.org",
-    "https://server.nith.eu.org",
-  ],
-  corsEnabled: process.env.CORS_ENABLED === "true",
+  // Proxy hops in front of the server, so req.ip is the real client for rate limiting.
+  TRUST_PROXY: parseProxyHops(process.env.TRUST_PROXY),
+
   isDev: process.env.NODE_ENV !== "production",
 } as const;
 

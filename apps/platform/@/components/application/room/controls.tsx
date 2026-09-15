@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useId, useOptimistic, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { deleteRoom, updateRoom } from "~/actions/common.room";
+import { callAction } from "~/lib/call-action";
 
 type Status = "available" | "occupied";
 
@@ -40,24 +41,22 @@ export function RoomControls({
     const next: Status = checked ? "occupied" : "available";
     startTransition(async () => {
       setOptimistic(next);
-      try {
-        await toast.promise(
-          updateRoom(
-            roomId,
-            { currentStatus: next, lastUpdatedTime: new Date() },
-            { userId }
-          ),
-          {
-            loading: `Marking ${roomNumber} ${next}...`,
-            success: `${roomNumber} is now ${next}`,
-            error: "Couldn't update the room",
-          }
-        );
-        startTransition(() => setConfirmed(next));
-        router.refresh();
-      } catch {
-        // toast already reported it; the optimistic value rolls back with the transition
+      const toastId = toast.loading(`Marking ${roomNumber} ${next}...`);
+      const res = await callAction(() =>
+        updateRoom(
+          roomId,
+          { currentStatus: next, lastUpdatedTime: new Date() },
+          { userId }
+        )
+      );
+      // On failure the optimistic value rolls back when the transition ends.
+      if (!res.ok) {
+        toast.error(res.error, { id: toastId });
+        return;
       }
+      toast.success(`${roomNumber} is now ${next}`, { id: toastId });
+      startTransition(() => setConfirmed(next));
+      router.refresh();
     });
   };
 
@@ -66,16 +65,14 @@ export function RoomControls({
       return;
     }
     startTransition(async () => {
-      try {
-        await toast.promise(deleteRoom(roomId), {
-          loading: `Deleting ${roomNumber}...`,
-          success: `${roomNumber} deleted`,
-          error: "Couldn't delete the room",
-        });
-        router.refresh();
-      } catch {
-        // reported by the toast
+      const toastId = toast.loading(`Deleting ${roomNumber}...`);
+      const res = await callAction(() => deleteRoom(roomId));
+      if (!res.ok) {
+        toast.error(res.error, { id: toastId });
+        return;
       }
+      toast.success(`${roomNumber} deleted`, { id: toastId });
+      router.refresh();
     });
   };
 

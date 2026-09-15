@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { FilterPanel, type FilterOption } from "./filter-panel";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 type SearchBoxProps = {
@@ -41,6 +41,16 @@ export default function BaseSearchBox({
   const pathname = usePathname();
   const { replace } = useRouter();
   const [showExpandedFilters, setShowExpandedFilters] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const urlQuery = searchParams.get(searchParamsKey) ?? "";
+
+  // Syncs external changes like "Clear search"; keying the input would drop focus on every debounced search.
+  useEffect(() => {
+    const input = inputRef.current;
+    if (input && document.activeElement !== input && input.value !== urlQuery) {
+      input.value = urlQuery;
+    }
+  }, [urlQuery]);
 
   // Memoize URL Params
   const params = useMemo(
@@ -132,9 +142,10 @@ export default function BaseSearchBox({
           {/* Center: Input */}
           <Input
             id={id}
+            ref={inputRef}
             className="h-12 flex-1 border-none bg-transparent px-3 text-base shadow-none focus:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body-lg dark:bg-transparent"
             placeholder={searchPlaceholder}
-            defaultValue={searchParams.get(searchParamsKey)?.toString()}
+            defaultValue={urlQuery}
             onChange={(e) => handleSearch(e.target.value)}
             disabled={disabled}
           />

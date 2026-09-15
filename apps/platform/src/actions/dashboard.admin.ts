@@ -1,10 +1,16 @@
 "use server";
+import { ROLES_ENUMS } from "~/constants";
 import type { InferSelectModel } from "drizzle-orm";
 import { eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { auth } from "~/auth";
 import { getAuthErrorMessage, toAuthErrorLike } from "~/auth/errors";
+import {
+  assertAdmin as assertAdminSession,
+  getCurrentSession,
+  isAdminLike,
+} from "~/auth/guards";
 import { hostelIdSchema } from "~/constants/hostel_n_outpass";
 import { db } from "~/db/connect";
 import { sessions, users } from "~/db/schema/auth-schema";
@@ -27,8 +33,6 @@ import {
 } from "~/utils/process";
 import { updateHostelStudent } from "./hostel.core";
 
-// Mirrors app/[moderator]/(admin)/layout.tsx, which lets both roles in.
-const ADMIN_ROLES = ["admin", "moderator"];
 const SELF_EDITABLE_FIELDS = ["gender", "other_emails"] as const;
 // The fields the admin user page edits; `role` is added for full admins only.
 const ADMIN_EDITABLE_FIELDS = [
@@ -40,10 +44,6 @@ const ADMIN_EDITABLE_FIELDS = [
   "other_emails",
 ] as const;
 
-const getCurrentSession = cache(async () =>
-  auth.api.getSession({ headers: await headers() })
-);
-
 async function isServerIdentity() {
   // biome-ignore lint/suspicious/noUndeclaredEnvVars: runtime secret, not a build input
   const expected = process.env.SERVER_IDENTITY;
@@ -53,10 +53,7 @@ async function isServerIdentity() {
 
 async function assertAdmin(options: { allowServerIdentity?: boolean } = {}) {
   if (options.allowServerIdentity && (await isServerIdentity())) return;
-  const session = await getCurrentSession();
-  if (!session || !ADMIN_ROLES.includes(session.user.role)) {
-    throw new Error("Unauthorized");
-  }
+  await assertAdminSession();
 }
 
 export interface UserCountAndGrowthResult {
@@ -348,14 +345,14 @@ export async function updateUser(
   try {
     const session = await getCurrentSession();
     if (!session) throw new Error("Unauthorized");
-    const isAdmin = ADMIN_ROLES.includes(session.user.role);
+    const isAdmin = isAdminLike(session.user);
     if (!isAdmin && session.user.id !== userId) {
       throw new Error("Unauthorized");
     }
 
     // Allow-listed so a client can't set id, email or emailVerified, and a moderator can't grant `role`.
     const editable: readonly (keyof User)[] = isAdmin
-      ? session.user.role === "admin"
+      ? session.user.role === ROLES_ENUMS.ADMIN
         ? [...ADMIN_EDITABLE_FIELDS, "role"]
         : ADMIN_EDITABLE_FIELDS
       : SELF_EDITABLE_FIELDS;
@@ -380,12 +377,13 @@ export async function updateUser(
       .limit(1);
     if (isAdmin && "hostelId" in patch && user) {
       // Clearing must sync too, or a removed resident keeps hostel access through Mongo.
-      await updateHostelStudent(user.email, {
+      const synced = await updateHostelStudent(user.email, {
         hostelId: patch.hostelId ?? null,
-      }).catch((err) => {
-        // Staff and not-yet-imported students have no hostel record; the Postgres change still stands.
-        if (err !== "Hostel student not found") throw err;
       });
+      // Staff and not-yet-imported students have no hostel record; the Postgres change still stands.
+      if (!synced.ok && synced.error !== "Hostel student not found") {
+        throw new Error(synced.error);
+      }
     }
     return user ?? null;
   } catch (error) {
@@ -399,7 +397,7 @@ export async function changeUserPassword(
   newPassword: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await getCurrentSession();
-  if (!session || session.user.id !== userId || session.user.role !== "admin") {
+  if (!session || session.user.id !== userId || session.user.role !== ROLES_ENUMS.ADMIN) {
     return { ok: false, error: "You can only change your own password." };
   }
   try {

@@ -1,5 +1,6 @@
 "use client";
 
+import { ROLES_ENUMS } from "~/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Drawer,
@@ -74,11 +75,11 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
     .join("");
 
   const dashboards: Row[] = [
-    ...(user.role === "admin"
+    ...(user.role === ROLES_ENUMS.ADMIN
       ? [{ href: "/admin", label: "Admin console", Icon: ShieldCheck }]
       : []),
     ...user.other_roles
-      .filter((role) => role !== "admin")
+      .filter((role) => role !== ROLES_ENUMS.ADMIN)
       .map((role) => ({
         href: `/${role}`,
         label: changeCase(role, "title"),

@@ -31,6 +31,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { deletePost } from "~/actions/common.community";
+import { callAction } from "~/lib/call-action";
 
 type PostMenuProps = {
   postId: string;
@@ -76,19 +77,17 @@ export function PostMenu({
 
   function confirmDelete() {
     startDelete(async () => {
-      try {
-        await deletePost(postId);
-        toast.success("Post deleted");
-        setConfirmOpen(false);
-        if (pathname.startsWith("/community/posts/")) {
-          router.replace("/community");
-        } else {
-          router.refresh();
-        }
-      } catch (err) {
-        toast.error(
-          typeof err === "string" ? err : "Couldn't delete the post. Try again."
-        );
+      const res = await callAction(() => deletePost(postId));
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Post deleted");
+      setConfirmOpen(false);
+      if (pathname.startsWith("/community/posts/")) {
+        router.replace("/community");
+      } else {
+        router.refresh();
       }
     });
   }

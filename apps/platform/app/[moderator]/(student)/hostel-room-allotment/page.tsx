@@ -13,6 +13,8 @@ import {
   type MyAllotment,
 } from "~/actions/hostel.allotment-process";
 import { ALLOTMENT_STATUS_COPY } from "~/constants/hostel.allotment-process";
+import { ok } from "~/lib/action-result";
+import type { HostelRoomJson } from "~/models/allotment";
 import { MyRoomPanel, RoomPicker } from "./client";
 
 const when = (iso: string) =>
@@ -41,11 +43,11 @@ export default function HostelRoomAllotmentPage() {
 
 async function AllotmentBody() {
   const res = await getMyAllotment();
-  if (res.error || !res.data) {
+  if (!res.ok) {
     return (
       <EmptyNote
         icon={<DoorOpen />}
-        title={res.message || "No hostel assigned"}
+        title={res.error || "No hostel assigned"}
         description="Room selection opens once the warden adds you to a hostel. Contact the hostel office if this looks wrong."
       />
     );
@@ -53,7 +55,7 @@ async function AllotmentBody() {
   const me = res.data;
   const roomsRes = me.eligible
     ? await getHostelRooms(me.hostel._id)
-    : { error: false, data: [] };
+    : ok<HostelRoomJson[]>([]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,7 +63,7 @@ async function AllotmentBody() {
       {me.room ? (
         <MyRoomPanel room={me.room} selectionOpen={me.process === "open"} />
       ) : me.eligible ? (
-        roomsRes.error ? (
+        !roomsRes.ok ? (
           <EmptyNote
             title="Rooms couldn't load"
             description="Refresh the page to try again."

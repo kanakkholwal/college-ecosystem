@@ -40,7 +40,7 @@ export default async function UserDetailPage({ params }: PageProps) {
   if (!user) return notFound();
 
   const basePath = `/${moderator}/users`;
-  const hostels = hostelRes.data.map((hostel) => ({
+  const hostels = (hostelRes.ok ? hostelRes.data : []).map((hostel) => ({
     id: hostel._id,
     name: hostel.name,
   }));

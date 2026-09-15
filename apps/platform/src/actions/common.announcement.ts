@@ -1,26 +1,39 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import dbConnect from "src/lib/dbConnect";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
-import { RawAnnouncementType } from "~/constants/common.announcement";
-import Announcement, { AnnouncementTypeWithId } from "~/models/announcement";
+import { getCurrentSession } from "~/auth/guards";
+import { ROLES_ENUMS } from "~/constants";
+import {
+  type RawAnnouncementType,
+  rawAnnouncementSchema,
+} from "~/constants/common.announcement";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
+import {
+  type ActionResult,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
+import Announcement, {
+  type AnnouncementTypeWithId,
+} from "~/models/announcement";
+import { serialize } from "~/utils/serialize";
+
+const ANNOUNCEMENT_NOT_FOUND = "Announcement not found";
 
 export async function createAnnouncement(
   announcementData: RawAnnouncementType
-) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    return Promise.reject("You need to be logged in to create an announcement");
-  }
-  try {
+): Promise<ActionResult<string>> {
+  return runAction("Failed to create announcement", async () => {
+    const session = await getCurrentSession();
+    if (!session) {
+      throw new UserFacingError(
+        "You need to be logged in to create an announcement"
+      );
+    }
+    const data = rawAnnouncementSchema.parse(announcementData);
     await dbConnect();
-    // Validate the announcement data
     const announcement = new Announcement({
-      ...announcementData,
+      ...data,
       createdBy: {
         id: session.user.id,
         name: session.user.name,
@@ -29,80 +42,93 @@ export async function createAnnouncement(
     });
     await announcement.save();
     revalidatePath(`/announcements`);
-    return Promise.resolve("Announcement created successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to create announcement");
-  }
+    return "Announcement created successfully";
+  });
 }
+
 export async function getAnnouncements(): Promise<AnnouncementTypeWithId[]> {
   try {
     await dbConnect();
     const announcements = await Announcement.find();
-    return Promise.resolve(JSON.parse(JSON.stringify(announcements)));
+    return serialize<AnnouncementTypeWithId[]>(announcements);
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch announcements");
+    throw new Error("Failed to fetch announcements");
   }
 }
+
 export async function getAnnouncementById(
   id: string
-): Promise<AnnouncementTypeWithId> {
+): Promise<AnnouncementTypeWithId | null> {
+  if (!isObjectIdString(id)) return null;
   try {
     await dbConnect();
     const announcement = await Announcement.findById(id);
-    return Promise.resolve(JSON.parse(JSON.stringify(announcement)));
+    return serialize<AnnouncementTypeWithId | null>(announcement);
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch announcement");
+    throw new Error("Failed to fetch announcement");
   }
 }
+
 export async function updateAnnouncement(
   id: string,
   announcementData: RawAnnouncementType
-) {
-  try {
-    await dbConnect();
-    await Announcement.findByIdAndUpdate(id, announcementData, { new: true });
-    revalidatePath(`/announcements`);
-    return Promise.resolve("Announcement updated successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to update announcement");
-  }
-}
-export async function deleteAnnouncement(id: string) {
-  try {
-    const headersList = await headers();
-    const session = await auth.api.getSession({
-      headers: headersList,
-    });
+): Promise<ActionResult<string>> {
+  return runAction("Failed to update announcement", async () => {
+    const session = await getCurrentSession();
     if (!session) {
-      return Promise.reject(
+      throw new UserFacingError(
+        "You need to be logged in to update an announcement"
+      );
+    }
+    if (!isObjectIdString(id))
+      throw new UserFacingError(ANNOUNCEMENT_NOT_FOUND);
+    // Parsing strips unknown keys, so the client can never overwrite createdBy.
+    const data = rawAnnouncementSchema.parse(announcementData);
+    await dbConnect();
+    const announcement = await Announcement.findById(id);
+    if (!announcement) throw new UserFacingError(ANNOUNCEMENT_NOT_FOUND);
+    if (
+      announcement.createdBy.id !== session.user.id &&
+      session.user.role !== ROLES_ENUMS.ADMIN
+    ) {
+      throw new UserFacingError(
+        "You are not authorized to update this announcement"
+      );
+    }
+    announcement.set(data);
+    await announcement.save();
+    revalidatePath(`/announcements`);
+    return "Announcement updated successfully";
+  });
+}
+
+export async function deleteAnnouncement(
+  id: string
+): Promise<ActionResult<string>> {
+  return runAction("Failed to delete announcement", async () => {
+    const session = await getCurrentSession();
+    if (!session) {
+      throw new UserFacingError(
         "You need to be logged in to delete an announcement"
       );
     }
+    if (!isObjectIdString(id))
+      throw new UserFacingError(ANNOUNCEMENT_NOT_FOUND);
     await dbConnect();
-    // Check if the announcement exists
     const announcement = await Announcement.findById(id);
-    if (!announcement) {
-      return Promise.reject("Announcement not found");
-    }
-    // Check if the user is the author of the announcement
+    if (!announcement) throw new UserFacingError(ANNOUNCEMENT_NOT_FOUND);
     if (
       announcement.createdBy.id !== session.user.id &&
-      session.user.role !== "admin"
+      session.user.role !== ROLES_ENUMS.ADMIN
     ) {
-      return Promise.reject(
+      throw new UserFacingError(
         "You are not authorized to delete this announcement"
       );
     }
     await announcement.deleteOne();
-    // Revalidate the announcements page
     revalidatePath(`/announcements`);
-    return Promise.resolve("Announcement deleted successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to delete announcement");
-  }
+    return "Announcement deleted successfully";
+  });
 }

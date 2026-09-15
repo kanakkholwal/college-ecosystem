@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { z } from "zod";
 import { generateCoursesByDoc, generateEventsByDoc } from "~/ai/actions";
 import { getSession } from "~/auth/server";
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (session.user.role !== "admin") {
+  if (session.user.role !== ROLES_ENUMS.ADMIN) {
     return Response.json(
       { error: "Unauthorized: admin role required" },
       { status: 403 }

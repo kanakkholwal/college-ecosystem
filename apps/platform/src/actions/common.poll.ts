@@ -1,20 +1,20 @@
 "use server";
 
+import { ROLES_ENUMS } from "~/constants";
 import {
   type PollInput,
   pollInputSchema,
 } from "@/components/application/poll/schema";
-import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import { getSession } from "~/auth/server";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import Poll, { type PollType } from "~/models/poll";
+import { serialize } from "~/utils/serialize";
 
 export type PollActionResult<T = null> =
   | { ok: true; data: T }
   | { ok: false; error: string };
-
-const serialize = <T>(value: unknown): T => JSON.parse(JSON.stringify(value));
 
 const fail = (error: string) => ({ ok: false, error }) as const;
 
@@ -61,7 +61,7 @@ export async function getClosedPolls(): Promise<PollType[]> {
 }
 
 export async function getPollById(id: string): Promise<PollType | null> {
-  if (!mongoose.isObjectIdOrHexString(id)) return null;
+  if (!isObjectIdString(id)) return null;
   await dbConnect();
   const poll = await Poll.findById(id).lean();
   return poll ? serialize(poll) : null;
@@ -74,7 +74,7 @@ export async function castVote(
 ): Promise<PollActionResult> {
   const session = await getSession();
   if (!session) return fail("Sign in to vote.");
-  if (!mongoose.isObjectIdOrHexString(pollId)) {
+  if (!isObjectIdString(pollId)) {
     return fail("This poll doesn't exist.");
   }
 
@@ -134,7 +134,7 @@ export async function castVote(
 export async function deletePoll(pollId: string): Promise<PollActionResult> {
   const session = await getSession();
   if (!session) return fail("Sign in to delete a poll.");
-  if (!mongoose.isObjectIdOrHexString(pollId)) {
+  if (!isObjectIdString(pollId)) {
     return fail("This poll doesn't exist.");
   }
 
@@ -146,7 +146,7 @@ export async function deletePoll(pollId: string): Promise<PollActionResult> {
     if (!poll) return fail("This poll doesn't exist.");
     if (
       poll.createdBy !== session.user.username &&
-      session.user.role !== "admin"
+      session.user.role !== ROLES_ENUMS.ADMIN
     ) {
       return fail("Only the author or an admin can delete this poll.");
     }

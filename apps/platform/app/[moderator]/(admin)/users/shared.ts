@@ -24,4 +24,5 @@ export const formatDate = (value: Date | string) =>
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "Asia/Kolkata",
   });

@@ -65,9 +65,10 @@ import {
 } from "~/actions/dashboard.admin";
 import { deleteUserResourcesById } from "~/actions/user.core";
 import { authClient } from "~/auth/client";
-import { genderSchema, ROLES } from "~/constants";
+import { genderSchema, ROLES, ROLES_ENUMS } from "~/constants";
 import { DEPARTMENTS_LIST } from "~/constants/core.departments";
 import { IN_CHARGES_EMAILS, toHostelId } from "~/constants/hostel_n_outpass";
+import { callAction } from "~/lib/call-action";
 import { roleLabel } from "../shared";
 
 const GENDERS = [
@@ -679,7 +680,7 @@ export function UserAccountActions({
   const router = useRouter();
   const [dialog, setDialog] = useState<"impersonate" | "delete" | null>(null);
   const [pending, startTransition] = useTransition();
-  const targetIsAdmin = target.role === "admin";
+  const targetIsAdmin = target.role === ROLES_ENUMS.ADMIN;
 
   const impersonate = () =>
     startTransition(async () => {
@@ -696,11 +697,9 @@ export function UserAccountActions({
 
   const remove = () =>
     startTransition(async () => {
-      try {
-        await deleteUserResourcesById(target.id);
-      } catch {
-        // Production builds mask server action errors, so the reason isn't available.
-        toast.error("Couldn't delete this account. Refresh and try again.");
+      const res = await callAction(() => deleteUserResourcesById(target.id));
+      if (!res.ok) {
+        toast.error(res.error);
         return;
       }
       setDialog(null);

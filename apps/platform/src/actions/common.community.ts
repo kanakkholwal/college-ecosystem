@@ -1,26 +1,33 @@
 "use server";
 
+import { ROLES_ENUMS } from "~/constants";
 import { eq, inArray } from "drizzle-orm";
-import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { auth } from "~/auth";
+import { getCurrentSession } from "~/auth/guards";
 import { getSession } from "~/auth/server";
 import {
   CATEGORY_TYPES,
   type RawCommunityPostType,
   rawCommunityPostSchema,
 } from "~/constants/common.community";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import { db } from "~/db/connect";
 import { comments, rates, users } from "~/db/schema";
+import {
+  type ActionResult,
+  runAction,
+  UserFacingError,
+} from "~/lib/action-result";
 import dbConnect from "~/lib/dbConnect";
 import CommunityPost, {
   CommunityComment,
   type CommunityPostTypeWithId,
   type ICommunityPost,
 } from "~/models/community";
+import { serialize } from "~/utils/serialize";
 
 const MAX_PAGE_SIZE = 50;
+const POST_NOT_FOUND = "Post not found";
 
 function normalisePost(data: Partial<RawCommunityPostType>) {
   if (data.category && data.category !== "departmental") {
@@ -29,23 +36,22 @@ function normalisePost(data: Partial<RawCommunityPostType>) {
   return data;
 }
 
-export async function createPost(postData: RawCommunityPostType) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    return Promise.reject("You need to be logged in to create a post");
-  }
-  // Validated here too: a server action is a public endpoint, not just the form's submit handler.
-  const parsed = rawCommunityPostSchema.safeParse(postData);
-  if (!parsed.success) {
-    return Promise.reject(
-      "Check the title, body and community, then try again"
-    );
-  }
+export async function createPost(
+  postData: RawCommunityPostType
+): Promise<ActionResult<string>> {
+  return runAction("Failed to create post", async () => {
+    const session = await getCurrentSession();
+    if (!session) {
+      throw new UserFacingError("You need to be logged in to create a post");
+    }
+    // Validated here too: a server action is a public endpoint, not just the form's submit handler.
+    const parsed = rawCommunityPostSchema.safeParse(postData);
+    if (!parsed.success) {
+      throw new UserFacingError(
+        "Check the title, body and community, then try again"
+      );
+    }
 
-  try {
     await dbConnect();
     const post = new CommunityPost({
       ...normalisePost(parsed.data),
@@ -60,11 +66,8 @@ export async function createPost(postData: RawCommunityPostType) {
     });
     await post.save();
     revalidatePath(`/community`);
-    return Promise.resolve("Post created successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to create post");
-  }
+    return "Post created successfully";
+  });
 }
 
 export async function getPostsByCategory(
@@ -93,10 +96,10 @@ export async function getPostsByCategory(
       .skip((safePage - 1) * safeLimit)
       .limit(safeLimit)
       .lean();
-    return JSON.parse(JSON.stringify(posts));
+    return serialize<CommunityPostTypeWithId[]>(posts);
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch posts");
+    throw new Error("Failed to fetch posts");
   }
 }
 
@@ -105,7 +108,7 @@ export async function getPostById(
   id: string,
   cached: boolean
 ): Promise<CommunityPostTypeWithId | null> {
-  if (!mongoose.isObjectIdOrHexString(id)) return null;
+  if (!isObjectIdString(id)) return null;
   try {
     await dbConnect();
     const post = cached
@@ -115,10 +118,10 @@ export async function getPostById(
           { $inc: { views: 1 } },
           { returnDocument: "after", timestamps: false }
         ).lean();
-    return post ? JSON.parse(JSON.stringify(post)) : null;
+    return post ? serialize<CommunityPostTypeWithId>(post) : null;
   } catch (err) {
     console.error(err);
-    return Promise.reject("Failed to fetch post");
+    throw new Error("Failed to fetch post");
   }
 }
 
@@ -134,76 +137,80 @@ type UpdateAction =
   | { type: "toggleSave" }
   | { type: "edit"; data: EditablePostFields };
 
-export async function updatePost(id: string, action: UpdateAction) {
-  const session = await getSession();
-  if (!session) throw new Error("You need to be logged in to update a post");
-  if (!mongoose.isObjectIdOrHexString(id)) throw new Error("Post not found");
-
-  await dbConnect();
-
-  const post = await CommunityPost.findById(id);
-  if (!post) throw new Error("Post not found");
-
-  let updated: unknown;
-  switch (action.type) {
-    case "toggleLike":
-    case "toggleSave": {
-      const field = action.type === "toggleLike" ? "likes" : "savedBy";
-      const has = (post[field] as string[]).includes(session.user.id);
-      // Atomic operators so concurrent reactions don't overwrite each other's array writes.
-      updated = await CommunityPost.findByIdAndUpdate(
-        id,
-        has
-          ? { $pull: { [field]: session.user.id } }
-          : { $addToSet: { [field]: session.user.id } },
-        { returnDocument: "after", timestamps: false }
-      ).lean();
-      break;
+export async function updatePost(
+  id: string,
+  action: UpdateAction
+): Promise<ActionResult<CommunityPostTypeWithId>> {
+  return runAction("Couldn't update the post. Try again.", async () => {
+    const session = await getSession();
+    if (!session) {
+      throw new UserFacingError("You need to be logged in to update a post");
     }
+    if (!isObjectIdString(id)) throw new UserFacingError(POST_NOT_FOUND);
 
-    case "edit": {
-      if (post.author.id !== session.user.id && session.user.role !== "admin") {
-        throw new Error("You are not authorized to edit this post");
+    await dbConnect();
+
+    const post = await CommunityPost.findById(id);
+    if (!post) throw new UserFacingError(POST_NOT_FOUND);
+
+    let updated: unknown;
+    switch (action.type) {
+      case "toggleLike":
+      case "toggleSave": {
+        const field = action.type === "toggleLike" ? "likes" : "savedBy";
+        const has = (post[field] as string[]).includes(session.user.id);
+        // Atomic operators so concurrent reactions don't overwrite each other's array writes.
+        updated = await CommunityPost.findByIdAndUpdate(
+          id,
+          has
+            ? { $pull: { [field]: session.user.id } }
+            : { $addToSet: { [field]: session.user.id } },
+          { returnDocument: "after", timestamps: false }
+        ).lean();
+        break;
       }
-      // Schema parse strips unknown keys, so callers can't overwrite author, likes or views.
-      const parsed = rawCommunityPostSchema.partial().safeParse(action.data);
-      if (!parsed.success) throw new Error("Invalid post data");
-      post.set(normalisePost(parsed.data));
-      await post.save();
-      updated = post.toObject();
-      break;
+
+      case "edit": {
+        if (
+          post.author.id !== session.user.id &&
+          session.user.role !== ROLES_ENUMS.ADMIN
+        ) {
+          throw new UserFacingError("You are not authorized to edit this post");
+        }
+        // Schema parse strips unknown keys, so callers can't overwrite author, likes or views.
+        const parsed = rawCommunityPostSchema.partial().safeParse(action.data);
+        if (!parsed.success) throw new UserFacingError("Invalid post data");
+        post.set(normalisePost(parsed.data));
+        await post.save();
+        updated = post.toObject();
+        break;
+      }
+
+      default:
+        throw new UserFacingError("Unknown update action");
     }
 
-    default:
-      throw new Error("Unknown update action");
-  }
+    revalidatePath(`/community/posts/${id}`);
+    revalidatePath(`/community`);
 
-  revalidatePath(`/community/posts/${id}`);
-  revalidatePath(`/community`);
-
-  return JSON.parse(JSON.stringify(updated)) as CommunityPostTypeWithId;
+    return serialize<CommunityPostTypeWithId>(updated);
+  });
 }
 
-export async function deletePost(id: string) {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
-  });
-  if (!session) {
-    return Promise.reject("You need to be logged in to update a post");
-  }
-  if (!mongoose.isObjectIdOrHexString(id))
-    return Promise.reject("Post not found");
+export async function deletePost(id: string): Promise<ActionResult<string>> {
+  return runAction("Failed to delete post", async () => {
+    const session = await getCurrentSession();
+    if (!session) {
+      throw new UserFacingError("You need to be logged in to update a post");
+    }
+    if (!isObjectIdString(id)) throw new UserFacingError(POST_NOT_FOUND);
 
-  try {
     await dbConnect();
     const post = await CommunityPost.findById(id);
-    if (!post) {
-      return Promise.reject("Post not found");
-    }
+    if (!post) throw new UserFacingError(POST_NOT_FOUND);
 
-    if (post.author.id !== session.user.id && session.user.role !== "admin") {
-      return Promise.reject("You are not authorized to delete this post");
+    if (post.author.id !== session.user.id && session.user.role !== ROLES_ENUMS.ADMIN) {
+      throw new UserFacingError("You are not authorized to delete this post");
     }
     await post.deleteOne();
     await CommunityComment.deleteMany({ postId: id });
@@ -224,28 +231,30 @@ export async function deletePost(id: string) {
     }
     revalidatePath(`/community`);
     revalidatePath(`/community/posts/${id}`);
-    return Promise.resolve("Post deleted successfully");
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to delete post");
-  }
+    return "Post deleted successfully";
+  });
 }
 
-export async function getPostActivity(id: string) {
-  try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) return Promise.reject("Sign in to see post activity");
-    if (!mongoose.isObjectIdOrHexString(id)) {
-      return Promise.reject("Post not found");
-    }
+type ActivityUser = {
+  id: string;
+  name: string;
+  username: string;
+  image: string | null;
+};
+
+export async function getPostActivity(
+  id: string
+): Promise<ActionResult<{ likedBy: ActivityUser[]; savedBy: ActivityUser[] }>> {
+  return runAction("Failed to fetch post stats", async () => {
+    const session = await getCurrentSession();
+    if (!session) throw new UserFacingError("Sign in to see post activity");
+    if (!isObjectIdString(id)) throw new UserFacingError(POST_NOT_FOUND);
     await dbConnect();
     const post = await CommunityPost.findById<ICommunityPost>(id);
-    if (!post) {
-      return Promise.reject("Post not found");
-    }
+    if (!post) throw new UserFacingError(POST_NOT_FOUND);
     // Bookmarks are private: only the author and admins see who saved a post.
     const canSeeSaves =
-      post.author.id === session.user.id || session.user.role === "admin";
+      post.author.id === session.user.id || session.user.role === ROLES_ENUMS.ADMIN;
 
     const likedBy =
       post.likes.length === 0
@@ -272,12 +281,6 @@ export async function getPostActivity(id: string) {
             })
             .from(users)
             .where(inArray(users.id, post.savedBy));
-    return Promise.resolve({
-      likedBy,
-      savedBy,
-    });
-  } catch (err) {
-    console.error(err);
-    return Promise.reject("Failed to fetch post stats");
-  }
+    return { likedBy, savedBy };
+  });
 }

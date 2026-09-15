@@ -64,14 +64,15 @@ export default async function AllotmentPage({
 }
 
 async function AllotmentBody({ hostelId }: { hostelId: string }) {
-  const [process, slotsRes, roomsRes] = await Promise.all([
-    getAllotmentProcess(hostelId).catch(() => null),
+  const [processRes, slotsRes, roomsRes] = await Promise.all([
+    getAllotmentProcess(hostelId),
     getUpcomingSlots(hostelId),
     getHostelRooms(hostelId),
   ]);
-  if (!process || slotsRes.error || roomsRes.error) {
+  if (!processRes.ok || !slotsRes.ok || !roomsRes.ok) {
     return <SectionError what="Room selection" />;
   }
+  const process = processRes.data;
   const slots = slotsRes.data;
   const rooms = roomsRes.data;
   const beds = rooms.reduce((a, r) => a + r.capacity, 0);
@@ -89,6 +90,11 @@ async function AllotmentBody({ hostelId }: { hostelId: string }) {
           <p className="text-body text-muted-foreground">
             {STATUS_COPY[process.status].effect}
           </p>
+          {process.notice && (
+            <p role="status" className="text-body text-destructive">
+              {process.notice}
+            </p>
+          )}
         </div>
         <ProcessControl hostelId={hostelId} current={process.status} />
       </Panel>

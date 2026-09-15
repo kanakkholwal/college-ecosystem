@@ -108,9 +108,9 @@ async function LogResults({
     limit: PAGE_SIZE,
     sortBy: query.sort,
   });
-  if (res.error) return <SectionError what="Outpass logs" />;
+  if (!res.ok) return <SectionError what="Outpass logs" />;
 
-  const { data: rows, total } = res;
+  const { rows, total } = res.data;
   const filtered = Boolean(query.query || query.status);
 
   if (rows.length === 0) {

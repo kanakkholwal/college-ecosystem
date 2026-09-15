@@ -5,8 +5,12 @@ import {
   isValidRollNumber,
 } from "../constants/departments";
 import { pipelines } from "../constants/pipelines";
-import { scrapeAndSaveResult } from "../lib/result_utils";
+import {
+  getStudentInfoFromRollNo,
+  scrapeAndSaveResult,
+} from "../lib/result_utils";
 import { getInfoFromRollNo, scrapeResult } from "../lib/scrape";
+import { mapSettledWithLimit } from "../lib/utils";
 import { ResultScrapingLog } from "../models/log-result_scraping";
 import ResultModel from "../models/result";
 import { rawResultSchema } from "../types/result";
@@ -80,13 +84,11 @@ export const addResult = async (req: Request, res: Response) => {
     await dbConnect();
     const resultData = await ResultModel.findOne({ rollNo });
     if (resultData) {
-      return res
-        .status(200)
-        .json({
-          data: resultData,
-          message: "Result already exists",
-          error: false,
-        });
+      return res.status(200).json({
+        data: resultData,
+        message: "Result already exists",
+        error: false,
+      });
     }
 
     const data = await scrapeResult(rollNo);
@@ -105,13 +107,11 @@ export const addResult = async (req: Request, res: Response) => {
     });
     await newResult.save();
     console.log("Created ", rollNo);
-    return res
-      .status(201)
-      .json({
-        data: newResult,
-        message: "Result added successfully",
-        error: false,
-      });
+    return res.status(201).json({
+      data: newResult,
+      message: "Result added successfully",
+      error: false,
+    });
   } catch (err) {
     console.error("addResult error:", err);
     return res
@@ -139,13 +139,11 @@ export const updateResult = async (req: Request, res: Response) => {
     .partial()
     .safeParse(req.body ?? {});
   if (!custom_attributes.success) {
-    return res
-      .status(400)
-      .json({
-        message: "Invalid custom attributes",
-        error: true,
-        data: custom_attributes.error.issues,
-      });
+    return res.status(400).json({
+      message: "Invalid custom attributes",
+      error: true,
+      data: custom_attributes.error.issues,
+    });
   }
   const valid_custom_attributes = custom_attributes.data;
 
@@ -183,13 +181,11 @@ export const updateResult = async (req: Request, res: Response) => {
     );
 
     console.log("Updated ", rollNo);
-    return res
-      .status(200)
-      .json({
-        data: updated,
-        message: "Result updated successfully",
-        error: false,
-      });
+    return res.status(200).json({
+      data: updated,
+      message: "Result updated successfully",
+      error: false,
+    });
   } catch (error) {
     console.error("updateResult error:", error);
     return res
@@ -213,13 +209,11 @@ export const deleteResult = async (req: Request, res: Response) => {
         .status(404)
         .json({ message: "Result not found", error: true, data: null });
     }
-    return res
-      .status(200)
-      .json({
-        data: resultData,
-        message: "Result deleted successfully",
-        error: false,
-      });
+    return res.status(200).json({
+      data: resultData,
+      message: "Result deleted successfully",
+      error: false,
+    });
   } catch (error) {
     console.error("deleteResult error:", error);
     return res
@@ -232,13 +226,11 @@ export const getAbnormalResults = async (req: Request, res: Response) => {
   try {
     await dbConnect();
     const results = await ResultModel.aggregate(pipelines["abnormal-results"]);
-    return res
-      .status(200)
-      .json({
-        error: false,
-        message: "Abnormal results fetched successfully",
-        data: results,
-      });
+    return res.status(200).json({
+      error: false,
+      message: "Abnormal results fetched successfully",
+      data: results,
+    });
   } catch (error) {
     console.error("getAbnormalResults error:", error);
     return res
@@ -252,13 +244,11 @@ export const deleteAbNormalResults = async (req: Request, res: Response) => {
     await dbConnect();
     const results = await ResultModel.aggregate(pipelines["abnormal-results"]);
     if (!results || results.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: true,
-          message: "No abnormal results found",
-          data: null,
-        });
+      return res.status(404).json({
+        error: true,
+        message: "No abnormal results found",
+        data: null,
+      });
     }
     const abnormalIds = results.map((r) => r._id);
     const deleteResult = await ResultModel.deleteMany({
@@ -418,13 +408,11 @@ export const assignRankToResults = async (req: Request, res: Response) => {
         });
       }
 
-      return res
-        .status(200)
-        .json({
-          error: false,
-          message: "No ranks to assign",
-          data: { timeTaken: `${(Date.now() - start) / 1000}s` },
-        });
+      return res.status(200).json({
+        error: false,
+        message: "No ranks to assign",
+        data: { timeTaken: `${(Date.now() - start) / 1000}s` },
+      });
     } catch (error) {
       console.log("[assignRankToResults] inner error for aggregations:", error);
       // Fetch all results with only necessary fields
@@ -637,6 +625,9 @@ export const assignBranchChangeToResults = async (
   }
 };
 
+// Rows share the per-scheme header fetch; the cap keeps DB and site load bounded for large imports.
+const FRESHERS_CONCURRENCY = 8;
+
 const freshersDataSchema = z.array(
   z.object({
     name: z.string(),
@@ -653,43 +644,60 @@ export const importFreshers = async (req: Request, res: Response) => {
     const data = req.body;
     const parsedData = freshersDataSchema.safeParse(data);
     if (!parsedData.success) {
-      return res
-        .status(400)
-        .json({
-          error: true,
-          message: "Invalid data",
-          data: parsedData.error.issues,
-        });
+      return res.status(400).json({
+        error: true,
+        message: "Invalid data",
+        data: parsedData.error.issues,
+      });
     }
 
-    // build freshers list defensively
-    const results = await Promise.all(
-      parsedData.data.map(async (student) => {
+    const outcomes = await mapSettledWithLimit(
+      parsedData.data,
+      FRESHERS_CONCURRENCY,
+      async (student) => {
+        let info: { branch: string; batch: number; programme: string };
         try {
-          const info = await getInfoFromRollNo(student.rollNo);
-          return {
-            name: student.name,
-            rollNo: student.rollNo,
-            branch: info.branch,
-            batch: info.batch,
-            programme: info.programme,
-            gender: student.gender,
-            semesters: [],
-          };
+          info = await getInfoFromRollNo(student.rollNo);
         } catch (err) {
-          console.error(`getInfoFromRollNo failed for ${student.rollNo}:`, err);
-          // fallback but keep rollNo so caller can see problem
-          return {
-            name: student.name,
-            rollNo: student.rollNo,
-            branch: "unknown",
-            batch: 0,
-            programme: "unknown",
-            gender: student.gender,
-            semesters: [],
-          };
+          // Freshers have no semesters to scrape yet, so the roll number alone is enough.
+          console.warn(`getInfoFromRollNo failed for ${student.rollNo}:`, err);
+          info = getStudentInfoFromRollNo(student.rollNo);
         }
-      })
+        return {
+          name: student.name,
+          rollNo: student.rollNo,
+          branch: info.branch,
+          batch: info.batch,
+          programme: info.programme,
+          gender: student.gender,
+          semesters: [],
+        };
+      }
+    );
+
+    const unresolved = outcomes.flatMap((outcome, index) =>
+      outcome.status === "rejected"
+        ? [
+            {
+              rollNo: parsedData.data[index].rollNo,
+              error:
+                outcome.reason instanceof Error
+                  ? outcome.reason.message
+                  : String(outcome.reason),
+            },
+          ]
+        : []
+    );
+    // Nothing is inserted unless every row resolves, so no fresher is saved with a placeholder batch.
+    if (unresolved.length > 0) {
+      return res.status(400).json({
+        error: true,
+        message: `Couldn't determine batch or branch for ${unresolved.length} roll number(s)`,
+        data: unresolved,
+      });
+    }
+    const results = outcomes.flatMap((outcome) =>
+      outcome.status === "fulfilled" ? [outcome.value] : []
     );
 
     // insertMany with ordered:false to continue on duplicates
@@ -734,32 +742,25 @@ export const getResultsByBatch = async (req: Request, res: Response) => {
         ? "latestCgpi"
         : "rank.batch";
 
-    const results = await ResultModel.aggregate([
+    const sortStage: Record<string, 1 | -1> =
+      sortBy === "latestCgpi" ? { latestCgpi: -1 } : { "rank.batch": 1 };
+
+    // Computed per read from the last semester, so a GET never writes.
+    const docs = await ResultModel.aggregate([
       { $match: { batch } },
       {
-        $set: {
+        $project: {
+          _id: 0,
+          rollNo: 1,
+          name: 1,
+          "rank.batch": 1,
           latestCgpi: {
             $ifNull: [{ $arrayElemAt: ["$semesters.cgpi", -1] }, 0],
           },
         },
       },
-      {
-        $merge: {
-          into: "results",
-          on: "_id",
-          whenMatched: "merge",
-          whenNotMatched: "discard",
-        },
-      },
-    ]);
-
-    const sortStage: Record<string, 1 | -1> =
-      sortBy === "latestCgpi" ? { latestCgpi: -1 } : { "rank.batch": 1 };
-
-    const docs = await ResultModel.find({ batch })
-      .sort(sortStage)
-      .select({ rollNo: 1, name: 1, latestCgpi: 1, "rank.batch": 1, _id: 0 })
-      .lean();
+      { $sort: sortStage },
+    ]).allowDiskUse(true);
 
     const escape = (v: unknown) => {
       const s = String(v ?? "");
@@ -794,32 +795,52 @@ export const createBatchUsingPrevious = async (req: Request, res: Response) => {
     const latestBatch =
       allBatches && allBatches.length ? allBatches.sort((a, b) => b - a)[0] : 0;
     const newBatch = latestBatch + 1;
-    const previousBatchResults =
-      latestBatch > 0 ? await ResultModel.find({ batch: latestBatch }) : [];
+    const previousBatchRollNos =
+      latestBatch > 0
+        ? ((await ResultModel.distinct("rollNo", {
+            batch: latestBatch,
+          })) as string[])
+        : [];
+    const taskId = `create-batch-${newBatch}`;
 
-    await ResultScrapingLog.create({
-      processable: previousBatchResults.length,
-      processed: 0,
-      failed: 0,
-      success: 0,
-      data: [],
-      status: "in_progress",
-      successfulRollNos: [],
-      failedRollNos: [],
-      queue: [],
-      list_type: "previous_batch",
-      taskId: `create-batch-${newBatch}`,
-      startTime: new Date(),
-      endTime: null,
+    // Upsert keeps repeat calls idempotent: taskId is unique, so a plain create would 500.
+    const outcome = await ResultScrapingLog.findOneAndUpdate(
+      { taskId },
+      {
+        $setOnInsert: {
+          processable: previousBatchRollNos.length,
+          processed: 0,
+          failed: 0,
+          success: 0,
+          data: [],
+          status: "in_progress",
+          successfulRollNos: [],
+          failedRollNos: [],
+          queue: [],
+          list_type: "previous_batch",
+          taskId,
+          startTime: new Date(),
+          endTime: null,
+        },
+      },
+      { upsert: true, new: true, includeResultMetadata: true }
+    );
+    const alreadyExisted = Boolean(outcome.lastErrorObject?.updatedExisting);
+
+    return res.status(200).json({
+      error: false,
+      message: alreadyExisted
+        ? `A task for batch ${newBatch} already exists`
+        : "Batch created successfully",
+      data: {
+        newBatch,
+        previousBatch: latestBatch,
+        previousBatchCount: previousBatchRollNos.length,
+        previousBatchRollNos,
+        taskId,
+        alreadyExisted,
+      },
     });
-
-    return res
-      .status(200)
-      .json({
-        error: false,
-        message: "Batch created successfully",
-        data: { previousBatchResults, newBatch },
-      });
   } catch (error) {
     console.error("createBatchUsingPrevious error:", error);
     return res

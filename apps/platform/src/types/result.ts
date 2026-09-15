@@ -41,18 +41,7 @@ export const freshersDataSchema = z.array(
   })
 );
 
-export const rollNoSchema = z
-  .string()
-  .regex(/^\d{2}[a-z]{3}\d{3}$/i)
-  .refine(
-    (rollNo) => {
-      const numericPart = Number.parseInt(rollNo.slice(-3));
-      return numericPart >= 1 && numericPart <= 999;
-    },
-    {
-      message: "Invalid roll number",
-    }
-  );
+export { rollNoSchema } from "../constants/core.departments";
 
 export type Course = {
   name: string;

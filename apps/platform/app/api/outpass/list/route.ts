@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { authorizeHostelManager } from "~/lib/hostel-access";
 import { OutPassModel, type OutPassType } from "~/models/hostel_n_outpass";
+import { serialize } from "~/utils/serialize";
 
 const toInt = (value: string | null, fallback: number) =>
   Number.parseInt(value ?? "", 10) || fallback;
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const groupedOutPasses: Record<string, OutPassType[]> = {};
-    const rows = JSON.parse(JSON.stringify(outPasses)) as OutPassType[];
+    const rows = serialize<OutPassType[]>(outPasses);
     for (const outPass of rows) {
       groupedOutPasses[outPass.status] ??= [];
       groupedOutPasses[outPass.status].push(outPass);

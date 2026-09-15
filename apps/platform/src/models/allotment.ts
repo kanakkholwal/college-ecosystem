@@ -59,6 +59,9 @@ const RoomMemberSchema = new Schema<IRoomMember>({
   hostel: { type: Schema.Types.ObjectId, ref: "Hostel", required: true },
 });
 
+// Backstop for concurrent joins: the "already has a room" read can't see another transaction's insert.
+RoomMemberSchema.index({ student: 1 }, { unique: true });
+
 export const RoomMemberModel =
   mongoose?.models?.RoomMember ||
   mongoose.model<IRoomMember>("RoomMember", RoomMemberSchema);

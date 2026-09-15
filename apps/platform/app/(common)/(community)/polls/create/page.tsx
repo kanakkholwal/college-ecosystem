@@ -2,7 +2,7 @@ import CreatePollForm from "@/components/application/poll/create-poll";
 import { signInHref } from "@/components/application/poll/utils";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSession } from "~/auth/server";
+import { getSessionOrThrow } from "~/auth/server";
 
 export const metadata: Metadata = {
   title: "New poll",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CreatePollPage() {
-  const session = await getSession();
+  const session = await getSessionOrThrow();
   if (!session) redirect(signInHref("/polls/create"));
 
   return <CreatePollForm />;

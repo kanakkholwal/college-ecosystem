@@ -1,9 +1,11 @@
 "use server";
 
 import type { PipelineStage } from "mongoose";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import { serverFetch } from "~/lib/fetch-server";
 import ResultModel from "~/models/result";
+import { serialize } from "~/utils/serialize";
 import { assertAdmin, guarded, upstreamFailure } from "../guard";
 import { EVENTS, LIST_TYPE, type TaskData } from "./types";
 
@@ -15,13 +17,13 @@ export async function listScrapeTasks() {
       `${TASKS_PATH}?action=${EVENTS.TASK_GET_LIST}`
     );
     if (error) throw upstreamFailure(error, "Couldn't load scrape history");
-    return JSON.parse(JSON.stringify(data?.data ?? [])) as TaskData[];
+    return serialize<TaskData[]>(data?.data ?? []);
   });
 }
 
 export async function deleteScrapeTask(taskId: string) {
   return guarded("Couldn't delete that task log", async () => {
-    if (!/^[a-f0-9]{24}$/i.test(taskId)) throw new Error("Invalid task id.");
+    if (!isObjectIdString(taskId)) throw new Error("Invalid task id.");
     const { error } = await serverFetch(
       `${TASKS_PATH}?action=${EVENTS.TASK_DELETE}&deleteTaskId=${taskId}`
     );

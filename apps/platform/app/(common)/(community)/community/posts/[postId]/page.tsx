@@ -1,3 +1,4 @@
+import { ROLES_ENUMS } from "~/constants";
 import { ActivityList } from "@/components/application/activity/list";
 import { PostActions } from "@/components/application/community/post-actions";
 import {
@@ -182,7 +183,7 @@ export default async function CommunityPost(props: Props) {
               {formatNumber(post.views ?? 0)}
               <span className="sr-only">views</span>
             </p>
-            {viewer?.role === "admin" && (
+            {viewer?.role === ROLES_ENUMS.ADMIN && (
               <ActivityList targetId={post._id} targetModel="communityPost" />
             )}
             <PostMenu

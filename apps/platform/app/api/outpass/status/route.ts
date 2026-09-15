@@ -1,10 +1,10 @@
-import { Types } from "mongoose";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   getOutPassById,
   getOutPassHistoryByRollNo,
 } from "~/actions/hostel.outpass";
 import { isValidRollNumber } from "~/constants/core.departments";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import { authorizeGate } from "~/lib/hostel-access";
 
 const noStore = { "Cache-Control": "no-store" };
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     );
   }
   const isRollNo = isValidRollNumber(identifier);
-  if (!isRollNo && !Types.ObjectId.isValid(identifier)) {
+  if (!isRollNo && !isObjectIdString(identifier)) {
     return NextResponse.json(
       {
         identifier: "unknown",
@@ -36,27 +36,21 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    if (isRollNo) {
-      const history = await getOutPassHistoryByRollNo(identifier);
-      return NextResponse.json(
-        { identifier: "rollNo", history },
-        { status: 200, headers: noStore }
-      );
-    }
-    const outpass = await getOutPassById(identifier);
+  const lookupFailed = (message: string) =>
+    NextResponse.json({ identifier: "unknown", message }, { status: 500 });
+
+  if (isRollNo) {
+    const history = await getOutPassHistoryByRollNo(identifier);
+    if (!history.ok) return lookupFailed(history.error);
     return NextResponse.json(
-      { identifier: "id", outpass },
+      { identifier: "rollNo", history: history.data },
       { status: 200, headers: noStore }
     );
-  } catch (error) {
-    console.error("outpass status lookup failed:", error);
-    return NextResponse.json(
-      {
-        identifier: "unknown",
-        message: "An error occurred while fetching data",
-      },
-      { status: 500 }
-    );
   }
+  const outpass = await getOutPassById(identifier);
+  if (!outpass.ok) return lookupFailed(outpass.error);
+  return NextResponse.json(
+    { identifier: "id", outpass: outpass.data },
+    { status: 200, headers: noStore }
+  );
 }

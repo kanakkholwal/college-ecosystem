@@ -5,7 +5,7 @@ import {
 } from "@/components/application/community/utils";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSession } from "~/auth/server";
+import { getSessionOrThrow } from "~/auth/server";
 
 export const metadata: Metadata = {
   title: "New post",
@@ -18,7 +18,7 @@ export default async function CreateCommunityPostPage(props: {
 }) {
   const [searchParams, session] = await Promise.all([
     props.searchParams,
-    getSession(),
+    getSessionOrThrow(),
   ]);
   if (!session) {
     const query = new URLSearchParams(

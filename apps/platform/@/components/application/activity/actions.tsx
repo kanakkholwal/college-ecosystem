@@ -8,7 +8,9 @@ export async function getActivity({
   targetModel,
 }: GetActivityParamters): Promise<ActivityResponse | null> {
   if (targetModel === "communityPost") {
-    const activity = await getPostActivity(targetId);
+    const res = await getPostActivity(targetId);
+    if (!res.ok) throw new Error(res.error);
+    const activity = res.data;
     return {
       likedBy: {
         label: "Liked By",

@@ -31,6 +31,7 @@ import {
   type ResidentImportRow,
   type ResidentImportRowResult,
 } from "~/actions/hostel.core";
+import { callAction } from "~/lib/call-action";
 
 const FILTERS: FilterOption[] = [
   {
@@ -149,38 +150,22 @@ export function ImportResidents({ slug }: { slug: string }) {
 
   const check = async () => {
     setBusy("check");
-    try {
-      const res = await previewResidentImport(slug, payload());
-      if (!res.success) toast.error(res.error ?? "Couldn't check the file");
-      else setPreview(res.rows);
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(null);
-    }
+    const res = await callAction(() => previewResidentImport(slug, payload()));
+    setBusy(null);
+    if (!res.ok) toast.error(res.error);
+    else setPreview(res.data);
   };
 
   const commit = async () => {
     setBusy("import");
-    try {
-      const res = await importResidents(slug, payload());
-      if (!res.success) {
-        toast.error(res.error ?? "Import failed");
-        return;
-      }
-      setResult({ written: res.written, failed: res.failed });
-      router.refresh();
-    } catch {
-      // A rejected action (network drop, redeploy) would otherwise fail silently.
-      toast.error(
-        "Couldn't reach the server. Check your connection and try again."
-      );
-    } finally {
-      setBusy(null);
+    const res = await callAction(() => importResidents(slug, payload()));
+    setBusy(null);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
     }
+    setResult(res.data);
+    router.refresh();
   };
 
   const counts = useMemo(() => {

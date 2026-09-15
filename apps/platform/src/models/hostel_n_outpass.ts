@@ -1,9 +1,5 @@
-import { eq } from "drizzle-orm";
 import mongoose, { type Document, Schema } from "mongoose";
 import type { OUTPASS_STATUS, REASONS } from "~/constants/hostel.outpass";
-import { toHostelId } from "~/constants/hostel_n_outpass";
-import { db } from "~/db/connect";
-import { users } from "~/db/schema/auth-schema";
 import ResultModel from "./result";
 
 export interface RawHostelType {
@@ -187,6 +183,16 @@ const OutPassSchema = new Schema(
 
 OutPassSchema.index({ hostel: 1, status: 1, createdAt: 1 });
 OutPassSchema.index({ student: 1, createdAt: -1 });
+// Mirrors createOutPass's open-pass check. "approved" is left out: unused approved passes never leave that state.
+export const OPEN_OUTPASS_STATUSES = ["pending", "in_use"] as const;
+OutPassSchema.index(
+  { student: 1 },
+  {
+    unique: true,
+    name: "one_open_outpass_per_student",
+    partialFilterExpression: { status: { $in: [...OPEN_OUTPASS_STATUSES] } },
+  }
+);
 
 // 🟢 Pre-remove hook to clean up students if hostel is deleted
 HostelSchema.pre(
@@ -222,66 +228,6 @@ HostelStudentSchema.pre("save", async function () {
   //   throw new Error("Student gender does not match hostel gender");
   // }
 });
-// 🟢 Pre-save hook: Ensure userId is updated
-
-async function updateCorrespondingUserId(student: IHostelStudentType) {
-  const userRecord = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, student.email))
-    .limit(1);
-
-  if (userRecord.length > 0) {
-    const userId = userRecord[0].id;
-    student.userId = userId;
-
-    await db
-      .update(users)
-      .set({ hostelId: toHostelId(student.hostelId) })
-      .where(eq(users.id, userId));
-  } else {
-    student.userId = null;
-  }
-}
-
-// Pre hook for insertMany
-// HostelStudentSchema.pre("insertMany", async (next, docs) => {
-//   try {
-//     for await (const student of docs) {
-//       // Fetch userId from PostgreSQL based on student's email
-//       await updateCorrespondingUserId(student as unknown as IHostelStudentType);
-//     }
-//     next();
-//   } catch (error) {
-//     next(error as CallbackError);
-//   }
-// });
-
-// Pre hook for insertOne (save)
-// HostelStudentSchema.pre("save", async function (next) {
-//   const student = this as unknown as IHostelStudentType;
-
-//   try {
-//     // Fetch userId from PostgreSQL based on student's email
-//     await updateCorrespondingUserId(student);
-//     next();
-//   } catch (error) {
-//     next(error as CallbackError);
-//   }
-// });
-// HostelStudentSchema.pre("save", async (next) => {
-//   const student = this as unknown as IHostelStudentType;
-
-//   try {
-//     // Fetch userId from PostgreSQL based on student's email
-//     await updateCorrespondingUserId(student);
-
-//     next();
-//   } catch (error) {
-//     next(error as CallbackError);
-//   }
-// });
-
 // 🔴 Post-save hook: Auto-update ResultModel gender if missing
 HostelStudentSchema.post("save", async (doc) => {
   await ResultModel.updateOne(

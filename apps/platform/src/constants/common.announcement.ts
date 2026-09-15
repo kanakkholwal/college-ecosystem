@@ -23,9 +23,7 @@ export const rawAnnouncementSchema = z.object({
     .refine((date) => date.getTime() > new Date().getTime(), {
       message: "Expiry Date must be in the future.",
     })
-    .default(
-      new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // Default to 2 days from now
-    ),
+    .default(() => new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)),
   relatedFor: z.enum(RELATED_FOR_TYPES),
 });
 export type RawAnnouncementType = z.infer<typeof rawAnnouncementSchema>;

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { orgConfig } from "~/project.config";
 import { formatNumberOrdinal } from "~/utils/number";
+import type { rollNoSchema } from "./core.departments";
 
 export const ROLES_ENUMS = {
   ADMIN: "admin",
@@ -16,12 +17,13 @@ export const ROLES_ENUMS = {
   LIBRARIAN: "librarian",
   STAFF: "staff",
   GUARD: "guard",
+  // Primary `users.role` value only; it is not in the `user_roles_enum` Postgres type.
+  MODERATOR: "moderator",
 } as const;
 
-export const ROLES: readonly string[] = Object.values(ROLES_ENUMS);
-
-export const ROLES_MAP = Object.fromEntries(
-  Object.entries(ROLES).map(([key, value]) => [value, key])
+// Feeds the other_roles pickers, whose values must exist in `user_roles_enum`.
+export const ROLES: readonly string[] = Object.values(ROLES_ENUMS).filter(
+  (role) => role !== ROLES_ENUMS.MODERATOR
 );
 
 export const ALLOWED_ROLES = [
@@ -59,21 +61,7 @@ export const emailSchema = z
     message: `Email must end with @${orgConfig.domain}`,
   });
 
-export const rollNoSchema = z
-  .string()
-  .regex(/^\d{2}[a-z]{3}\d{3}$/i)
-  .refine(
-    (rollNo) => {
-      const numericPart = Number.parseInt(rollNo.slice(-3));
-      return numericPart >= 1 && numericPart <= 999;
-    },
-    {
-      message: "Invalid roll number",
-    }
-  );
-export const isValidRollNumber = (rollNo: string): boolean => {
-  return rollNoSchema.safeParse(rollNo).success;
-};
+export { isValidRollNumber, rollNoSchema } from "./core.departments";
 
 /** The one rule set for any new password (sign up, reset, settings). Every character is allowed. */
 export const passwordSchema = z

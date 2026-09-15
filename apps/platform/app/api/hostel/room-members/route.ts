@@ -1,5 +1,6 @@
-import mongoose from "mongoose";
+import type mongoose from "mongoose";
 import { type NextRequest, NextResponse } from "next/server";
+import { isObjectIdString } from "~/constants/hostel_n_outpass";
 import dbConnect from "~/lib/dbConnect";
 import { authorizeHostelManager, authorizeResident } from "~/lib/hostel-access";
 import { HostelRoomModel, RoomMemberModel } from "~/models/allotment";
@@ -12,7 +13,7 @@ type Member = {
 
 export async function GET(request: NextRequest) {
   const roomId = request.nextUrl.searchParams.get("roomId");
-  if (!roomId || !mongoose.isValidObjectId(roomId)) {
+  if (!roomId || !isObjectIdString(roomId)) {
     return NextResponse.json(
       { message: "No room id provided" },
       { status: 400 }

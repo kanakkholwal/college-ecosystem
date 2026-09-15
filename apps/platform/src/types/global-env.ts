@@ -17,10 +17,10 @@ const envVariables = z.object({
   DEEPSEEK_API_KEY: z.string(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
 
-  SERVER_IDENTITY: z.string().url(),
+  // Server-only: never expose it as NEXT_PUBLIC_*, the browser bundle is public.
+  SERVER_IDENTITY: z.string(),
   BASE_SERVER_URL: z.string().url(),
   NEXT_PUBLIC_BASE_SERVER_URL: z.string().url(),
-  NEXT_PUBLIC_SERVER_IDENTITY: z.string(),
 
   REDIS_URL: z.string(),
 
