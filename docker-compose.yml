@@ -1,12 +1,11 @@
 services:
   platform:
     build:
-      context: ./apps/platform
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/platform/Dockerfile
     ports:
       - "3000:3000"
     environment:
-    # TODO: Add proper environment variables
       - NODE_ENV=production
       - GOOGLE_ID=${GOOGLE_ID}
       - GOOGLE_SECRET=${GOOGLE_SECRET}
@@ -40,8 +39,8 @@ services:
 
   mail-server:
     build:
-      context: ./apps/mail-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/mail-server/Dockerfile
     ports:
       - "3001:3000"
     environment:
@@ -59,8 +58,8 @@ services:
 
   server:
     build:
-      context: ./apps/server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/server/Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -71,21 +70,6 @@ services:
     depends_on:
       - redis
       - mongodb
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-    networks:
-      - ecosystem-network
-
-  website:
-    build:
-      context: ./apps/website
-      dockerfile: Dockerfile
-    ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=production
     deploy:
       resources:
         limits:
@@ -114,7 +98,7 @@ services:
       - ecosystem-network
 
   postgres:
-    image: postgres:alpine
+    image: postgres:17-alpine
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -135,4 +119,3 @@ networks:
 volumes:
   mongodb_data:
   postgres_data:
-
