@@ -1,13 +1,12 @@
-// Updated feature data arrays for College Ecosystem
-
 import {
+  Bell,
   Building,
   Calendar,
   FileText,
   GraduationCap,
-  LucideIcon,
   MessageSquare,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 
 export type FeatureItem = {
@@ -20,55 +19,49 @@ export type FeatureItem = {
 
 const leftFeatures: FeatureItem[] = [
   {
-    icon: GraduationCap, // lucide-react
-    title: "Academic Results",
+    icon: GraduationCap,
+    title: "Academic Management",
     description:
-      "Check your semester results instantly, ranked with CGPI and branch insights.",
+      "Access academic information, results, schedules, syllabus, and other student resources from one place.",
     position: "left",
-    cornerStyle: "sm:translate-x-4 sm:rounded-br-[2px]",
   },
   {
-    icon: Building, // lucide-react
-    title: "Hostel Allotment",
+    icon: Bell,
+    title: "Notices & Updates",
     description:
-      "Seamless hostel room allocation with preferences, CGPI priority, and SOE-based rules.",
+      "Keep important announcements, notices, circulars, and campus updates within easy reach.",
     position: "left",
-    cornerStyle: "sm:-translate-x-4 sm:rounded-br-[2px]",
   },
   {
-    icon: Users, // lucide-react
-    title: "Clubs & Societies",
+    icon: Users,
+    title: "Student Community",
     description:
-      "Explore cultural, technical, and sports clubs — join events and grow your community.",
+      "Connect with other students and stay involved with clubs, societies, activities, and campus life.",
     position: "left",
-    cornerStyle: "sm:translate-x-4 sm:rounded-tr-[2px]",
   },
 ];
 
 const rightFeatures: FeatureItem[] = [
   {
-    icon: Calendar, // lucide-react
-    title: "Events & Activities",
+    icon: Calendar,
+    title: "Schedules & Events",
     description:
-      "Stay updated with college fests, workshops, and society events — all in one place.",
+      "Find academic schedules, campus events, activities, and important dates in one place.",
     position: "right",
-    cornerStyle: "sm:-translate-x-4 sm:rounded-bl-[2px]",
   },
   {
-    icon: FileText, // lucide-react
-    title: "Resources & Notices",
+    icon: FileText,
+    title: "Resources",
     description:
-      "Get access to study material, academic notices, and important circulars easily.",
+      "Organize and access useful academic resources, documents, and information whenever you need them.",
     position: "right",
-    cornerStyle: "sm:translate-x-4 sm:rounded-bl-[2px]",
   },
   {
-    icon: MessageSquare, // lucide-react
-    title: "Community Space",
+    icon: Building,
+    title: "Campus Services",
     description:
-      "Engage with peers, share ideas, and collaborate through dedicated student forums.",
+      "Bring everyday campus services and information together through a single digital platform.",
     position: "right",
-    cornerStyle: "sm:-translate-x-4 sm:rounded-tl-[2px]",
   },
 ];
 
@@ -77,37 +70,8 @@ export const featuresSectionContent = {
   right: rightFeatures,
 };
 
-export const testimonialsContent = [
-  {
-    description: "Everything I need is just here.",
-    image: "https://i.pravatar.cc/150?img=11",
-    name: "Ankit Sharma",
-    handle: "@19122",
-  },
-  {
-    description: "This platform makes campus life smoother and more connected.",
-    image: "https://i.pravatar.cc/150?img=22",
-    name: "Ujjwal Singh",
-    handle: "@19147",
-  },
-  {
-    description:
-      "From results to Syllabus, this platform actually makes NITH life simpler.",
-    image: "https://i.pravatar.cc/150?img=33",
-    name: "Rahul Mehta",
-    handle: "@19089",
-  },
-  {
-    description: "The UI is modern and simple to use. I love the features!",
-    image: "https://i.pravatar.cc/150?img=44",
-    name: "Ayushi Yadav",
-    handle: "@19201",
-  },
-  {
-    description:
-      "The College Ecosystem really bridges academics and social life at NITH. ",
-    image: "https://i.pravatar.cc/150?img=55",
-    name: "Aditya Verma",
-    handle: "@19057",
-  },
-];
+/**
+ * Testimonials are intentionally kept empty until genuine
+ * student/faculty feedback is available.
+ */
+export const testimonialsContent = [];

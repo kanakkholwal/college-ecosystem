@@ -1,61 +1,54 @@
 "use client";
-import {EncryptedText} from "@/components/animation/encrypted-text"
-import { AnimatedGradientText } from "@/components/animation/animated-shiny-text";
-import { FloatingElements } from "@/components/animation/floating-elements";
+
 import {
   StaggerChildrenContainer,
   StaggerChildrenItem,
 } from "@/components/animation/motion";
-import { NumberTicker } from "@/components/animation/number-ticker";
 import FeatureCard from "@/components/common/feature-card";
 import { Icon } from "@/components/icons";
-import { ApplicationSvgLogo } from "@/components/logo";
-import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/utils/link";
 import { featuresSectionContent } from "@/constants/landing";
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
-  BarChart2,
-  BarChart3,
   Bell,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
+  ClipboardCheck,
   FileText,
-  Globe,
   GraduationCap,
   Users,
 } from "lucide-react";
 import type { Session } from "~/auth";
 import { PublicStatsType } from "~/lib/third-party/github";
-import { appConfig, orgConfig } from "~/project.config";
-import { getGreeting } from "~/utils/misc";
+import { appConfig } from "~/project.config";
 
-// --- VARIANTS ---
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
   },
 };
 
 const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: {
+    opacity: 0,
+    y: 20,
+  },
   visible: {
-    y: 0,
     opacity: 1,
-    transition: { type: "spring", stiffness: 100, damping: 20 },
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 18,
+    },
   },
 };
-
-// --- DATA ---
-const popular_features = [
-  { name: "Results", icon: FileText, href: "/results" },
-  { name: "Community", icon: Users, href: "/community" },
-];
-
-// --- COMPONENTS ---
 
 export function IntroSection({
   user,
@@ -64,230 +57,286 @@ export function IntroSection({
   user: Session["user"] | null | undefined;
   stats: PublicStatsType;
 }) {
-  // Flatten stats logic for display
   const displayStats = [
-    { label: "Impressions", value: stats.visitors, icon: BarChart2 },
-    { label: "Active Students", value: stats.userCount, icon: Users },
     {
-      label: "GitHub Stars",
-      value: stats.githubStats?.stars || 0,
-      icon: Globe,
+      label: "Students",
+      value: stats.userCount,
     },
-    { label: "Live Sessions", value: stats.sessionCount, icon: BarChart3 },
+    {
+      label: "Sessions",
+      value: stats.sessionCount,
+    },
+    {
+      label: "Platform Visits",
+      value: stats.visitors,
+    },
   ];
 
   return (
-    <section className="relative w-full max-w-(--max-app-width) mx-auto pt-12 pb-20 lg:pt-24 lg:pb-32 px-4 md:px-6">
+    <section className="relative w-full overflow-hidden py-16 md:py-24 lg:py-28">
+      {/* Background decoration */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-primary/8 blur-3xl" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,#000_50%,transparent_100%)]" />
+      </div>
+
       <StaggerChildrenContainer
-        className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center"
         variants={containerVariants}
+        className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-14 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20"
       >
-        {/* LEFT COLUMN: Copy & CTAs */}
-        <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-8">
-          {/* Greeting / Badge */}
-          <StaggerChildrenItem>
+        {/* LEFT */}
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <StaggerChildrenItem variants={itemVariants}>
             {user ? (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
                 </span>
-                {getGreeting()}, {user.name}
+                Welcome back, {user.name}
               </div>
             ) : (
-              <Badge
-                variant="outline"
-                className="rounded-full py-1.5 px-4 gap-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
-              >
-                <span className="font-bold">New</span> {appConfig.name} 2.0 is
-                live
-              </Badge>
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                A unified digital campus platform
+              </div>
             )}
           </StaggerChildrenItem>
 
-          {/* Headlines */}
-          <StaggerChildrenItem>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground text-balance">
-              The{" "}
-              <span className="bg-primary bg-clip-text text-transparent">
-                Operating System
-              </span>{" "}
-              <br className="hidden lg:block" />
-              for {orgConfig.shortName} Campus.
+          <StaggerChildrenItem variants={itemVariants}>
+            <h1 className="mt-7 max-w-3xl text-5xl font-bold tracking-[-0.04em] text-foreground sm:text-6xl lg:text-7xl">
+              Your Campus.
+              <span className="block text-primary">Connected.</span>
             </h1>
-            <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 text-balance leading-relaxed">
-              {appConfig.description ||
-                "Manage results, find empty classrooms, and connect with seniors. Everything you need to survive and thrive in college, all in one place."}
+          </StaggerChildrenItem>
+
+          <StaggerChildrenItem variants={itemVariants}>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
+              Campus 360 brings academics, attendance, schedules, results,
+              notices, resources, events, and campus services together in one
+              simple platform.
             </p>
           </StaggerChildrenItem>
 
-          {/* Buttons */}
-          <StaggerChildrenItem className="flex flex-wrap items-center justify-center lg:justify-start gap-4 w-full">
+          <StaggerChildrenItem
+            variants={itemVariants}
+            className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
+          >
             <ButtonLink
               size="lg"
               href={user ? `/${user.other_roles[0]}` : "/auth/sign-in"}
-              variant="default"
-              className="h-12 px-8 text-base shadow-lg shadow-primary/20"
+              className="h-12 rounded-xl px-7 shadow-lg shadow-primary/20"
             >
-              {user ? "Go to Dashboard" : "Get Started"}{" "}
+              {user ? "Go to Dashboard" : "Get Started"}
               <Icon name="arrow-right" className="ml-2 size-4" />
             </ButtonLink>
 
             <ButtonLink
               size="lg"
-              href="#quick-links"
               variant="outline"
-              className="h-12 px-8 text-base bg-background/50 backdrop-blur-sm"
+              href="#quick-links"
+              className="h-12 rounded-xl px-7"
             >
-              Explore Features
+              Explore Platform
             </ButtonLink>
           </StaggerChildrenItem>
 
-          {/* Stats / Social Proof */}
-          <StaggerChildrenItem className="pt-4 w-full">
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-4 border-t border-border/50 pt-6">
-              {displayStats.map((stat, i) => (
-                <div key={i} className="flex flex-col">
-                  <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
-                    <NumberTicker value={stat.value} suffix="+" />
-                  </div>
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {/* Stats */}
+          <StaggerChildrenItem
+            variants={itemVariants}
+            className="mt-10 w-full max-w-xl border-t border-border/60 pt-7"
+          >
+            <div className="grid grid-cols-3 divide-x divide-border/60">
+              {displayStats.map((stat) => (
+                <div key={stat.label} className="px-4 first:pl-0">
+                  <p className="text-2xl font-bold tracking-tight text-foreground">
+                    {stat.value}+
+                  </p>
+                  <p className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {stat.label}
-                  </span>
+                  </p>
                 </div>
               ))}
             </div>
           </StaggerChildrenItem>
         </div>
 
-        {/* RIGHT COLUMN: Visuals */}
-        <div className="relative w-full perspective-1000">
-          <HeroBentoMockup />
-
-          {/* Decorative gradients behind mockup */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/10 blur-[100px] -z-10 rounded-full pointer-events-none mix-blend-screen" />
-        </div>
+        {/* RIGHT */}
+        <StaggerChildrenItem variants={itemVariants}>
+          <CampusDashboardPreview />
+        </StaggerChildrenItem>
       </StaggerChildrenContainer>
     </section>
   );
 }
 
-export function HeroBentoMockup() {
+function CampusDashboardPreview() {
   return (
     <motion.div
-      initial={{ opacity: 0, rotateX: 10, rotateY: -10, scale: 0.9 }}
-      animate={{ opacity: 1, rotateX: 0, rotateY: 0, scale: 1 }}
-      transition={{ duration: 0.8, type: "spring" }}
-      className="relative w-full max-w-2xl mx-auto lg:mr-0 select-none"
+      initial={{
+        opacity: 0,
+        y: 30,
+        scale: 0.97,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+      }}
+      transition={{
+        duration: 0.7,
+        ease: "easeOut",
+      }}
+      className="relative mx-auto w-full max-w-[680px]"
     >
-      {/* Main Dashboard Card (The "Base") */}
-      <div className="relative rounded-2xl border border-border/60 bg-background/80 backdrop-blur-xl shadow-2xl overflow-hidden">
-        {/* Fake Header */}
-        <div className="h-10 border-b border-border/40 flex items-center px-4 gap-2 bg-muted/20">
+      {/* Glow */}
+      <div className="absolute -inset-10 -z-10 rounded-full bg-primary/10 blur-3xl" />
+
+      {/* Main application window */}
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-2xl">
+        {/* Browser / app header */}
+        <div className="flex h-12 items-center border-b border-border/60 bg-muted/20 px-4">
           <div className="flex gap-1.5">
-            <div className="size-3 rounded-full bg-red-400/80" />
-            <div className="size-3 rounded-full bg-yellow-400/80" />
-            <div className="size-3 rounded-full bg-green-400/80" />
+            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+            <span className="size-2.5 rounded-full bg-muted-foreground/30" />
           </div>
-          <div className="mx-auto w-1/3 h-2 rounded-full bg-muted/50" />
+
+          <div className="mx-auto rounded-md bg-muted/60 px-8 py-1">
+            <span className="text-[10px] text-muted-foreground">
+              campus360
+            </span>
+          </div>
+
+          <div className="size-6 rounded-full bg-primary/10" />
         </div>
 
-        {/* Dashboard Content */}
-        <div className="p-6 grid grid-cols-3 gap-4">
-          {/* Result Widget */}
-          <div className="col-span-2 p-4 rounded-xl bg-card border border-border/40 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <GraduationCap className="size-4 text-primary" />
-                </div>
-                <span className="text-sm font-semibold">Current CGPA</span>
-              </div>
-              <Badge variant="default" className="text-[10px]">
-                Sem 5
-              </Badge>
-            </div>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-bold tracking-tighter">9.42</span>
-              <span className="text-xs text-muted-foreground mb-1">/ 10.0</span>
-            </div>
-            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-              <div className="h-full w-[94%] bg-primary rounded-full" />
-            </div>
-          </div>
-
-          {/* Date Widget */}
-          <div className="col-span-1 p-4 rounded-xl bg-primary/10 text-primary shadow-sm flex flex-col justify-between items-center text-center">
-            <CalendarDays className="size-6 opacity-80" />
+        {/* Dashboard */}
+        <div className="p-4 sm:p-6">
+          {/* Dashboard top */}
+          <div className="flex items-center justify-between">
             <div>
-              <span className="text-2xl font-bold block">28</span>
-              <span className="text-xs opacity-80 uppercase font-medium">
-                Nov
-              </span>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Campus 360
+              </p>
+
+              <h3 className="mt-1 text-lg font-bold tracking-tight">
+                Student Dashboard
+              </h3>
+            </div>
+
+            <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Bell className="size-4" />
             </div>
           </div>
 
-          {/* Resource List */}
-          <div className="col-span-3 p-4 rounded-xl bg-card border border-border/40 shadow-sm space-y-3">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-              Recent Resources
-            </div>
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-default"
-              >
-                <div className="size-8 rounded bg-blue-500/10 flex items-center justify-center text-blue-500">
-                  <FileText className="size-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="h-2 w-3/4 bg-muted-foreground/20 rounded mb-1.5" />
-                  <div className="h-1.5 w-1/2 bg-muted-foreground/10 rounded" />
-                </div>
+          {/* Overview cards */}
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <DashboardStat
+              icon={ClipboardCheck}
+              label="Attendance"
+              value="87%"
+            />
+
+            <DashboardStat
+              icon={BookOpen}
+              label="Classes"
+              value="04"
+            />
+
+            <DashboardStat
+              icon={GraduationCap}
+              label="Results"
+              value="8.7"
+            />
+
+            <DashboardStat
+              icon={CalendarDays}
+              label="Events"
+              value="06"
+            />
+          </div>
+
+          {/* Main grid */}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-5">
+            {/* Schedule */}
+            <div className="rounded-xl border border-border/60 bg-card p-4 sm:col-span-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold">Today&apos;s Schedule</p>
+
+                <CalendarDays className="size-4 text-muted-foreground" />
               </div>
-            ))}
+
+              <div className="mt-4 space-y-3">
+                <ScheduleRow
+                  time="10:00"
+                  title="Data Science"
+                  room="Room 204"
+                />
+
+                <ScheduleRow
+                  time="12:00"
+                  title="Database Systems"
+                  room="Lab 02"
+                />
+
+                <ScheduleRow
+                  time="02:30"
+                  title="Software Engineering"
+                  room="Room 301"
+                />
+              </div>
+            </div>
+
+            {/* Notices */}
+            <div className="rounded-xl border border-border/60 bg-card p-4 sm:col-span-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold">Latest Notices</p>
+
+                <FileText className="size-4 text-muted-foreground" />
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <NoticeRow text="Examination registration" />
+
+                <NoticeRow text="Academic calendar update" />
+
+                <NoticeRow text="Campus event announcement" />
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom status */}
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-primary/10 bg-primary/5 px-4 py-3">
+            <CheckCircle2 className="size-4 text-primary" />
+
+            <p className="text-xs text-muted-foreground">
+              Your campus information, available from one place.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Floating "Notification" Card - Top Right */}
+      {/* Floating card */}
       <motion.div
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -right-8 -top-8 w-48 p-3 rounded-xl border border-border bg-card shadow-xl z-20 hidden sm:block"
-      >
-        <div className="flex gap-3 items-start">
-          <div className="size-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-600 shrink-0">
-            <CheckCircle2 className="size-4" />
-          </div>
-          <div>
-            <p className="text-xs font-bold">Outpass Approved!</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Approved by Warden. Have a great time!
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Floating "Event" Card - Bottom Left */}
-      <motion.div
-        animate={{ y: [0, 10, 0] }}
+        animate={{ y: [0, -7, 0] }}
         transition={{
-          duration: 5,
+          duration: 4,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 1,
         }}
-        className="absolute -left-8 -bottom-8 w-52 p-3 rounded-xl border border-border bg-card shadow-xl z-20 hidden sm:block"
+        className="absolute -bottom-5 -left-5 hidden rounded-xl border border-border bg-background p-3 shadow-xl sm:block"
       >
-        <div className="flex gap-3 items-center">
-          <div className="size-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-600 shrink-0">
-            <Bell className="size-4" />
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Users className="size-4" />
           </div>
+
           <div>
-            <p className="text-xs font-bold">Exam Schedule</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Finals start in 3 days.
+            <p className="text-xs font-semibold">One Campus</p>
+            <p className="text-[10px] text-muted-foreground">
+              One connected platform
             </p>
           </div>
         </div>
@@ -296,63 +345,140 @@ export function HeroBentoMockup() {
   );
 }
 
+function DashboardStat({
+  icon: IconComponent,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-3">
+      <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <IconComponent className="size-3.5" />
+      </div>
+
+      <p className="mt-3 text-lg font-bold tracking-tight">{value}</p>
+
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function ScheduleRow({
+  time,
+  title,
+  room,
+}: {
+  time: string;
+  title: string;
+  room: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-2.5">
+      <div className="w-10 text-[10px] font-semibold text-primary">
+        {time}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[11px] font-medium">{title}</p>
+        <p className="text-[9px] text-muted-foreground">{room}</p>
+      </div>
+
+      <span className="size-2 rounded-full bg-primary/70" />
+    </div>
+  );
+}
+
+function NoticeRow({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="mt-1 size-1.5 shrink-0 rounded-full bg-primary" />
+
+      <p className="text-[10px] leading-4 text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
 export function FeatureSection() {
   return (
-    <section className="py-24 relative overflow-hidden" id="features">
-      {/* Optional Background Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+    <section
+      id="features"
+      className="relative overflow-hidden py-20 md:py-28"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,#000_45%,transparent_100%)]" />
 
-      <div className="max-w-[1200px] mx-auto px-4 md:px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-[1200px] px-4 md:px-6">
         <StaggerChildrenContainer
           variants={containerVariants}
-          className="space-y-16"
+          className="space-y-14"
         >
           {/* Header */}
-          <div className="text-center max-w-2xl mx-auto space-y-4">
-            <h2 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
-              <EncryptedText text="Built for your entire campus life."/>
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              Campus 360
+            </p>
+
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+              Everything your campus needs.
             </h2>
-            <p className="text-base text-muted-foreground text-balance">
-              From checking results to finding hostel rooms, we{"'"}ve digitized
-              the friction points of college life.
+
+            <p className="mt-5 text-base leading-7 text-muted-foreground sm:text-lg">
+              A single platform that brings academic information, campus
+              services, communication, and resources together.
             </p>
           </div>
 
-          {/* Features Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Left Column */}
-            <div className="space-y-8 flex flex-col justify-start">
-              {featuresSectionContent.left.map((feature, i) => (
+          {/* Features */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-6">
+              {featuresSectionContent.left.map((feature, index) => (
                 <FeatureCard
-                  key={`l-${i}`}
+                  key={`left-${index}`}
                   feature={feature}
                   className="h-full"
                 />
               ))}
             </div>
 
-            {/* Center Visual (or additional text) */}
-            <div className="hidden lg:flex flex-col items-center justify-center text-center space-y-6 p-6">
-              <div className="relative size-40">
-                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
-                <ApplicationSvgLogo className="relative z-10 object-contain drop-shadow-2xl" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">Everything Connected</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Real-time data syncing between students, faculty, and admin.
+            {/* Center */}
+            <div className="hidden lg:flex">
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/50 p-8 text-center">
+                <div className="relative flex size-32 items-center justify-center rounded-3xl border border-primary/20 bg-primary/5">
+                  <div className="absolute inset-0 rounded-3xl bg-primary/10 blur-2xl" />
+
+                  <div className="relative text-4xl font-bold text-primary">
+                    C<span className="text-foreground">360</span>
+                  </div>
+                </div>
+
+                <h3 className="mt-8 text-xl font-bold">
+                  One campus. One platform.
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Designed to connect students, faculty, administration, and
+                  campus services through one digital ecosystem.
                 </p>
+
+                <ButtonLink
+                  variant="outline"
+                  size="sm"
+                  href="#quick-links"
+                  className="mt-6 rounded-lg"
+                >
+                  Explore Platform
+                  <Icon name="arrow-down" className="ml-2 size-4" />
+                </ButtonLink>
               </div>
-              <ButtonLink variant="outline" size="sm" href="/about">
-                Learn how it works
-              </ButtonLink>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-8 flex flex-col justify-start">
-              {featuresSectionContent.right.map((feature, i) => (
+            <div className="space-y-6">
+              {featuresSectionContent.right.map((feature, index) => (
                 <FeatureCard
-                  key={`r-${i}`}
+                  key={`right-${index}`}
                   feature={feature}
                   className="h-full"
                 />
@@ -365,90 +491,14 @@ export function FeatureSection() {
   );
 }
 
-interface HeroSection {
+/**
+ * Kept for compatibility with any existing imports.
+ * The homepage now uses IntroSection.
+ */
+interface HeroSectionProps {
   user: Session["user"];
 }
 
-// Deprecated HeroSection wrapper for backward compatibility if needed,
-// but IntroSection is now the superior component.
-export function HeroSection({ user }: HeroSection) {
-  return (
-    <div
-      id="hero-section"
-      className="z-10 w-full max-w-7xl max-h-96 relative flex flex-col gap-4 items-center justify-center py-24 px-2 sm:px-4 rounded-lg text-center lg:text-left"
-      suppressHydrationWarning={true}
-    >
-      <motion.div
-        initial={{ opacity: 0.0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.1 }}
-        viewport={{ once: true, amount: 0.2 }}
-        className="relative z-30 flex w-full items-center justify-center flex-col px-4 py-8 bg-background/30 border-muted/30 max-w-xl rounded-3xl border backdrop-blur"
-      >
-        <motion.h2
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="font-bold tracking-tight mb-4 max-w-5xl mt-10 group relative"
-        >
-          <AnimatedGradientText
-            className={cn(
-              user
-                ? "text-base sm:text-3xl"
-                : "text-3xl sm:text-4xl md:text-5xl"
-            )}
-          >
-            {getGreeting()}
-          </AnimatedGradientText>{" "}
-          <br />
-          <span className="text-3xl sm:text-4xl md:text-5xl bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-secondary dark:from-foreground to-primary">
-            {user?.name}
-          </span>
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{
-            delay: 0.35,
-            type: "spring",
-            damping: 20,
-            stiffness: 300,
-            delayChildren: 0.1,
-          }}
-          className="text-base text-muted-foreground text-center mb-5"
-        >
-          {appConfig.description.split(".")[0] ||
-            "Welcome to the digital campus platform!"}
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="grid grid-cols-1 sm:grid-cols-2 items-center gap-4"
-        >
-          <ButtonLink
-            variant="dark"
-            href={user ? `/${user.other_roles[0]}` : "/auth/sign-in"}
-            effect="shineHover"
-            transition="damped"
-            shadow="dark"
-          >
-            <Icon name="chart-candlestick" />
-            {user ? "Dashboard" : "Sign In"} <Icon name="arrow-right" />
-          </ButtonLink>
-          <ButtonLink
-            variant="outline"
-            target="_blank"
-            transition="scale"
-            href={`https://github.com/${appConfig.githubUri}/blob/main/CONTRIBUTING.md`}
-          >
-            <Icon name="github" />
-            Contribute Now
-            <Icon name="arrow-up-right" />
-          </ButtonLink>
-        </motion.div>
-      </motion.div>
-      <FloatingElements />
-    </div>
-  );
+export function HeroSection({ user }: HeroSectionProps) {
+  return <IntroSection user={user} stats={{} as PublicStatsType} />;
 }

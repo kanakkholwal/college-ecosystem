@@ -1,7 +1,6 @@
-import { FlickeringGrid } from "@/components/animation/flikering-grid";
 import { ApplicationInfo } from "@/components/logo";
 import { ButtonLink } from "@/components/utils/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarDays, GraduationCap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,81 +12,115 @@ type LayoutProps = Readonly<{
 
 export default function AuthLayout({ children }: LayoutProps) {
   return (
-    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      {/* Mobile: Back Button (Visible only on small screens) */}
-      <div className="absolute left-4 top-4 md:left-8 md:top-8 z-50 lg:hidden">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <ApplicationInfo className="h-8" />
-        </Link>
-      </div>
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
+      {/* Left panel */}
+      <div className="relative hidden min-h-screen overflow-hidden border-r lg:flex">
+        {/* Soft background */}
+        <div className="absolute inset-0 bg-muted/40" />
+        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
 
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex overflow-hidden">
-        {/* Ambient Background */}
-        <div className="absolute inset-0 bg-zinc-900" />
-        <FlickeringGrid
-          className="absolute inset-0 z-0 size-full opacity-20"
-          squareSize={4}
-          gridGap={6}
-          color="#FFFFFF"
-          maxOpacity={0.2}
-          flickerChance={0.05}
-        />
+        <div className="relative z-10 flex w-full flex-col p-10 xl:p-14">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex w-fit items-center transition-opacity hover:opacity-80"
+          >
+            <ApplicationInfo className="h-10" />
+          </Link>
 
-        {/* Content */}
-        <Link
-          href="/"
-          className="relative z-20 flex items-center text-lg font-medium"
-        >
-          <ApplicationInfo className="h-10" />
-        </Link>
-        <div className="hidden lg:flex justify-center items-center w-full relative h-full">
-          <Image
-            src="/assets/images/illustration_dashboard.png"
-            alt="Application Illustration"
-            width={720}
-            height={600}
-            className="w-full object-cover max-w-md"
-          />
-        </div>
+          {/* Main content */}
+          <div className="my-auto max-w-xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background/70 px-3 py-1.5 text-sm text-muted-foreground shadow-sm backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+              Campus 360
+            </div>
 
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              &ldquo;This platform has completely transformed how we manage
-              academic resources and campus life. It{"'"}s the operating system
-              our college needed.&rdquo;
+            <h1 className="text-4xl font-bold tracking-tight xl:text-5xl">
+              Your campus,
+              <br />
+              <span className="text-primary">connected.</span>
+            </h1>
+
+            <p className="mt-5 max-w-lg text-lg leading-8 text-muted-foreground">
+              One platform for academics, attendance, events, resources,
+              communication, and everyday campus services.
             </p>
-            <footer className="text-sm text-zinc-400">
-              NITH Student Community
-            </footer>
-          </blockquote>
+
+            {/* Dashboard illustration */}
+            <div className="relative mt-10">
+              <div className="overflow-hidden rounded-2xl border bg-background shadow-2xl">
+                <Image
+                  src="/assets/images/illustration_dashboard.png"
+                  alt="Campus 360 dashboard"
+                  width={720}
+                  height={600}
+                  className="h-auto w-full object-cover"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Small feature row */}
+            <div className="mt-8 grid grid-cols-3 gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <GraduationCap className="size-4 text-primary" />
+                Academics
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CalendarDays className="size-4 text-primary" />
+                Schedule
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BookOpen className="size-4 text-primary" />
+                Resources
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-10 text-sm text-muted-foreground">
+            A unified digital platform for the SGGS campus community.
+          </p>
         </div>
       </div>
 
-      {/* --- RIGHT PANEL: FORM --- */}
-      <div className="relative flex h-full items-center justify-center p-4 lg:p-8">
-        {/* Desktop: Back Button */}
-        <div className="absolute right-4 top-4 md:right-8 md:top-8">
+      {/* Right panel */}
+      <div className="relative flex min-h-screen items-center justify-center px-4 py-20 sm:px-8">
+        {/* Mobile logo */}
+        <div className="absolute left-4 top-5 sm:left-8 lg:hidden">
+          <Link
+            href="/"
+            className="flex items-center transition-opacity hover:opacity-80"
+          >
+            <ApplicationInfo className="h-8" />
+          </Link>
+        </div>
+
+        {/* Back button */}
+        <div className="absolute right-4 top-5 sm:right-8">
           <ButtonLink href="/" variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="size-4" /> Back to Home
+            <ArrowLeft className="size-4" />
+            <span className="hidden sm:inline">Back to Home</span>
           </ButtonLink>
         </div>
 
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[380px]">
+        <div className="w-full max-w-[420px]">
           {children}
 
-          <p className="px-8 text-center text-sm text-muted-foreground">
-            By clicking continue, you agree to our{" "}
+          <p className="mt-8 px-4 text-center text-xs leading-5 text-muted-foreground">
+            By continuing, you agree to our{" "}
             <Link
               href="/terms"
-              className="underline underline-offset-4 hover:text-primary"
+              className="underline underline-offset-4 hover:text-foreground"
             >
               Terms of Service
             </Link>{" "}
             and{" "}
             <Link
               href="/privacy-policy"
-              className="underline underline-offset-4 hover:text-primary"
+              className="underline underline-offset-4 hover:text-foreground"
             >
               Privacy Policy
             </Link>

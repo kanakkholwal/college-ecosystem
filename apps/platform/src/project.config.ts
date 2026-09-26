@@ -1,217 +1,153 @@
 import { getBaseURL } from "./utils/env";
 
 /** Lives here so the edge proxy can read auth cookies without importing the auth (and DB) module. */
-export const AUTH_COOKIE_PREFIX = "nith";
+export const AUTH_COOKIE_PREFIX = "campus360";
 
-// Project configuration for the College Ecosystem platform
+// Campus 360 application configuration
 export const orgConfig = {
-  name: "National Institute of Technology, Hamirpur",
-  shortName: "NITH",
-  domain: "nith.ac.in",
-  website: "https://nith.ac.in",
-  logo: "https://nith.ac.in/uploads/settings/15795036012617.png",
-  logoSquare: "https://nith.ac.in/uploads/topics/nit-logo15954991401255.jpg",
-  mailSuffix: "@nith.ac.in",
+  name: "Campus 360",
+  shortName: "Campus 360",
+  domain: "campus360.local",
+  website: "http://localhost:3000",
+  logo: "/logo.svg",
+  logoSquare: "/logo-square.svg",
+  mailSuffix: "@sggs.ac.in",
 
-  // Enhanced social profiles
   socials: {
-    twitter: {
-      url: "https://twitter.com/nithamirpur",
-      handle: "@nithamirpur",
-      publisher: "@nithamirpur",
-    },
-    linkedin: "https://linkedin.com/company/nithamirpur",
-    instagram: "https://instagram.com/nithamirpur",
-    facebook: "https://facebook.com/NITHamirpur",
-    youtube: "https://youtube.com/@NITHamirpur",
+    twitter: "",
+    linkedin: "",
+    instagram: "",
+    facebook: "",
+    youtube: "",
   },
-  // Enhanced organization details
-  foundingDate: "1986-01-01",
+
+  foundingDate: "",
   location: {
     address: {
       "@type": "PostalAddress",
-      streetAddress: "NIT Hamirpur Campus, Anu",
-      addressLocality: "Hamirpur",
-      addressRegion: "Himachal Pradesh",
-      postalCode: "177005",
+      streetAddress: "",
+      addressLocality: "",
+      addressRegion: "",
+      postalCode: "",
       addressCountry: "IN",
     },
     geo: {
       "@type": "GeoCoordinates",
-      latitude: "31.7087",
-      longitude: "76.5270",
+      latitude: "",
+      longitude: "",
     },
   },
 
   contact: {
-    email: "registrar@nith.ac.in",
-    phone: "+91-1972-254001",
-    fax: "+91-1972-223834",
+    email: "",
+    phone: "",
+    fax: "",
   },
 
-  socialProfiles: [
-    "https://www.facebook.com/NITHamirpur",
-    "https://twitter.com/NITHamirpurHP",
-    "https://www.instagram.com/nithamirpur/",
-    "https://www.linkedin.com/school/nithamirpur/",
-    "https://www.youtube.com/@NITHamirpur",
-  ],
+  socialProfiles: [],
 
-  // Enhanced structured data
   jsonLds: {
     EducationalOrganization: {
       "@context": "https://schema.org",
-      "@type": ["CollegeOrUniversity", "GovernmentOrganization"],
-      name: "National Institute of Technology, Hamirpur",
-      url: "https://nith.ac.in",
-      logo: "https://nith.ac.in/uploads/settings/15795036012617.png",
-      foundingDate: "1986",
+      "@type": "CollegeOrUniversity",
+      name: "Campus 360",
+      url: "http://localhost:3000",
+      logo: "/logo.svg",
+      foundingDate: "",
       address: {
         "@type": "PostalAddress",
-        streetAddress: "NIT Hamirpur Campus, Anu",
-        addressLocality: "Hamirpur",
-        addressRegion: "Himachal Pradesh",
-        postalCode: "177005",
+        streetAddress: "",
+        addressLocality: "",
+        addressRegion: "",
+        postalCode: "",
         addressCountry: "IN",
       },
       contactPoint: {
         "@type": "ContactPoint",
-        contactType: "Admissions",
-        telephone: "+91-1972-254001",
-        email: "registrar@nith.ac.in",
+        contactType: "General",
+        telephone: "",
+        email: "",
       },
-      sameAs: [
-        "https://www.facebook.com/NITHamirpur",
-        "https://twitter.com/NITHamirpurHP",
-        "https://www.instagram.com/nithamirpur/",
-        "https://www.linkedin.com/school/nithamirpur/",
-        "https://www.youtube.com/@NITHamirpur",
-      ],
-      department: [
-        {
-          "@type": "CollegeDepartment",
-          name: "Computer Science and Engineering",
-        },
-        {
-          "@type": "CollegeDepartment",
-          name: "Electronics and Communication Engineering",
-        },
-        // Add all departments
-      ],
+      sameAs: [],
+      department: [],
     },
   },
 } as const;
 
-// This file contains the configuration for the app and college
+// Campus 360 application configuration
 export const appConfig = {
-  name: "College Platform",
-  shortName: "CP",
-  appDomain: "nith.eu.org",
-  otherAppDomains: [
-    "app.nith.eu.org",
-    "platform.nith.eu.org",
-    "nith-app.vercel.app",
-    "os.nith.eu.org",
-    "nith-app.pages.dev",
-  ],
-  url: getBaseURL() ?? "https://app.nith.eu.org",
+  name: "Campus 360",
+  shortName: "C360",
+  appDomain: "localhost",
+  otherAppDomains: [],
+  url: getBaseURL() ?? "http://localhost:3000",
+
   logoSquare: "/logo-square.svg",
   logo: "/logo.svg",
   logoDark: "/logo-dark.svg",
-  // appDomain: "college-ecosystem.vercel.app",
-  // url: "https://college-ecosystem.vercel.app",
+
   description:
-    "NIT Hamirpur student portal for academic results, campus resources, and community collaboration. Manage your college ecosystem in one platform.",
+    "Campus 360 is a unified college management and student platform for academics, communication, campus services, hostel management, and administration.",
+
   keywords: [
-    // Primary terms
-    "NITH portal",
-    "NIT Hamirpur",
+    "Campus 360",
     "campus management",
     "student portal",
+    "college management system",
     "college ecosystem",
     "academic platform",
-    "college os",
-
-    // Feature-specific
-    "NITH results",
-    "semester results",
-    "exam grades",
-    "course materials",
-    "faculty collaboration",
-    "campus resources",
-
-    // Program-specific
-    "BTech portal",
-    "MTech portal",
-    "MCA portal",
-    "BArch portal",
-    "PhD portal",
-
-    // Location-based
-    "Hamirpur colleges",
-    "Himachal Pradesh colleges",
-    "NIT Hamirpur portal",
-
-    // Action-oriented
-    "check results online",
-    "download marksheet",
-    "academic records",
-    "connect with faculty",
-    "campus announcements",
+    "student management",
+    "hostel management",
+    "attendance management",
+    "campus services",
   ].join(", "),
-  creator: "Kanak Kholwal",
+
+  creator: "Campus 360",
   authors: [
     {
-      name: "Kanak Kholwal",
-      url: "https://kanak.eu.org",
-      image: "https://github.com/kanakkholwal.png",
-      email: "me@kanak.eu.org",
-    },
-    {
-      name: "NITH Administration",
-      url: "https://nith.ac.in",
-      role: "EducationalInstitution",
+      name: "Campus 360",
+      url: "",
+      image: "",
+      email: "",
     },
   ],
-  githubRepo: "https://github.com/kanakkholwal/college-ecosystem",
-  githubUri: "kanakkholwal/college-ecosystem",
+
+  githubRepo: "https://github.com/Aadi-1319/campus360",
+  githubUri: "Aadi-1319/campus360",
+
   socials: {
-    twitter:
-      "https://twitter.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    linkedin:
-      "https://linkedin.com/in/kanak-kholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    instagram:
-      "https://instagram.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    github:
-      "https://github.com/kanakkholwal?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
-    website:
-      "https://kanak.eu.org/?utm_source=app.nith.eu.org&utm_medium=direct&utm_campaign=personal_brand",
+    twitter: "",
+    linkedin: "",
+    instagram: "",
+    github: "https://github.com/Aadi-1319",
+    website: "",
   },
 
   verifications: {
-    google_adsense: "ca-pub-2219281381026289",
-    google_analytics: "G-SC4TQQ5PCW",
+    google_adsense: "",
+    google_analytics: "",
   },
-  // SEO-specific enhancements
+
   seo: {
     locale: "en_IN",
     timezone: "Asia/Kolkata",
     geo: {
-      placename: "Hamirpur",
-      region: "Himachal Pradesh",
-      position: "31.7087° N, 76.5270° E",
+      placename: "",
+      region: "",
+      position: "",
     },
     category: "Education",
-    publisher: orgConfig.name,
+    publisher: "Campus 360",
     schemaType: "WebApplication",
   },
-  contact: "https://forms.gle/PXbaDm9waeJWYWUP8",
-  // Structured data templates
+
+  contact: "",
+
   jsonLds: {
     WebApplication: {
       "@type": "WebApplication",
-      name: "NITH Campus Portal",
-      url: "https://app.nith.eu.org",
+      name: "Campus 360",
+      url: "http://localhost:3000",
       applicationCategory: "Education",
       operatingSystem: "Web",
       offers: {
@@ -223,7 +159,7 @@ export const appConfig = {
   },
 
   flags: {
-    enableOgImage: false, // Enable Open Graph image generation
+    enableOgImage: false,
   },
 };
 
@@ -235,15 +171,6 @@ export const supportLinks = [
   {
     href: appConfig.githubRepo + "/issues",
     title: "Report an issue",
-  },
-
-  {
-    href: "https://forms.gle/u2ptK12iRVdn5oXF7",
-    title: "Give a feedback",
-  },
-  {
-    href: "https://forms.gle/v8Angn9VCbt9oVko7",
-    title: "Suggest a feature",
   },
 ] as const;
 
