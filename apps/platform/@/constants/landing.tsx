@@ -1,3 +1,4 @@
+
 import {
   Bell,
   Building,
@@ -20,23 +21,23 @@ export type FeatureItem = {
 const leftFeatures: FeatureItem[] = [
   {
     icon: GraduationCap,
-    title: "Academic Management",
+    title: "Academic Hub",
     description:
-      "Access academic information, results, schedules, syllabus, and other student resources from one place.",
+      "Access academic results, timetables, syllabi, and essential learning information through one connected campus portal.",
     position: "left",
   },
   {
     icon: Bell,
-    title: "Notices & Updates",
+    title: "Notices & Announcements",
     description:
-      "Keep important announcements, notices, circulars, and campus updates within easy reach.",
+      "Stay informed about institute notices, academic updates, events, and important campus announcements.",
     position: "left",
   },
   {
     icon: Users,
-    title: "Student Community",
+    title: "Campus Community",
     description:
-      "Connect with other students and stay involved with clubs, societies, activities, and campus life.",
+      "Discover student communities, clubs, activities, and opportunities to participate in campus life.",
     position: "left",
   },
 ];
@@ -44,23 +45,23 @@ const leftFeatures: FeatureItem[] = [
 const rightFeatures: FeatureItem[] = [
   {
     icon: Calendar,
-    title: "Schedules & Events",
+    title: "Timetables & Events",
     description:
-      "Find academic schedules, campus events, activities, and important dates in one place.",
+      "Keep track of class schedules, academic dates, institute events, and upcoming activities.",
     position: "right",
   },
   {
     icon: FileText,
-    title: "Resources",
+    title: "Academic Resources",
     description:
-      "Organize and access useful academic resources, documents, and information whenever you need them.",
+      "Find useful academic documents, course information, results, and student resources in one place.",
     position: "right",
   },
   {
     icon: Building,
     title: "Campus Services",
     description:
-      "Bring everyday campus services and information together through a single digital platform.",
+      "Explore campus facilities and services, including classroom availability and hostel-related services where enabled.",
     position: "right",
   },
 ];
@@ -71,7 +72,7 @@ export const featuresSectionContent = {
 };
 
 /**
- * Testimonials are intentionally kept empty until genuine
- * student/faculty feedback is available.
+ * Keep testimonials empty until genuine student or faculty feedback
+ * is available and approved for publication.
  */
 export const testimonialsContent = [];

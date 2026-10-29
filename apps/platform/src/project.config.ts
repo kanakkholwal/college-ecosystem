@@ -5,10 +5,10 @@ export const AUTH_COOKIE_PREFIX = "campus360";
 
 // Campus 360 application configuration
 export const orgConfig = {
-  name: "Campus 360",
-  shortName: "Campus 360",
-  domain: "campus360.local",
-  website: "http://localhost:3000",
+  name: "Shri Guru Gobind Singhji Institute of Engineering and Technology",
+  shortName: "SGGSIE&T",
+  domain: "sggs.ac.in",
+  website: "https://www.sggs.ac.in",
   logo: "/logo.svg",
   logoSquare: "/logo-square.svg",
   mailSuffix: "@sggs.ac.in",
@@ -87,7 +87,7 @@ export const appConfig = {
   logoDark: "/logo-dark.svg",
 
   description:
-    "Campus 360 is a unified college management and student platform for academics, communication, campus services, hostel management, and administration.",
+  "SGGS Campus 360 is a unified campus management platform for students, faculty, academic administration, hostel services, and campus communication at SGGSIE&T, Nanded.",
 
   keywords: [
     "Campus 360",
@@ -137,7 +137,7 @@ export const appConfig = {
       position: "",
     },
     category: "Education",
-    publisher: "Campus 360",
+    publisher: "Shri Guru Gobind Singhji Institute of Engineering and Technology",
     schemaType: "WebApplication",
   },
 

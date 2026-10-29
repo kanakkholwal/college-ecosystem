@@ -42,7 +42,12 @@ export const ORG_EMAIL_REQUIRED = `Use your ${orgConfig.mailSuffix} account to s
 
 /** Case-insensitive: Google may return the address with different casing than we store. */
 export function isOrgEmail(email: string): boolean {
-  return emailSchema.safeParse(email.trim().toLowerCase()).success;
+  const normalizedEmail = email.trim().toLowerCase();
+
+  return (
+    normalizedEmail.endsWith(orgConfig.mailSuffix.toLowerCase()) &&
+    emailSchema.safeParse(normalizedEmail).success
+  );
 }
 
 function assertOrgEmail(email: string): void {
@@ -52,15 +57,10 @@ function assertOrgEmail(email: string): void {
 }
 
 export const trustedOrigins = new Set<string>([
-  // Apex + every subdomain of nith.eu.org, so the platform can run on any
-  // *.nith.eu.org host (app, platform, auth, os, dev, …) without edits here.
-  // Scheme-qualified on purpose: bare hostnames are not a documented form, and
-  // the https:// prefix stops the pattern from matching plaintext origins.
-  "https://nith.eu.org",
-  "https://*.nith.eu.org",
-  appConfig.url,
-  `https://${appConfig.appDomain}`,
-  ...(isProd ? [] : ["http://localhost:3000", "http://localhost:3001"]),
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
 ]);
 
 export const betterAuthOptions = {

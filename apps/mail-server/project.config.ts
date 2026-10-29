@@ -1,30 +1,25 @@
 
-
 export const appConfig = {
-  name: "College Platform",
-  appDomain: "nith.eu.org",
-  url: "https://app.nith.eu.org",
-  logo: "https://app.nith.eu.org/logo.png",
-  logoSquare: "https://app.nith.eu.org/favicon.ico",
-  tagline: "Connecting Students, Faculty, and Staff",
+  name: "Campus 360 Mail Service",
+  appDomain: "localhost",
+  url: "http://localhost:3000",
+  logo: "",
+  logoSquare: "",
+  tagline: "Campus 360 email service",
   description:
-    "A platform for students, faculty, and staff to interact and collaborate.",
+    "Local email service for the SGGS Campus 360 development environment.",
   authors: [
-    { name: "Kanak Kholwal", url: "https://kanakkholwal.eu.org" },
-    { name: "NITH", url: "https://nith.ac.in" },
+    { name: "Campus 360" },
+    { name: "Original project contributors", url: "https://github.com/kanakkholwal/college-ecosystem" },
   ],
-  githubRepo: "https://github.com/kanakkholwal/college-ecosystem",
+  githubRepo: "https://github.com/Aadi-1319/campus360",
   socials: {
-    twitter: "https://twitter.com/kanakkholwal",
-    linkedin: "https://linkedin.com/in/kanakkholwal",
-    instagram: "https://instagram.com/kanakkholwal",
-    github: "https://github.com/kanakkholwal"
+    github: "https://github.com/Aadi-1319/campus360",
   },
-  // sender email
-  senderEmail: `platform@nith.eu.org`,
-  sender: `College Platform <platform@nith.eu.org>`,
-  contact:"https://forms.gle/PXbaDm9waeJWYWUP8",
-  
+  // Configure a real sender later using an authorized email address.
+  senderEmail: process.env.MAIL_FROM_EMAIL || "no-reply@localhost",
+  sender: `Campus 360 <${process.env.MAIL_FROM_EMAIL || "no-reply@localhost"}>`,
+  contact: "",
 } as const;
 
 export const SERVER_IDENTITY = process.env.SERVER_IDENTITY;
@@ -33,14 +28,12 @@ export const SMTP_HOST = process.env.SMTP_HOST;
 export const MAIL_EMAIL = process.env.MAIL_EMAIL;
 export const MAIL_PASSWORD = process.env.MAIL_PASSWORD;
 
-
-
 export const SMTP_SETTINGS = {
-  host: SMTP_HOST || "smtp-relay.brevo.com", // "smtp.gmail.com", //replace with your email provider
+  host: SMTP_HOST || "smtp-relay.brevo.com",
   port: 587,
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
     user: MAIL_EMAIL,
     pass: MAIL_PASSWORD,
   },
-}
+};
